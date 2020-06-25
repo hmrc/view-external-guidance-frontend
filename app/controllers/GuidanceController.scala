@@ -30,7 +30,6 @@ import views.html.{standard_page, question_page}
 import play.api.Logger
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
-import uk.gov.hmrc.http.SessionKeys
 
 @Singleton
 class GuidanceController @Inject() (
@@ -143,7 +142,7 @@ class GuidanceController @Inject() (
       logger.error(s"Session Id missing from request when required")
       Future.successful(Left(BadRequestError): RequestOutcome[T])
     } { sessionId =>
-      logger.info(s"withSession, EG_SESSIONID ${request.session.get("EG_SESSION")}, sessionId $sessionId")
+      logger.info(s"withSession, sessionId $sessionId")
       block(sessionId.value)
     }
 
@@ -153,7 +152,7 @@ class GuidanceController @Inject() (
     processStartUrl(id, sessionId).map {
       case Right(url) =>
         logger.warn(s"Redirecting to begin viewing process $id at ${routes.GuidanceController.getPage(url.drop(1)).toString} using sessionId $sessionId")
-        Redirect(routes.GuidanceController.getPage(url.drop(1))).withSession((SessionKeys.sessionId -> sessionId), ("EG_SESSION" -> sessionId))
+        Redirect(routes.GuidanceController.getPage(url.drop(1)))
       case Left(NotFoundError) =>
         logger.warn(s"Unable to find process $id and render using sessionId $sessionId")
         NotFound(errorHandler.notFoundTemplate)
