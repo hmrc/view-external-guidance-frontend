@@ -62,6 +62,10 @@ class SessionTimeoutFilter @Inject()(
     val updateTimestamp: (Result) => Result =
       result => result.addingToSession(lastRequestTimestamp -> clock().getMillis.toString)(rh)
 
+    //
+    // Variation from standard Boostrap filter: Preserve the value of a Session Id which has been
+    // created in the first application Action which is processed after the timeout has occurred.
+    // 
     val wipeAllFromSessionCookie: (Result) => Result =
       result => result.withSession(preservedSessionData(result.session(rh), Some(SessionKeys.sessionId)): _*)
 
@@ -108,6 +112,7 @@ class SessionTimeoutFilter @Inject()(
       value = new AssignedCell(session)
     )
 
+  // Variation from standard Boostrap version: Addition argument to allow the preservationn of a named key
   private def preservedSessionData(session: Session, additionalKey: Option[String] = None): Seq[(String, String)] =
     for {
       key   <- (SessionTimeoutFilter.whitelistedSessionKeys ++ config.additionalSessionKeys).toSeq ++ additionalKey.fold(Seq.empty: Seq[String])(Seq(_))
