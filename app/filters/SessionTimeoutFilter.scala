@@ -20,13 +20,14 @@ package filters
 
 import akka.stream.Materializer
 import javax.inject.Inject
-import org.joda.time.{DateTime, DateTimeZone, Duration}
-import play.api.Configuration
+import org.joda.time.{DateTime, DateTimeZone}
 import play.api.mvc._
 import play.api.mvc.request.{AssignedCell, RequestAttrKey}
 import uk.gov.hmrc.http.SessionKeys._
 import uk.gov.hmrc.play.bootstrap.filters.frontend.SessionTimeoutFilterConfig
 import scala.concurrent.{ExecutionContext, Future}
+import uk.gov.hmrc.http.SessionKeys
+import play.api.Logger
 
 /**
   * Filter that manipulates session data if 'ts' session field is older than configured timeout.
@@ -50,7 +51,7 @@ class SessionTimeoutFilter @Inject()(
   ec: ExecutionContext,
   override val mat: Materializer)
     extends Filter {
-
+  val logger = Logger(getClass)
   def clock(): DateTime = DateTime.now(DateTimeZone.UTC)
 
   val authRelatedKeys = Seq(authToken, token, userId)
@@ -58,12 +59,11 @@ class SessionTimeoutFilter @Inject()(
   private def wipeFromSession(session: Session, keys: Seq[String]): Session = keys.foldLeft(session)((s, k) => s - k)
 
   override def apply(f: (RequestHeader) => Future[Result])(rh: RequestHeader): Future[Result] = {
-
     val updateTimestamp: (Result) => Result =
       result => result.addingToSession(lastRequestTimestamp -> clock().getMillis.toString)(rh)
 
     val wipeAllFromSessionCookie: (Result) => Result =
-      result => result.withSession(preservedSessionData(result.session(rh)): _*)
+      result => result.withSession(preservedSessionData(result.session(rh), Some(SessionKeys.sessionId)): _*)
 
     val wipeAuthRelatedKeysFromSessionCookie: (Result) => Result =
       result => result.withSession(wipeFromSession(result.session(rh), authRelatedKeys))
@@ -76,7 +76,7 @@ class SessionTimeoutFilter @Inject()(
           .map(wipeAuthRelatedKeysFromSessionCookie)
       case Some(ts) if hasExpired(ts) =>
         f(wipeSession(rh))
-          
+          .map(wipeAllFromSessionCookie)
       case _ =>
         f(rh)
     }).map(updateTimestamp)
@@ -108,9 +108,9 @@ class SessionTimeoutFilter @Inject()(
       value = new AssignedCell(session)
     )
 
-  private def preservedSessionData(session: Session): Seq[(String, String)] =
+  private def preservedSessionData(session: Session, additionalKey: Option[String] = None): Seq[(String, String)] =
     for {
-      key   <- (SessionTimeoutFilter.whitelistedSessionKeys ++ config.additionalSessionKeys).toSeq
+      key   <- (SessionTimeoutFilter.whitelistedSessionKeys ++ config.additionalSessionKeys).toSeq ++ additionalKey.fold(Seq.empty: Seq[String])(Seq(_))
       value <- session.get(key)
     } yield key -> value
 
