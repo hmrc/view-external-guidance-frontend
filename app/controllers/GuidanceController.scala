@@ -143,7 +143,7 @@ class GuidanceController @Inject() (
       logger.error(s"Session Id missing from request when required")
       Future.successful(Left(BadRequestError): RequestOutcome[T])
     } { sessionId =>
-      logger.info(s"withSession, sessionId $sessionId")
+      logger.info(s"withSession, EG_SESSIONID ${request.session.get("EG_SESSION")}, sessionId $sessionId")
       block(sessionId.value)
     }
 
