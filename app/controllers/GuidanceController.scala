@@ -103,25 +103,25 @@ class GuidanceController @Inject() (
   }
 
   def startJourney(processId: String): Action[AnyContent] = Action.async { implicit request =>
-    val sessionId: String = hc.sessionId.fold(java.util.UUID.randomUUID.toString)(_.value)
+    val sessionId: String = hc.sessionId.fold(s"session-${java.util.UUID.randomUUID.toString}")(_.value)
     logger.info(s"Starting journey with sessionId = $sessionId")
     retreiveCacheAndRedirectToProcess(processId, sessionId, service.getStartPageUrl)
   }
 
   def scratch(uuid: String): Action[AnyContent] = Action.async { implicit request =>
-    val sessionId: String = hc.sessionId.fold(java.util.UUID.randomUUID.toString)(_.value)
+    val sessionId: String = hc.sessionId.fold(s"session-${java.util.UUID.randomUUID.toString}")(_.value)
     logger.info(s"Starting scratch with sessionId = $sessionId")
     retreiveCacheAndRedirectToProcess(uuid, sessionId, service.retrieveAndCacheScratch)
   }
 
   def published(processId: String): Action[AnyContent] = Action.async { implicit request =>
-    val sessionId: String = hc.sessionId.fold(java.util.UUID.randomUUID.toString)(_.value)
+    val sessionId: String = hc.sessionId.fold(s"session-${java.util.UUID.randomUUID.toString}")(_.value)
     logger.info(s"Starting publish with sessionId = $sessionId")
     retreiveCacheAndRedirectToProcess(processId, sessionId, service.retrieveAndCachePublished)
   }
 
   def approval(processId: String): Action[AnyContent] = Action.async { implicit request =>
-    val sessionId: String = hc.sessionId.fold(java.util.UUID.randomUUID.toString)(_.value)
+    val sessionId: String = hc.sessionId.fold(s"session-${java.util.UUID.randomUUID.toString}")(_.value)
     logger.info(s"Starting approval direct view with sessionId = $sessionId")
     retreiveCacheAndRedirectToProcess(processId, sessionId, service.retrieveAndCacheApproval)
   }
@@ -133,7 +133,7 @@ class GuidanceController @Inject() (
         case err @ Left(_) => err
       }
 
-    val sessionId: String = hc.sessionId.fold(java.util.UUID.randomUUID.toString)(_.value)
+    val sessionId: String = hc.sessionId.fold(s"session-${java.util.UUID.randomUUID.toString}")(_.value)
     logger.info(s"Starting approval direct view with sessionId = $sessionId")
     retreiveCacheAndRedirectToProcess(processId, sessionId, retrieveCacheAndRedirect(s"/$url"))
   }
@@ -143,7 +143,7 @@ class GuidanceController @Inject() (
       logger.error(s"Session Id missing from request when required")
       Future.successful(Left(BadRequestError): RequestOutcome[T])
     } { sessionId =>
-      logger.info(s"withSession, EG_SESSIONID ${request.session.get("EG_SESSION")}, sessionId $sessionId")
+      logger.info(s"withSession sessionId $sessionId")
       block(sessionId.value)
     }
 
@@ -153,7 +153,7 @@ class GuidanceController @Inject() (
     processStartUrl(id, sessionId).map {
       case Right(url) =>
         logger.warn(s"Redirecting to begin viewing process $id at ${routes.GuidanceController.getPage(url.drop(1)).toString} using sessionId $sessionId")
-        Redirect(routes.GuidanceController.getPage(url.drop(1))).withSession((SessionKeys.sessionId -> sessionId), ("EG_SESSION" -> sessionId))
+        Redirect(routes.GuidanceController.getPage(url.drop(1))).withSession(SessionKeys.sessionId -> sessionId)
       case Left(NotFoundError) =>
         logger.warn(s"Unable to find process $id and render using sessionId $sessionId")
         NotFound(errorHandler.notFoundTemplate)
