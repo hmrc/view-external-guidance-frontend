@@ -30,7 +30,7 @@
 
       @for(err <- errors) {
         <li>
-          <a href="#@inputFieldName-0">
+          <a id="error-text" href="#@inputFieldName-0">
             @components.render_text({err.text})
           </a>
         </li>
