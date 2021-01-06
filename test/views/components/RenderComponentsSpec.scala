@@ -16,21 +16,20 @@
 
 package views.components
 
+import base.{ViewFns, ViewSpec}
+import models.PageContext
+import models.ocelot.{LabelCache, Labels}
+import models.ui._
 import org.jsoup.nodes.Element
-
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.i18n.{Lang, Messages, MessagesApi}
 import play.api.inject.Injector
+import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
-
 import play.twirl.api.Html
-
-import models.ui._
-import models.ocelot.{Labels, LabelCache}
 import views.html._
-import scala.collection.JavaConverters._
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 
-import base.{ViewFns, ViewSpec}
+import scala.collection.JavaConverters._
 
 class RenderComponentsSpec extends ViewSpec with ViewFns with GuiceOneAppPerSuite {
 
@@ -39,16 +38,16 @@ class RenderComponentsSpec extends ViewSpec with ViewFns with GuiceOneAppPerSuit
     private def injector: Injector = app.injector
     def messagesApi: MessagesApi = injector.instanceOf[MessagesApi]
 
-    implicit val fakeRequest = FakeRequest("GET", "/")
+    implicit val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("GET", "/")
     implicit def messages: Messages = messagesApi.preferred(fakeRequest)
 
-    val expectedTable = Table(Text("HELLO","HELLO"),
+    val expectedTable: Table = Table(Text("HELLO","HELLO"),
                               Seq(Text("First","First"), Text("Second","Second")),
                               Seq.fill(3)(Seq(Text("HELLO","HELLO"), Text("World","World"))))
 
-    val currencyInput = models.ui.CurrencyInput(Text(), None, Seq.empty)
-    val page = models.ui.FormPage("/url", currencyInput)
-    implicit val ctx = models.PageContext(page, None, "sessionId", None, Text(), "processId", "processCode", labels)
+    val currencyInput: CurrencyInput = models.ui.CurrencyInput(Text(), None, Seq.empty)
+    val page: FormPage = models.ui.FormPage("/url", currencyInput)
+    implicit val ctx: PageContext = models.PageContext(page, None, "sessionId", None, Text(), "processId", "processCode", labels)
   }
 
   private trait WelshTest extends Test {implicit override def messages: Messages = messagesApi.preferred(Seq(Lang("cy")))}
@@ -70,6 +69,19 @@ class RenderComponentsSpec extends ViewSpec with ViewFns with GuiceOneAppPerSuit
       }
     }
 
+    "generate a Details section when required" in new Test {
+      val details: Details = Details(Text("Detail header","Welsh Detail header"), Seq(Text("hidden text","Welsh hidden text")))
+      val html: Html = components.render_components(Seq(details))
+      val detailsSection: Element = getSingleElementByTag(html, "details")
+
+      val header: Element = getSingleElementByTag(detailsSection, "span")
+      header.text() shouldBe "Detail header"
+      checkClassForElement(header, "govuk-details__summary-text")
+
+      val bodyDiv: Element = getSingleElementByTag(detailsSection, "div")
+      bodyDiv.text() shouldBe "hidden text"
+      checkClassForElement(bodyDiv, "govuk-details__text")
+    }
   }
 
   "Welsh render_components" must {
@@ -87,6 +99,19 @@ class RenderComponentsSpec extends ViewSpec with ViewFns with GuiceOneAppPerSuit
 
         rows.size shouldBe expectedTable.rows.size
       }
+    }
+    "generate a Details section when required" in new WelshTest {
+      val details: Details = Details(Text("Detail header","Welsh Detail header"), Seq(Text("hidden text","Welsh hidden text")))
+      val html: Html = components.render_components(Seq(details))
+      val detailsSection: Element = getSingleElementByTag(html, "details")
+
+      val header: Element = getSingleElementByTag(detailsSection, "span")
+      header.text() shouldBe "Welsh Detail header"
+      checkClassForElement(header, "govuk-details__summary-text")
+
+      val bodyDiv: Element = getSingleElementByTag(detailsSection, "div")
+      bodyDiv.text() shouldBe "Welsh hidden text"
+      checkClassForElement(bodyDiv, "govuk-details__text")
     }
   }
 }

@@ -20,8 +20,7 @@ import base.BaseSpec
 import models.ocelot._
 import models.ocelot.stanzas._
 import models.ui
-import models.ui.{BulletPointList, ConfirmationPanel, CyaSummaryList, FormPage, ErrorMsg, H1, H3, H4}
-import models.ui.{InsetText, Link, Paragraph, Table, Text, Words}
+import models.ui.{BulletPointList, ConfirmationPanel, CyaSummaryList, Details, ErrorMsg, FormPage, H1, H3, H4, InsetText, Link, Paragraph, Table, Text, Words}
 
 class UIBuilderSpec extends BaseSpec with ProcessJson {
 
@@ -1417,5 +1416,51 @@ class UIBuilderSpec extends BaseSpec with ProcessJson {
 
   }
 
+  "UIBuilder Details Component processing" must {
+    trait DetailsTest extends Test {
+      val sectionPhrase = Phrase(Vector("Visible text", "Welsh visible Text"))
+      val num1Phrase = Phrase(Vector("Line1", "Welsh Line1"))
+      val num2Phrase = Phrase(Vector("Line2", "Welsh Line2"))
+      val num3Phrase = Phrase(Vector("Line3", "Welsh Line3"))
+      val num4Phrase = Phrase(Vector("Line4", "Welsh Line4"))
+
+      val stackedNote1 = NoteCallout(num1Phrase, Seq(""), stack = true)
+      val stackedNote2 = NoteCallout(num2Phrase, Seq(""), stack = true)
+      val unstackedNote = NoteCallout(num2Phrase, Seq(""), stack = false)
+
+      val subSectionCallout: Callout = SubSectionCallout(sectionPhrase, Seq("8"), stack = false)
+    }
+
+    "Convert a subSection callout and single stacked note callout into a single Details component" in new DetailsTest {
+      val p = uiBuilder.buildPage("/start", Seq(subSectionCallout, stackedNote1))
+      p.components match {
+        case Seq(_: Details) => succeed
+        case x => fail(s"Found $x")
+      }
+    }
+    "Convert a subSection callout and two stacked note callouts into a single Details component" in new DetailsTest {
+      val p = uiBuilder.buildPage("/start", Seq(subSectionCallout, stackedNote1, stackedNote2))
+      p.components match {
+        case Seq(_: Details) => succeed
+        case x => fail(s"Found $x")
+      }
+    }
+
+    "Convert a subSection callout and an unstacked note callout into an H3 and InsetText" in new DetailsTest {
+      val p = uiBuilder.buildPage("/start", Seq(subSectionCallout, unstackedNote))
+      p.components match {
+        case Seq(_: H4, _: InsetText) => succeed
+        case x => fail(s"Found $x")
+      }
+    }
+
+    "Convert a subSection callout, two stacked note callouts and one unstacked note into a single Details component and an InsetText" in new DetailsTest {
+      val p = uiBuilder.buildPage("/start", Seq(subSectionCallout, stackedNote1, stackedNote2, unstackedNote))
+      p.components match {
+        case Seq(_: Details, _: InsetText) => succeed
+        case x => fail(s"Found $x")
+      }
+    }
+  }
 
 }

@@ -43,7 +43,7 @@ trait ViewSpec extends WordSpec with Matchers {
     getMultipleElementsByTag(document, htmlTag, expectedNumberOfElements)
   }
 
-  def getSingleElementByTag(document: Document, htmlTag: String): Element = {
+  def getSingleElementByTag(document: Element, htmlTag: String): Element = {
 
     val elements: Elements = document.getElementsByTag(htmlTag)
 
@@ -82,9 +82,13 @@ trait ViewSpec extends WordSpec with Matchers {
   def checkClassesForElement(element: Element, expectedClasses: List[String]): Unit = {
 
     for (expectedClass <- expectedClasses) {
-      assert(element.hasClass(expectedClass), "\n Class " + expectedClass + " not found on element")
+      assert(element.hasClass(expectedClass), "\n Class " + expectedClass + " not found on element " + element.nodeName())
     }
 
+  }
+
+  def checkClassForElement(element: Element, expectedClass: String): Unit = {
+    checkClassesForElement(element, List(expectedClass))
   }
 
   def checkHyperLink(link: Element, destination: String, text: String, targetBlank: Boolean): Unit = {
