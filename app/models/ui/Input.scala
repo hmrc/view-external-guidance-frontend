@@ -17,7 +17,9 @@
 package models.ui
 
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
+import java.time.format.ResolverStyle
+
+import models.ocelot.dateFormatter
 
 trait Input extends FormComponent
 
@@ -27,11 +29,9 @@ case class DateInput(text: Text, hint: Option[Text], body: Seq[UIComponent], err
 
 object DateInput {
 
-  val submittedDateAnswerFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("d/M/yyyy")
-
   def partitionSubmittedDateAnswer(submittedDateAnswer: String): (String, String, String) = {
 
-    val submittedDate: LocalDate = LocalDate.parse(submittedDateAnswer, submittedDateAnswerFormatter)
+    val submittedDate: LocalDate = LocalDate.parse(submittedDateAnswer, dateFormatter.withResolverStyle(ResolverStyle.STRICT))
 
     (submittedDate.getDayOfMonth.toString, submittedDate.getMonthValue.toString, submittedDate.getYear.toString)
   }
