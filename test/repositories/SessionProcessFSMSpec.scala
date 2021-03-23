@@ -141,7 +141,7 @@ class SessionProcessFSMSpec extends BaseSpec {
         verify(fsm("/start", sessionProcess.copy(pageHistory = List(PageHistory("/start", Nil), PageHistory("/next", Nil), PageHistory("/another", Nil))), true, "/start"),
                None,
                Some(List(PageHistory("/start", Nil))),
-               None,
+               Some(Nil),
                None)
     }
   }
@@ -268,15 +268,15 @@ class SessionProcessFSMSpec extends BaseSpec {
     }
 
     "Return backlink, PageHistory update with multiple element history, forceForward true (FORCE FORWARD)" in new FlowStackTest {
-        verify(fsm("/next", sessionProcess.copy(pageHistory = List(PageHistory("/start", Nil), PageHistory("/next", Nil), PageHistory("/another", Nil))), true, "/start"),
+        verify(fsm("/next", sessionProcess.copy(pageHistory = List(PageHistory("/start", Nil), PageHistory("/next", List(Flow("8",Some(LabelValue("Choice","Third"))), Flow("88",Some(LabelValue("Choice","Fourth"))), Continuation("2"))), PageHistory("/another", Nil))), true, "/start"),
                Some("/another"),
                Some(List(PageHistory("/start",List()),
-                         PageHistory("/next",List()),
+                         PageHistory("/next",List(Flow("8",Some(LabelValue("Choice","Third"))), Flow("88",Some(LabelValue("Choice","Fourth"))), Continuation("2"))),
                          PageHistory("/another",List()),
                          PageHistory("/next",List(Flow("8",Some(LabelValue("Choice","Third"))), Flow("88",Some(LabelValue("Choice","Fourth"))), Continuation("2")))
                          )),
-               None,
-               None)
+               Some(List(Flow("8",Some(LabelValue("Choice","Third"))), Flow("88",Some(LabelValue("Choice","Fourth"))), Continuation("2"))),
+               Some(ScalarLabel("Choice",List("Third"),List())))
     }
 
     "Return no backlink, PageHistory update with multiple element history, when returning to first page forceForward false (FORWARD)" in new FlowStackTest {

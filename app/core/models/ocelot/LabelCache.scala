@@ -101,14 +101,14 @@ private class LabelCacheImpl(labels: Map[String, Label] = Map(),
   def nextFlow: Option[(String, Labels)] = // Remove head of flow stack and update flow label if required
     stack match {
       case Nil => None
-      case x :: Nil => None
-      case x :: (y: Flow) :: xs =>
+      case _ :: Nil => None
+      case _ :: (y: Flow) :: xs =>
         Some(
           (y.next,
            y.labelValue.fold(new LabelCacheImpl(labels, cache, stack.tail, pool, poolCache))
                                (lv => new LabelCacheImpl(labels, updateOrAddScalarLabel(lv.name, lv.value, None), y :: xs, pool, poolCache)))
         )
-      case x :: (c: Continuation) :: xs => Some((c.next, new LabelCacheImpl(labels, cache, xs, pool, poolCache)))
+      case _ :: (c: Continuation) :: xs => Some((c.next, new LabelCacheImpl(labels, cache, xs, pool, poolCache)))
     }
 
   def activeFlow: Option[FlowStage] = stack.headOption

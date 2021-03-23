@@ -22,8 +22,10 @@ import DefaultSessionRepository._
 import core.models.ocelot.{Label, ScalarLabel}
 
 
+
 @Singleton
 class SessionProcessFSM @Inject() () {
+  type BackLinkAndStateUpdate = (Option[String], Option[List[PageHistory]], Option[List[FlowStage]], Option[Label])
   // Input
   // url ,incoming url
   // priorSp, prior SessionProcess corresponding to the previous url processed. Note. The db record will have the head of the page history updated
@@ -39,8 +41,7 @@ class SessionProcessFSM @Inject() () {
   // optional backlink to be displayed on page with incoming url
   // optional page history update
   // optional flowStack update
-  def apply(url: String, priorSp: SessionProcess, forceForward: Boolean, sentinelUrl: String):
-    (Option[String], Option[List[PageHistory]], Option[List[FlowStage]], Option[Label]) =
+  def apply(url: String, priorSp: SessionProcess, forceForward: Boolean, sentinelUrl: String): BackLinkAndStateUpdate =
     priorSp.pageHistory.reverse match {
       // Initial page
       case Nil =>
@@ -59,21 +60,35 @@ class SessionProcessFSM @Inject() () {
         val labelValue: Option[ScalarLabel] = y.flowStack.headOption.collect{case Flow(_, Some(lv)) => ScalarLabel(lv.name, List(lv.value), Nil)}
         (xs.headOption.map(_.url), Some((y :: xs).reverse), Some(y.flowStack), labelValue)
 
-      // FORWARD with a non-empty flowStack to first page of guidance
-      case x :: xs if priorSp.flowStack.nonEmpty && url == sentinelUrl =>
-        (None, Some(List(PageHistory(url, Nil))), Some(Nil), None)
+      // FORWARD or BACK to first page of guidance
+      case x :: xs if url == sentinelUrl =>
+        findPreviousFlowAndLabelState(url, priorSp.pageHistory).fold[BackLinkAndStateUpdate]((None, Some(List(PageHistory(url, Nil))), Some(Nil), None)){t =>
+          val (labelValue, flowStack) = t
+          (None, Some(List(PageHistory(url, flowStack))), Some(flowStack), labelValue)
+        }
 
       // FORWARD with a non-empty flowStack
       case x :: xs if priorSp.flowStack.nonEmpty =>
-        (Some(x.url), Some((PageHistory(url, priorSp.flowStack) :: x :: xs).reverse), None, None)
-
-      // FORWARD with empty flowStack to first page of guidance
-      case x :: _ if url == sentinelUrl =>
-        (None, Some(List(PageHistory(url, Nil))), None, None)
+        // Check for forward  movement to a previous page (possibly from CYA)
+        findPreviousFlowAndLabelState(url, priorSp.pageHistory).fold[BackLinkAndStateUpdate]((Some(x.url), Some((PageHistory(url, priorSp.flowStack) :: x :: xs).reverse), None, None)){t =>
+          val (labelValue, flowStack) = t
+          (Some(x.url), Some((PageHistory(url, flowStack) :: x :: xs).reverse), Some(flowStack), labelValue)
+        }
 
       // FORWARD with empty flowStack
-      case x :: _ =>
+      case x :: xs =>
+        // Check for forward  movement to a previous page (CYA)
+        findPreviousFlowAndLabelState(url, priorSp.pageHistory).fold[BackLinkAndStateUpdate]((Some(x.url), None, None, None)){t =>
+          val (labelValue, flowStack) = t
+          (Some(x.url), Some((PageHistory(url, flowStack) :: x :: xs).reverse), Some(flowStack), labelValue)
+        }
         (Some(x.url), None, None, None)
+    }
+
+  private def findPreviousFlowAndLabelState(url: String, pageHistory: List[PageHistory]): Option[(Option[Label], List[FlowStage])] =
+    pageHistory.find(_.url == url).fold[Option[(Option[Label], List[FlowStage])]](None){ph =>
+      val labelValue: Option[Label] = ph.flowStack.headOption.collect{case Flow(_, Some(lv)) => ScalarLabel(lv.name, List(lv.value), Nil)}
+      Some((labelValue, ph.flowStack))
     }
 }
 
