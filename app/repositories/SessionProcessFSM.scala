@@ -45,47 +45,43 @@ class SessionProcessFSM @Inject() () {
     priorSp.pageHistory.reverse match {
       // Initial page
       case Nil =>
-        println(s"*** NIL")
         (None, None, None, None)
 
       // REFRESH: new url equals current url
       case x :: xs if x.url == url =>
-        println(s"*** REFRESH")
         (xs.headOption.map(_.url), Some(priorSp.pageHistory), None, None)
 
       // BACK: new url equals previous url and prior flowStack equals the previous flowStack
       case _ :: y :: xs if y.url == url && !forceForward && priorSp.flowStack == y.flowStack =>
-        println(s"*** BACK: new url equals previous url")
         (xs.headOption.map(_.url), Some((y :: xs).reverse), None, None)
 
       // BACK: flowStack change
       case _ :: y :: xs if y.url == url && !forceForward =>
-        println(s"*** BACK: flowStack change")
-        val labelValue: Option[ScalarLabel] = y.flowStack.headOption.collect{case Flow(_, Some(lv)) => ScalarLabel(lv.name, List(lv.value), Nil)}
-        (xs.headOption.map(_.url), Some((y :: xs).reverse), Some(y.flowStack), labelValue)
+        (xs.headOption.map(_.url), Some((y :: xs).reverse), Some(y.flowStack), pageHistoryLabelValue(y))
 
       // FORWARD to first page of guidance
       case x :: xs if url == sentinelUrl =>
-        println(s"*** FORWARD")
-        findPreviousFlowAndLabelState(url, priorSp.pageHistory).fold[BackLinkAndStateUpdate]((None, Some(List(PageHistory(url, Nil))), Some(Nil), None)){t =>
+        findPreviousFlowAndLabelState(url, priorSp.pageHistory).fold[BackLinkAndStateUpdate](
+          (None, Some(List(PageHistory(url, Nil))), Some(Nil), None)
+        ){t =>
           val (labelValue, flowStack) = t
           (None, Some(List(PageHistory(url, flowStack))), Some(flowStack), labelValue)
         }
 
       // FORWARD with a non-empty flowStack
-      case x :: xs if priorSp.flowStack.nonEmpty =>
-        println(s"*** FORWARD with a non-empty flowStack")
-        // Check for forward  movement to a previous page (possibly from CYA)
-        findPreviousFlowAndLabelState(url, priorSp.pageHistory).fold[BackLinkAndStateUpdate]((Some(x.url), Some((PageHistory(url, priorSp.flowStack) :: x :: xs).reverse), None, None)){t =>
+      case x :: xs if priorSp.flowStack.nonEmpty => // Check for forward  movement to a previous page (possibly from CYA)
+        findPreviousFlowAndLabelState(url, priorSp.pageHistory).fold[BackLinkAndStateUpdate](
+          (Some(x.url), Some((PageHistory(url, priorSp.flowStack) :: x :: xs).reverse), None, None)
+        ){t =>
           val (labelValue, flowStack) = t
           (Some(x.url), Some((PageHistory(url, flowStack) :: x :: xs).reverse), Some(flowStack), labelValue)
         }
 
       // FORWARD with empty flowStack
-      case x :: xs =>
-        println(s"*** FORWARD with empty flowStack")
-        // Check for forward  movement to a previous page (CYA)
-        findPreviousFlowAndLabelState(url, priorSp.pageHistory).fold[BackLinkAndStateUpdate]((Some(x.url), None, None, None)){
+      case x :: xs => // Check for forward  movement to a previous page (CYA)
+        findPreviousFlowAndLabelState(url, priorSp.pageHistory).fold[BackLinkAndStateUpdate](
+          (Some(x.url), None, None, None)
+        ){
           case (labelValue, Nil) =>
             (Some(x.url), None, None, None)
           case (labelValue, flowStack) =>
@@ -93,10 +89,12 @@ class SessionProcessFSM @Inject() () {
         }
     }
 
-  private def findPreviousFlowAndLabelState(url: String, pageHistory: List[PageHistory]): Option[(Option[Label], List[FlowStage])] =
-    pageHistory.find(_.url == url).fold[Option[(Option[Label], List[FlowStage])]](None){ph =>
-      val labelValue: Option[Label] = ph.flowStack.headOption.collect{case Flow(_, Some(lv)) => ScalarLabel(lv.name, List(lv.value), Nil)}
-      Some((labelValue, ph.flowStack))
-    }
+  private type LabelAndFlowStack = Option[(Option[Label], List[FlowStage])]
+
+  private def pageHistoryLabelValue(ph: PageHistory): Option[Label] =
+    ph.flowStack.headOption.collect{case Flow(_, Some(lv)) => ScalarLabel(lv.name, List(lv.value), Nil)}
+
+  private def findPreviousFlowAndLabelState(url: String, pageHistory: List[PageHistory]): LabelAndFlowStack =
+    pageHistory.find(_.url == url).fold[LabelAndFlowStack](None){ph => Some((pageHistoryLabelValue(ph), ph.flowStack))}
 }
 

@@ -144,6 +144,27 @@ class SessionProcessFSMSpec extends BaseSpec {
                Some(Nil),
                None)
     }
+
+    "Return backlink, PageHistory update with multiple element history, when returning to a page not in a sequence flow, forceForward false (FORWARD)" in new Test {
+        verify(fsm("/next", sessionProcess.copy(pageHistory = List(PageHistory("/start", Nil), PageHistory("/next", Nil), PageHistory("/somepage", Nil), PageHistory("/another", Nil))), true, "/start"),
+               Some("/another"),
+               None,
+               None,
+               None)
+    }
+
+    "Return backlink, PageHistory update with multiple element history, when returning to a page within a sequence flow, forceForward false (FORWARD)" in new Test {
+        verify(fsm("/next", sessionProcess.copy(pageHistory = List(PageHistory("/start", Nil), PageHistory("/next", List(Flow("8",None),Continuation("2"))), PageHistory("/somepage", Nil), PageHistory("/another", Nil))), true, "/start"),
+               Some("/another"),
+               Some(List(PageHistory("/start", Nil),
+                         PageHistory("/next", List(Flow("8",None),Continuation("2"))),
+                         PageHistory("/somepage", Nil),
+                         PageHistory("/another", Nil),
+                         PageHistory("/next", List(Flow("8",None), Continuation("2"))))),
+               Some(List(Flow("8",None),Continuation("2"))),
+               None)
+    }
+
   }
 
   trait FlowStackTest extends SequenceJson {
@@ -244,7 +265,9 @@ class SessionProcessFSMSpec extends BaseSpec {
     }
 
     "Return backlink, PageHistory update with multiple element history, forceForward false (BACK)" in new FlowStackTest {
-        verify(fsm("/next", sessionProcess.copy(pageHistory = List(PageHistory("/start", Nil), PageHistory("/next", Nil), PageHistory("/another", Nil))), false, "/start"),
+        verify(fsm("/next", sessionProcess.copy(pageHistory = List(PageHistory("/start", Nil),
+                                                                   PageHistory("/next", Nil),
+                                                                   PageHistory("/another", Nil))), false, "/start"),
                Some("/start"),
                Some(List(PageHistory("/start", Nil),
                          PageHistory("/next", Nil))),
@@ -268,7 +291,13 @@ class SessionProcessFSMSpec extends BaseSpec {
     }
 
     "Return backlink, PageHistory update with multiple element history, forceForward true (FORCE FORWARD)" in new FlowStackTest {
-        verify(fsm("/next", sessionProcess.copy(pageHistory = List(PageHistory("/start", Nil), PageHistory("/next", List(Flow("8",Some(LabelValue("Choice","Third"))), Flow("88",Some(LabelValue("Choice","Fourth"))), Continuation("2"))), PageHistory("/another", Nil))), true, "/start"),
+        verify(fsm("/next",
+               sessionProcess.copy(
+                 pageHistory = List(PageHistory("/start", Nil),
+                                    PageHistory("/next", List(Flow("8",Some(LabelValue("Choice","Third"))),
+                                                              Flow("88",Some(LabelValue("Choice","Fourth"))),
+                                                              Continuation("2"))),
+                                    PageHistory("/another", Nil))), true, "/start"),
                Some("/another"),
                Some(List(PageHistory("/start",List()),
                          PageHistory("/next",List(Flow("8",Some(LabelValue("Choice","Third"))), Flow("88",Some(LabelValue("Choice","Fourth"))), Continuation("2"))),
@@ -280,10 +309,49 @@ class SessionProcessFSMSpec extends BaseSpec {
     }
 
     "Return no backlink, PageHistory update with multiple element history, when returning to first page forceForward false (FORWARD)" in new FlowStackTest {
-        verify(fsm("/start", sessionProcess.copy(pageHistory = List(PageHistory("/start", Nil), PageHistory("/next", Nil), PageHistory("/another", Nil))), true, "/start"),
+        verify(fsm("/start", sessionProcess.copy(pageHistory = List(PageHistory("/start", Nil),
+                                                                    PageHistory("/next", Nil),
+                                                                    PageHistory("/another", Nil))), true, "/start"),
                None,
                Some(List(PageHistory("/start", Nil))),
                Some(Nil),
+               None)
+    }
+
+    "Return no backlink, PageHistory update with multiple element history, when returning to first page when no first page visited" in new Test {
+        verify(fsm("/start", sessionProcess.copy(pageHistory = List(PageHistory("/next", Nil), PageHistory("/another", Nil))), true, "/start"),
+               None,
+               Some(List(PageHistory("/start", Nil))),
+               Some(Nil),
+               None)
+    }
+
+    "Return backlink, PageHistory update with multiple element history, when returning to a page not in a sequence flow, forceForward false (FORWARD)" in new FlowStackTest {
+        verify(fsm("/next", sessionProcess.copy(pageHistory = List(PageHistory("/start", Nil),
+                                                                   PageHistory("/next", List(Flow("8",None),Continuation("2"))),
+                                                                   PageHistory("/somepage", Nil),
+                                                                   PageHistory("/another", Nil))), true, "/start"),
+               Some("/another"),
+               Some(List(PageHistory("/start", Nil),
+                         PageHistory("/next", List(Flow("8",None),Continuation("2"))),
+                         PageHistory("/somepage", Nil), PageHistory("/another", Nil),
+                         PageHistory("/next",List(Flow("8",None), Continuation("2"))))),
+               Some(List(Flow("8",None), Continuation("2"))),
+               None)
+    }
+
+    "Return backlink, PageHistory update with multiple element history, when returning to a page within a sequence flow, forceForward false (FORWARD)" in new FlowStackTest {
+        verify(fsm("/next", sessionProcess.copy(pageHistory = List(PageHistory("/start", Nil),
+                                                                   PageHistory("/next", List(Flow("8",None),Continuation("2"))),
+                                                                   PageHistory("/somepage", Nil),
+                                                                   PageHistory("/another", Nil))), true, "/start"),
+               Some("/another"),
+               Some(List(PageHistory("/start", Nil),
+                         PageHistory("/next", List(Flow("8",None),Continuation("2"))),
+                         PageHistory("/somepage", Nil),
+                         PageHistory("/another", Nil),
+                         PageHistory("/next", List(Flow("8",None), Continuation("2"))))),
+               Some(List(Flow("8",None),Continuation("2"))),
                None)
     }
 
