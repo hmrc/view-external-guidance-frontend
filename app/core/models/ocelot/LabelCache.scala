@@ -86,7 +86,11 @@ private class LabelCacheImpl(labels: Map[String, Label] = Map(),
     cache + (name -> cache.get(name).fold[Label](ListLabel(name, english, welsh))(l => ListLabel(l.name, english, welsh)))
 
   // Flows
-  def pushFlows(flowNext: List[String], continue: String, labelName: Option[String], labelValues: List[String], stanzas: Map[String, Stanza]): (Option[String], Labels) =
+  def pushFlows(flowNext: List[String],
+                continue: String,
+                labelName: Option[String],
+                labelValues: List[String],
+                stanzas: Map[String, Stanza]): (Option[String], Labels) =
     flowNext.zipWithIndex.map{
       case (nxt, idx) => Flow(nxt, labelName.map(LabelValue(_, labelValues(idx))))
     } match {
@@ -94,7 +98,11 @@ private class LabelCacheImpl(labels: Map[String, Label] = Map(),
       case x :: xs =>
         (Some(x.next),
          x.labelValue.fold(new LabelCacheImpl(labels, cache, x :: xs ++ (Continuation(continue) :: stack), pool, poolCache ++ stanzas))
-                          (lv => new LabelCacheImpl(labels, updateOrAddScalarLabel(lv.name, lv.value, None), x :: xs ++ (Continuation(continue) :: stack), pool, poolCache ++ stanzas))
+                          (lv => new LabelCacheImpl(labels,
+                                                    updateOrAddScalarLabel(lv.name, lv.value, None),
+                                                    x :: xs ++ (Continuation(continue) :: stack),
+                                                    pool,
+                                                    poolCache ++ stanzas))
         )
     }
 

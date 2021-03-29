@@ -139,7 +139,8 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
       Left(DatabaseError)
     }
 
-  def get(key: String, pageUrl: Option[String], previousPageByLink: Boolean): Future[RequestOutcome[ProcessContext]] =
+  def get(key: String, pageUrl: Option[String], previousPageByLink: Boolean): Future[RequestOutcome[ProcessContext]] = {
+    println(s" ***** get $key, $pageUrl, $previousPageByLink")
     findAndUpdate(
       Json.obj("_id" -> key),
       Json.obj(
@@ -160,12 +161,12 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
             Future.successful(Right(ProcessContext(sp.process, sp.answers, sp.labels, sp.flowStack, sp.continuationPool, sp.urlToPageId, None)))
           ){url =>
             val firstPageUrl: String = s"${sp.process.meta.processCode}${sp.process.startUrl.getOrElse("")}"
-            val (backLink, historyUpdate, flowStackUpdate, labelUpdate) = sessionProcessTransition(url, sp, previousPageByLink, firstPageUrl)
-            val labels = labelUpdate.fold(sp.labels)(l => sp.labels + (l.name -> l))
+            val (backLink, historyUpdate, flowStackUpdate, labelUpdates) = sessionProcessTransition(url, sp, previousPageByLink, firstPageUrl)
+            val labels: Map[String, Label] = sp.labels ++ labelUpdates.map(l => (l.name -> l)).toMap
             val processContext =
               ProcessContext(sp.process, sp.answers, labels, flowStackUpdate.getOrElse(sp.flowStack), sp.continuationPool, sp.urlToPageId, backLink)
             historyUpdate.fold(Future.successful(Right(processContext)))(history =>
-              savePageHistory(key, history, flowStackUpdate, labelUpdate).map {
+              savePageHistory(key, history, flowStackUpdate, labelUpdates).map {
                 case Left(err) =>
                   logger.error(s"Unable to save backlink history, error = $err")
                   Right(processContext)
@@ -180,6 +181,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
           logger.error(s"Error $lastError while trying to retrieve process from session repo with _id=$key")
           Left(DatabaseError)
       }
+    }
 
   def saveFormPageState(key: String, url: String, answer: String, labels: Labels): Future[RequestOutcome[Unit]] =
     findAndUpdate(
@@ -248,7 +250,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
 
   private def toFieldPair[A](name: String, value: A)(implicit w: Writes[A]): FieldAttr = name -> Json.toJsFieldJsValueWrapper(value)
 
-  private def savePageHistory(key: String, pageHistory: List[PageHistory], flowStack: Option[List[FlowStage]], labelUpdate: Option[Label]): Future[RequestOutcome[Unit]] =
+  private def savePageHistory(key: String, pageHistory: List[PageHistory], flowStack: Option[List[FlowStage]], labelUpdates: List[Label]): Future[RequestOutcome[Unit]] =
     findAndUpdate(
       Json.obj("_id" -> key),
       Json.obj(
@@ -256,7 +258,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
             (List(
               toFieldPair(TtlExpiryFieldName, Json.obj(toFieldPair("$date", Instant.now().toEpochMilli))),
               toFieldPair(PageHistoryKey, pageHistory)) ++
-              labelUpdate.fold[List[FieldAttr]](Nil)(l => List(toFieldPair(s"${LabelsKey}.${l.name}", l))) ++
+              labelUpdates.map(l => toFieldPair(s"${LabelsKey}.${l.name}", l)) ++
               flowStack.fold[List[FieldAttr]](Nil)(stack => List(toFieldPair(FlowStackKey, stack)))).toArray: _*
         )
       )
