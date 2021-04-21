@@ -1064,7 +1064,7 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
       val process: Process =
         Process(metaSection, flow, Vector[Phrase](phrase1, phrase2), Vector[Link]())
 
-      pageBuilder.pagesWithValidation(process) match {
+      pageBuilder.pages(process) match {
 
         case Right(pages) =>
 
@@ -1095,7 +1095,7 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
       val process: Process =
         Process(metaSection, flow, Vector[Phrase](phrase1, phrase2), Vector[Link]())
 
-      pageBuilder.pagesWithValidation(process) match {
+      pageBuilder.pages(process) match {
 
         case Right(pages) =>
 
@@ -1126,7 +1126,7 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
       val process: Process =
         Process(metaSection, flow, Vector[Phrase](phrase1, phrase2), Vector[Link]())
 
-      pageBuilder.pagesWithValidation(process) match {
+      pageBuilder.pages(process) match {
 
         case Right(pages) =>
 
@@ -1161,7 +1161,7 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
       val process: Process =
         Process(metaSection, flow, Vector[Phrase](phrase1, phrase2), Vector[Link]())
 
-      pageBuilder.pagesWithValidation(process) match {
+      pageBuilder.pages(process) match {
 
         case Right(pages) =>
 
@@ -1198,7 +1198,7 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
       val process: Process =
         Process(metaSection, flow, Vector[Phrase](phrase1, phrase2, phrase3), Vector[Link]())
 
-      pageBuilder.pagesWithValidation(process) match {
+      pageBuilder.pages(process) match {
 
         case Right(pages) =>
 
@@ -1232,7 +1232,7 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
       val process: Process =
         Process(metaSection, flow, Vector[Phrase](phrase1, phrase2, phrase3), Vector[Link]())
 
-      pageBuilder.pagesWithValidation(process) match {
+      pageBuilder.pages(process) match {
 
         case Right(pages) =>
 
@@ -1270,7 +1270,7 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
       val process: Process =
         Process(metaSection, flow, Vector[Phrase](phrase1, phrase2, phrase3), Vector[Link]())
 
-      pageBuilder.pagesWithValidation(process) match {
+      pageBuilder.pages(process) match {
 
         case Right(pages) =>
 
@@ -1309,7 +1309,7 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
       val process: Process =
         Process(metaSection, flow, Vector[Phrase](phrase1, phrase2, phrase3), Vector[Link]())
 
-      pageBuilder.pagesWithValidation(process) match {
+      pageBuilder.pages(process) match {
 
         case Right(pages) =>
 
@@ -1377,7 +1377,7 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
       val process: Process =
         Process(metaSection, flow, phrases, Vector[Link]())
 
-      pageBuilder.pagesWithValidation(process) match {
+      pageBuilder.pages(process) match {
 
         case Right(pages) =>
 
@@ -1480,7 +1480,7 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
       val process: Process =
         Process(metaSection, flow, phrases, Vector[Link]())
 
-      pageBuilder.pagesWithValidation(process) match {
+      pageBuilder.pages(process) match {
 
         case Right(pages) =>
 
@@ -1518,7 +1518,7 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
       )
       val process = Process(metaSection, flow, Vector[Phrase](phrase1, phrase2), Vector[Link]())
 
-      pageBuilder.pagesWithValidation(process) match {
+      pageBuilder.pages(process) match {
         case Right(pages) =>
 
           assert(pages.head.stanzas.size == 4)
@@ -1550,7 +1550,7 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
 
       val process = Process(metaSection, flow, Vector[Phrase](phrase1, phrase2, phrase3), Vector[Link]())
 
-      pageBuilder.pagesWithValidation(process) match {
+      pageBuilder.pages(process) match {
         case Right(pages) =>
 
           assert(pages.head.stanzas.size == 5)
@@ -1611,7 +1611,7 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
       val process: Process =
         Process(metaSection, flow, Vector[Phrase](phrase1, phrase2, phrase3, phrase4, phrase5, phrase6, phrase7, phrase8, phrase9), Vector[Link]())
 
-      pageBuilder.pagesWithValidation(process) match {
+      pageBuilder.pages(process) match {
         case Right(pages) =>
 
           assert(pages.head.stanzas.size == 12)
