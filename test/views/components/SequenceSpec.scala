@@ -433,6 +433,20 @@ class SequenceSpec extends WordSpec with Matchers with ViewSpec with ViewFns wit
 
       containerChildren.last.tagName() shouldBe "div"
       elementAttrs(containerChildren.last)("class") shouldBe "govuk-checkboxes__item"
+
+      val exclusiveCheckboxChildren: List[Element] = containerChildren.last.children().asScala.toList
+
+      exclusiveCheckboxChildren.size shouldBe 3
+
+      exclusiveCheckboxChildren.head.tagName() shouldBe "input"
+      elementAttrs(exclusiveCheckboxChildren.head)("aria-describedby") shouldBe "exclusive-hint"
+
+      exclusiveCheckboxChildren(1).tagName() shouldBe "label"
+      exclusiveCheckboxChildren(1).text() shouldBe exclusiveHolidayOption.asString
+
+      exclusiveCheckboxChildren.last.tagName() shouldBe "div"
+      elementAttrs(exclusiveCheckboxChildren.last)("id") shouldBe "exclusive-hint"
+      exclusiveCheckboxChildren.last.text() shouldBe messages("exclusive.checkbox.describedby")
     }
 
   }

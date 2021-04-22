@@ -27,6 +27,7 @@
 <div class="govuk-checkboxes__item">
  <input class="govuk-checkboxes__input" id="@checkboxIdentifier(name, idx)" name="@checkboxName(name, idx)" type="checkbox" value="@idx" @{if(itemChecked(idx)) "checked"} @{if(exclusive) dataExclusive()}>
  <label class="govuk-label govuk-checkboxes__label" for="@checkboxIdentifier(name, idx)">@components.render_text(option)</label>
+ @if(exclusive){<div id="exclusive-hint" class="govuk-hint govuk-checkboxes__hint">@messages("exclusive.checkbox.describedby")</div>}
 </div>
 @{
 //$COVERAGE-OFF$
