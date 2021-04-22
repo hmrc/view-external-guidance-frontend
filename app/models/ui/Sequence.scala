@@ -27,6 +27,7 @@ case class ExclusiveSequence(text: Text,
                              hint: Option[Text],
                              options: Seq[Text],
                              exclusiveOption: Text,
+                             exclusiveOptionHint: Option[Text],
                              body: Seq[UIComponent],
                              errorMsgs: Seq[ErrorMsg]
                             ) extends ExclusiveSequenceFormComponent
