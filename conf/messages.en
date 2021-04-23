@@ -18,7 +18,6 @@ label.month=Month
 label.year=Year
 
 exclusive.checkbox.or = or
-exclusive.checkbox.describedby = Selecting this will uncheck all other checkboxes
 
 error.browser.title.prefix = Error:
 error.summary.title = There is a problem

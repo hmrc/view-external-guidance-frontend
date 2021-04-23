@@ -19,7 +19,6 @@ label.month=Mis
 label.year=Blwyddyn
 
 exclusive.checkbox.or = neu
-exclusive.checkbox.describedby = Selecting this will uncheck all other checkboxes
 
 error.browser.title.prefix = Gwall:
 error.summary.title = Mae yna broblem

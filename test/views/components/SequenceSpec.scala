@@ -62,6 +62,7 @@ class SequenceSpec extends WordSpec with Matchers with ViewSpec with ViewFns wit
       Text("Europe")
     )
     val exclusiveHolidayOption: Text = Text("Elsewhere")
+    val exclusiveHint: Text = Text("Selecting this option will deselect all the other checkboxes")
 
     val h2: H2 = H2(Text("Subtitle"))
     val p: Paragraph = Paragraph(Text("Introduction to sweets"))
@@ -103,6 +104,7 @@ class SequenceSpec extends WordSpec with Matchers with ViewSpec with ViewFns wit
       None,
       holidayOptions,
       exclusiveHolidayOption,
+      Some(exclusiveHint),
       Seq(h2, p),
       Seq.empty
     )
@@ -446,7 +448,7 @@ class SequenceSpec extends WordSpec with Matchers with ViewSpec with ViewFns wit
 
       exclusiveCheckboxChildren.last.tagName() shouldBe "div"
       elementAttrs(exclusiveCheckboxChildren.last)("id") shouldBe "exclusive-hint"
-      exclusiveCheckboxChildren.last.text() shouldBe messages("exclusive.checkbox.describedby")
+      exclusiveCheckboxChildren.last.text() shouldBe exclusiveHint.asString
     }
 
   }

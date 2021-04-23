@@ -105,7 +105,8 @@ case class ExclusiveSequence(text: Phrase,
                              label: Option[String],
                              stack: Boolean) extends Sequence {
   lazy val (exclusiveOptions: Seq[Phrase], nonExclusiveOptions: Seq[Phrase]) =
-    options.partition{p => exclusiveOptionRegex.findFirstMatchIn(p.english).nonEmpty}
+    options.partition{p => exclusiveOptionRegex.findFirstMatchIn(p.english).nonEmpty &&
+      exclusiveOptionRegex.findFirstMatchIn(p.welsh).nonEmpty}
 
   override def validInput(value: String): Option[String] =
     asListOfInt(value).fold[Option[String]](None){l =>
