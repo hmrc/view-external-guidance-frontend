@@ -41,7 +41,10 @@ class PageRenderer @Inject() () {
           case p: PageStanza => (Some(next), labels)
           case EndStanza => labels.nextFlow match {
               case Some((nxt, updatedLabels)) => evaluatePostInputStanzas(nxt, updatedLabels, seen)
-              case None => (Some(next), labels)
+              // Encountering an EndStanza following input suggest incomplete guidance, i.e. a form page which accepts input and stops
+              // Therefore handle as if guidance indicated a Value error and cause current form page to be re-displayed. Logically also
+              // an EndStanza indicates there is no Next!
+              case None => (None, labels)
             }
           case s: Stanza with Evaluate =>
             val (next, updatedLabels) = s.eval(labels)

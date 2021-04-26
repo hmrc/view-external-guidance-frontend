@@ -23,6 +23,7 @@ trait Stanza {
   val visual: Boolean = false
   val next: Seq[String] = Nil
   val links: List[String] = Nil
+  val buttonLinks: List[String] = Nil
   val labels: List[String] = Nil
   val labelRefs: List[String] = Nil
 }

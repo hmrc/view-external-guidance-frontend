@@ -278,7 +278,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson  {
       val labels = LabelCache()
 
       val (next, newLabels) = renderer.renderPagePostSubmit(page, labels, "0")
-      next shouldBe Some("end")
+      next shouldBe None
       newLabels.updatedLabels shouldBe Map("X" -> ScalarLabel("X",List("4")))
     }
 
