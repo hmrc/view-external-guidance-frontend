@@ -21,7 +21,7 @@ import models._
 import models.ocelot.stanzas._
 import core.models.ocelot.stanzas.{CurrencyInput, CurrencyPoundsOnlyInput, DateInput, Input, Question}
 import core.models.ocelot.stanzas.{ExclusiveSequence, NonExclusiveSequence, _}
-import core.models.ocelot.{Labels, Link, Phrase, EmbeddedParameterRegex, exclusiveOptionRegex, exclusiveOptionHintRegex}
+import core.models.ocelot.{Labels, Link, Phrase, EmbeddedParameterRegex, exclusiveOptionRegex}
 import models.ui.{Answer, BulletPointList, ComplexDetails, ConfirmationPanel, CyaSummaryList, Details, ErrorMsg, H1, H2, H3, H4, InsetText, WarningText}
 import models.ui.{NameValueSummaryList, Page, Paragraph, RequiredErrorMsg, Table, Text, TypeErrorMsg, UIComponent, ValueErrorMsg, stackStanzas}
 import BulletPointBuilder.{Break, ExplicitBreak}
@@ -245,10 +245,10 @@ class UIBuilder {
     val options: Seq[Text] = exclusiveSequence.nonExclusiveOptions.map{phrase => TextBuilder.fromPhrase(phrase)}
 
     val exclusiveOptionHintEnglish: Option[String] =
-      exclusiveOptionHintRegex.findAllMatchIn(exclusiveSequence.exclusiveOptions.head.english).toList.headOption.map(m => m.group(1))
+      exclusiveOptionRegex.findFirstMatchIn(exclusiveSequence.exclusiveOptions.head.english).map(m => m.group(1))
 
     val exclusiveOptionHintWelsh: Option[String] =
-      exclusiveOptionHintRegex.findAllMatchIn(exclusiveSequence.exclusiveOptions.head.welsh).toList.headOption.map(m => m.group(1))
+      exclusiveOptionRegex.findFirstMatchIn(exclusiveSequence.exclusiveOptions.head.welsh).map(m => m.group(1))
 
     val exclusiveOptionHint: Option[Text] = (exclusiveOptionHintEnglish, exclusiveOptionHintWelsh) match {
       case (Some(english), Some(welsh)) => Some(TextBuilder.fromPhrase(Phrase(english, welsh)))
