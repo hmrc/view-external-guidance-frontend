@@ -64,12 +64,12 @@ class ProcessErrorSpec extends BaseSpec {
       details shouldBe ProcessError("MissingWelshText: Welsh text at index index on stanza id = stanzaId is empty", "stanzaId")
     }
 
-    "from InconsistentQuestionError" in {
-      val details: ProcessError = InconsistentQuestionError("stanzaId")
-      details shouldBe ProcessError("InconsistentQuestionError: Inconsistent QuestionStanza at id stanzaId, number of answers and next locations dont match", "stanzaId")
+    "from InconsistentQuestion" in {
+      val details: ProcessError = InconsistentQuestion("stanzaId")
+      details shouldBe ProcessError("InconsistentQuestion: Inconsistent QuestionStanza at id stanzaId, number of answers and next locations dont match", "stanzaId")
     }
 
-    "from VisualStanzasAfterDataInput" in {
+    "from VisualStanzasAfterQuestion" in {
       val details: ProcessError = VisualStanzasAfterDataInput("stanzaId")
       details shouldBe ProcessError("VisualStanzasAfterDataInput: Visual stanza with id = stanzaId found following a data input stanza", "stanzaId")
     }
@@ -93,9 +93,9 @@ class ProcessErrorSpec extends BaseSpec {
       val details: ProcessError = PageRedirectNotSupported("stanzaId")
       details shouldBe ProcessError("PageRedirectNotSupported: Use of ChoiceStanza stanzaId as a page redirect not supported", "stanzaId")
     }
-    "from MultipleExclusiveOptionsError" in {
-      val details: ProcessError = MultipleExclusiveOptionsError("stanzaId")
-      details shouldBe ProcessError("MultipleExclusiveOptionsError: Sequence stanza stanzaId defines multiple exclusive options", "stanzaId")
+    "from MultipleExclusiveOptions" in {
+      val details: ProcessError = MultipleExclusiveOptions("stanzaId")
+      details shouldBe ProcessError("MultipleExclusiveOptions: Sequence stanza stanzaId defines multiple exclusive options", "stanzaId")
     }
     "from UseOfReservedUrl" in {
       val details: ProcessError = UseOfReservedUrl("stanzaId")
@@ -109,6 +109,9 @@ class ProcessErrorSpec extends BaseSpec {
       val details: ProcessError = PageOccursInMultiplSequenceFlows("stanzaId")
       details shouldBe ProcessError("PageOccursInMultiplSequenceFlows: Page stanzaId occurs in more than one Sequence flow", "stanzaId")
     }
-
+    "from ErrorRedirectToFirstNonPageStanzaOnly" in {
+      val details: ProcessError = ErrorRedirectToFirstNonPageStanzaOnly("stanzaId")
+      details shouldBe ProcessError("ErrorRedirectToFirstNonPageStanzaOnly: Invalid link to stanza stanzaId. Page redisplay after a ValueError must link to the first stanza after the PageStanza", "stanzaId")
+    }
   }
 }
