@@ -41,7 +41,7 @@ class PageRenderer @Inject() () {
           case p: PageStanza => (Some(next), labels)
           case EndStanza => labels.nextFlow match {
               case Some((nxt, updatedLabels)) => evaluatePostInputStanzas(nxt, updatedLabels, seen)
-              // Encountering an EndStanza following input suggest incomplete guidance, i.e. a form page which accepts input and stops
+              // Encountering an EndStanza following input suggests incomplete guidance, i.e. a form page which accepts input and stops
               // Therefore handle as if guidance indicated a Value error and cause current form page to be re-displayed. Logically also
               // an EndStanza indicates there is no Next!
               case None => (None, labels)
@@ -51,6 +51,7 @@ class PageRenderer @Inject() () {
             evaluatePostInputStanzas(next, updatedLabels, seen)
         }
       }
+    }
 
 
     implicit val stanzaMap: Map[String, Stanza] = page.keyedStanzas.map(ks => (ks.key, ks.stanza)).toMap ++ labels.continuationPool
@@ -60,7 +61,10 @@ class PageRenderer @Inject() () {
       dataInputStanza.eval(answer, page, newLabels) match {
         case (Some(Process.EndStanzaId), updatedLabels) => updatedLabels.nextFlow match {
             case Some((next, updatedLabels)) => evaluatePostInputStanzas(next, updatedLabels, seen)
-            case None => (Some(Process.EndStanzaId), updatedLabels)
+            // Encountering an EndStanza following input suggests incomplete guidance, i.e. a form page which accepts input and stops
+            // Therefore handle as if guidance indicated a Value error and cause current form page to be re-displayed. Logically also
+            // an EndStanza indicates there is no Next!
+            case None => (None, updatedLabels)
           }
         case (Some(next), updatedLabels) => evaluatePostInputStanzas(next, updatedLabels, seen)
         case (None, updatedLabels) => (None, updatedLabels)
