@@ -51,7 +51,7 @@ class PageRenderer @Inject() () {
             evaluatePostInputStanzas(next, updatedLabels, seen)
         }
       }
-    }
+
 
 
     implicit val stanzaMap: Map[String, Stanza] = page.keyedStanzas.map(ks => (ks.key, ks.stanza)).toMap ++ labels.continuationPool
