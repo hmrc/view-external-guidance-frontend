@@ -17,13 +17,13 @@
 @import models.ui._
 @import uk.gov.hmrc.hmrcfrontend.views.html.components._
 
-@(name: String, options: Seq[models.ui.Text], exclusiveOption: models.ui.Text, form: Form[_])(implicit request: Request[_], messages: Messages, ctx: PageContext)
+@(name: String, options: Seq[models.ui.Text], exclusiveOption: models.ui.Text, exclusiveOptionHint: Option[models.ui.Text], form: Form[_])(implicit request: Request[_], messages: Messages, ctx: PageContext)
 <div class="govuk-checkboxes">
-    @{options.zipWithIndex.map{case (option, idx) => components.sequence_checkbox(name, option, idx, false, form)}}
+    @{options.zipWithIndex.map{case (option, idx) => components.sequence_checkbox(name, option, idx, None, form)}}
 
     <p class="govuk-body govuk-!-margin-top-1 govuk-!-margin-bottom-3 govuk-!-margin-left-2">@messages("exclusive.checkbox.or")</p>
 
-    @{components.sequence_checkbox(name, exclusiveOption, options.size, true, form)}
+    @{components.sequence_checkbox(name, exclusiveOption, options.size, exclusiveOptionHint, form)}
 </div>
 @{
 //$COVERAGE-OFF$

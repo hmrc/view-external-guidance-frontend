@@ -2203,7 +2203,10 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
       val optionsPhrases: Seq[Phrase] = Seq(
         Phrase(Vector("Drone", "Welsh: Drone")),
         Phrase(Vector("Worker", "Welsh: Worker")),
-        Phrase(Vector("Queen [exclusive]", "Welsh: Queen [exclusive]"))
+        Phrase(Vector(
+          "Queen [exclusive:Selecting this checkbox will deselect the other checkboxes]",
+          "Welsh: Queen [exclusive:Welsh: Selecting this checkbox will deselect the other checkboxes]"
+        ))
       )
 
       val stanzas: Seq[KeyedStanza] = Seq(
