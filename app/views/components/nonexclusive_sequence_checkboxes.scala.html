@@ -19,7 +19,7 @@
 
 @(name: String, options: Seq[models.ui.Text], form: Form[_])(implicit request: Request[_], messages: Messages, ctx: PageContext)
   <div class="govuk-checkboxes">
-    @{options.zipWithIndex.map{case (option, idx) => components.sequence_checkbox(name, option, idx, false, form)}}
+    @{options.zipWithIndex.map{case (option, idx) => components.sequence_checkbox(name, option, idx, None, form)}}
   </div>
 @{
 //$COVERAGE-OFF$
