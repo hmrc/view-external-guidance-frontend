@@ -62,7 +62,7 @@ class GuidanceService @Inject() (
       case Left(NotFoundError) =>
         Left(ExpectationFailedError)
       case Left(err) =>
-        Left(ExpectationFailedError)
+        Left(InternalServerError)
     }
 
   def getProcessContext(sessionId: String): Future[RequestOutcome[ProcessContext]] = sessionRepository.get(sessionId)

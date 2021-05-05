@@ -51,7 +51,7 @@ trait MockSessionRepository extends MockFactory {
 
     def getResetSession(key: String): CallHandler[Future[RequestOutcome[ProcessContext]]] =
       (mockSessionRepository
-        .get(_: String))
+        .getResetSession(_: String))
         .expects(key)
 
     def savePageState(key: String, labels: Labels): CallHandler[Future[RequestOutcome[Unit]]] =
