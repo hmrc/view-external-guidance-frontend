@@ -104,7 +104,14 @@ class PageSpec extends WordSpec with Matchers with ViewSpec with ViewFns with Gu
     val exclusiveSequenceTitle: Text = Text("What kind of car would you like?")
     val carTypeOptions: Seq[Text] = Seq(Text("Sports car"), Text("SUV"), Text("People carrier"))
     var exclusiveSequence: ExclusiveSequence = ExclusiveSequence(
-      exclusiveSequenceTitle, None, carTypeOptions, Text("Other"), Seq.empty, Seq.empty)
+      exclusiveSequenceTitle,
+      None,
+      carTypeOptions,
+      Text("Other"),
+      Some(Text("Selecting this option will deselect all the other checkboxes")),
+      Seq.empty,
+      Seq.empty
+    )
     var exclusiveSequencePage: FormPage = FormPage("/cars-you-like", exclusiveSequence)
 
     // Complex details with single bullet point

@@ -116,7 +116,9 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
         Phrase("Africa", "Welsh: Africa"),
         Phrase("Americas", "Welsh: Americas"),
         Phrase("Asia", "Welsh: Asia"),
-        Phrase("Elsewhere [exclusive]", "Welsh: Elsewhere")
+        Phrase(
+          "Elsewhere [exclusive:Selecting this checkbox will deselect the other checkboxes]",
+          "Welsh: Elsewhere [exclusive:Welsh: Selecting this checkbox will deselect the other checkboxes]")
       ),
       None,
       stack = false
@@ -1652,6 +1654,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
             Text("Asia")
           ),
           Text("Elsewhere"),
+          Some(Text("Selecting this option will deselect all the other checkboxes")),
           Seq(Paragraph(Text("When did you go into work?"))),
           Seq.empty
         )

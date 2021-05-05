@@ -118,10 +118,10 @@ class UIBuilder {
 
   private def fromInstruction( i:Instruction)(implicit ctx: UIContext): UIComponent =
     i match {
-      case Instruction(txt, _, Some(Link(id, dest, _, window)), _, _) if Link.isLinkableStanzaId(dest) =>
+      case Instruction(txt, _, Some(Link(id, dest, _, window)), _, _, _) if Link.isLinkableStanzaId(dest) =>
         Paragraph(Text.link(ctx.stanzaIdToUrlMap(dest), txt.value(ctx.lang), window))
-      case Instruction(txt, _, Some(Link(id, dest, _, window)), _, _) => Paragraph(Text.link(dest, txt.value(ctx.lang), window))
-      case Instruction(txt, _, _, _, _) => Paragraph(TextBuilder.fromPhrase(txt))
+      case Instruction(txt, _, Some(Link(id, dest, _, window)), _, _, _) => Paragraph(Text.link(dest, txt.value(ctx.lang), window))
+      case Instruction(txt, _, _, _, _, _) => Paragraph(TextBuilder.fromPhrase(txt))
     }
 
   private def fromQuestion(q: Question, components: Seq[UIComponent])(implicit ctx: UIContext): UIComponent = {
@@ -244,12 +244,23 @@ class UIBuilder {
     val (text, hint) = TextBuilder.fromPhraseWithOptionalHint(exclusiveSequence.text)
     val options: Seq[Text] = exclusiveSequence.nonExclusiveOptions.map{phrase => TextBuilder.fromPhrase(phrase)}
 
+    val exclusiveOptionHintEnglish: Option[String] =
+      exclusiveOptionRegex.findFirstMatchIn(exclusiveSequence.exclusiveOptions.head.english).map(m => m.group(1))
+
+    val exclusiveOptionHintWelsh: Option[String] =
+      exclusiveOptionRegex.findFirstMatchIn(exclusiveSequence.exclusiveOptions.head.welsh).map(m => m.group(1))
+
+    val exclusiveOptionHint: Option[Text] = (exclusiveOptionHintEnglish, exclusiveOptionHintWelsh) match {
+      case (Some(english), Some(welsh)) => Some(TextBuilder.fromPhrase(Phrase(english, welsh)))
+      case _ => None
+    }
+
     val exclusiveOptionPhrase: Phrase = Phrase(
       exclusiveOptionRegex.replaceAllIn(exclusiveSequence.exclusiveOptions.head.english,"").trim,
       exclusiveOptionRegex.replaceAllIn(exclusiveSequence.exclusiveOptions.head.welsh,"").trim
     )
 
-    ui.ExclusiveSequence(text, hint, options, TextBuilder.fromPhrase(exclusiveOptionPhrase), uiElements, errMsgs)
+    ui.ExclusiveSequence(text, hint, options, TextBuilder.fromPhrase(exclusiveOptionPhrase), exclusiveOptionHint, uiElements, errMsgs)
   }
 
   private def createBulletPointListComponents(phraseGroup: Seq[Phrase])(implicit ctx: UIContext): Seq[Text] =
