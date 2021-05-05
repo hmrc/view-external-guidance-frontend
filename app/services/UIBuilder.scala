@@ -118,10 +118,10 @@ class UIBuilder {
 
   private def fromInstruction( i:Instruction)(implicit ctx: UIContext): UIComponent =
     i match {
-      case Instruction(txt, _, Some(Link(id, dest, _, window)), _, _) if Link.isLinkableStanzaId(dest) =>
+      case Instruction(txt, _, Some(Link(id, dest, _, window)), _, _, _) if Link.isLinkableStanzaId(dest) =>
         Paragraph(Text.link(ctx.stanzaIdToUrlMap(dest), txt.value(ctx.lang), window))
-      case Instruction(txt, _, Some(Link(id, dest, _, window)), _, _) => Paragraph(Text.link(dest, txt.value(ctx.lang), window))
-      case Instruction(txt, _, _, _, _) => Paragraph(TextBuilder.fromPhrase(txt))
+      case Instruction(txt, _, Some(Link(id, dest, _, window)), _, _, _) => Paragraph(Text.link(dest, txt.value(ctx.lang), window))
+      case Instruction(txt, _, _, _, _, _) => Paragraph(TextBuilder.fromPhrase(txt))
     }
 
   private def fromQuestion(q: Question, components: Seq[UIComponent])(implicit ctx: UIContext): UIComponent = {
