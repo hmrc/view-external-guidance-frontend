@@ -1222,7 +1222,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
       lazy val result = target.getPage("otherProcessCode", "/path", None)(fakeRequest)
     }
 
-    "return a reidrect response" in new Test {
+    "return a redirect response" in new Test {
 
       status(result) shouldBe Status.SEE_OTHER
 
