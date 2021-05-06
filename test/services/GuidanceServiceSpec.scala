@@ -27,7 +27,6 @@ import uk.gov.hmrc.http.HeaderCarrier
 import repositories.ProcessContext
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import core.models.errors.BadRequestError
 import models.PageContext
 import play.api.i18n.Lang
 import play.api.i18n.MessagesApi
@@ -290,7 +289,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
       private val result = target.getPageContext(processCode, url, previousPageByLink = false, processId)
 
       whenReady(result) {
-        _ shouldBe Left(BadRequestError)
+        _ shouldBe Left(NotFoundError)
       }
     }
   }
