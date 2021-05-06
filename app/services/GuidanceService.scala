@@ -84,7 +84,7 @@ class GuidanceService @Inject() (
       case Right(ProcessContext(process, answers, labelsMap, flowStack, continuationPool, urlToPageId, backLink)) if process.meta.processCode == processCode =>
         urlToPageId.get(url).fold[RequestOutcome[PageEvaluationContext]]{
           logger.error(s"Unable to find url $url within cached process ${process.meta.id} using sessionId $sessionId")
-          Left(BadRequestError)
+          Left(NotFoundError)
         }{ pageId =>
           pageBuilder.buildPage(pageId, process).fold(
             err => {
