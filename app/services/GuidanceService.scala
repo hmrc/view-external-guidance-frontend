@@ -22,7 +22,7 @@ import connectors.GuidanceConnector
 import javax.inject.{Inject, Singleton}
 import models.{PageContext, PageEvaluationContext}
 import play.api.Logger
-import core.models.errors.{BadRequestError, InternalServerError, InvalidProcessError, AuthenticationError}
+import core.models.errors.{InternalServerError, InvalidProcessError, AuthenticationError}
 import core.models.RequestOutcome
 import uk.gov.hmrc.http.HeaderCarrier
 import play.api.i18n.Lang
@@ -57,7 +57,7 @@ class GuidanceService @Inject() (
           }(Right(_))
 
       case Right(_) =>
-        logger.error(s"Referenced session ( $sessionId ) does not contain a process with processCode $processCode after session reset")
+        logger.warn(s"Referenced session ( $sessionId ) does not contain a process with processCode $processCode after session reset")
         Left(ExpectationFailedError)
       case Left(NotFoundError) =>
         Left(ExpectationFailedError)
@@ -115,7 +115,7 @@ class GuidanceService @Inject() (
           )
         }
       case Right(_) =>
-        logger.error(s"Referenced session ( $sessionId ) does not contain a process with processCode $processCode")
+        logger.warn(s"Referenced session ( $sessionId ) does not contain a process with processCode $processCode")
         Left(ExpectationFailedError)
       case Left(err) =>
         logger.error(s"Repository returned $err, when attempting retrieve process using id (sessionId) $sessionId")
