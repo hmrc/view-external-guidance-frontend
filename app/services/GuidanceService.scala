@@ -57,7 +57,7 @@ class GuidanceService @Inject() (
           }(Right(_))
 
       case Right(_) =>
-        logger.error(s"Referenced session ( $sessionId ) does not contain a process with processCode $processCode after session reset")
+        logger.warn(s"Referenced session ( $sessionId ) does not contain a process with processCode $processCode after session reset")
         Left(ExpectationFailedError)
       case Left(NotFoundError) =>
         Left(ExpectationFailedError)
