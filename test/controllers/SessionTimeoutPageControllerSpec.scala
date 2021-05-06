@@ -109,7 +109,7 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
       status(result) shouldBe Status.INTERNAL_SERVER_ERROR
     }
 
-    "return an internal server error if the process code in the session data does not match value of input argument" in new Test {
+    "return a Session expired if the process code in the session data does not match value of input argument" in new Test {
 
       val now: String = Instant.now.toEpochMilli.toString
 
@@ -121,7 +121,7 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
 
       val result: Future[Result] = target.getPage(invalidProcessCode)(fakeRequest)
 
-      status(result) shouldBe Status.INTERNAL_SERVER_ERROR
+      status(result) shouldBe Status.OK
     }
 
   }
