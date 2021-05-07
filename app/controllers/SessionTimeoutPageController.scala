@@ -54,7 +54,8 @@ class SessionTimeoutPageController @Inject()(appConfig: AppConfig,
             case Right(processContext) if processCode != processContext.process.meta.processCode =>
               logger.error(s"Unexpected process code encountered when removing session after timeout warning. " +
                 s"Expected code $processCode; actual code ${processContext.process.meta.processCode}")
-              Future.successful(InternalServerError(errorHandler.internalServerErrorTemplate).withNewSession)
+              // Session not as expected, user must be running another piece of guidance, signal answers deleted
+              Future.successful(Ok(createDeleteYourAnswersResponse(messages("session.timeout.header.title"), processCode)).withNewSession)
             case Right(processContext) =>
               Future.successful(Ok(createDeleteYourAnswersResponse(processContext.process.title.value(messages.lang), processCode)).withNewSession)
             case Left(NotFoundError) =>

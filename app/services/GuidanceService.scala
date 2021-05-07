@@ -22,7 +22,7 @@ import connectors.GuidanceConnector
 import javax.inject.{Inject, Singleton}
 import models.{PageContext, PageEvaluationContext}
 import play.api.Logger
-import core.models.errors.{BadRequestError, InternalServerError, InvalidProcessError, AuthenticationError}
+import core.models.errors.{InternalServerError, InvalidProcessError, AuthenticationError}
 import core.models.RequestOutcome
 import uk.gov.hmrc.http.HeaderCarrier
 import play.api.i18n.Lang
@@ -84,7 +84,7 @@ class GuidanceService @Inject() (
       case Right(ProcessContext(process, answers, labelsMap, flowStack, continuationPool, urlToPageId, backLink)) if process.meta.processCode == processCode =>
         urlToPageId.get(url).fold[RequestOutcome[PageEvaluationContext]]{
           logger.error(s"Unable to find url $url within cached process ${process.meta.id} using sessionId $sessionId")
-          Left(BadRequestError)
+          Left(NotFoundError)
         }{ pageId =>
           pageBuilder.buildPage(pageId, process).fold(
             err => {
