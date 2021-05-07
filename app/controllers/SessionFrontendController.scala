@@ -27,7 +27,7 @@ trait SessionFrontendController {
   this: FrontendController =>
   val logger: Logger
 
-  def withExistingSession[T](block: String => Future[RequestOutcome[T]])(implicit request: Request[_]): Future[RequestOutcome[T]] =
+  protected def withExistingSession[T](block: String => Future[RequestOutcome[T]])(implicit request: Request[_]): Future[RequestOutcome[T]] =
     hc.sessionId.fold {
       logger.error(s"Session Id missing from request when required")
       Future.successful(Left(ExpectationFailedError): RequestOutcome[T])

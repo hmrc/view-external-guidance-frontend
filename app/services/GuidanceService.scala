@@ -30,6 +30,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import repositories.{ProcessContext, SessionRepository}
 import core.models.ocelot.{LabelCache, Labels, Process}
 import core.models.ocelot.SecuredProcess
+import core.models.errors.ExpectationFailedError
 
 @Singleton
 class GuidanceService @Inject() (
@@ -111,8 +112,8 @@ class GuidanceService @Inject() (
           )
         }
       case Right(_) =>
-        logger.error(s"Referenced session ( $sessionId ) does not contain a process with processCode $processCode")
-        Left(InternalServerError)
+        logger.warn(s"Referenced session ( $sessionId ) does not contain a process with processCode $processCode")
+        Left(ExpectationFailedError)
       case Left(err) =>
         logger.error(s"Repository returned $err, when attempting retrieve process using id (sessionId) $sessionId")
         Left(err)

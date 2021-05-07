@@ -1133,7 +1133,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
 
   }
 
-  "Calling any URL path for a page in a process with an invalid session" should {
+  "Calling any valid process URL in a process with an invalid session" should {
 
     trait Test extends MockGuidanceService with TestData {
       lazy val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest()
@@ -1152,15 +1152,15 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
           mockGuidanceService,
           stubMessagesControllerComponents()
         )
-      lazy val result = target.getPage(processCode, path, None)(fakeRequest)
+      lazy val result = target.getPage("otherProcessCode", "/path", None)(fakeRequest)
     }
 
-    "return a reidrect response" in new Test {
+    "return a redirect response" in new Test {
 
       status(result) shouldBe Status.SEE_OTHER
 
       redirectLocation(result).fold(fail("Should redirect to guidance entry point")){url =>
-        url shouldBe s"/guidance/$processCode"
+        url shouldBe s"/guidance/otherProcessCode"
       }
     }
 
