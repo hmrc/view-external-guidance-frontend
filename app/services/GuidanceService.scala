@@ -31,6 +31,7 @@ import repositories.{ProcessContext, SessionRepository}
 import core.models.ocelot.{LabelCache, Labels, Process}
 import core.models.ocelot.SecuredProcess
 import core.models.errors.ExpectationFailedError
+import core.models.errors.NotFoundError
 
 @Singleton
 class GuidanceService @Inject() (
@@ -56,8 +57,10 @@ class GuidanceService @Inject() (
           }(Right(_))
 
       case Right(_) =>
-        logger.error(s"Referenced session ( $sessionId ) does not contain a process with processCode $processCode after session reset")
-        Left(InternalServerError)
+        logger.warn(s"Referenced session ( $sessionId ) does not contain a process with processCode $processCode after session reset")
+        Left(ExpectationFailedError)
+      case Left(NotFoundError) =>
+        Left(ExpectationFailedError)
       case Left(err) =>
         Left(InternalServerError)
     }

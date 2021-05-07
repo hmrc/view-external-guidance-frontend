@@ -30,7 +30,7 @@ import play.api.test.Helpers._
 import play.api.test.Helpers.stubMessagesControllerComponents
 import uk.gov.hmrc.http.SessionKeys
 import models.{PageContext, PageEvaluationContext}
-import core.models.ocelot.{KeyedStanza, Labels, Page, Phrase, Process, ProcessJson}
+import core.models.ocelot.{KeyedStanza, Labels, Page, Phrase, Process, Meta, ProcessJson}
 import core.models.ocelot.stanzas.{CurrencyInput, DateInput, ExclusiveSequence, NonExclusiveSequence, Question, _}
 import models.ui
 import models.ui._
@@ -189,24 +189,91 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
               )
   }
 
+  trait RestartTest extends MockSessionRepository with MockGuidanceConnector with TestData {
+    val fakeRequest = FakeRequest("GET", path).withSession(SessionKeys.sessionId -> processId).withFormUrlEncodedBody().withCSRFToken
+
+    val formError = new FormError(relativePath, List("error.required"))
+    val guidanceService = new GuidanceService(
+      MockAppConfig,
+      mockGuidanceConnector,
+      mockSessionRepository,
+      new PageBuilder(new Placeholders(new DefaultTodayProvider)),
+      new PageRenderer,
+      new SecuredProcessBuilder(messagesApi),
+      new UIBuilder())
+
+    val target = new GuidanceController(
+      MockAppConfig,
+      fakeSessionIdAction,
+      errorHandler,
+      view,
+      formView,
+      guidanceService,
+      stubMessagesControllerComponents()
+    )
+
+    val initialLabels = LabelCache()
+    val (vStanzas: Seq[VisualStanza], labels: Labels, di: Option[DataInput]) = new PageRenderer().renderPage(page, initialLabels)
+    val pec = PageEvaluationContext(
+                page,
+                vStanzas,
+                di,
+                sessionId,
+                Map("4" -> "/somewhere-else"),
+                Some("/hello"),
+                Text(),
+                processId,
+                "hello",
+                initialLabels,
+                None,
+                None
+              )
+  }
+
+
   "Calling sessionRestart" should {
     "Return a SEE_OTHER" in new QuestionTest {
       MockGuidanceService
-        .sessionRestart(processId, processId)
+        .sessionRestart(processCode, processId)
         .returns(Future.successful(Right("/start")))
 
-      val result = target.sessionRestart(processId)(fakeRequest)
+      val result = target.sessionRestart(processCode)(fakeRequest)
       status(result) shouldBe Status.SEE_OTHER
     }
 
     "Return INTERNAL_SERVER_ERROR after service failure" in new QuestionTest {
       MockGuidanceService
-        .sessionRestart(processId, processId)
+        .sessionRestart(processCode, processId)
         .returns(Future.successful(Left(InternalServerError)))
 
-      val result = target.sessionRestart(processId)(fakeRequest)
+      val result = target.sessionRestart(processCode)(fakeRequest)
       status(result) shouldBe Status.INTERNAL_SERVER_ERROR
     }
+
+    "Return SEE_OTHER after no session" in new RestartTest {
+      MockSessionRepository
+        .getResetSession(processId)
+        .returns(Future.successful(Left(NotFoundError)))
+
+      val result = target.sessionRestart(processCode)(fakeRequest)
+      status(result) shouldBe Status.SEE_OTHER
+
+      redirectLocation(result) shouldBe Some(s"/guidance/$processCode")
+    }
+
+    "Return SEE_OTHER after wrong session found" in new RestartTest {
+      val meta: Meta = Meta("otherId","", None, 0,"", 1L, 0, None, None, "otherProcessCode")
+      val otherProcess: Process = Process(meta, Map(), Vector(), Vector())
+      MockSessionRepository
+        .getResetSession(processId)
+        .returns(Future.successful(Right(ProcessContext(otherProcess, Map(), Map(), Nil, Map(), Map(), None))))
+
+      val result = target.sessionRestart(processCode)(fakeRequest)
+      status(result) shouldBe Status.SEE_OTHER
+
+      redirectLocation(result) shouldBe Some(s"/guidance/$processCode")
+    }
+
   }
 
   "Calling a valid URL path to a Question page in a process" should {
