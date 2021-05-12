@@ -44,6 +44,7 @@ class SessionProcessFSMSpec extends BaseSpec {
         Map(),
         Map(),
         List(PageHistory("/start", Nil)),
+        Nil,
         Instant.now
       )
   }
@@ -179,6 +180,7 @@ class SessionProcessFSMSpec extends BaseSpec {
         Map("/done" -> "2", "/one" -> "4", "/third" -> "8", "/start" -> "start", "/fourth" -> "88"),
         Map("/start" -> "2,3"),
         List(PageHistory("/start", Nil)),
+        Nil,
         Instant.now
       )
   }

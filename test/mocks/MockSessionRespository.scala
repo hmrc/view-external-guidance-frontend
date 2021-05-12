@@ -22,6 +22,7 @@ import core.models.RequestOutcome
 import org.scalamock.handlers.CallHandler
 import org.scalamock.scalatest.MockFactory
 import scala.concurrent.Future
+import models.{GET, RequestOperation}
 
 trait MockSessionRepository extends MockFactory {
 
@@ -29,10 +30,10 @@ trait MockSessionRepository extends MockFactory {
 
   object MockSessionRepository {
 
-    def get(key: String, pageHistoryUrl: Option[String], previousPageByLink: Boolean): CallHandler[Future[RequestOutcome[ProcessContext]]] =
+    def get(key: String, pageHistoryUrl: Option[String], previousPageByLink: Boolean, op: RequestOperation = GET): CallHandler[Future[RequestOutcome[ProcessContext]]] =
       (mockSessionRepository
-        .get(_: String, _: Option[String], _: Boolean))
-        .expects(key, pageHistoryUrl, previousPageByLink)
+        .get(_: String, _: Option[String], _: Boolean, _: RequestOperation))
+        .expects(key, pageHistoryUrl, previousPageByLink, op)
 
     def set(key: String, process: Process, urltoPageId: Map[String, String]): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockSessionRepository
@@ -59,5 +60,4 @@ trait MockSessionRepository extends MockFactory {
         .savePageState(_: String, _: Labels))
         .expects(key, *)
   }
-
 }

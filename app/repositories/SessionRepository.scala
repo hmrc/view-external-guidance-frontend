@@ -26,7 +26,7 @@ import core.models.ocelot.stanzas.Stanza
 import core.models.errors._
 import core.models.MongoDateTimeFormats
 import core.models.RequestOutcome
-import models.RequestOperation
+import models.{GET, POST, RequestOperation}
 import play.modules.reactivemongo.ReactiveMongoComponent
 import reactivemongo.bson.{BSONDocument, BSONObjectID}
 import reactivemongo.play.json.ImplicitBSONHandlers.JsObjectDocumentWriter
@@ -80,11 +80,12 @@ object DefaultSessionRepository {
                                   urlToPageId: Map[String, String],
                                   answers: Map[String, String],
                                   pageHistory: List[PageHistory],
+                                  legalPageIds: List[String],
                                   lastAccessed: Instant)
 
   object SessionProcess {
     def apply(id: String, processId: String, process: Process, urlToPageId: Map[String, String] = Map(), lastAccessed: Instant = Instant.now()): SessionProcess =
-      SessionProcess(id, processId, process, Map(), Nil, Map(), urlToPageId, Map(), Nil, lastAccessed)
+      SessionProcess(id, processId, process, Map(), Nil, Map(), urlToPageId, Map(), Nil, Nil, lastAccessed)
     implicit val dateFormat: Format[Instant] = MongoDateTimeFormats.instantFormats
     implicit lazy val format: Format[SessionProcess] = ReactiveMongoFormats.mongoEntity { Json.format[SessionProcess] }
   }
@@ -142,6 +143,48 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
     }
 
   def get(key: String, pageUrl: Option[String], previousPageByLink: Boolean, op: RequestOperation): Future[RequestOutcome[ProcessContext]] =
+    op match {
+      case GET => getGet(key, pageUrl, previousPageByLink)
+      case POST => postGet(key)
+    }
+
+  private def postGet(key: String): Future[RequestOutcome[ProcessContext]] =
+    findAndUpdate(
+      Json.obj("_id" -> key),
+      Json.obj((List(toFieldPair("$set", Json.obj(toFieldPair(TtlExpiryFieldName, Json.obj("$date" -> Instant.now().toEpochMilli)))))).toArray: _*),
+      fetchNewObject = false
+    ).flatMap { r =>
+        r.result[DefaultSessionRepository.SessionProcess]
+        .fold {
+          logger.warn(s"Attempt to retrieve cached process from session repo with _id=$key returned no result, lastError ${r.lastError}")
+          Future.successful(Left(NotFoundError): RequestOutcome[ProcessContext])
+        }{ sp =>
+          // SessionProcess returned by findAndUpdate() is intentionally that prior to the update!!
+          val backLink = sp.pageHistory.reverse match {
+            case x :: y :: xs => Some(y.url)
+            case _ => None
+          }
+          println(s"************* POST: ${backLink}")
+          Future.successful(Right(
+            ProcessContext(
+              sp.process,
+              sp.answers,
+              sp.labels,
+              sp.flowStack,
+              sp.continuationPool,
+              sp.urlToPageId,
+              backLink)
+            )
+          )
+        }
+      }
+      .recover {
+        case lastError =>
+          logger.error(s"Error $lastError while trying to retrieve process from session repo with _id=$key")
+          Left(DatabaseError)
+      }
+
+  private def getGet(key: String, pageUrl: Option[String], previousPageByLink: Boolean): Future[RequestOutcome[ProcessContext]] =
     findAndUpdate(
       Json.obj("_id" -> key),
       Json.obj(
@@ -166,6 +209,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
             val labels: Map[String, Label] = sp.labels ++ labelUpdates.map(l => (l.name -> l)).toMap
             val processContext =
               ProcessContext(sp.process, sp.answers, labels, flowStackUpdate.getOrElse(sp.flowStack), sp.continuationPool, sp.urlToPageId, backLink)
+            println(s"************* GET: ${backLink}")
             historyUpdate.fold(Future.successful(Right(processContext)))(history =>
               savePageHistory(key, history, flowStackUpdate, labelUpdates).map {
                 case Left(err) =>

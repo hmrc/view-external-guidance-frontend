@@ -360,7 +360,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
 
     "return a NOT_FOUND response" in new QuestionSubmissionTest {
       MockSessionRepository
-        .get(processId, Some(s"tell-hmrc$path"), previousPageByLink = false)
+        .get(processId, Some(s"tell-hmrc$path"), previousPageByLink = false, models.POST)
         .returns(Future.successful(Right(ProcessContext(process, Map(), Map(), Nil, Map(), Map(), None))))
 
       override val fakeRequest = FakeRequest("POST", path).withSession(SessionKeys.sessionId -> processId).withFormUrlEncodedBody().withCSRFToken
@@ -373,7 +373,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
 
     "return a SeeOther response" in new QuestionTest {
       MockGuidanceService
-        .getPageEvaluationContext(processId, path, previousPageByLink = false, processId)
+        .getPageEvaluationContext(processId, path, previousPageByLink = false, processId, models.POST)
         .returns(Future.successful(Right(pec)))
 
       MockGuidanceService
@@ -398,7 +398,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
 
     "return a InternalServerError when saving of answer and labels fails" in new QuestionTest {
       MockGuidanceService
-        .getPageEvaluationContext(processId, path, previousPageByLink = false, processId)
+        .getPageEvaluationContext(processId, path, previousPageByLink = false, processId, models.POST)
         .returns(Future.successful(Right(pec)))
 
       MockGuidanceService
@@ -423,7 +423,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
 
     "return a BAD_REQUEST when submitting page and guidance determines invalid data" in new QuestionTest {
       MockGuidanceService
-        .getPageEvaluationContext(processId, path, previousPageByLink = false, processId)
+        .getPageEvaluationContext(processId, path, previousPageByLink = false, processId, models.POST)
         .returns(Future.successful(Right(pec)))
 
       MockGuidanceService
@@ -449,7 +449,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
     "return a SeeOther response whether the saving of the question succeeds or not" in new QuestionTest {
 
       MockGuidanceService
-        .getPageEvaluationContext(processId, path, previousPageByLink = false, processId)
+        .getPageEvaluationContext(processId, path, previousPageByLink = false, processId, models.POST)
         .returns(Future.successful(Right(pec)))
 
       MockGuidanceService
@@ -474,7 +474,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
 
     "return a BAD_REQUEST response if trying to submit a page where url not found in process" in new QuestionTest {
       MockGuidanceService
-        .getPageEvaluationContext(processId, "/unknown", previousPageByLink = false, processId)
+        .getPageEvaluationContext(processId, "/unknown", previousPageByLink = false, processId, models.POST)
         .returns(Future.successful(Left(BadRequestError)))
 
       override val fakeRequest = FakeRequest("POST", "/unknown")
@@ -502,7 +502,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
           )
 
       MockGuidanceService
-        .getPageEvaluationContext(processId, standardPagePath, previousPageByLink = false, processId)
+        .getPageEvaluationContext(processId, standardPagePath, previousPageByLink = false, processId, models.POST)
         .returns(Future.successful(Right(pec)))
 
       MockGuidanceService
@@ -521,7 +521,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
       val unknownPath = "/non-existent"
       val unknownRelativePath = unknownPath.drop(1)
       MockGuidanceService
-        .getPageEvaluationContext(processId, unknownPath, previousPageByLink = false, processId)
+        .getPageEvaluationContext(processId, unknownPath, previousPageByLink = false, processId, models.POST)
         .returns(Future.successful(Left(NotFoundError)))
 
       override val fakeRequest = FakeRequest("POST", unknownPath)
@@ -535,7 +535,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
     "return a INTERNAL_SERVER_ERROR response if submitting to a Process containing errors is referenced" in new QuestionTest {
 
       MockGuidanceService
-        .getPageEvaluationContext(processId, path, previousPageByLink = false, processId)
+        .getPageEvaluationContext(processId, path, previousPageByLink = false, processId, models.POST)
         .returns(Future.successful(Left(InvalidProcessError)))
 
       override val fakeRequest = FakeRequest("POST", path)
@@ -548,7 +548,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
 
     "return a INTERNAL_SERVER_ERROR response if encountering a database error when submitting a page" in new QuestionTest {
       MockGuidanceService
-        .getPageEvaluationContext(processId, path, previousPageByLink = false, processId)
+        .getPageEvaluationContext(processId, path, previousPageByLink = false, processId, models.POST)
         .returns(Future.successful(Left(DatabaseError)))
       override val fakeRequest = FakeRequest("POST", path)
         .withSession(SessionKeys.sessionId -> processId)
@@ -664,7 +664,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
 
     "return a BadRequest response" in new InputTest {
       MockGuidanceService
-        .getPageEvaluationContext(processId, path, previousPageByLink = false, processId)
+        .getPageEvaluationContext(processId, path, previousPageByLink = false, processId, models.POST)
         .returns(Future.successful(Right(pec)))
 
       MockGuidanceService
@@ -701,7 +701,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
               )
 
       MockGuidanceService
-        .getPageEvaluationContext(processId, path, previousPageByLink = false, processId)
+        .getPageEvaluationContext(processId, path, previousPageByLink = false, processId, models.POST)
         .returns(Future.successful(Right(pec)))
 
       MockGuidanceService
@@ -747,7 +747,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
               )
 
       MockGuidanceService
-        .getPageEvaluationContext(processId, path, previousPageByLink = false, processId)
+        .getPageEvaluationContext(processId, path, previousPageByLink = false, processId, models.POST)
         .returns(Future.successful(Right(pec)))
 
       MockGuidanceService
@@ -782,7 +782,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
     "return a SeeOther response" in new InputTest {
 
       MockGuidanceService
-        .getPageEvaluationContext(processId, path, previousPageByLink = false, processId)
+        .getPageEvaluationContext(processId, path, previousPageByLink = false, processId, models.POST)
         .returns(Future.successful(Right(pec)))
 
       MockGuidanceService
@@ -823,7 +823,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
       )
 
       MockGuidanceService
-        .getPageEvaluationContext(processId, path, previousPageByLink = false, processId)
+        .getPageEvaluationContext(processId, path, previousPageByLink = false, processId, models.POST)
         .returns(Future.successful(Right(pec)))
 
       MockGuidanceService
@@ -866,7 +866,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
       )
 
       MockGuidanceService
-        .getPageEvaluationContext(processId, path, previousPageByLink = false, processId)
+        .getPageEvaluationContext(processId, path, previousPageByLink = false, processId, models.POST)
         .returns(Future.successful(Right(pec)))
 
       MockGuidanceService
@@ -893,7 +893,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
 
     "return a SeeOther response whether the saving of the input succeeds or not" in new InputTest {
       MockGuidanceService
-        .getPageEvaluationContext(processId, path, previousPageByLink = false, processId)
+        .getPageEvaluationContext(processId, path, previousPageByLink = false, processId, models.POST)
         .returns(Future.successful(Right(pec)))
 
       MockGuidanceService
@@ -918,7 +918,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
 
     "return a INTERNAL_SERVER_ERROR response if submitting to a Process containing errors is referenced" in new InputTest {
       MockGuidanceService
-        .getPageEvaluationContext(processId, path, previousPageByLink = false, processId)
+        .getPageEvaluationContext(processId, path, previousPageByLink = false, processId, models.POST)
         .returns(Future.successful(Left(InvalidProcessError)))
       override val fakeRequest = FakeRequest("POST", path)
         .withSession(SessionKeys.sessionId -> processId)
@@ -930,7 +930,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
 
     "return a NOT_FOUND response if trying to submit to a non-existent page" in new QuestionTest {
       MockGuidanceService
-        .getPageEvaluationContext(processId, path, previousPageByLink = false, processId)
+        .getPageEvaluationContext(processId, path, previousPageByLink = false, processId, models.POST)
         .returns(Future.successful(Left(NotFoundError)))
 
       override val fakeRequest = FakeRequest("POST", path)
@@ -944,7 +944,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
     "return a InternalServerError response when an unexpected error returned from service call" in new QuestionTest {
 
       MockGuidanceService
-        .getPageEvaluationContext(processId, path, previousPageByLink = false, processId)
+        .getPageEvaluationContext(processId, path, previousPageByLink = false, processId, models.POST)
         .returns(Future.successful(Left(DatabaseError)))
 
       override val fakeRequest = FakeRequest("POST", path)
@@ -957,7 +957,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
 
     "return a BAD_REQUEST response when a bad request error returned from service call" in new QuestionTest {
       MockGuidanceService
-        .getPageEvaluationContext(processId, path, previousPageByLink = false, processId)
+        .getPageEvaluationContext(processId, path, previousPageByLink = false, processId, models.POST)
         .returns(Future.successful(Left(BadRequestError)))
 
       override val fakeRequest = FakeRequest("POST", path)
@@ -985,7 +985,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
           )
 
       MockGuidanceService
-        .getPageEvaluationContext(processId, standardPagePath, previousPageByLink = false, processId)
+        .getPageEvaluationContext(processId, standardPagePath, previousPageByLink = false, processId, models.POST)
         .returns(Future.successful(Right(pec)))
 
       MockGuidanceService
@@ -1054,7 +1054,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
 
     "Return SEE_OTHER from a submit()) as a result of an Authentication error when non authenticated" in new Test {
       MockSessionRepository
-        .get(processId, Some(s"${processId}$path"), false)
+        .get(processId, Some(s"${processId}$path"), false, models.POST)
         .returns(Future.successful(Left(AuthenticationError)))
 
       lazy val result = target.submitPage(processId, relativePath)(fakeRequest)
@@ -1379,7 +1379,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
       "return a see other response" in new DateInputTest {
 
         MockGuidanceService
-          .getPageEvaluationContext(processId, path, previousPageByLink = false, processId)
+          .getPageEvaluationContext(processId, path, previousPageByLink = false, processId, models.POST)
           .returns(Future.successful(Right(pec)))
 
         MockGuidanceService
@@ -1409,7 +1409,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
         "returns a bad request response" in new DateInputTest {
 
           MockGuidanceService
-            .getPageEvaluationContext(processId, path, previousPageByLink = false, processId)
+            .getPageEvaluationContext(processId, path, previousPageByLink = false, processId, models.POST)
             .returns(Future.successful(Right(pec)))
 
           MockGuidanceService
@@ -1436,7 +1436,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
         "return a bad request response" in new DateInputTest {
 
           MockGuidanceService
-            .getPageEvaluationContext(processId, path, previousPageByLink = false, processId)
+            .getPageEvaluationContext(processId, path, previousPageByLink = false, processId, models.POST)
             .returns(Future.successful(Right(pec)))
 
           MockGuidanceService
@@ -1482,7 +1482,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
           )
 
           MockGuidanceService
-            .getPageEvaluationContext(processId, path, previousPageByLink = false, processId)
+            .getPageEvaluationContext(processId, path, previousPageByLink = false, processId, models.POST)
             .returns(Future.successful(Right(pec)))
 
           override val fakeRequest = FakeRequest("POST", path)
@@ -1622,7 +1622,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
       "return a see other response" in new SequenceInputTest {
 
         MockGuidanceService
-          .getPageEvaluationContext(processId, path, previousPageByLink = false, processId)
+          .getPageEvaluationContext(processId, path, previousPageByLink = false, processId, models.POST)
           .returns(Future.successful(Right(pec)))
 
         MockGuidanceService
@@ -1652,7 +1652,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
         "returns a bad request response" in new SequenceInputTest {
 
           MockGuidanceService
-            .getPageEvaluationContext(processId, path, previousPageByLink = false, processId)
+            .getPageEvaluationContext(processId, path, previousPageByLink = false, processId, models.POST)
             .returns(Future.successful(Right(pec)))
 
           MockGuidanceService
@@ -1676,7 +1676,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
         "return a bad request response" in new SequenceInputTest {
 
           MockGuidanceService
-            .getPageEvaluationContext(processId, path, previousPageByLink = false, processId)
+            .getPageEvaluationContext(processId, path, previousPageByLink = false, processId, models.POST)
             .returns(Future.successful(Right(pec)))
 
           MockGuidanceService
@@ -1824,7 +1824,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
       "return a see other response" in new ExclusiveSequenceInputTest {
 
         MockGuidanceService
-          .getPageEvaluationContext(processId, path, previousPageByLink = false, processId)
+          .getPageEvaluationContext(processId, path, previousPageByLink = false, processId, models.POST)
           .returns(Future.successful(Right(pec)))
 
         MockGuidanceService
@@ -1853,7 +1853,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
         "returns a bad request response" in new ExclusiveSequenceInputTest {
 
           MockGuidanceService
-            .getPageEvaluationContext(processId, path, previousPageByLink = false, processId)
+            .getPageEvaluationContext(processId, path, previousPageByLink = false, processId, models.POST)
             .returns(Future.successful(Right(pec)))
 
           MockGuidanceService
@@ -1877,7 +1877,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
         "return a bad request response" in new ExclusiveSequenceInputTest {
 
           MockGuidanceService
-            .getPageEvaluationContext(processId, path, previousPageByLink = false, processId)
+            .getPageEvaluationContext(processId, path, previousPageByLink = false, processId, models.POST)
             .returns(Future.successful(Right(pec)))
 
           MockGuidanceService
