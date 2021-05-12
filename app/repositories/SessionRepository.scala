@@ -158,13 +158,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
         .fold {
           logger.warn(s"Attempt to retrieve cached process from session repo with _id=$key returned no result, lastError ${r.lastError}")
           Future.successful(Left(NotFoundError): RequestOutcome[ProcessContext])
-        }{ sp =>
-          // SessionProcess returned by findAndUpdate() is intentionally that prior to the update!!
-          val backLink = sp.pageHistory.reverse match {
-            case x :: y :: xs => Some(y.url)
-            case _ => None
-          }
-          println(s"************* POST: ${backLink}")
+        }{ sp => // SessionProcess returned by findAndUpdate() is intentionally that prior to the update!!
           Future.successful(Right(
             ProcessContext(
               sp.process,
@@ -173,19 +167,24 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
               sp.flowStack,
               sp.continuationPool,
               sp.urlToPageId,
-              pageUrl.fold[Option[String]](None)(_ => backLink))
+              pageUrl.fold[Option[String]](None){_ =>
+                sp.pageHistory.reverse match {
+                  case x :: y :: xs => Some(y.url)
+                  case _ => None
+                }
+              }
             )
           )
-        }
+        )
       }
-      .recover {
-        case lastError =>
-          logger.error(s"Error $lastError while trying to retrieve process from session repo with _id=$key")
-          Left(DatabaseError)
-      }
+    }
+    .recover {
+      case lastError =>
+        logger.error(s"Error $lastError while trying to retrieve process from session repo with _id=$key")
+        Left(DatabaseError)
+    }
 
   private def getGet(key: String, pageUrl: Option[String], previousPageByLink: Boolean): Future[RequestOutcome[ProcessContext]] =
-//def get(key: String, pageUrl: Option[String], previousPageByLink: Boolean, op: RequestOperation): Future[RequestOutcome[ProcessContext]] =
     findAndUpdate(
       Json.obj("_id" -> key),
       Json.obj(
@@ -194,39 +193,35 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
         ).toArray: _*),
       fetchNewObject = false
     ).flatMap { r =>
-        r.result[DefaultSessionRepository.SessionProcess]
-        .fold {
-          logger.warn(s"Attempt to retrieve cached process from session repo with _id=$key returned no result, lastError ${r.lastError}")
-          Future.successful(Left(NotFoundError): RequestOutcome[ProcessContext])
-        }{ sp =>
-          //
-          // SessionProcess returned by findAndUpdate() is intentionally that prior to the update!!
-          //
-          pageUrl.fold(
-            Future.successful(Right(ProcessContext(sp.process, sp.answers, sp.labels, sp.flowStack, sp.continuationPool, sp.urlToPageId, None)))
-          ){url =>
-            val firstPageUrl: String = s"${sp.process.meta.processCode}${sp.process.startUrl.getOrElse("")}"
-            val (backLink, historyUpdate, flowStackUpdate, labelUpdates) = sessionProcessTransition(url, sp, previousPageByLink, firstPageUrl)
-            val labels: Map[String, Label] = sp.labels ++ labelUpdates.map(l => (l.name -> l)).toMap
-            val processContext =
-              ProcessContext(sp.process, sp.answers, labels, flowStackUpdate.getOrElse(sp.flowStack), sp.continuationPool, sp.urlToPageId, backLink)
-            println(s"************* GET: ${backLink}")
-            historyUpdate.fold(Future.successful(Right(processContext)))(history =>
-              savePageHistory(key, history, flowStackUpdate, labelUpdates).map {
-                case Left(err) =>
-                  logger.error(s"Unable to save backlink history, error = $err")
-                  Right(processContext)
-                case _ => Right(processContext)
-              }
-            )
-          }
+      r.result[DefaultSessionRepository.SessionProcess]
+      .fold {
+        logger.warn(s"Attempt to retrieve cached process from session repo with _id=$key returned no result, lastError ${r.lastError}")
+        Future.successful(Left(NotFoundError): RequestOutcome[ProcessContext])
+      }{ sp => // SessionProcess returned by findAndUpdate() is intentionally that prior to the update!!
+        pageUrl.fold(
+          Future.successful(Right(ProcessContext(sp.process, sp.answers, sp.labels, sp.flowStack, sp.continuationPool, sp.urlToPageId, None)))
+        ){url =>
+          val firstPageUrl: String = s"${sp.process.meta.processCode}${sp.process.startUrl.getOrElse("")}"
+          val (backLink, historyUpdate, flowStackUpdate, labelUpdates) = sessionProcessTransition(url, sp, previousPageByLink, firstPageUrl)
+          val labels: Map[String, Label] = sp.labels ++ labelUpdates.map(l => (l.name -> l)).toMap
+          val processContext =
+            ProcessContext(sp.process, sp.answers, labels, flowStackUpdate.getOrElse(sp.flowStack), sp.continuationPool, sp.urlToPageId, backLink)
+          historyUpdate.fold(Future.successful(Right(processContext)))(history =>
+            savePageHistory(key, history, flowStackUpdate, labelUpdates).map {
+              case Left(err) =>
+                logger.error(s"Unable to save backlink history, error = $err")
+                Right(processContext)
+              case _ => Right(processContext)
+            }
+          )
         }
       }
-      .recover {
-        case lastError =>
-          logger.error(s"Error $lastError while trying to retrieve process from session repo with _id=$key")
-          Left(DatabaseError)
-      }
+    }
+    .recover {
+      case lastError =>
+        logger.error(s"Error $lastError while trying to retrieve process from session repo with _id=$key")
+        Left(DatabaseError)
+    }
 
   def getResetSession(key: String): Future[RequestOutcome[ProcessContext]] =
     findAndUpdate(
