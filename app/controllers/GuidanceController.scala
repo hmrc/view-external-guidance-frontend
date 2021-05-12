@@ -26,7 +26,7 @@ import services.{ErrorStrategy, GuidanceService, ValueTypeError}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 import core.models.errors._
 import core.models.ocelot.SecuredProcess
-import models.{PageContext, PageEvaluationContext}
+import models.{PageContext, PageEvaluationContext, POST}
 import models.ui.{FormPage, StandardPage, SubmittedAnswer}
 import views.html.{form_page, standard_page}
 import play.api.Logger
@@ -111,7 +111,7 @@ class GuidanceController @Inject() (
   def submitPage(processCode: String, path: String): Action[AnyContent] = Action.async { implicit request =>
     implicit val messages: Messages = mcc.messagesApi.preferred(request)
     implicit val lang: Lang = messages.lang
-    withExistingSession[PageEvaluationContext](service.getPageEvaluationContext(processCode, s"/$path", previousPageByLink = false, _)).flatMap {
+    withExistingSession[PageEvaluationContext](service.getPageEvaluationContext(processCode, s"/$path", previousPageByLink = false, _, POST)).flatMap {
       case Right(ctx) => ctx.dataInput.fold{
           logger.error( s"Unable to locate input stanza for process ${ctx.processCode} on submission")
           Future.successful(BadRequest(errorHandler.badRequestTemplateWithProcessCode(Some(processCode))))

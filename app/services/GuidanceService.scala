@@ -20,7 +20,7 @@ import core.services._
 import config.AppConfig
 import connectors.GuidanceConnector
 import javax.inject.{Inject, Singleton}
-import models.{PageContext, PageEvaluationContext}
+import models.{PageContext, PageEvaluationContext, RequestOperation, GET, POST}
 import play.api.Logger
 import core.models.errors.{InternalServerError, InvalidProcessError, AuthenticationError}
 import core.models.RequestOutcome
@@ -67,10 +67,10 @@ class GuidanceService @Inject() (
 
   def getProcessContext(sessionId: String): Future[RequestOutcome[ProcessContext]] = sessionRepository.get(sessionId)
 
-  def getProcessContext(sessionId: String, processCode: String, url: String, previousPageByLink: Boolean)
+  def getProcessContext(sessionId: String, processCode: String, url: String, previousPageByLink: Boolean, op: RequestOperation = GET)
                        (implicit context: ExecutionContext): Future[RequestOutcome[ProcessContext]] = {
     val pageUrl: Option[String] = if (isAuthenticationUrl(url)) None else Some(s"$processCode$url")
-    sessionRepository.get(sessionId, pageUrl, previousPageByLink).map{ result =>
+    sessionRepository.get(sessionId, pageUrl, previousPageByLink, op).map{ result =>
       (result, pageUrl) match {
         case (Right(ctx), Some(_)) if !ctx.secure => Left(AuthenticationError)
         case _ => result
@@ -78,9 +78,9 @@ class GuidanceService @Inject() (
     }
   }
 
-  def getPageEvaluationContext(processCode: String, url: String, previousPageByLink: Boolean, sessionId: String)
+  def getPageEvaluationContext(processCode: String, url: String, previousPageByLink: Boolean, sessionId: String, op: RequestOperation = GET)
                               (implicit context: ExecutionContext, lang: Lang): Future[RequestOutcome[PageEvaluationContext]] =
-    getProcessContext(sessionId, processCode, url, previousPageByLink).map {
+    getProcessContext(sessionId, processCode, url, previousPageByLink, op).map {
       case Right(ProcessContext(process, answers, labelsMap, flowStack, continuationPool, urlToPageId, backLink)) if process.meta.processCode == processCode =>
         urlToPageId.get(url).fold[RequestOutcome[PageEvaluationContext]]{
           logger.error(s"Unable to find url $url within cached process ${process.meta.id} using sessionId $sessionId")

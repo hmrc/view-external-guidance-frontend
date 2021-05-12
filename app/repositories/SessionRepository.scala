@@ -26,6 +26,10 @@ import core.models.ocelot.stanzas.Stanza
 import core.models.errors._
 import core.models.MongoDateTimeFormats
 import core.models.RequestOutcome
+<<<<<<< Updated upstream
+=======
+import models.{PageNext, ProcessContext, RequestOperation}
+>>>>>>> Stashed changes
 import play.modules.reactivemongo.ReactiveMongoComponent
 import reactivemongo.bson.{BSONDocument, BSONObjectID}
 import reactivemongo.play.json.ImplicitBSONHandlers.JsObjectDocumentWriter
@@ -52,7 +56,7 @@ case class ProcessContext(process: Process,
 trait SessionRepository {
   def get(key: String): Future[RequestOutcome[ProcessContext]]
   def getResetSession(key: String): Future[RequestOutcome[ProcessContext]]
-  def get(key: String, pageUrl: Option[String], previousPageByLink: Boolean): Future[RequestOutcome[ProcessContext]]
+  def get(key: String, pageUrl: Option[String], previousPageByLink: Boolean, op: RequestOperation): Future[RequestOutcome[ProcessContext]]
   def set(key: String, process: Process, urlToPageId: Map[String, String]): Future[RequestOutcome[Unit]]
   def saveFormPageState(key: String, url: String, answer: String, labels: Labels): Future[RequestOutcome[Unit]]
   def savePageState(key: String, labels: Labels): Future[RequestOutcome[Unit]]
@@ -140,7 +144,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
       Left(DatabaseError)
     }
 
-  def get(key: String, pageUrl: Option[String], previousPageByLink: Boolean): Future[RequestOutcome[ProcessContext]] =
+  def get(key: String, pageUrl: Option[String], previousPageByLink: Boolean, op: RequestOperation): Future[RequestOutcome[ProcessContext]] =
     findAndUpdate(
       Json.obj("_id" -> key),
       Json.obj(
