@@ -26,10 +26,7 @@ import core.models.ocelot.stanzas.Stanza
 import core.models.errors._
 import core.models.MongoDateTimeFormats
 import core.models.RequestOutcome
-<<<<<<< Updated upstream
-=======
-import models.{PageNext, ProcessContext, RequestOperation}
->>>>>>> Stashed changes
+import models.RequestOperation
 import play.modules.reactivemongo.ReactiveMongoComponent
 import reactivemongo.bson.{BSONDocument, BSONObjectID}
 import reactivemongo.play.json.ImplicitBSONHandlers.JsObjectDocumentWriter
