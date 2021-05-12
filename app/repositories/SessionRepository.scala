@@ -145,10 +145,10 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
   def get(key: String, pageUrl: Option[String], previousPageByLink: Boolean, op: RequestOperation): Future[RequestOutcome[ProcessContext]] =
     op match {
       case GET => getGet(key, pageUrl, previousPageByLink)
-      case POST => postGet(key)
+      case POST => postGet(key, pageUrl)
     }
 
-  private def postGet(key: String): Future[RequestOutcome[ProcessContext]] =
+  private def postGet(key: String, pageUrl: Option[String]): Future[RequestOutcome[ProcessContext]] =
     findAndUpdate(
       Json.obj("_id" -> key),
       Json.obj((List(toFieldPair("$set", Json.obj(toFieldPair(TtlExpiryFieldName, Json.obj("$date" -> Instant.now().toEpochMilli)))))).toArray: _*),
@@ -173,7 +173,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
               sp.flowStack,
               sp.continuationPool,
               sp.urlToPageId,
-              backLink)
+              pageUrl.fold[Option[String]](None)(_ => backLink))
             )
           )
         }
@@ -185,6 +185,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
       }
 
   private def getGet(key: String, pageUrl: Option[String], previousPageByLink: Boolean): Future[RequestOutcome[ProcessContext]] =
+//def get(key: String, pageUrl: Option[String], previousPageByLink: Boolean, op: RequestOperation): Future[RequestOutcome[ProcessContext]] =
     findAndUpdate(
       Json.obj("_id" -> key),
       Json.obj(
