@@ -276,7 +276,10 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
 
   private def toFieldPair[A](name: String, value: A)(implicit w: Writes[A]): FieldAttr = name -> Json.toJsFieldJsValueWrapper(value)
 
-  private def savePageHistory(key: String, pageHistory: List[PageHistory], flowStack: Option[List[FlowStage]], labelUpdates: List[Label]): Future[RequestOutcome[Unit]] =
+  private def savePageHistory(key: String,
+                              pageHistory: List[PageHistory],
+                              flowStack: Option[List[FlowStage]],
+                              labelUpdates: List[Label]): Future[RequestOutcome[Unit]] =
     findAndUpdate(
       Json.obj("_id" -> key),
       Json.obj(

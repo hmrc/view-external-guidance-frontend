@@ -86,8 +86,7 @@ class GuidanceService @Inject() (
           logger.error(s"Unable to find url $url within cached process ${process.meta.id} using sessionId $sessionId")
           Left(NotFoundError)
         }{ pageId =>
-          pageBuilder.buildPage(pageId, process).fold(
-            err => {
+          pageBuilder.buildPage(pageId, process).fold(err => {
               logger.error(s"PageBuilder error $err on process ${process.meta.id} with sessionId $sessionId")
               Left(InvalidProcessError)
             },
@@ -183,18 +182,25 @@ class GuidanceService @Inject() (
         Future.successful(Left(err))
       case Right(process) =>
         logger.warn(s"Loaded process ${process.meta.id}, containing ${process.flow.keys.toList.length} stanzas, ${process.phrases.length} phrases")
-        pageBuilder.pages(process, process.startPageId).fold(
-        err => {
+        pageBuilder.pages(process, process.startPageId).fold(err => {
           logger.warn(s"Failed to parse process with error $err")
           Future.successful(Left(InvalidProcessError))
         },
-        pages => sessionRepository.set(docId, process, pages.map(p => p.url -> p.id).toMap).map {
-          case Right(_) => Right((pages.head.url, process.meta.processCode))
-          case Left(err) =>
-            logger.error(s"Failed to store new parsed process in session repository, $err")
-            Left(err)
+        pages => {
+          val urlMap: Map[String, String] = pages.map(p => (p.id, p.url)).toMap
+          logger.debug(s"Process id: $processIdentifier, processCode: ${process.meta.processCode}, title: ${process.meta.title}")
+          logger.debug(s"PAGE MAP:")
+          pages.foreach{pge =>
+            logger.debug(s"PAGE: ${pge.id}, ${pge.url}")
+            (pge.next ++ pge.linked).distinct.foreach(id => logger.debug(s"\t=> $id, ${urlMap(id)}"))
           }
-        )
+          sessionRepository.set(docId, process, pages.map(p => p.url -> p.id).toMap).map {
+            case Right(_) => Right((pages.head.url, process.meta.processCode))
+            case Left(err) =>
+              logger.error(s"Failed to store new parsed process in session repository, $err")
+              Left(err)
+          }
+        })
     }
 
   private def isAuthenticationUrl(url: String): Boolean = url.drop(1).equals(SecuredProcess.SecuredProcessStartUrl)

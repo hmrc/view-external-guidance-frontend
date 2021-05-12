@@ -99,6 +99,9 @@ class GuidanceController @Inject() (
       case Left(ExpectationFailedError) =>
         logger.error(s"Redirecting to start of processCode $processCode at ${appConfig.baseUrl}/$processCode")
         Future.successful(Redirect(s"${appConfig.baseUrl}/$processCode"))
+      case Left(ForbiddenError) =>
+        logger.error(s"Redirecting to start of processCode $processCode at ${appConfig.baseUrl}/$processCode")
+        Future.successful(Redirect(s"${appConfig.baseUrl}/$processCode"))
       case Left(err) =>
         logger.error(s"Request for PageContext at /$path returned $err, returning InternalServerError")
         Future.successful(InternalServerError(errorHandler.internalServerErrorTemplate))

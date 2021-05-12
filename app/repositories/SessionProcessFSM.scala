@@ -23,16 +23,16 @@ import DefaultSessionRepository._
 import core.models.ocelot.{Label, ScalarLabel}
 
 
-
 @Singleton
 class SessionProcessFSM @Inject() () {
   type BackLinkAndStateUpdate = (Option[String], Option[List[PageHistory]], Option[List[FlowStage]], List[Label])
   // Input
   // url ,incoming url
   // priorSp, prior SessionProcess corresponding to the previous url processed. Note. The db record will have the head of the page history updated
-  //          to include incoming url and flowStack Nil, this update is not within priorSp. This is an optimisation, as the most common transition
-  //          is forward in a process containing no Sequences (i.e. the flowStack will always be empty), this transition will result in
-  //          no page history or flowstack updates given the update described has already taken place.
+  //          to include incoming url and flowStack Nil, this update is not within priorSp. Due to the large number of submit calls which are
+  //          seen as a "Refresh" in code below, this may not be the most effcient mechanism. Without the inclusion of submit "Refresh" calls,
+  //          the most common transition would be forward in a process containing no Sequences (i.e. the flowStack will always be empty), this
+  //          transition will result in no page history or flowstack updates given the update described has already taken place.
   // forceForward, true indicates that a url similar to head of prior history (looks like a BACK) should be treated as a forward movement
   // sentinelUrl. generally url of the first page, arrival here will always clear down the page history
 
@@ -42,6 +42,7 @@ class SessionProcessFSM @Inject() () {
   // optional backlink to be displayed on page with incoming url
   // optional page history update
   // optional flowStack update
+  // Flow Labels update (Nil unless flowstack active in from or to page)
   def apply(url: String, priorSp: SessionProcess, forceForward: Boolean, sentinelUrl: String): BackLinkAndStateUpdate =
     priorSp.pageHistory.reverse match {
       // Initial page
