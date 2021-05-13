@@ -143,8 +143,9 @@ class GuidanceService @Inject() (
                 (implicit context: ExecutionContext): Future[RequestOutcome[(Option[String], Labels)]] = {
     val (optionalNext, labels) = pageRenderer.renderPagePostSubmit(ctx.page, ctx.labels, validatedAnswer)
     optionalNext.fold[Future[RequestOutcome[(Option[String], Labels)]]](Future.successful(Right((None, labels)))){next =>
-      logger.info(s"Next page found at stanzaId: $next")
-      sessionRepository.saveFormPageState(ctx.sessionId, url, submittedAnswer, labels).map{
+      logger.debug(s"Next page found at stanzaId: $next")
+      val legalPageIds = Process.StartStanzaId :: next :: ctx.pageMapById(next).next
+      sessionRepository.saveFormPageState(ctx.sessionId, url, submittedAnswer, labels, legalPageIds).map{
         case Left(err) =>
           logger.error(s"Failed to save updated labels, error = $err")
           Left(InternalServerError)

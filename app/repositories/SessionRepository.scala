@@ -44,7 +44,7 @@ trait SessionRepository {
   def getUpdateForGET(key: String, pageUrl: Option[String], previousPageByLink: Boolean): Future[RequestOutcome[ProcessContext]]
   def getUpdateForPOST(key: String, pageUrl: Option[String]): Future[RequestOutcome[ProcessContext]]
   def set(key: String, process: Process, pageMap: Map[String, PageNext]): Future[RequestOutcome[Unit]]
-  def saveFormPageState(key: String, url: String, answer: String, labels: Labels): Future[RequestOutcome[Unit]]
+  def saveFormPageState(key: String, url: String, answer: String, labels: Labels, nextLegalPageIs: List[String]): Future[RequestOutcome[Unit]]
   def savePageState(key: String, labels: Labels): Future[RequestOutcome[Unit]]
 }
 
@@ -193,19 +193,26 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
           Future.successful(Right(ProcessContext(sp.process, sp.answers, sp.labels, sp.flowStack, sp.continuationPool, sp.pageMap, Nil, None)))
         ){url =>
           sp.pageMap.get(url.drop(sp.process.meta.processCode.length)).fold[Future[RequestOutcome[ProcessContext]]]{
-            logger.warn(s"Attempt to move to known page $url")
+            logger.warn(s"Attempt to move to unknown page $url")
             Future.successful(Left(NotFoundError))
           }{pageDesc =>
-            println(s"************* $url")
-            println(s"************* ${sp.legalPageIds}")
-            if (sp.legalPageIds.isEmpty || sp.legalPageIds.contains(pageDesc.id)){
+            logger.debug(s"Incoming Page: ${pageDesc.id}, $url, current legalPageIds: ${sp.legalPageIds}")
+            if (sp.legalPageIds.isEmpty || sp.legalPageIds.contains(pageDesc.id)){ // Wild card or fixed list of valid page ids
               val firstPageUrl: String = s"${sp.process.meta.processCode}${sp.process.startUrl.getOrElse("")}"
               val (backLink, historyUpdate, flowStackUpdate, labelUpdates) = sessionProcessTransition(url, sp, previousPageByLink, firstPageUrl)
               val labels: Map[String, Label] = sp.labels ++ labelUpdates.map(l => (l.name -> l)).toMap
-              val legalPageIds = pageDesc.id :: pageDesc.next ++ backLink.fold[List[String]](Nil)(bl => List(sp.pageMap(bl.drop(sp.process.meta.processCode.length)).id))
-              val processContext =
-                ProcessContext(sp.process, sp.answers, labels, flowStackUpdate.getOrElse(sp.flowStack), sp.continuationPool, sp.pageMap, legalPageIds, backLink)
-              println(s"************* NewLegalIds ${legalPageIds}")
+              val legalPageIds = Process.StartStanzaId :: pageDesc.id :: pageDesc.next ++
+                                  backLink.fold[List[String]](Nil)(bl => List(sp.pageMap(bl.drop(sp.process.meta.processCode.length)).id))
+              val processContext = ProcessContext(
+                                    sp.process,
+                                    sp.answers,
+                                    labels,
+                                    flowStackUpdate.getOrElse(sp.flowStack),
+                                    sp.continuationPool,
+                                    sp.pageMap,
+                                    legalPageIds,
+                                    backLink)
+              logger.debug(s"NewLegalIds: ${legalPageIds}")
               saveUpdates(key, historyUpdate, flowStackUpdate, labelUpdates, legalPageIds).map {
                 case Left(err) =>
                   logger.error(s"Unable to save backlink history, error = $err")
@@ -252,7 +259,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
           Left(DatabaseError)
       }
 
-  def saveFormPageState(key: String, url: String, answer: String, labels: Labels): Future[RequestOutcome[Unit]] =
+  def saveFormPageState(key: String, url: String, answer: String, labels: Labels, nextLegalPageIds: List[String]): Future[RequestOutcome[Unit]] =
     findAndUpdate(
       Json.obj("_id" -> key),
       Json.obj(
@@ -260,7 +267,8 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
           (List(
             toFieldPair(TtlExpiryFieldName, Json.obj(toFieldPair("$date", Instant.now().toEpochMilli))),
             toFieldPair(FlowStackKey, labels.flowStack),
-            toFieldPair(s"${AnswersKey}.$url", answer)) ++
+            toFieldPair(s"${AnswersKey}.$url", answer),
+            toFieldPair(LegalPageIdsKey, nextLegalPageIds)) ++
             labels.poolUpdates.toList.map(l => toFieldPair(s"${ContinuationPoolKey}.${l._1}", l._2)) ++
             labels.updatedLabels.values.map(l => toFieldPair(s"${LabelsKey}.${l.name}", l))).toArray: _*
         )
