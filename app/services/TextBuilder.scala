@@ -53,7 +53,7 @@ object TextBuilder {
         boldTextOpt(m).fold[TextItem]({
           listNameOpt(m).fold[TextItem]({
             val window: Boolean = linkTypeOpt(m).fold(false)(modifier => modifier == "-tab")
-            val dest: String = if (Link.isLinkableStanzaId(linkDest(m))) ctx.stanzaIdToUrlMap(linkDest(m)) else linkDest(m)
+            val dest: String = if (Link.isLinkableStanzaId(linkDest(m))) ctx.pageMapById(linkDest(m)).url else linkDest(m)
             val asButton: Boolean = buttonOrLink(m).fold(false)(_ == "button")
             val (lnkText, lnkHint) = singleStringWithOptionalHint(linkText(m))
             ui.Link(dest, lnkText, window, asButton, lnkHint)

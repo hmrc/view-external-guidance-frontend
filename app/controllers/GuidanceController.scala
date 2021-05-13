@@ -74,7 +74,7 @@ class GuidanceController @Inject() (
         logger.info(s"Retrieved page at ${pageCtx.page.urlPath}, start at ${pageCtx.processStartUrl}," +
                     s" answer = ${pageCtx.answer}, backLink = ${pageCtx.backLink}")
         pageCtx.page match {
-          case page: StandardPage => service.savePageState(pageCtx.sessionId, pageCtx.labels).map {
+          case page: StandardPage => service.savePageState(pageCtx).map {
               case Right(_) => Ok(standardView(page, pageCtx))
               case Left(_) => InternalServerError(errorHandler.internalServerErrorTemplate)
             }
@@ -130,7 +130,7 @@ class GuidanceController @Inject() (
                     logger.info(s"Post submit page evaluation indicates guidance detected input error")
                     BadRequest(createInputView(service.getPageContext(ctx.copy(labels = labels)), inputName, form))
                   case Right((Some(stanzaId), _)) => // Some(stanzaId) here indicates a redirect to the page with id "stanzaId"
-                    val url = ctx.stanzaIdToUrlMap(stanzaId)
+                    val url = ctx.pageMapById(stanzaId).url
                     logger.info(s"Post submit page evaluation indicates next page at stanzaId: $stanzaId => $url")
                     Redirect(routes.GuidanceController.getPage(
                       processCode,

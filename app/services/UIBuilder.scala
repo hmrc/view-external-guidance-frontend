@@ -29,7 +29,7 @@ import play.api.Logger
 import play.api.i18n.Lang
 import scala.annotation.tailrec
 
-case class UIContext(labels: Labels, lang: Lang, stanzaIdToUrlMap: Map[String, String])
+case class UIContext(labels: Labels, lang: Lang, pageMapById: Map[String, PageDesc])
 
 sealed trait ErrorStrategy {
   def default(stanzas: Seq[VisualStanza]): ErrorStrategy = this
@@ -119,7 +119,7 @@ class UIBuilder {
   private def fromInstruction( i:Instruction)(implicit ctx: UIContext): UIComponent =
     i match {
       case Instruction(txt, _, Some(Link(id, dest, _, window)), _, _, _) if Link.isLinkableStanzaId(dest) =>
-        Paragraph(Text.link(ctx.stanzaIdToUrlMap(dest), txt.value(ctx.lang), window))
+        Paragraph(Text.link(ctx.pageMapById(dest).url, txt.value(ctx.lang), window))
       case Instruction(txt, _, Some(Link(id, dest, _, window)), _, _, _) => Paragraph(Text.link(dest, txt.value(ctx.lang), window))
       case Instruction(txt, _, _, _, _, _) => Paragraph(TextBuilder.fromPhrase(txt))
     }
