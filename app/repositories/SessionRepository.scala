@@ -178,10 +178,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
   def getUpdateForGET(key: String, pageUrl: Option[String], previousPageByLink: Boolean): Future[RequestOutcome[ProcessContext]] =
     findAndUpdate(
       Json.obj("_id" -> key),
-      Json.obj(
-        (List(toFieldPair("$set", Json.obj(toFieldPair(TtlExpiryFieldName, Json.obj("$date" -> Instant.now().toEpochMilli))))) ++
-              pageUrl.fold[List[FieldAttr]](Nil)(url => List("$push" -> Json.obj(PageHistoryKey -> PageHistory(url, Nil))))
-        ).toArray: _*),
+      Json.obj((List(toFieldPair("$set", Json.obj(toFieldPair(TtlExpiryFieldName, Json.obj("$date" -> Instant.now().toEpochMilli)))))).toArray: _*),
       fetchNewObject = false
     ).flatMap { r =>
       r.result[DefaultSessionRepository.SessionProcess]

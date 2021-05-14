@@ -47,11 +47,11 @@ class SessionProcessFSM @Inject() () {
     priorSp.pageHistory.reverse match {
       // Initial page
       case Nil =>
-        (None, None, None, Nil)
+        (None, Some(List(PageHistory(url, Nil))), None, Nil)
 
       // REFRESH: new url equals current url
       case x :: xs if x.url == url =>
-        (xs.headOption.map(_.url), Some(priorSp.pageHistory), None, Nil)
+        (xs.headOption.map(_.url), None, None, Nil)
 
       // BACK: new url equals previous url and prior flowStack equals the previous flowStack
       case _ :: y :: xs if y.url == url && !forceForward && priorSp.flowStack == y.flowStack =>
@@ -76,7 +76,7 @@ class SessionProcessFSM @Inject() () {
           (Some(x.url), Some((PageHistory(url, priorSp.flowStack) :: x :: xs).reverse), None, Nil)
         }{
           case (_, Nil) =>
-            (Some(x.url), None, Some(Nil), Nil)
+            (Some(x.url), Some((PageHistory(url, Nil) :: x :: xs).reverse), Some(Nil), Nil)
           case (_, flowStack) =>
             (Some(x.url), Some((PageHistory(url, priorSp.flowStack) :: x :: xs).reverse), None, Nil)
         }
@@ -84,10 +84,10 @@ class SessionProcessFSM @Inject() () {
       // FORWARD from empty flowStack
       case x :: xs => // Check for forward  movement to a previous page (CYA)
         findPreviousFlowAndLabelState(url, priorSp.pageHistory).fold[BackLinkAndStateUpdate]{
-          (Some(x.url), None, None, Nil)
+          (Some(x.url), Some((PageHistory(url, priorSp.flowStack) :: x :: xs).reverse), None, Nil)
         }{
           case (_, Nil) =>
-            (Some(x.url), None, None, Nil)
+            (Some(x.url), Some((PageHistory(url, Nil) :: x :: xs).reverse), None, Nil)
           case (labels, flowStack) =>
             (Some(x.url), Some((PageHistory(url, flowStack) :: x :: xs).reverse), Some(flowStack), labels)
         }
