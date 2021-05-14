@@ -202,7 +202,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
               val (backLink, historyUpdate, flowStackUpdate, labelUpdates) = sessionProcessTransition(url, sp, previousPageByLink, firstPageUrl)
               val labels: Map[String, Label] = sp.labels ++ labelUpdates.map(l => (l.name -> l)).toMap
               val legalPageIds = Process.StartStanzaId :: pageDesc.id :: pageDesc.next ++
-                                  backLink.fold[List[String]](Nil)(bl => List(sp.pageMap(bl.drop(sp.process.meta.processCode.length)).id))
+                                  backLink.fold[List[String]](Nil)(bl => List(sp.pageMap(bl.drop(sp.process.meta.processCode.length)).id)).distinct
               val processContext = ProcessContext(
                                     sp.process,
                                     sp.answers,
