@@ -29,12 +29,11 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import play.api.test.Helpers.stubMessagesControllerComponents
 import uk.gov.hmrc.http.SessionKeys
-import models.{PageContext, PageEvaluationContext}
+import models.{PageContext, PageDesc, ProcessContext, PageEvaluationContext}
 import core.models.ocelot.{KeyedStanza, Labels, Page, Phrase, Process, Meta, ProcessJson}
 import core.models.ocelot.stanzas.{CurrencyInput, DateInput, ExclusiveSequence, NonExclusiveSequence, Question, _}
 import models.ui
 import models.ui._
-import repositories.ProcessContext
 import play.api.test.CSRFTokenHelper._
 import play.api.data.FormError
 import core.models.errors._
@@ -178,7 +177,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
                 vStanzas,
                 di,
                 sessionId,
-                Map("4" -> "/somewhere-else"),
+                Map("4" -> PageDesc("4", "/somewhere-else")),
                 Some("/hello"),
                 Text(),
                 processId,
@@ -219,7 +218,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
                 vStanzas,
                 di,
                 sessionId,
-                Map("4" -> "/somewhere-else"),
+                Map("4" -> PageDesc("4", "/somewhere-else")),
                 Some("/hello"),
                 Text(),
                 processId,
@@ -266,7 +265,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
       val otherProcess: Process = Process(meta, Map(), Vector(), Vector())
       MockSessionRepository
         .getResetSession(processId)
-        .returns(Future.successful(Right(ProcessContext(otherProcess, Map(), Map(), Nil, Map(), Map(), None))))
+        .returns(Future.successful(Right(ProcessContext(otherProcess, Map(), Map(), Nil, Map(), Map(), Nil, None))))
 
       val result = target.sessionRestart(processCode)(fakeRequest)
       status(result) shouldBe Status.SEE_OTHER
@@ -360,8 +359,8 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
 
     "return a NOT_FOUND response" in new QuestionSubmissionTest {
       MockSessionRepository
-        .get(processId, Some(s"tell-hmrc$path"), previousPageByLink = false, models.POST)
-        .returns(Future.successful(Right(ProcessContext(process, Map(), Map(), Nil, Map(), Map(), None))))
+        .getUpdateForPOST(processId, Some(s"tell-hmrc$path"))
+        .returns(Future.successful(Right(ProcessContext(process, Map(), Map(), Nil, Map(), Map(), Nil, None))))
 
       override val fakeRequest = FakeRequest("POST", path).withSession(SessionKeys.sessionId -> processId).withFormUrlEncodedBody().withCSRFToken
       val result = target.submitPage("tell-hmrc", relativePath)(fakeRequest)
@@ -591,7 +590,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
                 vStanzas,
                 di,
                 sessionId,
-                Map("4" -> "/somewhere-else"),
+                Map("4" -> PageDesc("4", "/somewhere-else")),
                 Some("/hello"),
                 Text(),
                 processId,
@@ -690,7 +689,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
                 vStanzas,
                 di,
                 sessionId,
-                Map("4" -> "/somewhere-else"),
+                Map("4" -> PageDesc("4", "/somewhere-else")),
                 Some("/hello"),
                 Text(),
                 processId,
@@ -736,7 +735,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
                 vStanzas,
                 di,
                 sessionId,
-                Map("4" -> "/somewhere-else"),
+                Map("4" -> PageDesc("4", "/somewhere-else")),
                 Some("/hello"),
                 Text(),
                 processId,
@@ -812,7 +811,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
         vStanzas,
         di,
         sessionId,
-        Map("4" -> "/guidance/ext90002/somewhere-else"),
+        Map("4" -> PageDesc("4", "/guidance/ext90002/somewhere-else")),
         Some("/hello"),
         Text(),
         processId,
@@ -855,7 +854,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
         vStanzas,
         di,
         sessionId,
-        Map("4" -> "/guidance/ext90002/somewhere-else"),
+        Map("4" -> PageDesc("4", "/guidance/ext90002/somewhere-else")),
         Some("/hello"),
         Text(),
         processId,
@@ -1044,7 +1043,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
 
     "Return SEE_OTHER from a getPage() as a result of an Authentication error when non authenticated" in new Test {
       MockSessionRepository
-        .get(processId, Some(s"${processId}$path"), false)
+        .getUpdateForGET(processId, Some(s"${processId}$path"), false)
         .returns(Future.successful(Left(AuthenticationError)))
 
       lazy val result = target.getPage(processId, relativePath, None)(fakeRequest)
@@ -1054,7 +1053,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
 
     "Return SEE_OTHER from a submit()) as a result of an Authentication error when non authenticated" in new Test {
       MockSessionRepository
-        .get(processId, Some(s"${processId}$path"), false, models.POST)
+        .getUpdateForPOST(processId, Some(s"${processId}$path"))
         .returns(Future.successful(Left(AuthenticationError)))
 
       lazy val result = target.submitPage(processId, relativePath)(fakeRequest)
@@ -1294,7 +1293,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
         vStanzas,
         di,
         sessionId,
-        Map("4" -> "/somewhere-else"),
+        Map("4" -> PageDesc("4", "/somewhere-else")),
         Some("/hello"),
         Text(),
         processId,
@@ -1471,7 +1470,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
             vStanzas,
             None,
             sessionId,
-            Map("4" -> "/somewhere-else"),
+            Map("4" -> PageDesc("4", "/somewhere-else")),
             Some("/hello"),
             Text(),
             processId,
@@ -1547,7 +1546,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
         vStanzas,
         di,
         sessionId,
-        Map("4" -> "somewhere-else"),
+        Map("4" -> PageDesc("4", "/somewhere-else")),
         Some("Hello"),
         Text(),
         processId,
@@ -1750,7 +1749,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
         vStanzas,
         di,
         sessionId,
-        Map("4" -> "somewhere-else"),
+        Map("4" -> PageDesc("4", "/somewhere-else")),
         Some("Hello"),
         Text(),
         processId,

@@ -74,7 +74,7 @@ class GuidanceController @Inject() (
         logger.info(s"Retrieved page at ${pageCtx.page.urlPath}, start at ${pageCtx.processStartUrl}," +
                     s" answer = ${pageCtx.answer}, backLink = ${pageCtx.backLink}")
         pageCtx.page match {
-          case page: StandardPage => service.savePageState(pageCtx).map {
+          case page: StandardPage => service.savePageState(pageCtx.sessionId, pageCtx.labels).map {
               case Right(_) => Ok(standardView(page, pageCtx))
               case Left(_) => InternalServerError(errorHandler.internalServerErrorTemplate)
             }

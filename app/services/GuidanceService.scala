@@ -157,7 +157,7 @@ class GuidanceService @Inject() (
   def validateUserResponse(ctx: PageEvaluationContext, response: String): Option[String] =
     ctx.dataInput.fold[Option[String]](None)(_.validInput(response))
 
-  def savePageState(ctx: PageContext): Future[RequestOutcome[Unit]] = sessionRepository.savePageState(ctx.sessionId, ctx.labels)
+  def savePageState(sessionId: String, labels: Labels): Future[RequestOutcome[Unit]] = sessionRepository.savePageState(sessionId, labels)
 
   def retrieveAndCacheScratch(uuid: String, docId: String)
                              (implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[(String,String)]] =

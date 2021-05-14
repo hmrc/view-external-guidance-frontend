@@ -33,12 +33,12 @@ case class ProcessContext(process: Process,
   }
 }
 
-case class PageNext(id: String, next: List[String])
+case class PageNext(id: String, next: List[String] = Nil)
 object PageNext {
   implicit val formats: OFormat[PageNext] = Json.format[PageNext]
 }
 
-case class PageDesc(id: String, url: String, next: List[String])
+case class PageDesc(id: String, url: String, next: List[String] = Nil)
 object PageDesc {
   def apply(pn: PageNext, url: String): PageDesc = PageDesc(pn.id, url, pn.next)
   implicit val formats: OFormat[PageDesc] = Json.format[PageDesc]

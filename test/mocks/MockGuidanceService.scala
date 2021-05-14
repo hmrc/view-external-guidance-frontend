@@ -21,7 +21,7 @@ import core.models.RequestOutcome
 import org.scalamock.handlers.CallHandler
 import org.scalamock.scalatest.MockFactory
 import services.{ErrorStrategy, GuidanceService}
-import repositories.ProcessContext
+import models.ProcessContext
 import uk.gov.hmrc.http.HeaderCarrier
 import core.models.ocelot.Labels
 import scala.concurrent.{ExecutionContext, Future}

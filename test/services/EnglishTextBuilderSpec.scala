@@ -18,6 +18,7 @@ package services
 
 import base.{EnglishLanguage, BaseSpec}
 import core.models.ocelot._
+import models.PageDesc
 import models.ui.{Currency, CurrencyPoundsOnly, DateStandard, LabelRef, Link, Text, Txt, Words}
 
 class EnglishTextBuilderSpec extends BaseSpec {
@@ -33,7 +34,10 @@ class EnglishTextBuilderSpec extends BaseSpec {
 
     val link1 = "https://www.bbc.co.uk/news/#nw-c-most-watched-heading__title"
     val link2 = "https://www.gov.uk"
-    val urlMap1: Map[String, String] = Map("start" -> "dummy-path/start", "3" -> "dummy-path", "5" -> "dummy-path/blah", "34" -> "dummy-path/next")
+    val urlMap1: Map[String, PageDesc] = Map("start" -> PageDesc("start",  "dummy-path/start", Nil),
+                                             "3" -> PageDesc("3", "dummy-path", Nil),
+                                             "5" -> PageDesc("5","dummy-path/blah", Nil),
+                                             "34" -> PageDesc("34","dummy-path/next", Nil))
 
     val txtWithLinks = Phrase(
       Vector(

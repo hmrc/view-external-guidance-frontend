@@ -20,6 +20,7 @@ import base.BaseSpec
 import core.models.ocelot.stanzas.{ValueStanza, Value, ScalarType}
 import core.models.ocelot.{Process, ProcessJson, SequenceJson, FlowStage, ScalarLabel, ListLabel, Flow, Continuation, Label, LabelValue}
 import DefaultSessionRepository._
+import models.PageNext
 import java.time.Instant
 
 class SessionProcessFSMSpec extends BaseSpec {
@@ -177,7 +178,7 @@ class SessionProcessFSMSpec extends BaseSpec {
         Map("Choice" -> ScalarLabel("Choice",List("Third"),List()), "Choice_seq" -> ListLabel("Choice_seq",List("Third", "Fourth"),List())),
         List(Flow("8",Some(LabelValue("Choice","Third"))), Flow("88",Some(LabelValue("Choice","Fourth"))), Continuation("2")),
         Map("6" -> ValueStanza(List(Value(ScalarType,"SecondSeqChoice","Loop value = [label:Choice]")),Vector("end"),false)),
-        Map("/done" -> "2", "/one" -> "4", "/third" -> "8", "/start" -> "start", "/fourth" -> "88"),
+        Map("/done" -> PageNext("2"), "/one" -> PageNext("4"), "/third" -> PageNext("8"), "/start" -> PageNext("start"), "/fourth" -> PageNext("88")),
         Map("/start" -> "2,3"),
         List(PageHistory("/start", Nil)),
         Nil,
