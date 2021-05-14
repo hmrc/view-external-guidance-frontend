@@ -16,6 +16,9 @@
 
 package services
 
+import play.api.inject.Injector
+import play.api.i18n.MessagesApi
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 
 import core.services._
 import base.{BaseSpec, WelshLanguage}
@@ -26,9 +29,15 @@ import models.ui
 import models.ui.{BulletPointList, ComplexDetails, ConfirmationPanel, CyaSummaryList, Details, ErrorMsg, FormPage, H1, H3, H4}
 import models.ui.{InsetText, Link, Paragraph, RequiredErrorMsg, ExclusiveSequenceFormComponent, NonExclusiveSequenceFormComponent, Table, Text, WarningText, Words}
 
-class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
+class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage with GuiceOneAppPerSuite {
   implicit val labels: Labels = LabelCache()
-  trait QuestionTest {
+
+  trait BaseTest {
+    private def injector: Injector = app.injector
+    val messagesApi: MessagesApi = injector.instanceOf[MessagesApi]
+  }
+
+  trait QuestionTest extends BaseTest {
 
     implicit val urlMap: Map[String, String] =
       Map(
@@ -61,7 +70,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     val pageWithQuestionHint =
       Page(Process.StartStanzaId, "/test-page", stanzas :+ KeyedStanza("5", Question(questionWithHintPhrase, answers, answerDestinations, None, false)), Seq.empty)
 
-    val uiBuilder: UIBuilder = new UIBuilder()
+    val uiBuilder: UIBuilder = new UIBuilder(messagesApi)
 
     val four: Int = 4
     implicit val ctx: UIContext = UIContext(labels, lang, urlMap)
@@ -115,7 +124,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
   }
 
-  trait Test extends ProcessJson {
+  trait Test extends BaseTest with ProcessJson {
     case class UnsupportedVisualStanza(override val next: Seq[String], stack: Boolean) extends VisualStanza with Populated
 
     val lang0 = Vector("Some Text", "Welsh: Some Text")
@@ -289,7 +298,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     val extraIncomeUrlMap = extraIncomeStanzaPages.map(p => (p.id, p.url)).toMap
 
     // Define instance of class to be used in tests
-    val uiBuilder: UIBuilder = new UIBuilder()
+    val uiBuilder: UIBuilder = new UIBuilder(messagesApi)
     implicit val ctx: UIContext = UIContext(labels.update("week", "week", "Welsh: week"), lang, urlMap)
     val four: Int = 4
     val five: Int = 5
@@ -1120,7 +1129,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
   }
 
-  trait InputTest {
+  trait InputTest extends BaseTest {
     implicit val urlMap: Map[String, String] =
       Map(
         Process.StartStanzaId -> "/blah",
@@ -1149,7 +1158,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     val inputNumber = core.models.ocelot.stanzas.NumberInput(inputNext, inputPhrase, Some(helpPhrase), label = "inputNumber", None, stack = false)
     val pageNumber = Page(Process.StartStanzaId, "/test-page", stanzas :+ KeyedStanza("5", inputNumber), Seq.empty)
 
-    val uiBuilder: UIBuilder = new UIBuilder()
+    val uiBuilder: UIBuilder = new UIBuilder(messagesApi)
     implicit val ctx: UIContext = UIContext(labels, lang, urlMap)
     val four: Int = 4
   }
@@ -1329,7 +1338,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
   }
 
-  trait ConfirmationPanelTest {
+  trait ConfirmationPanelTest extends BaseTest {
     implicit val urlMap: Map[String, String] =
       Map(
         Process.StartStanzaId -> "/page-1",
@@ -1368,7 +1377,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     val sectionCalloutText: Text = TextBuilder.fromPhrase(sectionCallOutPhrase)
     val subSectionCalloutText: Text = TextBuilder.fromPhrase(subSectionCalloutPhrase)
 
-    val uiBuilder: UIBuilder = new UIBuilder()
+    val uiBuilder: UIBuilder = new UIBuilder(messagesApi)
 
   }
 
@@ -1550,7 +1559,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
   }
 
   "UIBuilder Date Input processing" must {
-    trait DateInputTest {
+    trait DateInputTest extends BaseTest {
       implicit val urlMap: Map[String, String] =
         Map(
           Process.StartStanzaId -> "/blah",
@@ -1573,7 +1582,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
       )
       val dateInput = DateInput(inputNext, inputPhrase, Some(helpPhrase), label = "input1", None, stack = false)
       val datePage = Page(Process.StartStanzaId, "/test-page", stanzas :+ KeyedStanza("5", dateInput), Seq.empty)
-      val uiBuilder: UIBuilder = new UIBuilder()
+      val uiBuilder: UIBuilder = new UIBuilder(messagesApi)
 
       implicit val ctx: UIContext = UIContext(labels, lang, urlMap)
     }
@@ -2046,7 +2055,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
 
   "UIBuilder non-exclusive sequence processing" must {
 
-    trait NonExclusiveSequenceTest {
+    trait NonExclusiveSequenceTest extends BaseTest {
 
       implicit val urlMap: Map[String, String] = Map(
         Process.StartStanzaId -> "start",
@@ -2103,7 +2112,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
       val page: Page = Page(Process.StartStanzaId, "/start", stanzas :+ KeyedStanza("4", nonExclusiveSequence), Seq.empty)
       val pageWithHint: Page = Page(Process.StartStanzaId, "/start", stanzas :+ KeyedStanza("4", nonExclusiveSequenceWithHint), Seq.empty)
       implicit val ctx: UIContext = UIContext(labels, lang, urlMap)
-      val uiBuilder: UIBuilder = new UIBuilder()
+      val uiBuilder: UIBuilder = new UIBuilder(messagesApi)
     }
 
     "ignore error callouts if no errors have occurred" in new NonExclusiveSequenceTest {
@@ -2190,7 +2199,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
 
   "UIBuilder exclusive sequence processing" must {
 
-    trait ExclusiveSequenceTest {
+    trait ExclusiveSequenceTest extends BaseTest {
 
       implicit val urlMap: Map[String, String] = Map(
         Process.StartStanzaId -> "start",
@@ -2251,7 +2260,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
       val page: Page = Page(Process.StartStanzaId, "/start", stanzas :+ KeyedStanza("4", exclusiveSequence), Seq.empty)
       val pageWithHint: Page = Page(Process.StartStanzaId, "/start", stanzas :+ KeyedStanza("4", exclusiveSequenceWithHint), Seq.empty)
       implicit val ctx: UIContext = UIContext(labels, lang, urlMap)
-      val uiBuilder: UIBuilder = new UIBuilder()
+      val uiBuilder: UIBuilder = new UIBuilder(messagesApi)
     }
 
     "ignore error callouts if no errors have occurred" in new ExclusiveSequenceTest {

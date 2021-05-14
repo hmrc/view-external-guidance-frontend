@@ -25,8 +25,8 @@
     case w: Words if w.bold => s"<strong>$w</strong>"
     case w: Words => w
     case l: Link => l.hint.fold(components.link(l))(h => components.link_withHint(l, h))
-    case lr: LabelRef if lr.bold => s"<strong>${lr.outputFormat.asString(ctx.labels.displayValue(lr.name)(messages.lang))}</strong>"
-    case lr: LabelRef => lr.outputFormat.asString(ctx.labels.displayValue(lr.name)(messages.lang))
+    case lr: LabelRef if lr.bold => s"<strong>${lr.outputFormat.asString(ctx.labels.displayValue(lr.name)(messages.lang), messages)}</strong>"
+    case lr: LabelRef => lr.outputFormat.asString(ctx.labels.displayValue(lr.name)(messages.lang), messages)
   }.mkString
 )
 @{
