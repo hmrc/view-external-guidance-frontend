@@ -144,7 +144,7 @@ class GuidanceService @Inject() (
     val (optionalNext, labels) = pageRenderer.renderPagePostSubmit(ctx.page, ctx.labels, validatedAnswer)
     optionalNext.fold[Future[RequestOutcome[(Option[String], Labels)]]](Future.successful(Right((None, labels)))){next =>
       logger.debug(s"Next page found at stanzaId: $next")
-      val legalPageIds = Process.StartStanzaId :: next :: ctx.pageMapById(next).next
+      val legalPageIds = next :: Process.StartStanzaId :: ctx.pageMapById(next).next
       sessionRepository.saveFormPageState(ctx.sessionId, url, submittedAnswer, labels, legalPageIds).map{
         case Left(err) =>
           logger.error(s"Failed to save updated labels, error = $err")
@@ -192,12 +192,14 @@ class GuidanceService @Inject() (
           Future.successful(Left(InvalidProcessError))
         },
         pages => {
-          val urlMap: Map[String, String] = pages.map(p => (p.id, p.url)).toMap
-          logger.debug(s"Process id: $processIdentifier, processCode: ${process.meta.processCode}, title: ${process.meta.title}")
-          logger.debug(s"PAGE MAP:")
-          pages.foreach{pge =>
-            logger.debug(s"PAGE: ${pge.id}, ${pge.url}")
-            (pge.next ++ pge.linked).distinct.foreach(id => logger.debug(s"\t=> $id, ${urlMap(id)}"))
+          if (logger.isDebugEnabled) {
+            val urlMap: Map[String, String] = pages.map(p => (p.id, p.url)).toMap
+            logger.debug(s"Process id: $processIdentifier, processCode: ${process.meta.processCode}, title: ${process.meta.title}")
+            logger.debug(s"PAGE MAP:")
+            pages.foreach{pge =>
+              logger.debug(s"PAGE: ${pge.id}, ${pge.url}")
+              (pge.next ++ pge.linked).distinct.foreach(id => logger.debug(s"\t=> $id, ${urlMap(id)}"))
+            }
           }
           sessionRepository.set(docId, process, pages.map(p => p.url -> PageNext(p.id, (p.next ++ p.linked).toList.distinct)).toMap).map {
             case Right(_) => Right((pages.head.url, process.meta.processCode))

@@ -30,7 +30,7 @@ import models.{PageContext, PageEvaluationContext, POST}
 import models.ui.{FormPage, StandardPage, SubmittedAnswer}
 import views.html.{form_page, standard_page}
 import play.api.Logger
-
+import models.ProcessContext
 import scala.concurrent.ExecutionContext.Implicits.global
 import controllers.actions.SessionIdAction
 import play.twirl.api.Html
@@ -69,7 +69,7 @@ class GuidanceController @Inject() (
   def getPage(processCode: String, path: String, p: Option[String]): Action[AnyContent] = sessionIdAction.async { implicit request =>
     implicit val messages: Messages = mcc.messagesApi.preferred(request)
     implicit val lang: Lang = messages.lang
-    withExistingSession[PageContext](service.getPageContext(processCode, s"/$path", p.isDefined, _)).flatMap {
+    withExistingSession[PageContext](sId =>service.getPageContext(processCode, s"/$path", p.isDefined, sId)).flatMap {
       case Right(pageCtx) =>
         logger.info(s"Retrieved page at ${pageCtx.page.urlPath}, start at ${pageCtx.processStartUrl}," +
                     s" answer = ${pageCtx.answer}, backLink = ${pageCtx.backLink}")
@@ -97,8 +97,20 @@ class GuidanceController @Inject() (
         logger.error(s"Redirecting to start of processCode $processCode at ${appConfig.baseUrl}/$processCode")
         Future.successful(Redirect(s"${appConfig.baseUrl}/$processCode"))
       case Left(ForbiddenError) =>
-        logger.error(s"Redirecting to start of processCode $processCode at ${appConfig.baseUrl}/$processCode")
-        Future.successful(Redirect(s"${appConfig.baseUrl}/$processCode"))
+        withExistingSession[ProcessContext](service.getProcessContext(_)).map{
+          case Right(ctx) => ctx.legalPageIds match {
+              case Nil =>
+                logger.error(s"Redirection after ForbiddenError to beginning of process")
+                Redirect(s"${appConfig.baseUrl}/$processCode")
+              case x :: xs => // Current page always the head of the legalPageIds
+                val idToUrlMap: Map[String, String] = ctx.pageMap.map{case (k, v) => (v.id, k)}
+                logger.error(s"Redirection after ForbiddenError to previous page at ${idToUrlMap(x)}")
+                Redirect(s"${appConfig.baseUrl}/${processCode}${idToUrlMap(x)}")
+            }
+          case Left(err) =>
+            logger.error(s"Redirection after ForbiddenError to beginning of process")
+            Redirect(s"${appConfig.baseUrl}/$processCode")
+        }
       case Left(err) =>
         logger.error(s"Request for PageContext at /$path returned $err, returning InternalServerError")
         Future.successful(InternalServerError(errorHandler.internalServerErrorTemplate))

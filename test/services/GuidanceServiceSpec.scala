@@ -410,6 +410,25 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
       }
 
     }
+  }
+
+  "Calling getProcessContext full" should {
+
+    // "return a Process context containing legalPageIds" in new Test {
+    //   val expectedProcessContext: ProcessContext = ProcessContext(process, Map(), Map(), Nil, Map(), Map(), Nil, None)
+
+    //   MockSessionRepository
+    //     .getUpdateForGET(sessionRepoId, None, false)
+    //     .returns(Future.successful(Right(expectedProcessContext)))
+
+    //   private val result = target.getProcessContext(sessionRepoId, process.meta.processCode, s"/${SecuredProcess.SecuredProcessStartUrl}", false)
+
+    //   whenReady(result) { err =>
+    //     err shouldBe Right(expectedProcessContext)
+    //   }
+
+    // }
+
 
     "with a url to the passphrase page should send no pageHistory url to the repository" in new Test {
       val expectedProcessContext: ProcessContext = ProcessContext(process, Map(), Map(), Nil, Map(), Map(), Nil, None)
@@ -450,7 +469,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
         .returns((Some("2"), LabelCache()))
 
       MockSessionRepository
-        .saveFormPageState(processId,"/last-page", "yes", labels, List("start", "2"))
+        .saveFormPageState(processId,"/last-page", "yes", labels, List("2", "start"))
         .returns(Future.successful(Right({})))
 
       target.submitPage(pec, "/last-page", "yes", "yes").map{
