@@ -131,7 +131,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
   def getNoUpdate(key:String): Future[RequestOutcome[ProcessContext]] =
     find("_id" -> key).map {
       case Nil =>  Left(NotFoundError)
-      case r :: _ => Right(ProcessContext(r.process, r.answers, r.labels, r.flowStack, r.continuationPool, r.pageMap, Nil, None))
+      case r :: _ => Right(ProcessContext(r.process, r.answers, r.labels, r.flowStack, r.continuationPool, r.pageMap, r.legalPageIds, None))
     }.recover {
       case lastError =>
       logger.error(s"Error $lastError occurred in method get(key: String) attempting to retrieve session $key")
@@ -201,8 +201,8 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
               val firstPageUrl: String = s"${sp.process.meta.processCode}${sp.process.startUrl.getOrElse("")}"
               val (backLink, historyUpdate, flowStackUpdate, labelUpdates) = sessionProcessTransition(url, sp, previousPageByLink, firstPageUrl)
               val labels: Map[String, Label] = sp.labels ++ labelUpdates.map(l => (l.name -> l)).toMap
-              val legalPageIds = Process.StartStanzaId :: pageDesc.id :: pageDesc.next ++
-                                  backLink.fold[List[String]](Nil)(bl => List(sp.pageMap(bl.drop(sp.process.meta.processCode.length)).id)).distinct
+              val legalPageIds = (pageDesc.id :: Process.StartStanzaId :: pageDesc.next ++
+                                  backLink.fold[List[String]](Nil)(bl => List(sp.pageMap(bl.drop(sp.process.meta.processCode.length)).id))).distinct
               val processContext = ProcessContext(
                                     sp.process,
                                     sp.answers,
@@ -215,12 +215,12 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
               logger.debug(s"NewLegalIds: ${legalPageIds}")
               saveUpdates(key, historyUpdate, flowStackUpdate, labelUpdates, legalPageIds).map {
                 case Left(err) =>
-                  logger.error(s"Unable to save backlink history, error = $err")
-                  Right(processContext)
+                  logger.error(s"Unable to update session data, error = $err")
+                  Left(err)
                 case _ => Right(processContext)
               }
             } else {
-              logger.error(s"Attempt to move to illegal page $url")
+              logger.error(s"Attempt to move to illegal page $url, LEGALPIDS ${sp.legalPageIds}")
               Future.successful(Left(ForbiddenError))
             }
           }
@@ -239,6 +239,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
         "$set" -> Json.obj(
           (List(
             toFieldPair(TtlExpiryFieldName, Json.obj(toFieldPair("$date", Instant.now().toEpochMilli))),
+            toFieldPair(LegalPageIdsKey, List[String]()),
             toFieldPair(FlowStackKey, List[FlowStage]()),
             toFieldPair(PageHistoryKey, List[PageHistory]()),
             toFieldPair(ContinuationPoolKey, Map[String, Stanza]()),
