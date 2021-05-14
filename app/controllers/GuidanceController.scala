@@ -93,9 +93,6 @@ class GuidanceController @Inject() (
       case Left(NotFoundError) =>
         logger.warn(s"Request for PageContext at /$path returned NotFound, returning NotFound")
         Future.successful(NotFound(errorHandler.notFoundTemplateWithProcessCode(Some(processCode))))
-      case Left(BadRequestError) =>
-        logger.warn(s"Request for PageContext at /$path returned BadRequest")
-        Future.successful(BadRequest(errorHandler.badRequestTemplateWithProcessCode(Some(processCode))))
       case Left(ExpectationFailedError) =>
         logger.error(s"Redirecting to start of processCode $processCode at ${appConfig.baseUrl}/$processCode")
         Future.successful(Redirect(s"${appConfig.baseUrl}/$processCode"))

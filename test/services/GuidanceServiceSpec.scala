@@ -83,7 +83,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
                 vStanzas,
                 di,
                 processId,
-                Map("/first-page" -> PageDesc("start", "/first-page"), "/page-1" ->  PageDesc("1", "/page-1"), "/last-page" ->  PageDesc("2", "/last-page")),
+                Map("start" -> PageDesc("start", "/first-page"), "1" ->  PageDesc("1", "/page-1"), "2" ->  PageDesc("2", "/last-page")),
                 Some("/hello"),
                 ui.Text(),
                 processId,
@@ -447,13 +447,13 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
     "Return the id of the page to follow" in new Test {
       MockPageRenderer
         .renderPagePostSubmit(page, LabelCache(), "yes")
-        .returns((Some("4"), LabelCache()))
+        .returns((Some("2"), LabelCache()))
 
       MockSessionRepository
-        .saveFormPageState(processId,"/test-page", "yes", labels, Nil)
+        .saveFormPageState(processId,"/last-page", "yes", labels, List("start", "2"))
         .returns(Future.successful(Right({})))
 
-      target.submitPage(pec, "/test-page", "yes", "yes").map{
+      target.submitPage(pec, "/last-page", "yes", "yes").map{
         case Left(err) => fail
         case Right((Some("4"), _)) => succeed
         case Right(_) => fail
