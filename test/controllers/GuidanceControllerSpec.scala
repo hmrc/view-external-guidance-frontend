@@ -29,7 +29,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import play.api.test.Helpers.stubMessagesControllerComponents
 import uk.gov.hmrc.http.SessionKeys
-import models.{PageContext, PageDesc, ProcessContext, PageEvaluationContext}
+import models.{PageContext, PageDesc, PageNext, ProcessContext, PageEvaluationContext}
 import core.models.ocelot.{KeyedStanza, Labels, Page, Phrase, Process, Meta, ProcessJson}
 import core.models.ocelot.stanzas.{CurrencyInput, DateInput, ExclusiveSequence, NonExclusiveSequence, Question, _}
 import models.ui
@@ -1039,6 +1039,38 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
           guidanceService,
           stubMessagesControllerComponents()
         )
+
+      val meta = Meta(processId, "", None, 0, "", 1L, 0, None, None, processCode)
+      val emptyProcess = Process(meta, Map(), Vector(), Vector())
+      val pageMap = Map("1" -> PageNext("1", List("2", "3")))
+      val processContext: ProcessContext =
+        ProcessContext(emptyProcess,Map("/start" -> "0"),Map(),Nil,Map(),pageMap,List("1","2"),None)
+    }
+
+    "Return SEE_OTHER from getPage as a result trying to access valid page illegal in the current context" in new Test {
+      MockSessionRepository
+        .getUpdateForGET(processId, Some(s"${processId}$path"), false)
+        .returns(Future.successful(Left(ForbiddenError)))
+      MockSessionRepository
+        .getNoUpdate(processId)
+        .returns(Future.successful(Right(processContext)))
+
+      lazy val result = target.getPage(processId, relativePath, None)(fakeRequest)
+
+      status(result) shouldBe Status.SEE_OTHER
+    }
+
+    "Return SEE_OTHER from getPage as a result trying to access valid page illegal in the current context when session not found" in new Test {
+      MockSessionRepository
+        .getUpdateForGET(processId, Some(s"${processId}$path"), false)
+        .returns(Future.successful(Left(ForbiddenError)))
+      MockSessionRepository
+        .getNoUpdate(processId)
+        .returns(Future.successful(Left(NotFoundError)))
+
+      lazy val result = target.getPage(processId, relativePath, None)(fakeRequest)
+
+      status(result) shouldBe Status.SEE_OTHER
     }
 
     "Return SEE_OTHER from a getPage() as a result of an Authentication error when non authenticated" in new Test {
