@@ -39,9 +39,7 @@ case object ValueMissingError extends ErrorStrategy
 case class ValueMissingGroupError(missingFieldNames: List[String]) extends ErrorStrategy
 case object ValueTypeError extends ErrorStrategy {
   override def default(stanzas: Seq[VisualStanza]): ErrorStrategy =
-    stanzas.collect{case s:TypeErrorCallout => s}
-           .headOption
-           .fold[ErrorStrategy](ValueMissingError)(_ => this)
+    stanzas.collectFirst{case s:TypeErrorCallout => s}.fold[ErrorStrategy](ValueMissingError)(_ => this)
 }
 
 @Singleton
@@ -75,10 +73,10 @@ class UIBuilder {
       case (nl: NumberedList) :: xs => fromStanzas(xs, acc ++ Seq(fromNumberedList(nl)), errStrategy)
       case (nl: NumberedCircleList) :: xs => fromStanzas(xs, acc ++ Seq(fromNumberedCircleList(nl)), errStrategy)
       case (c: Callout) :: xs => fromStanzas(xs, acc ++ fromCallout(c, errStrategy), errStrategy)
-      case (in: Input) :: xs => fromStanzas(Nil, Seq(fromInput(in, acc)), errStrategy)
-      case (q: Question) :: xs => fromStanzas(Nil, Seq(fromQuestion(q, acc)), errStrategy)
-      case (ns: NonExclusiveSequence) :: xs => fromStanzas(Nil, Seq(fromNonExclusiveSequence(ns, acc)), errStrategy)
-      case (es: ExclusiveSequence) :: xs => fromStanzas(Nil, Seq(fromExclusiveSequence(es, acc)), errStrategy)
+      case (in: Input) :: _ => fromStanzas(Nil, Seq(fromInput(in, acc)), errStrategy)
+      case (q: Question) :: _ => fromStanzas(Nil, Seq(fromQuestion(q, acc)), errStrategy)
+      case (ns: NonExclusiveSequence) :: _ => fromStanzas(Nil, Seq(fromNonExclusiveSequence(ns, acc)), errStrategy)
+      case (es: ExclusiveSequence) :: _ => fromStanzas(Nil, Seq(fromExclusiveSequence(es, acc)), errStrategy)
       case (ng: NoteGroup) :: xs => fromStanzas(xs, acc ++ Seq(fromNoteGroup(ng)), errStrategy)
       case (wt: ImportantGroup) :: xs => fromStanzas(xs, acc ++ Seq(fromImportantGroup(wt)), errStrategy)
       case (ycg: YourCallGroup) :: xs => fromStanzas(xs, acc ++ Seq(fromYourCallGroup(ycg)), errStrategy)
@@ -118,9 +116,9 @@ class UIBuilder {
 
   private def fromInstruction( i:Instruction)(implicit ctx: UIContext): UIComponent =
     i match {
-      case Instruction(txt, _, Some(Link(id, dest, _, window)), _, _, _) if Link.isLinkableStanzaId(dest) =>
+      case Instruction(txt, _, Some(Link(_, dest, _, window)), _, _, _) if Link.isLinkableStanzaId(dest) =>
         Paragraph(Text.link(ctx.pageMapById(dest).url, txt.value(ctx.lang), window))
-      case Instruction(txt, _, Some(Link(id, dest, _, window)), _, _, _) => Paragraph(Text.link(dest, txt.value(ctx.lang), window))
+      case Instruction(txt, _, Some(Link(_, dest, _, window)), _, _, _) => Paragraph(Text.link(dest, txt.value(ctx.lang), window))
       case Instruction(txt, _, _, _, _, _) => Paragraph(TextBuilder.fromPhrase(txt))
     }
 
@@ -187,7 +185,7 @@ class UIBuilder {
   private def fromRequiredErrorGroup(eg: RequiredErrorGroup, errStrategy: ErrorStrategy)(implicit ctx: UIContext): Seq[UIComponent] =
     errStrategy match {
       case ValueMissingGroupError(Nil) =>
-        eg.group.find(co => EmbeddedParameterRegex.findAllMatchIn(co.text.value(ctx.lang)).length == 0).fold[Seq[UIComponent]](Nil){errorCallout =>
+        eg.group.find(co => EmbeddedParameterRegex.findAllMatchIn(co.text.value(ctx.lang)).isEmpty).fold[Seq[UIComponent]](Nil){errorCallout =>
           Seq(RequiredErrorMsg(Text(errorCallout.text.value(ctx.lang))))
         }
       case e: ValueMissingGroupError =>

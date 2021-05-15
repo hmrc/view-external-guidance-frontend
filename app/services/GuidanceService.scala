@@ -84,19 +84,19 @@ class GuidanceService @Inject() (
   def getPageEvaluationContext(processCode: String, url: String, previousPageByLink: Boolean, sessionId: String, op: RequestOperation = GET)
                               (implicit context: ExecutionContext, lang: Lang): Future[RequestOutcome[PageEvaluationContext]] =
     getProcessContext(sessionId, processCode, url, previousPageByLink, op).map {
-      case Right(ProcessContext(process, answers, labelsMap, flowStack, continuationPool, pageMap, legalPageIds, backLink)) if process.meta.processCode == processCode =>
-        pageMap.get(url).fold[RequestOutcome[PageEvaluationContext]]{
-          logger.error(s"Unable to find url $url within cached process ${process.meta.id} using sessionId $sessionId")
+      case Right(ctx) if ctx.process.meta.processCode == processCode =>
+        ctx.pageMap.get(url).fold[RequestOutcome[PageEvaluationContext]]{
+          logger.error(s"Unable to find url $url within cached process ${ctx.process.meta.id} using sessionId $sessionId")
           Left(NotFoundError)
         }{ pageNext =>
-          pageBuilder.buildPage(pageNext.id, process).fold(
+          pageBuilder.buildPage(pageNext.id, ctx.process).fold(
             err => {
-              logger.error(s"PageBuilder error $err on process ${process.meta.id} with sessionId $sessionId")
+              logger.error(s"PageBuilder error $err on process ${ctx.process.meta.id} with sessionId $sessionId")
               Left(InvalidProcessError)
             },
             page => {
-              val pageMapById: Map[String, PageDesc] = pageMap.map{case (k, pn) => (pn.id, PageDesc(pn, s"${appConfig.baseUrl}/$processCode${k}"))}
-              val (visualStanzas, labels, dataInput) = pageRenderer.renderPage(page, LabelCache(labelsMap, Map(), flowStack, continuationPool))
+              val pageMapById: Map[String, PageDesc] = ctx.pageMap.map{case (k, pn) => (pn.id, PageDesc(pn, s"${appConfig.baseUrl}/$processCode${k}"))}
+              val (visualStanzas, labels, dataInput) = pageRenderer.renderPage(page, LabelCache(ctx.labels, Map(), ctx.flowStack, ctx.continuationPool))
 
               Right(
                 PageEvaluationContext(
@@ -105,13 +105,13 @@ class GuidanceService @Inject() (
                   dataInput,
                   sessionId,
                   pageMapById,
-                  process.startUrl.map( startUrl => s"${appConfig.baseUrl}/${processCode}/session-restart"),
-                  process.title,
-                  process.meta.id,
+                  ctx.process.startUrl.map( startUrl => s"${appConfig.baseUrl}/${processCode}/session-restart"),
+                  ctx.process.title,
+                  ctx.process.meta.id,
                   processCode,
                   labels,
-                  backLink.map(bl => s"${appConfig.baseUrl}/$bl"),
-                  answers.get(url)
+                  ctx.backLink.map(bl => s"${appConfig.baseUrl}/$bl"),
+                  ctx.answers.get(url)
                 )
               )
             }

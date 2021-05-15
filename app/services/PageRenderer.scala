@@ -34,11 +34,11 @@ class PageRenderer @Inject() () {
 
     @tailrec
     def evaluatePostInputStanzas(next: String, labels: Labels, seen: Seq[String])(implicit stanzaMap: Map[String, Stanza]): (Option[String], Labels) =
-      if (seen.contains(next)) (None, labels)   // next indicates any seen id
-      else stanzaMap.get(next) match {
+      if (seen.contains(next)) {(None, labels)}   // next indicates any seen id
+      else {stanzaMap.get(next) match {
         case None => (Some(next), labels)
         case Some(s) => s match {
-          case p: PageStanza => (Some(next), labels)
+          case _: PageStanza => (Some(next), labels)
           case EndStanza => labels.nextFlow match {
               case Some((nxt, updatedLabels)) => evaluatePostInputStanzas(nxt, updatedLabels, seen)
               // Encountering an EndStanza following input suggests incomplete guidance, i.e. a form page which accepts input and stops
@@ -50,7 +50,7 @@ class PageRenderer @Inject() () {
             val (next, updatedLabels) = s.eval(labels)
             evaluatePostInputStanzas(next, updatedLabels, seen)
         }
-      }
+      }}
 
 
 

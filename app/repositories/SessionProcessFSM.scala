@@ -43,12 +43,10 @@ class SessionProcessFSM @Inject() () {
   def apply(url: String, priorSp: SessionProcess, forceForward: Boolean, sentinelUrl: String): BackLinkAndStateUpdate =
     priorSp.pageHistory.reverse match {
       // Initial page
-      case Nil =>
-        (None, Some(List(PageHistory(url, Nil))), None, Nil)
+      case Nil => (None, Some(List(PageHistory(url, Nil))), None, Nil)
 
       // REFRESH: new url equals current url
-      case x :: xs if x.url == url =>
-        (xs.headOption.map(_.url), None, None, Nil)
+      case x :: xs if x.url == url => (xs.headOption.map(_.url), None, None, Nil)
 
       // BACK: new url equals previous url and prior flowStack equals the previous flowStack
       case _ :: y :: xs if y.url == url && !forceForward && priorSp.flowStack == y.flowStack =>
@@ -59,7 +57,7 @@ class SessionProcessFSM @Inject() () {
         (xs.headOption.map(_.url), Some((y :: xs).reverse), Some(y.flowStack), pageHistoryLabelValues(y.flowStack))
 
       // FORWARD to first page of guidance
-      case x :: xs if url == sentinelUrl =>
+      case _ :: _ if url == sentinelUrl =>
         findPreviousFlowAndLabelState(url, priorSp.pageHistory).fold[BackLinkAndStateUpdate](
           (None, Some(List(PageHistory(url, Nil))), Some(Nil), Nil)
         ){t =>
@@ -72,10 +70,8 @@ class SessionProcessFSM @Inject() () {
         findPreviousFlowAndLabelState(url, priorSp.pageHistory).fold[BackLinkAndStateUpdate]{
           (Some(x.url), Some((PageHistory(url, priorSp.flowStack) :: x :: xs).reverse), None, Nil)
         }{
-          case (_, Nil) =>
-            (Some(x.url), Some((PageHistory(url, Nil) :: x :: xs).reverse), Some(Nil), Nil)
-          case (_, flowStack) =>
-            (Some(x.url), Some((PageHistory(url, priorSp.flowStack) :: x :: xs).reverse), None, Nil)
+          case (_, Nil) => (Some(x.url), Some((PageHistory(url, Nil) :: x :: xs).reverse), Some(Nil), Nil)
+          case _ => (Some(x.url), Some((PageHistory(url, priorSp.flowStack) :: x :: xs).reverse), None, Nil)
         }
 
       // FORWARD from empty flowStack
