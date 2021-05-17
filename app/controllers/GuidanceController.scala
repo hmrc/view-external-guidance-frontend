@@ -26,11 +26,11 @@ import services.{ErrorStrategy, GuidanceService, ValueTypeError}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 import core.models.errors._
 import core.models.ocelot.SecuredProcess
-import models.{PageContext, PageEvaluationContext}
+import models.{PageContext, PageEvaluationContext, POST}
 import models.ui.{FormPage, StandardPage, SubmittedAnswer}
 import views.html.{form_page, standard_page}
 import play.api.Logger
-
+import models.ProcessContext
 import scala.concurrent.ExecutionContext.Implicits.global
 import controllers.actions.SessionIdAction
 import play.twirl.api.Html
@@ -69,7 +69,7 @@ class GuidanceController @Inject() (
   def getPage(processCode: String, path: String, p: Option[String]): Action[AnyContent] = sessionIdAction.async { implicit request =>
     implicit val messages: Messages = mcc.messagesApi.preferred(request)
     implicit val lang: Lang = messages.lang
-    withExistingSession[PageContext](service.getPageContext(processCode, s"/$path", p.isDefined, _)).flatMap {
+    withExistingSession[PageContext](sId =>service.getPageContext(processCode, s"/$path", p.isDefined, sId)).flatMap {
       case Right(pageCtx) =>
         logger.info(s"Retrieved page at ${pageCtx.page.urlPath}, start at ${pageCtx.processStartUrl}," +
                     s" answer = ${pageCtx.answer}, backLink = ${pageCtx.backLink}")
@@ -87,28 +87,15 @@ class GuidanceController @Inject() (
               Future.successful(BadRequest(errorHandler.badRequestTemplateWithProcessCode(Some(processCode))))
           }
         }
-      case Left(AuthenticationError) =>
-        logger.warn(s"Request for PageContext at /$path returned AuthenticationError, redirecting to process passphrase page")
-        Future.successful(Redirect(routes.GuidanceController.getPage(processCode, SecuredProcess.SecuredProcessStartUrl, None)))
-      case Left(NotFoundError) =>
-        logger.warn(s"Request for PageContext at /$path returned NotFound, returning NotFound")
-        Future.successful(NotFound(errorHandler.notFoundTemplateWithProcessCode(Some(processCode))))
-      case Left(BadRequestError) =>
-        logger.warn(s"Request for PageContext at /$path returned BadRequest")
-        Future.successful(BadRequest(errorHandler.badRequestTemplateWithProcessCode(Some(processCode))))
-      case Left(ExpectationFailedError) =>
-        logger.error(s"Redirecting to start of processCode $processCode at ${appConfig.baseUrl}/$processCode")
-        Future.successful(Redirect(s"${appConfig.baseUrl}/$processCode"))
-      case Left(err) =>
-        logger.error(s"Request for PageContext at /$path returned $err, returning InternalServerError")
-        Future.successful(InternalServerError(errorHandler.internalServerErrorTemplate))
+      case Left(ForbiddenError) => logAndTranslateGetPageForbiddenError(processCode)
+      case Left(err) => Future.successful(logAndTranslateGetPageError(err, processCode, path))
     }
   }
 
   def submitPage(processCode: String, path: String): Action[AnyContent] = Action.async { implicit request =>
     implicit val messages: Messages = mcc.messagesApi.preferred(request)
     implicit val lang: Lang = messages.lang
-    withExistingSession[PageEvaluationContext](service.getPageEvaluationContext(processCode, s"/$path", previousPageByLink = false, _)).flatMap {
+    withExistingSession[PageEvaluationContext](service.getPageEvaluationContext(processCode, s"/$path", previousPageByLink = false, _, POST)).flatMap {
       case Right(ctx) => ctx.dataInput.fold{
           logger.error( s"Unable to locate input stanza for process ${ctx.processCode} on submission")
           Future.successful(BadRequest(errorHandler.badRequestTemplateWithProcessCode(Some(processCode))))
@@ -127,7 +114,7 @@ class GuidanceController @Inject() (
                     logger.info(s"Post submit page evaluation indicates guidance detected input error")
                     BadRequest(createInputView(service.getPageContext(ctx.copy(labels = labels)), inputName, form))
                   case Right((Some(stanzaId), _)) => // Some(stanzaId) here indicates a redirect to the page with id "stanzaId"
-                    val url = ctx.stanzaIdToUrlMap(stanzaId)
+                    val url = ctx.pageMapById(stanzaId).url
                     logger.info(s"Post submit page evaluation indicates next page at stanzaId: $stanzaId => $url")
                     Redirect(routes.GuidanceController.getPage(
                       processCode,
@@ -140,22 +127,59 @@ class GuidanceController @Inject() (
             }
           }
         }
-      case Left(AuthenticationError) =>
-        Future.successful(Redirect(routes.GuidanceController.getPage(processCode, SecuredProcess.SecuredProcessStartUrl, None)))
-      case Left(NotFoundError) =>
-        logger.warn(s"Request for PageContext at /$path returned NotFound during form submission, returning NotFound")
-        Future.successful(NotFound(errorHandler.notFoundTemplateWithProcessCode(Some(processCode))))
-      case Left(BadRequestError) =>
-        logger.warn(s"Request for PageContext at /$path returned BadRequest during form submission, returning BadRequest")
-        Future.successful(BadRequest(errorHandler.badRequestTemplateWithProcessCode(Some(processCode))))
-      case Left(ExpectationFailedError) =>
-        logger.error(s"Redirecting to start of processCode $processCode at ${appConfig.baseUrl}/$processCode")
-        Future.successful(Redirect(s"${appConfig.baseUrl}/$processCode"))
-      case Left(err) =>
-        logger.error(s"Request for PageContext at /$path returned $err during form submission, returning InternalServerError")
-        Future.successful(InternalServerError(errorHandler.internalServerErrorTemplate))
+      case Left(err) => Future.successful(logAndTranslateSubmitError(err, processCode, path))
     }
   }
+
+  private def logAndTranslateSubmitError(err: Error, processCode: String, path: String)(implicit request: Request[_]): Result =
+    err match {
+      case AuthenticationError =>
+        Redirect(routes.GuidanceController.getPage(processCode, SecuredProcess.SecuredProcessStartUrl, None))
+      case NotFoundError =>
+        logger.warn(s"Request for PageContext at /$path returned NotFound during form submission, returning NotFound")
+        NotFound(errorHandler.notFoundTemplateWithProcessCode(Some(processCode)))
+      case BadRequestError =>
+        logger.warn(s"Request for PageContext at /$path returned BadRequest during form submission, returning BadRequest")
+        BadRequest(errorHandler.badRequestTemplateWithProcessCode(Some(processCode)))
+      case ExpectationFailedError =>
+        logger.error(s"Redirecting to start of processCode $processCode at ${appConfig.baseUrl}/$processCode")
+        Redirect(s"${appConfig.baseUrl}/$processCode")
+      case err =>
+        logger.error(s"Request for PageContext at /$path returned $err during form submission, returning InternalServerError")
+        InternalServerError(errorHandler.internalServerErrorTemplate)
+    }
+
+  private def logAndTranslateGetPageForbiddenError(processCode: String)(implicit request: Request[_]): Future[Result] =
+    withExistingSession[ProcessContext](service.getProcessContext).map{
+      case Right(ctx) => ctx.legalPageIds match {
+        case Nil =>
+          logger.error(s"Redirection after ForbiddenError to beginning of process")
+          Redirect(s"${appConfig.baseUrl}/$processCode")
+        case x :: _ => // Current page always the head of the legalPageIds
+          val idToUrlMap: Map[String, String] = ctx.pageMap.map{case (k, v) => (v.id, k)}
+          logger.error(s"Redirection after ForbiddenError to previous page at ${idToUrlMap(x)}")
+          Redirect(s"${appConfig.baseUrl}/${processCode}${idToUrlMap(x)}")
+      }
+      case Left(err) =>
+        logger.error(s"Failed ($err) to retrieve current session on ForbiddenError, redirecting after ForbiddenError to beginning of process")
+        Redirect(s"${appConfig.baseUrl}/$processCode")
+    }
+
+  private def logAndTranslateGetPageError(err: Error, processCode: String, path: String)(implicit request: Request[_]): Result =
+    err match {
+      case AuthenticationError =>
+        logger.warn(s"Request for PageContext at /$path returned AuthenticationError, redirecting to process passphrase page")
+        Redirect(routes.GuidanceController.getPage(processCode, SecuredProcess.SecuredProcessStartUrl, None))
+      case NotFoundError =>
+        logger.warn(s"Request for PageContext at /$path returned NotFound, returning NotFound")
+        NotFound(errorHandler.notFoundTemplateWithProcessCode(Some(processCode)))
+      case ExpectationFailedError =>
+        logger.error(s"Redirecting to start of processCode $processCode at ${appConfig.baseUrl}/$processCode")
+        Redirect(s"${appConfig.baseUrl}/$processCode")
+      case err =>
+        logger.error(s"Request for PageContext at /$path returned $err, returning InternalServerError")
+        InternalServerError(errorHandler.internalServerErrorTemplate)
+    }
 
   private def createInputView(ctx: PageContext, inputName: String, form: Form[_])(implicit request: Request[_], messages: Messages): Html =
     ctx.page match {

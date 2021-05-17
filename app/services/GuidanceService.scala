@@ -20,14 +20,14 @@ import core.services._
 import config.AppConfig
 import connectors.GuidanceConnector
 import javax.inject.{Inject, Singleton}
-import models.{PageContext, PageEvaluationContext}
+import models.{ProcessContext, PageDesc, PageNext, PageContext, PageEvaluationContext, RequestOperation, GET, POST}
 import play.api.Logger
 import core.models.errors.{InternalServerError, InvalidProcessError, AuthenticationError}
 import core.models.RequestOutcome
 import uk.gov.hmrc.http.HeaderCarrier
 import play.api.i18n.Lang
 import scala.concurrent.{ExecutionContext, Future}
-import repositories.{ProcessContext, SessionRepository}
+import repositories.SessionRepository
 import core.models.ocelot.{LabelCache, Labels, Process}
 import core.models.ocelot.SecuredProcess
 import core.models.errors.ExpectationFailedError
@@ -50,7 +50,7 @@ class GuidanceService @Inject() (
   def sessionRestart(processCode: String, sessionId: String)(implicit context: ExecutionContext): Future[RequestOutcome[String]] =
     sessionRepository.getResetSession(sessionId).map{
       case Right(ctx) if processCode == ctx.process.meta.processCode =>
-        ctx.urlToPageId.collectFirst{case (k,v) if v == ctx.process.startPageId => k}
+        ctx.pageMap.collectFirst{case (k,v) if v.id == ctx.process.startPageId => k}
           .fold[RequestOutcome[String]]{
             logger.error(s"Process start pageId (${ctx.process.startPageId}) missing from retreived session map" )
             Left(InternalServerError)
@@ -65,12 +65,15 @@ class GuidanceService @Inject() (
         Left(InternalServerError)
     }
 
-  def getProcessContext(sessionId: String): Future[RequestOutcome[ProcessContext]] = sessionRepository.get(sessionId)
+  def getProcessContext(sessionId: String): Future[RequestOutcome[ProcessContext]] = sessionRepository.getNoUpdate(sessionId)
 
-  def getProcessContext(sessionId: String, processCode: String, url: String, previousPageByLink: Boolean)
+  def getProcessContext(sessionId: String, processCode: String, url: String, previousPageByLink: Boolean, op: RequestOperation = GET)
                        (implicit context: ExecutionContext): Future[RequestOutcome[ProcessContext]] = {
     val pageUrl: Option[String] = if (isAuthenticationUrl(url)) None else Some(s"$processCode$url")
-    sessionRepository.get(sessionId, pageUrl, previousPageByLink).map{ result =>
+    (op match {
+      case GET => sessionRepository.getUpdateForGET(sessionId, pageUrl, previousPageByLink)
+      case POST => sessionRepository.getUpdateForPOST(sessionId, pageUrl)
+    }).map{ result =>
       (result, pageUrl) match {
         case (Right(ctx), Some(_)) if !ctx.secure => Left(AuthenticationError)
         case _ => result
@@ -78,22 +81,22 @@ class GuidanceService @Inject() (
     }
   }
 
-  def getPageEvaluationContext(processCode: String, url: String, previousPageByLink: Boolean, sessionId: String)
+  def getPageEvaluationContext(processCode: String, url: String, previousPageByLink: Boolean, sessionId: String, op: RequestOperation = GET)
                               (implicit context: ExecutionContext, lang: Lang): Future[RequestOutcome[PageEvaluationContext]] =
-    getProcessContext(sessionId, processCode, url, previousPageByLink).map {
-      case Right(ProcessContext(process, answers, labelsMap, flowStack, continuationPool, urlToPageId, backLink)) if process.meta.processCode == processCode =>
-        urlToPageId.get(url).fold[RequestOutcome[PageEvaluationContext]]{
-          logger.error(s"Unable to find url $url within cached process ${process.meta.id} using sessionId $sessionId")
+    getProcessContext(sessionId, processCode, url, previousPageByLink, op).map {
+      case Right(ctx) if ctx.process.meta.processCode == processCode =>
+        ctx.pageMap.get(url).fold[RequestOutcome[PageEvaluationContext]]{
+          logger.error(s"Unable to find url $url within cached process ${ctx.process.meta.id} using sessionId $sessionId")
           Left(NotFoundError)
-        }{ pageId =>
-          pageBuilder.buildPage(pageId, process).fold(
+        }{ pageNext =>
+          pageBuilder.buildPage(pageNext.id, ctx.process).fold(
             err => {
-              logger.error(s"PageBuilder error $err on process ${process.meta.id} with sessionId $sessionId")
+              logger.error(s"PageBuilder error $err on process ${ctx.process.meta.id} with sessionId $sessionId")
               Left(InvalidProcessError)
             },
             page => {
-              val stanzaIdToUrlMap = urlToPageId.map{case (k, v) => (v, s"${appConfig.baseUrl}/$processCode${k}")}
-              val (visualStanzas, labels, dataInput) = pageRenderer.renderPage(page, LabelCache(labelsMap, Map(), flowStack, continuationPool))
+              val pageMapById: Map[String, PageDesc] = ctx.pageMap.map{case (k, pn) => (pn.id, PageDesc(pn, s"${appConfig.baseUrl}/$processCode${k}"))}
+              val (visualStanzas, labels, dataInput) = pageRenderer.renderPage(page, LabelCache(ctx.labels, Map(), ctx.flowStack, ctx.continuationPool))
 
               Right(
                 PageEvaluationContext(
@@ -101,14 +104,14 @@ class GuidanceService @Inject() (
                   visualStanzas,
                   dataInput,
                   sessionId,
-                  stanzaIdToUrlMap,
-                  process.startUrl.map( startUrl => s"${appConfig.baseUrl}/${processCode}/session-restart"),
-                  process.title,
-                  process.meta.id,
+                  pageMapById,
+                  ctx.process.startUrl.map( startUrl => s"${appConfig.baseUrl}/${processCode}/session-restart"),
+                  ctx.process.title,
+                  ctx.process.meta.id,
                   processCode,
                   labels,
-                  backLink.map(bl => s"${appConfig.baseUrl}/$bl"),
-                  answers.get(url)
+                  ctx.backLink.map(bl => s"${appConfig.baseUrl}/$bl"),
+                  ctx.answers.get(url)
                 )
               )
             }
@@ -124,7 +127,7 @@ class GuidanceService @Inject() (
 
   def getPageContext(pec: PageEvaluationContext, errStrategy: ErrorStrategy = NoError)(implicit lang: Lang): PageContext = {
     val (visualStanzas, labels, dataInput) = pageRenderer.renderPage(pec.page, pec.labels)
-    val uiPage = uiBuilder.buildPage(pec.page.url, visualStanzas, errStrategy)(UIContext(labels, lang, pec.stanzaIdToUrlMap))
+    val uiPage = uiBuilder.buildPage(pec.page.url, visualStanzas, errStrategy)(UIContext(labels, lang, pec.pageMapById))
     PageContext(pec.copy(dataInput = dataInput), uiPage, labels)
   }
 
@@ -132,7 +135,7 @@ class GuidanceService @Inject() (
                     (implicit context: ExecutionContext, lang: Lang): Future[RequestOutcome[PageContext]] =
     getPageEvaluationContext(processCode, url, previousPageByLink, sessionId).map{
       case Right(ctx) =>
-        Right(PageContext(ctx, uiBuilder.buildPage(ctx.page.url, ctx.visualStanzas)(UIContext(ctx.labels, lang, ctx.stanzaIdToUrlMap))))
+        Right(PageContext(ctx, uiBuilder.buildPage(ctx.page.url, ctx.visualStanzas)(UIContext(ctx.labels, lang, ctx.pageMapById))))
       case Left(err) => Left(err)
     }
 
@@ -140,8 +143,9 @@ class GuidanceService @Inject() (
                 (implicit context: ExecutionContext): Future[RequestOutcome[(Option[String], Labels)]] = {
     val (optionalNext, labels) = pageRenderer.renderPagePostSubmit(ctx.page, ctx.labels, validatedAnswer)
     optionalNext.fold[Future[RequestOutcome[(Option[String], Labels)]]](Future.successful(Right((None, labels)))){next =>
-      logger.info(s"Next page found at stanzaId: $next")
-      sessionRepository.saveFormPageState(ctx.sessionId, url, submittedAnswer, labels).map{
+      logger.debug(s"Next page found at stanzaId: $next")
+      val legalPageIds = next :: Process.StartStanzaId :: ctx.pageMapById(next).next
+      sessionRepository.saveFormPageState(ctx.sessionId, url, submittedAnswer, labels, legalPageIds).map{
         case Left(err) =>
           logger.error(s"Failed to save updated labels, error = $err")
           Left(InternalServerError)
@@ -153,7 +157,7 @@ class GuidanceService @Inject() (
   def validateUserResponse(ctx: PageEvaluationContext, response: String): Option[String] =
     ctx.dataInput.fold[Option[String]](None)(_.validInput(response))
 
-  def savePageState(docId: String, labels: Labels): Future[RequestOutcome[Unit]] = sessionRepository.savePageState(docId, labels)
+  def savePageState(sessionId: String, labels: Labels): Future[RequestOutcome[Unit]] = sessionRepository.savePageState(sessionId, labels)
 
   def retrieveAndCacheScratch(uuid: String, docId: String)
                              (implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[(String,String)]] =
@@ -182,19 +186,28 @@ class GuidanceService @Inject() (
         logger.warn(s"Unable to find process using identifier $processIdentifier, received $err")
         Future.successful(Left(err))
       case Right(process) =>
-        logger.warn(s"Loaded process ${process.meta.id}, containing ${process.flow.keys.toList.length} stanzas, ${process.phrases.length} phrases")
-        pageBuilder.pages(process, process.startPageId).fold(
-        err => {
+        logger.debug(s"Loaded process ${process.meta.id}, containing ${process.flow.keys.toList.length} stanzas, ${process.phrases.length} phrases")
+        pageBuilder.pages(process, process.startPageId).fold(err => {
           logger.warn(s"Failed to parse process with error $err")
           Future.successful(Left(InvalidProcessError))
         },
-        pages => sessionRepository.set(docId, process, pages.map(p => p.url -> p.id).toMap).map {
-          case Right(_) => Right((pages.head.url, process.meta.processCode))
-          case Left(err) =>
-            logger.error(s"Failed to store new parsed process in session repository, $err")
-            Left(err)
+        pages => {
+          if (logger.isDebugEnabled) {
+            val urlMap: Map[String, String] = pages.map(p => (p.id, p.url)).toMap
+            logger.debug(s"Process id: $processIdentifier, processCode: ${process.meta.processCode}, title: ${process.meta.title}")
+            logger.debug(s"PAGE MAP:")
+            pages.foreach{pge =>
+              logger.debug(s"PAGE: ${pge.id}, ${pge.url}")
+              (pge.next ++ pge.linked).distinct.foreach(id => logger.debug(s"\t=> $id, ${urlMap(id)}"))
+            }
           }
-        )
+          sessionRepository.set(docId, process, pages.map(p => p.url -> PageNext(p.id, (p.next ++ p.linked).toList.distinct)).toMap).map {
+            case Right(_) => Right((pages.head.url, process.meta.processCode))
+            case Left(err) =>
+              logger.error(s"Failed to store new parsed process in session repository, $err")
+              Left(err)
+          }
+        })
     }
 
   private def isAuthenticationUrl(url: String): Boolean = url.drop(1).equals(SecuredProcess.SecuredProcessStartUrl)

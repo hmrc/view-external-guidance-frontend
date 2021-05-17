@@ -22,12 +22,11 @@ import core.models.errors.{DatabaseError, NotFoundError}
 import core.models.ocelot.stanzas._
 import core.models.ocelot.{Page, KeyedStanza, Process, SecuredProcess, ProcessJson, LabelCache, Labels, Phrase}
 import models.ui
-import models.PageEvaluationContext
+import models.{PageDesc, PageNext, PageEvaluationContext}
 import uk.gov.hmrc.http.HeaderCarrier
-import repositories.ProcessContext
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import models.PageContext
+import models.{ProcessContext, PageContext}
 import play.api.i18n.Lang
 import play.api.i18n.MessagesApi
 import play.api.inject.Injector
@@ -84,7 +83,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
                 vStanzas,
                 di,
                 processId,
-                Map("/first-page" -> "start", "/page-1" -> "1", "/last-page" -> "2"),
+                Map("start" -> PageDesc("start", "/first-page"), "1" ->  PageDesc("1", "/page-1"), "2" ->  PageDesc("2", "/last-page")),
                 Some("/hello"),
                 ui.Text(),
                 processId,
@@ -171,8 +170,8 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
       override val processCode = "cup-of-tea"
 
       MockSessionRepository
-        .get(sessionRepoId, Some(s"$processCode$${page.url}"), previousPageByLink = false)
-        .returns(Future.successful(Right(ProcessContext(process, Map(), Map(), Nil, Map(), Map(page.url -> "2"), None))))
+        .getUpdateForGET(sessionRepoId, Some(s"$processCode$${page.url}"), previousPageByLink = false)
+        .returns(Future.successful(Right(ProcessContext(process, Map(), Map(), Nil, Map(), Map(page.url -> PageNext("2", Nil)), Nil, None))))
 
       MockPageBuilder
         .buildPage("2", process)
@@ -204,8 +203,8 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
       override val processCode = "cup-of-tea"
 
       MockSessionRepository
-        .get(sessionRepoId, Some(s"$processCode$lastPageUrl"), previousPageByLink = false)
-        .returns(Future.successful(Right(ProcessContext(process, Map(), Map(), Nil, Map(), Map(lastPageUrl -> "2"), None))))
+        .getUpdateForGET(sessionRepoId, Some(s"$processCode$lastPageUrl"), previousPageByLink = false)
+        .returns(Future.successful(Right(ProcessContext(process, Map(), Map(), Nil, Map(), Map(lastPageUrl -> PageNext("2")), Nil, None))))
 
       MockPageBuilder
         .buildPage("2", process)
@@ -240,8 +239,8 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
       override val processCode = "tell-hmrc"
 
       MockSessionRepository
-        .get(sessionRepoId, Some(s"$processCode$lastPageUrl"), previousPageByLink = false)
-        .returns(Future.successful(Right(ProcessContext(fullProcess, Map(lastPageUrl -> "answer"), Map(), Nil, Map(), Map(lastPageUrl -> "2"), None))))
+        .getUpdateForGET(sessionRepoId, Some(s"$processCode$lastPageUrl"), previousPageByLink = false)
+        .returns(Future.successful(Right(ProcessContext(fullProcess, Map(lastPageUrl -> "answer"), Map(), Nil, Map(), Map(lastPageUrl -> PageNext("2")), Nil, None))))
 
       MockPageBuilder
         .buildPage("2", fullProcess)
@@ -279,8 +278,8 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
       override val processCode = "cup-of-tea"
 
       MockSessionRepository
-        .get(processId, Some(s"$processCode$url"), previousPageByLink = false)
-        .returns(Future.successful(Right(ProcessContext(process, Map(), Map(), Nil, Map(), Map(), None))))
+        .getUpdateForGET(processId, Some(s"$processCode$url"), previousPageByLink = false)
+        .returns(Future.successful(Right(ProcessContext(process, Map(), Map(), Nil, Map(), Map(), Nil, None))))
 
       MockPageBuilder
         .buildPage("2", process)
@@ -305,7 +304,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
       val processWithUpdatedId = process.copy(meta = process.meta.copy( id = uuid))
 
       MockSessionRepository
-        .set(uuid, processWithUpdatedId, Map("/first-page" -> "start", "/page-1" -> "1", "/last-page" -> "2"))
+        .set(uuid, processWithUpdatedId, Map("/first-page" -> PageNext("start"), "/page-1" -> PageNext("1"), "/last-page" -> PageNext("2")))
         .returns(Future.successful(Right(())))
 
       MockPageBuilder
@@ -329,7 +328,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
         .returns(Future.successful(Right(processWithProcessCode)))
 
       MockSessionRepository
-        .set(sessionRepoId, processWithProcessCode, Map("/first-page" -> "start", "/page-1" -> "1", "/last-page" -> "2"))
+        .set(sessionRepoId, processWithProcessCode,Map("/first-page" -> PageNext("start"), "/page-1" -> PageNext("1"), "/last-page" -> PageNext("2")))
         .returns(Future.successful(Right(())))
 
       MockPageBuilder
@@ -353,7 +352,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
         .returns(Future.successful(Right(processWithProcessCode)))
 
       MockSessionRepository
-        .set(sessionRepoId, processWithProcessCode, Map("/first-page" -> "start", "/page-1" -> "1", "/last-page" -> "2"))
+        .set(sessionRepoId, processWithProcessCode, Map("/first-page" -> PageNext("start"), "/page-1" -> PageNext("1"), "/last-page" -> PageNext("2")))
         .returns(Future.successful(Right(())))
 
       MockPageBuilder
@@ -372,10 +371,10 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
 
     "successfully retrieve a process context when the session data contains a single process" in new Test {
 
-      val expectedProcessContext: ProcessContext = ProcessContext(process, Map(), Map(), Nil, Map(), Map(), None)
+      val expectedProcessContext: ProcessContext = ProcessContext(process, Map(), Map(), Nil, Map(), Map(), Nil, None)
 
       MockSessionRepository
-        .get(sessionRepoId)
+        .getNoUpdate(sessionRepoId)
         .returns(Future.successful(Right(expectedProcessContext)))
 
       private val result = target.getProcessContext(sessionRepoId)
@@ -388,7 +387,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
     "return a not found error if the session data does not exist" in new Test {
 
       MockSessionRepository
-        .get(sessionRepoId)
+        .getNoUpdate(sessionRepoId)
         .returns(Future.successful(Left(NotFoundError)))
 
       private val result = target.getProcessContext(sessionRepoId)
@@ -401,7 +400,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
     "return a database error if an error occurs retrieving the session data" in new Test {
 
       MockSessionRepository
-        .get(sessionRepoId)
+        .getNoUpdate(sessionRepoId)
         .returns(Future.successful(Left(DatabaseError)))
 
       private val result = target.getProcessContext(sessionRepoId)
@@ -411,12 +410,31 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
       }
 
     }
+  }
+
+  "Calling getProcessContext full" should {
+
+    // "return a Process context containing legalPageIds" in new Test {
+    //   val expectedProcessContext: ProcessContext = ProcessContext(process, Map(), Map(), Nil, Map(), Map(), Nil, None)
+
+    //   MockSessionRepository
+    //     .getUpdateForGET(sessionRepoId, None, false)
+    //     .returns(Future.successful(Right(expectedProcessContext)))
+
+    //   private val result = target.getProcessContext(sessionRepoId, process.meta.processCode, s"/${SecuredProcess.SecuredProcessStartUrl}", false)
+
+    //   whenReady(result) { err =>
+    //     err shouldBe Right(expectedProcessContext)
+    //   }
+
+    // }
+
 
     "with a url to the passphrase page should send no pageHistory url to the repository" in new Test {
-      val expectedProcessContext: ProcessContext = ProcessContext(process, Map(), Map(), Nil, Map(), Map(), None)
+      val expectedProcessContext: ProcessContext = ProcessContext(process, Map(), Map(), Nil, Map(), Map(), Nil, None)
 
       MockSessionRepository
-        .get(sessionRepoId, None, false)
+        .getUpdateForGET(sessionRepoId, None, false)
         .returns(Future.successful(Right(expectedProcessContext)))
 
       private val result = target.getProcessContext(sessionRepoId, process.meta.processCode, s"/${SecuredProcess.SecuredProcessStartUrl}", false)
@@ -435,7 +453,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
         .returns((None, LabelCache()))
 
       MockSessionRepository
-        .saveFormPageState(processId,"/test-page", "yes", labels)
+        .saveFormPageState(processId,"/test-page", "yes", labels, Nil)
         .returns(Future.successful(Right({})))
 
       target.submitPage(pec, "/test-page", "yes", "yes").map{
@@ -448,13 +466,13 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
     "Return the id of the page to follow" in new Test {
       MockPageRenderer
         .renderPagePostSubmit(page, LabelCache(), "yes")
-        .returns((Some("4"), LabelCache()))
+        .returns((Some("2"), LabelCache()))
 
       MockSessionRepository
-        .saveFormPageState(processId,"/test-page", "yes", labels)
+        .saveFormPageState(processId,"/last-page", "yes", labels, List("2", "start"))
         .returns(Future.successful(Right({})))
 
-      target.submitPage(pec, "/test-page", "yes", "yes").map{
+      target.submitPage(pec, "/last-page", "yes", "yes").map{
         case Left(err) => fail
         case Right((Some("4"), _)) => succeed
         case Right(_) => fail

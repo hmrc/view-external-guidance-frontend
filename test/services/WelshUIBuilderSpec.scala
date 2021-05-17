@@ -25,6 +25,7 @@ import base.{BaseSpec, WelshLanguage}
 import core.models.ocelot._
 import core.models.ocelot.stanzas._
 import models.ocelot.stanzas._
+import models.PageDesc
 import models.ui
 import models.ui.{BulletPointList, ComplexDetails, ConfirmationPanel, CyaSummaryList, Details, ErrorMsg, FormPage, H1, H3, H4}
 import models.ui.{InsetText, Link, Paragraph, RequiredErrorMsg, ExclusiveSequenceFormComponent, NonExclusiveSequenceFormComponent, Table, Text, WarningText, Words}
@@ -39,14 +40,14 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
 
   trait QuestionTest extends BaseTest {
 
-    implicit val urlMap: Map[String, String] =
+    implicit val urlMap: Map[String, PageDesc] =
       Map(
-        Process.StartStanzaId -> "/blah",
-        "3" -> "dummy-path",
-        "4" -> "dummy-path/question",
-        "5" -> "dummy-path/blah",
-        "6" -> "dummy-path/anotherquestion",
-        "34" -> "dummy-path/next"
+        Process.StartStanzaId -> PageDesc(Process.StartStanzaId, "/blah"),
+        "3" -> PageDesc("3", "dummy-path"),
+        "4" -> PageDesc("4", "dummy-path/question"),
+        "5" -> PageDesc("5", "dummy-path/blah"),
+        "6" -> PageDesc("6", "dummy-path/anotherquestion"),
+        "34" -> PageDesc("34", "dummy-path/next")
       )
     val answerDestinations: Seq[String] = Seq("4", "5", "6")
     val questionPhrase: Phrase = Phrase(Vector("Some Text", "Welsh: Some Text"))
@@ -163,15 +164,16 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
     val pageLink2 = Link("dummy-path", pageLink2Text)
     val startLink = Link("/blah", link2Start)
 
-    implicit val urlMap: Map[String, String] =
+    implicit val urlMap: Map[String, PageDesc] =
       Map(
-        Process.StartStanzaId -> "/blah",
-        "3" -> "dummy-path",
-        "4" -> "dummy-path/question",
-        "5" -> "dummy-path/blah",
-        "6" -> "dummy-path/anotherquestion",
-        "34" -> "dummy-path/next"
+        Process.StartStanzaId -> PageDesc(Process.StartStanzaId, "/blah"),
+        "3" -> PageDesc("3", "dummy-path"),
+        "4" -> PageDesc("4", "dummy-path/question"),
+        "5" -> PageDesc("5", "dummy-path/blah"),
+        "6" -> PageDesc("6", "dummy-path/anotherquestion"),
+        "34" -> PageDesc("34", "dummy-path/next")
       )
+
     val answerDestinations = Seq("4", "5", "6")
 
     val txtWithLinks = Phrase(
@@ -295,7 +297,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
 
     // Create pages for extra income V6 process
     val extraIncomeStanzaPages = pageBuilder.pages(prototypeExtraIncomeV6Json.as[Process]).right.get
-    val extraIncomeUrlMap = extraIncomeStanzaPages.map(p => (p.id, p.url)).toMap
+    val extraIncomeUrlMap = extraIncomeStanzaPages.map(p => (p.id, PageDesc(p.id, p.url))).toMap
 
     // Define instance of class to be used in tests
     val uiBuilder: UIBuilder = new UIBuilder(messagesApi)
@@ -1130,15 +1132,16 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
   }
 
   trait InputTest extends BaseTest {
-    implicit val urlMap: Map[String, String] =
+    implicit val urlMap: Map[String, PageDesc] =
       Map(
-        Process.StartStanzaId -> "/blah",
-        "3" -> "dummy-path",
-        "4" -> "dummy-path/input",
-        "5" -> "dummy-path/blah",
-        "6" -> "dummy-path/anotherinput",
-        "34" -> "dummy-path/next"
+        Process.StartStanzaId -> PageDesc(Process.StartStanzaId, "/blah"),
+        "3" -> PageDesc("3", "dummy-path"),
+        "4" -> PageDesc("4", "dummy-path/question"),
+        "5" -> PageDesc("5", "dummy-path/blah"),
+        "6" -> PageDesc("6", "dummy-path/anotherquestion"),
+        "34" -> PageDesc("34", "dummy-path/next")
       )
+
     val inputNext = Seq("4")
     val inputPhrase: Phrase = Phrase(Vector("Some Text", "Welsh: Some Text"))
     val helpPhrase: Phrase = Phrase(Vector("Help text", "Welsh: Help text"))
@@ -1339,14 +1342,14 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
   }
 
   trait ConfirmationPanelTest extends BaseTest {
-    implicit val urlMap: Map[String, String] =
+    implicit val urlMap: Map[String, PageDesc] =
       Map(
-        Process.StartStanzaId -> "/page-1",
-        "3" -> "dummy-path",
-        "4" -> "dummy-path/input",
-        "5" -> "dummy-path/blah",
-        "6" -> "dummy-path/anotherinput",
-        "34" -> "dummy-path/next"
+        Process.StartStanzaId -> PageDesc(Process.StartStanzaId, "/page-1"),
+        "3" -> PageDesc("3", "dummy-path"),
+        "4" -> PageDesc("4", "dummy-path/input"),
+        "5" -> PageDesc("5", "dummy-path/blah"),
+        "6" -> PageDesc("6", "dummy-path/anotherinput"),
+        "34" -> PageDesc("34", "dummy-path/next")
       )
 
     implicit val ctx: UIContext = UIContext(labels, lang, urlMap)
@@ -1560,15 +1563,16 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
 
   "UIBuilder Date Input processing" must {
     trait DateInputTest extends BaseTest {
-      implicit val urlMap: Map[String, String] =
+      implicit val urlMap: Map[String, PageDesc] =
         Map(
-          Process.StartStanzaId -> "/blah",
-          "3" -> "dummy-path",
-          "4" -> "dummy-path/input",
-          "5" -> "dummy-path/blah",
-          "6" -> "dummy-path/anotherinput",
-          "34" -> "dummy-path/next"
+          Process.StartStanzaId -> PageDesc(Process.StartStanzaId, "/blah"),
+          "3" -> PageDesc("3", "dummy-path"),
+          "4" -> PageDesc("4", "dummy-path/input"),
+          "5" -> PageDesc("5", "dummy-path/blah"),
+          "6" -> PageDesc("6", "dummy-path/anotherinput"),
+          "34" -> PageDesc("34", "dummy-path/next")
         )
+
       val inputNext = Seq("4")
       val inputPhrase: Phrase = Phrase(Vector("Some Text", "Welsh: Some Text"))
       val helpPhrase: Phrase = Phrase(Vector("Help text", "Welsh: Help text"))
@@ -2057,12 +2061,13 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
 
     trait NonExclusiveSequenceTest extends BaseTest {
 
-      implicit val urlMap: Map[String, String] = Map(
-        Process.StartStanzaId -> "start",
-        "10" -> "page-2",
-        "35" -> "page-4",
-        "50" -> "page-10"
-      )
+      implicit val urlMap: Map[String, PageDesc] =
+        Map(
+          Process.StartStanzaId -> PageDesc(Process.StartStanzaId, "start"),
+          "10" -> PageDesc("10", "page-2"),
+          "35" -> PageDesc("35", "page-4"),
+          "50" -> PageDesc("50", "page-10")
+        )
 
       val next: Seq[String] = Seq("10", "35", "50")
 
@@ -2201,12 +2206,13 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
 
     trait ExclusiveSequenceTest extends BaseTest {
 
-      implicit val urlMap: Map[String, String] = Map(
-        Process.StartStanzaId -> "start",
-        "10" -> "page-2",
-        "35" -> "page-4",
-        "50" -> "page-10"
-      )
+      implicit val urlMap: Map[String, PageDesc] =
+        Map(
+          Process.StartStanzaId -> PageDesc(Process.StartStanzaId, "start"),
+          "10" -> PageDesc("10", "page-2"),
+          "35" -> PageDesc("35", "page-4"),
+          "50" -> PageDesc("50", "page-10")
+        )
 
       val next: Seq[String] = Seq("10", "35", "40", "50")
 

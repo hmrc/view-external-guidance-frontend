@@ -21,6 +21,7 @@ import play.api.i18n.MessagesApi
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import base.{WelshLanguage, BaseSpec}
 import core.models.ocelot._
+import models.PageDesc
 import models.ui.{Currency, CurrencyPoundsOnly, DateStandard, LabelRef, Link, Text, Txt, Words}
 
 class WelshTextBuilderSpec extends BaseSpec with WelshLanguage with GuiceOneAppPerSuite {
@@ -40,7 +41,10 @@ class WelshTextBuilderSpec extends BaseSpec with WelshLanguage with GuiceOneAppP
 
     val link1 = Link("https://www.bbc.co.uk", link1CyWords, false)
     val link2 = Link("https://www.gov.uk", link2CyWords, false)
-    val urlMap1: Map[String, String] = Map("start" -> "dummy-path/start", "3" -> "dummy-path", "5" -> "dummy-path/blah", "34" -> "dummy-path/next")
+    val urlMap1: Map[String, PageDesc] = Map("start" -> PageDesc("start",  "dummy-path/start", Nil),
+                                             "3" -> PageDesc("3", "dummy-path", Nil),
+                                             "5" -> PageDesc("5","dummy-path/blah", Nil),
+                                             "34" -> PageDesc("34","dummy-path/next", Nil))
 
     val txtWithLinks = Phrase(
       Vector(

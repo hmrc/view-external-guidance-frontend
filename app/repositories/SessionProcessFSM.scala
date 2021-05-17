@@ -23,18 +23,15 @@ import DefaultSessionRepository._
 import core.models.ocelot.{Label, ScalarLabel}
 
 
-
 @Singleton
 class SessionProcessFSM @Inject() () {
   type BackLinkAndStateUpdate = (Option[String], Option[List[PageHistory]], Option[List[FlowStage]], List[Label])
   // Input
-  // url ,incoming url
-  // priorSp, prior SessionProcess corresponding to the previous url processed. Note. The db record will have the head of the page history updated
-  //          to include incoming url and flowStack Nil, this update is not within priorSp. This is an optimisation, as the most common transition
-  //          is forward in a process containing no Sequences (i.e. the flowStack will always be empty), this transition will result in
-  //          no page history or flowstack updates given the update described has already taken place.
-  // forceForward, true indicates that a url similar to head of prior history (looks like a BACK) should be treated as a forward movement
-  // sentinelUrl. generally url of the first page, arrival here will always clear down the page history
+  // url: incoming url
+  // priorSp: prior SessionProcess corresponding to the previous url processed.
+  //
+  // forceForward: true indicates that a url similar to head of prior history (looks like a BACK) should be treated as a forward movement
+  // sentinelUrl: generally url of the first page, arrival here will always clear down the page history
 
   // New state == (priorSp + new Pagehistory head) ++ pageHistory and flowStack output updates
   //
@@ -42,15 +39,14 @@ class SessionProcessFSM @Inject() () {
   // optional backlink to be displayed on page with incoming url
   // optional page history update
   // optional flowStack update
+  // Flow Labels update (Nil unless flowstack active in from or to page)
   def apply(url: String, priorSp: SessionProcess, forceForward: Boolean, sentinelUrl: String): BackLinkAndStateUpdate =
     priorSp.pageHistory.reverse match {
       // Initial page
-      case Nil =>
-        (None, None, None, Nil)
+      case Nil => (None, Some(List(PageHistory(url, Nil))), None, Nil)
 
       // REFRESH: new url equals current url
-      case x :: xs if x.url == url =>
-        (xs.headOption.map(_.url), Some(priorSp.pageHistory), None, Nil)
+      case x :: xs if x.url == url => (xs.headOption.map(_.url), None, None, Nil)
 
       // BACK: new url equals previous url and prior flowStack equals the previous flowStack
       case _ :: y :: xs if y.url == url && !forceForward && priorSp.flowStack == y.flowStack =>
@@ -61,7 +57,7 @@ class SessionProcessFSM @Inject() () {
         (xs.headOption.map(_.url), Some((y :: xs).reverse), Some(y.flowStack), pageHistoryLabelValues(y.flowStack))
 
       // FORWARD to first page of guidance
-      case x :: xs if url == sentinelUrl =>
+      case _ :: _ if url == sentinelUrl =>
         findPreviousFlowAndLabelState(url, priorSp.pageHistory).fold[BackLinkAndStateUpdate](
           (None, Some(List(PageHistory(url, Nil))), Some(Nil), Nil)
         ){t =>
@@ -74,19 +70,17 @@ class SessionProcessFSM @Inject() () {
         findPreviousFlowAndLabelState(url, priorSp.pageHistory).fold[BackLinkAndStateUpdate]{
           (Some(x.url), Some((PageHistory(url, priorSp.flowStack) :: x :: xs).reverse), None, Nil)
         }{
-          case (_, Nil) =>
-            (Some(x.url), None, Some(Nil), Nil)
-          case (_, flowStack) =>
-            (Some(x.url), Some((PageHistory(url, priorSp.flowStack) :: x :: xs).reverse), None, Nil)
+          case (_, Nil) => (Some(x.url), Some((PageHistory(url, Nil) :: x :: xs).reverse), Some(Nil), Nil)
+          case _ => (Some(x.url), Some((PageHistory(url, priorSp.flowStack) :: x :: xs).reverse), None, Nil)
         }
 
       // FORWARD from empty flowStack
       case x :: xs => // Check for forward  movement to a previous page (CYA)
         findPreviousFlowAndLabelState(url, priorSp.pageHistory).fold[BackLinkAndStateUpdate]{
-          (Some(x.url), None, None, Nil)
+          (Some(x.url), Some((PageHistory(url, priorSp.flowStack) :: x :: xs).reverse), None, Nil)
         }{
           case (_, Nil) =>
-            (Some(x.url), None, None, Nil)
+            (Some(x.url), Some((PageHistory(url, Nil) :: x :: xs).reverse), None, Nil)
           case (labels, flowStack) =>
             (Some(x.url), Some((PageHistory(url, flowStack) :: x :: xs).reverse), Some(flowStack), labels)
         }
