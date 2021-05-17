@@ -73,7 +73,6 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
     val uiBuilder: UIBuilder = new UIBuilder(messagesApi)
     implicit val ctx: UIContext = UIContext(labels, lang, urlMap)
     val four: Int = 4
-    implicit val ctx: UIContext = UIContext(labels, lang, urlMap)
   }
 
   "UIBulider Question processing" must {
