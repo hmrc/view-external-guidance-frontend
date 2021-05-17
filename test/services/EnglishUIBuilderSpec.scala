@@ -16,6 +16,10 @@
 
 package services
 
+import play.api.inject.Injector
+import play.api.i18n.MessagesApi
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+
 import core.services._
 import base.{BaseSpec, EnglishLanguage}
 import core.models.ocelot.{Phrase, _}
@@ -26,11 +30,15 @@ import models.ui
 import models.ui.{BulletPointList, ComplexDetails, ConfirmationPanel, CyaSummaryList, Details, ErrorMsg, FormPage, H1, H3, H4}
 import models.ui.{InsetText, Link, Paragraph, RequiredErrorMsg, ExclusiveSequenceFormComponent, NonExclusiveSequenceFormComponent, Table, Text, WarningText, Words}
 
-class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguage {
+class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguage with GuiceOneAppPerSuite {
   implicit val labels: Labels = LabelCache()
 
-  trait QuestionTest {
+  trait BaseTest {
+    private def injector: Injector = app.injector
+    val messagesApi: MessagesApi = injector.instanceOf[MessagesApi]
+  }
 
+  trait QuestionTest extends BaseTest {
     implicit val urlMap: Map[String, PageDesc] =
       Map(
         Process.StartStanzaId -> PageDesc(Process.StartStanzaId, "/blah"),
@@ -62,8 +70,8 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
     val pageWithQuestionHint =
       Page(Process.StartStanzaId, "/test-page", stanzas :+ KeyedStanza("5", Question(questionWithHintPhrase, answers, answerDestinations, None, false)), Seq.empty)
 
-    val uiBuilder: UIBuilder = new UIBuilder()
-
+    val uiBuilder: UIBuilder = new UIBuilder(messagesApi)
+    implicit val ctx: UIContext = UIContext(labels, lang, urlMap)
     val four: Int = 4
     implicit val ctx: UIContext = UIContext(labels, lang, urlMap)
   }
@@ -116,7 +124,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
     }
   }
 
-  trait Test extends ProcessJson {
+  trait Test extends BaseTest with ProcessJson {
     case class UnsupportedVisualStanza(override val next: Seq[String], stack: Boolean) extends VisualStanza with Populated
     val lang0 = Vector("Some Text", "Welsh: Some Text")
     val lang1 = Vector("Some Text1", "Welsh: Some Text1")
@@ -289,7 +297,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
     val extraIncomeUrlMap = extraIncomeStanzaPages.map(p => (p.id, PageDesc(p.id, p.url))).toMap
 
     // Define instance of class to be used in tests
-    val uiBuilder: UIBuilder = new UIBuilder()
+    val uiBuilder: UIBuilder = new UIBuilder(messagesApi)
     implicit val ctx: UIContext = UIContext(labels.update("week", "week", "Welsh: week"), lang, urlMap)
     val four: Int = 4
     val five: Int = 5
@@ -1120,7 +1128,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
 
   }
 
-  trait InputTest {
+  trait InputTest extends BaseTest {
     implicit val urlMap: Map[String, PageDesc] =
       Map(
         Process.StartStanzaId -> PageDesc(Process.StartStanzaId, "/blah"),
@@ -1149,7 +1157,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
     val inputNumber = core.models.ocelot.stanzas.NumberInput(inputNext, inputPhrase, Some(helpPhrase), label ="inputNumber", None, stack = false)
     val pageNumber = Page(Process.StartStanzaId, "/test-page", stanzas :+ KeyedStanza("5", inputNumber), Seq.empty)
 
-    val uiBuilder: UIBuilder = new UIBuilder()
+    val uiBuilder: UIBuilder = new UIBuilder(messagesApi)
     implicit val ctx: UIContext = UIContext(labels, lang, urlMap)
     val four: Int = 4
   }
@@ -1329,7 +1337,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
     }
   }
 
-  trait ConfirmationPanelTest {
+  trait ConfirmationPanelTest extends BaseTest {
     implicit val urlMap: Map[String, PageDesc] =
       Map(
         Process.StartStanzaId -> PageDesc(Process.StartStanzaId, "/page-1"),
@@ -1368,7 +1376,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
     val sectionCalloutText: Text = TextBuilder.fromPhrase(sectionCallOutPhrase)
     val subSectionCalloutText: Text = TextBuilder.fromPhrase(subSectionCalloutPhrase)
 
-    val uiBuilder: UIBuilder = new UIBuilder()
+    val uiBuilder: UIBuilder = new UIBuilder(messagesApi)
 
   }
 
@@ -1550,7 +1558,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
   }
 
   "UIBuilder Date Input processing" must {
-    trait DateInputTest {
+    trait DateInputTest extends BaseTest {
       implicit val urlMap: Map[String, PageDesc] =
         Map(
           Process.StartStanzaId -> PageDesc(Process.StartStanzaId, "/blah"),
@@ -1573,7 +1581,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
       )
       val dateInput = DateInput(inputNext, inputPhrase, Some(helpPhrase), label ="input1", None, stack = false)
       val datePage = Page(Process.StartStanzaId, "/test-page", stanzas :+ KeyedStanza("5", dateInput), Seq.empty)
-      val uiBuilder: UIBuilder = new UIBuilder()
+      val uiBuilder: UIBuilder = new UIBuilder(messagesApi)
 
       implicit val ctx: UIContext = UIContext(labels, lang, urlMap)
     }
@@ -2046,7 +2054,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
 
   "UIBuilder non-exclusive sequence processing" must {
 
-    trait NonExclusiveSequenceTest {
+    trait NonExclusiveSequenceTest extends BaseTest {
 
       implicit val urlMap: Map[String, PageDesc] =
         Map(
@@ -2105,7 +2113,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
       val page: Page = Page(Process.StartStanzaId, "/start", stanzas :+ KeyedStanza("4", nonExclusiveSequence), Seq.empty)
       val pageWithHint: Page = Page(Process.StartStanzaId, "/start", stanzas :+ KeyedStanza("4", nonExclusiveSequenceWithHint), Seq.empty)
       implicit val ctx: UIContext = UIContext(labels, lang, urlMap)
-      val uiBuilder: UIBuilder = new UIBuilder()
+      val uiBuilder: UIBuilder = new UIBuilder(messagesApi)
     }
 
     "ignore error callouts if no errors have occurred" in new NonExclusiveSequenceTest {
@@ -2192,7 +2200,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
 
   "UIBuilder exclusive sequence processing" must {
 
-    trait ExclusiveSequenceTest {
+    trait ExclusiveSequenceTest extends BaseTest {
 
       implicit val urlMap: Map[String, PageDesc] =
         Map(
@@ -2255,7 +2263,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
       val page: Page = Page(Process.StartStanzaId, "/start", stanzas :+ KeyedStanza("4", exclusiveSequence), Seq.empty)
       val pageWithHint: Page = Page(Process.StartStanzaId, "/start", stanzas :+ KeyedStanza("4", exclusiveSequenceWithHint), Seq.empty)
       implicit val ctx: UIContext = UIContext(labels, lang, urlMap)
-      val uiBuilder: UIBuilder = new UIBuilder()
+      val uiBuilder: UIBuilder = new UIBuilder(messagesApi)
     }
 
     "ignore error callouts if no errors have occurred" in new ExclusiveSequenceTest {

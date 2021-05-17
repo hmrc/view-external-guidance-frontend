@@ -22,7 +22,7 @@ import core.models.ocelot.{labelAndListRegex, labelScalarMatch, boldPattern, lin
 import models.ui._
 import scala.util.matching.Regex
 import Regex._
-import play.api.i18n.Lang
+import play.api.i18n.{Lang, MessagesApi}
 import scala.annotation.tailrec
 
 object TextBuilder {
@@ -67,12 +67,15 @@ object TextBuilder {
       })(labelName => LabelRef(labelName, OutputFormat(labelFormatOpt(m))))
     }
 
-  def expandLabels(p: Phrase, labels: Labels): Phrase = {
-    def replace(lang: Lang)(m: Match): String = {
+  def expandLabels(p: Phrase, labels: Labels, messagesApi: MessagesApi): Phrase = {
+    def replace(lang: Lang, messagesApi: MessagesApi)(m: Match): String = {
       def labelValue(name: String): Option[String] = labels.displayValue(name)(lang)
-      OutputFormat(labelFormatOpt(m)).asString(labelScalarMatch(m, labels, labelValue))
+
+      OutputFormat(labelFormatOpt(m)).asString(labelScalarMatch(m, labels, labelValue _), messagesApi.preferred(Seq(lang)))
     }
-    Phrase(labelAndListRegex.replaceAllIn(p.english, replace(English) _), labelAndListRegex.replaceAllIn(p.welsh, replace(Welsh) _))
+    Phrase(
+      labelAndListRegex.replaceAllIn(p.english, replace(English, messagesApi) _),
+      labelAndListRegex.replaceAllIn(p.welsh, replace(Welsh, messagesApi) _))
   }
 
   def fromPhrase(txt: Phrase)(implicit ctx: UIContext): Text = {

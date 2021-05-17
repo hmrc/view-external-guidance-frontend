@@ -17,6 +17,19 @@ label.day=Day
 label.month=Month
 label.year=Year
 
+month.display.value.1=January
+month.display.value.2=February
+month.display.value.3=March
+month.display.value.4=April
+month.display.value.5=May
+month.display.value.6=June
+month.display.value.7=July
+month.display.value.8=August
+month.display.value.9=September
+month.display.value.10=October
+month.display.value.11=November
+month.display.value.12=December
+
 exclusive.checkbox.or = or
 
 error.browser.title.prefix = Error:

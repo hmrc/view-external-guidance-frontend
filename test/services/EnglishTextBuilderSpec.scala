@@ -15,15 +15,21 @@
  */
 
 package services
-
+import play.api.inject.Injector
+import play.api.i18n.MessagesApi
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import base.{EnglishLanguage, BaseSpec}
 import core.models.ocelot._
 import models.PageDesc
 import models.ui.{Currency, CurrencyPoundsOnly, DateStandard, LabelRef, Link, Text, Txt, Words}
 
-class EnglishTextBuilderSpec extends BaseSpec {
+class EnglishTextBuilderSpec extends BaseSpec with GuiceOneAppPerSuite {
 
   trait Test extends ProcessJson with EnglishLanguage {
+
+    private def injector: Injector = app.injector
+    val messagesApi: MessagesApi = injector.instanceOf[MessagesApi]
+
     val words1 = Words("This is a ", true)
     val words2 = Words(" followed by ")
     val words3 = Words(" and nothing")
@@ -233,37 +239,37 @@ class EnglishTextBuilderSpec extends BaseSpec {
     "Convert label reference with default output format placeholders within phrase" in new Test {
       val phrase = Phrase("""Sentence with a [label:BLAH] label reference""", """Welsh: Sentence with a [label:BLAH] label reference""")
       val expectedPhrase = Phrase("""Sentence with a 33.5 label reference""", """Welsh: Sentence with a 33.5 label reference""")
-      TextBuilder.expandLabels(phrase, labels) shouldBe expectedPhrase
+      TextBuilder.expandLabels(phrase, labels, messagesApi) shouldBe expectedPhrase
     }
 
     "Convert label reference with currency output format placeholders within phrase" in new Test {
       val phrase = Phrase("""Sentence with a [label:BLAH:currency] label reference""", """Welsh: Sentence with a [label:BLAH:currency] label reference""")
       val expectedPhrase = Phrase("""Sentence with a £33.50 label reference""", """Welsh: Sentence with a £33.50 label reference""")
-      TextBuilder.expandLabels(phrase, labels) shouldBe expectedPhrase
+      TextBuilder.expandLabels(phrase, labels, messagesApi) shouldBe expectedPhrase
     }
 
     "Convert label reference with date output format placeholders within phrase" in new Test {
       val phrase = Phrase("""Sentence with a [label:SomeDate:date] label reference""", """Welsh: Sentence with a [label:SomeDate:date] label reference""")
-      val expectedPhrase = Phrase("""Sentence with a 22 September 1973 label reference""", """Welsh: Sentence with a 22 September 1973 label reference""")
-      TextBuilder.expandLabels(phrase, labels) shouldBe expectedPhrase
+      val expectedPhrase = Phrase("""Sentence with a 22 September 1973 label reference""", """Welsh: Sentence with a 22 Medi 1973 label reference""")
+      TextBuilder.expandLabels(phrase, labels, messagesApi) shouldBe expectedPhrase
     }
 
     "Convert a label placeholder within a bold placeholder to a bold label ref" in new Test {
       val phrase = Phrase("""Sentence with a [bold:[label:BLAH]] label reference""", """Welsh: Sentence with a [bold:[label:BLAH]] label reference""")
       val expectedPhrase = Phrase("""Sentence with a [bold:33.5] label reference""", """Welsh: Sentence with a [bold:33.5] label reference""")
-      TextBuilder.expandLabels(phrase, labels) shouldBe expectedPhrase
+      TextBuilder.expandLabels(phrase, labels, messagesApi) shouldBe expectedPhrase
     }
 
     "Convert a label placeholder with currency output format within a bold placeholder" in new Test {
       val phrase = Phrase("""Sentence with a [bold:[label:BLAH:currencyPoundsOnly]] label reference""", """Welsh: Sentence with a [bold:[label:BLAH:currencyPoundsOnly]] label reference""")
       val expectedPhrase = Phrase("""Sentence with a [bold:£33] label reference""", """Welsh: Sentence with a [bold:£33] label reference""")
-      TextBuilder.expandLabels(phrase, labels) shouldBe expectedPhrase
+      TextBuilder.expandLabels(phrase, labels, messagesApi) shouldBe expectedPhrase
     }
 
     "Convert a list length placeholder " in new Test {
       val phrase = Phrase("""SomeList has length [list:SomeList:length]""", """Welsh: SomeList has length [list:SomeList:length]""")
       val expectedPhrase = Phrase("""SomeList has length 3""", """Welsh: SomeList has length 3""")
-      TextBuilder.expandLabels(phrase, labels) shouldBe expectedPhrase
+      TextBuilder.expandLabels(phrase, labels, messagesApi) shouldBe expectedPhrase
     }
 
   }
