@@ -18,6 +18,19 @@ label.day=Diwrnod
 label.month=Mis
 label.year=Blwyddyn
 
+month.display.value.1=Ionawr
+month.display.value.2=Chwefror
+month.display.value.3=Mawrth
+month.display.value.4=Ebrill
+month.display.value.5=Mai
+month.display.value.6=Mehefin
+month.display.value.7=Gorffennaf
+month.display.value.8=Awst
+month.display.value.9=Medi
+month.display.value.10=Hydref
+month.display.value.11=Tachwedd
+month.display.value.12=Rhagfyr
+
 exclusive.checkbox.or = neu
 
 error.browser.title.prefix = Gwall:

@@ -18,25 +18,25 @@ package models.ui
 
 import java.math.RoundingMode
 import java.text.NumberFormat
-import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeFormatter.ofPattern
 import java.util.Locale.UK
 
-import core.models.ocelot.{asDecimal, asDate, DateOutputFormat}
+import play.api.i18n.Messages
+
+import core.models.ocelot.{asDecimal, asDate}
 
 trait Name {
   val name: String
 }
 
 sealed trait OutputFormat {
-  def asString(value: Option[String]): String = value.getOrElse("")
+  def asString(value: Option[String], messages: Messages): String = value.getOrElse("")
   def isNumeric: Boolean = false
 }
 
 case object Currency extends OutputFormat with Name {
   val name: String = "currency"
   override def isNumeric: Boolean = true
-  override def asString(optValue: Option[String]): String =
+  override def asString(optValue: Option[String], messages: Messages): String =
     optValue.fold("")(value =>
       asDecimal(value) match {
         case Some(x) => NumberFormat.getCurrencyInstance(UK).format(x)
@@ -48,7 +48,7 @@ case object Currency extends OutputFormat with Name {
 case object CurrencyPoundsOnly extends OutputFormat with Name {
   val name: String = "currencyPoundsOnly"
   override def isNumeric: Boolean = true
-  override def asString(optValue: Option[String]): String =
+  override def asString(optValue: Option[String], messages: Messages): String =
     optValue.fold("")(value =>
       // Extract as simple number, then format as pounds only
       asDecimal(value) match {
@@ -68,12 +68,13 @@ case object Txt extends OutputFormat with Name {
 
 case object DateStandard extends OutputFormat with Name {
   val name: String = "date"
-  val formatter: DateTimeFormatter = ofPattern(DateOutputFormat)
-  override def asString(optValue: Option[String]): String =
+  override def asString(optValue: Option[String], messages: Messages): String =
     optValue.fold("")(value =>
       // Extract as a date, then format
       asDate(value) match {
-        case Some(date) => date.format(formatter)
+        case Some(date) =>
+          val month: String = messages(s"month.display.value.${date.getMonthValue}")
+          s"${date.getDayOfMonth} $month ${date.getYear}"
         case None => value
       }
     )
