@@ -33,9 +33,15 @@ class LabelSpec extends BaseSpec with ProcessJson {
     val listLabelWithEmptyLists = """{"name":"BLAH","english":[],"type":"list","welsh":[]}"""
     val listLabelWithSingleEntryLists = """{"name":"BLAH","english":["March"],"type":"list","welsh":["Mawrth"]}"""
     val listLabelWithSingleList = """{"name":"BLAH","english":["March,April,May,June"],"type":"list","welsh":[]}"""
-    val phraseOne: Phrase = Phrase("One", "Welsh:One")
-    val phraseTwo: Phrase = Phrase("Two", "Welsh:Two")
-    val phraseThree: Phrase = Phrase("Three", "Welsh:Three")
+    val oneEn: String = "One"
+    val oneCy: String = s"Welsh: $oneEn"
+    val twoEn: String = "Two"
+    val twoCy: String = s"Welsh: $twoEn"
+    val threeEn: String = "Three"
+    val threeCy: String = s"Welsh: $threeEn"
+    val phraseOne: Phrase = Phrase(oneEn, oneCy)
+    val phraseTwo: Phrase = Phrase(twoEn, twoCy)
+    val phraseThree: Phrase = Phrase(threeEn, threeCy)
     val oneTwo: List[Phrase] = List(phraseOne, phraseTwo)
     val oneTwoThree: List[Phrase] = oneTwo :+ phraseThree
   }
@@ -356,11 +362,13 @@ class LabelSpec extends BaseSpec with ProcessJson {
       val (next, labels0) = labels.pushFlows(List("1", "2"), "3", Some("loop"), oneTwo, Map())
 
       next shouldBe Some("1")
-      labels0.value("loop") shouldBe Some("One")
+      labels0.value("loop") shouldBe Some(oneEn)
       labels0.nextFlow.fold(fail("Stack should not be empty")){t =>
         val (nxt, updatedLabels) = t
         nxt shouldBe "2"
-        updatedLabels.value("loop") shouldBe Some("Two")
+        updatedLabels.value("loop") shouldBe Some(twoEn)
+        updatedLabels.displayValue("loop")(englishLang) shouldBe Some(twoEn)
+        updatedLabels.displayValue("loop")(welshLang) shouldBe Some(twoCy)
 
       }
     }

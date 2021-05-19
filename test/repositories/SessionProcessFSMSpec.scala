@@ -34,16 +34,20 @@ class SessionProcessFSMSpec extends BaseSpec {
   }
 
   trait Test extends ProcessJson {
-    val phraseOne: Phrase = Phrase("One", "Welsh:One")
-    val phraseTwo: Phrase = Phrase("Two", "Welsh:Two")
-    val phraseThree: Phrase = Phrase("Three", "Welsh:Three")
-    val phraseFour: Phrase = Phrase("Three", "Welsh:Three")
-    val phraseFourExclusive: Phrase = Phrase("Four [exclusive:Selecting this checkbox will deselect the other checkboxes]",
-                                             "Four [exclusive:Welsh: Selecting this checkbox will deselect the other checkboxes]")
+    val oneEn: String = "One"
+    val oneCy: String = s"Welsh: $oneEn"
+    val twoEn: String = "Two"
+    val twoCy: String = s"Welsh: $twoEn"
+    val threeEn: String = "Three"
+    val threeCy: String = s"Welsh: $threeEn"
+    val fourEn: String = "Four"
+    val fourCy: String = s"Welsh: $fourEn"
+    val phraseOne: Phrase = Phrase(oneEn, oneCy)
+    val phraseTwo: Phrase = Phrase(twoEn, twoCy)
+    val phraseThree: Phrase = Phrase(threeEn, threeCy)
+    val phraseFour: Phrase = Phrase(fourEn, fourCy)
     val oneTwo: List[Phrase] = List(phraseOne, phraseTwo)
     val oneTwoThree: List[Phrase] = oneTwo :+ phraseThree
-    val oneTwoThreeFour: List[Phrase] = oneTwoThree :+ phraseFour
-    val oneTwoThreeFourExclusive: List[Phrase] = oneTwoThree :+ phraseFourExclusive
 
     val sessionProcess: SessionProcess =
       new SessionProcess(

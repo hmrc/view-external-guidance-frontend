@@ -18,9 +18,13 @@ package core.models.ocelot.stanzas
 
 import base.BaseSpec
 import play.api.libs.json._
+import play.api.i18n.Lang
 import core.models.ocelot.{Page, Phrase, LabelCache, Labels, Process, Flow, LabelValue, Continuation}
 
 class SequenceStanzaSpec extends BaseSpec {
+  val langEn: Lang = Lang("en")
+  val langCy: Lang = Lang("cy")
+
   val json: JsValue = Json.parse(
     s"""|{
         |    "next": ["1", "2", "3", "4", "end"],
@@ -66,12 +70,20 @@ class SequenceStanzaSpec extends BaseSpec {
   )
 
   trait Test {
-    val phraseOne: Phrase = Phrase("One", "Welsh:One")
-    val phraseTwo: Phrase = Phrase("Two", "Welsh:Two")
-    val phraseThree: Phrase = Phrase("Three", "Welsh:Three")
-    val phraseFour: Phrase = Phrase("Three", "Welsh:Three")
-    val phraseFourExclusive: Phrase = Phrase("Four [exclusive:Selecting this checkbox will deselect the other checkboxes]",
-                                             "Four [exclusive:Welsh: Selecting this checkbox will deselect the other checkboxes]")
+    val oneEn: String = "One"
+    val oneCy: String = s"Welsh: $oneEn"
+    val twoEn: String = "Two"
+    val twoCy: String = s"Welsh: $twoEn"
+    val threeEn: String = "Three"
+    val threeCy: String = s"Welsh: $threeEn"
+    val fourEn: String = "Four"
+    val fourCy: String = s"Welsh: $fourEn"
+    val phraseOne: Phrase = Phrase(oneEn, oneCy)
+    val phraseTwo: Phrase = Phrase(twoEn, twoCy)
+    val phraseThree: Phrase = Phrase(threeEn, threeCy)
+    val phraseFour: Phrase = Phrase(fourEn, fourCy)
+    val phraseFourExclusive: Phrase = Phrase(s"$fourEn [exclusive:Selecting this checkbox will deselect the other checkboxes]",
+                                             s"$fourCy [exclusive:Welsh: Selecting this checkbox will deselect the other checkboxes]")
     val oneTwo: List[Phrase] = List(phraseOne, phraseTwo)
     val oneTwoThree: List[Phrase] = oneTwo :+ phraseThree
     val oneTwoThreeFour: List[Phrase] = oneTwoThree :+ phraseFour
@@ -98,7 +110,6 @@ class SequenceStanzaSpec extends BaseSpec {
       expectedStanza.stack
     )
   }
-
 
   "Reading valid JSON" should {
     "create a Sequence Stanza" in new Test {
@@ -163,7 +174,9 @@ class SequenceStanzaSpec extends BaseSpec {
       val (next, updatedLabels) = expectedNonExclusiveSequence.eval("0", blankPage, labels)
       next shouldBe Some("1")
       updatedLabels.flowStack shouldBe List(Flow("1", Some(LabelValue("Items", phraseOne))), Continuation(Process.EndStanzaId))
-      updatedLabels.value("Items") shouldBe Some("One")
+      updatedLabels.value("Items") shouldBe Some(oneEn)
+      updatedLabels.displayValue("Items")(langEn) shouldBe Some(oneEn)
+      updatedLabels.displayValue("Items")(langCy) shouldBe Some(oneCy)
     }
 
     "Evaluate invalid input to error return" in new Test {
@@ -209,7 +222,9 @@ class SequenceStanzaSpec extends BaseSpec {
       val (next, updatedLabels) = expectedExclusiveSequence.eval("0", blankPage, labels)
       next shouldBe Some("1")
       updatedLabels.flowStack shouldBe List(Flow("1", Some(LabelValue("Items", phraseOne))), Continuation(Process.EndStanzaId))
-      updatedLabels.value("Items") shouldBe Some("One")
+      updatedLabels.value("Items") shouldBe Some(oneEn)
+      updatedLabels.displayValue("Items")(langEn) shouldBe Some(oneEn)
+      updatedLabels.displayValue("Items")(langCy) shouldBe Some(oneCy)
     }
 
     "Evaluate invalid input to error return" in new Test {
