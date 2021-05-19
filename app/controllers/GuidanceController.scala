@@ -58,7 +58,7 @@ class GuidanceController @Inject() (
         logger.info(s"Redirecting to guidance start url $url after session reset")
         Future.successful(Redirect(controllers.routes.GuidanceController.getPage(processCode, url.drop(1), None).url))
       case Left(ExpectationFailedError) =>
-        logger.error(s"Redirecting to start of processCode $processCode at ${appConfig.baseUrl}/$processCode")
+        logger.error(s"ExpectationFailed error on sessionRestart. Redirecting to start of processCode $processCode at ${appConfig.baseUrl}/$processCode")
         Future.successful(Redirect(s"${appConfig.baseUrl}/$processCode"))
       case Left(err) =>
         logger.error(s"Request for Reset ProcessContext returned $err, returning InternalServerError")
@@ -142,7 +142,7 @@ class GuidanceController @Inject() (
         logger.warn(s"Request for PageContext at /$path returned BadRequest during form submission, returning BadRequest")
         BadRequest(errorHandler.badRequestTemplateWithProcessCode(Some(processCode)))
       case ExpectationFailedError =>
-        logger.error(s"Redirecting to start of processCode $processCode at ${appConfig.baseUrl}/$processCode")
+        logger.error(s"ExpectationFailed error on submitPage. Redirecting to start of processCode $processCode at ${appConfig.baseUrl}/$processCode")
         Redirect(s"${appConfig.baseUrl}/$processCode")
       case err =>
         logger.error(s"Request for PageContext at /$path returned $err during form submission, returning InternalServerError")
@@ -174,7 +174,7 @@ class GuidanceController @Inject() (
         logger.warn(s"Request for PageContext at /$path returned NotFound, returning NotFound")
         NotFound(errorHandler.notFoundTemplateWithProcessCode(Some(processCode)))
       case ExpectationFailedError =>
-        logger.error(s"Redirecting to start of processCode $processCode at ${appConfig.baseUrl}/$processCode")
+        logger.error(s"ExpectationFailed error on getPage. Redirecting to start of processCode $processCode at ${appConfig.baseUrl}/$processCode")
         Redirect(s"${appConfig.baseUrl}/$processCode")
       case err =>
         logger.error(s"Request for PageContext at /$path returned $err, returning InternalServerError")
