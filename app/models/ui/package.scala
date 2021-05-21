@@ -16,6 +16,7 @@
 
 package models
 
+import scala.language.implicitConversions
 import core.models.ocelot.Phrase
 import core.models.ocelot.stanzas.VisualStanza
 import models.ocelot.stanzas.StackedGroup
