@@ -297,7 +297,11 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
 
     // Define instance of class to be used in tests
     val uiBuilder: UIBuilder = new UIBuilder()
-    implicit val ctx: UIContext = UIContext(labels.update("week", "week", "Welsh: week"), lang, urlMap, messagesApi)
+    implicit val ctx: UIContext = UIContext(labels.update("week", "week", "Welsh: week")
+                                                  .update("Money", "2.0", "1.0"),
+                                            lang,
+                                            urlMap,
+                                            messagesApi)
     val four: Int = 4
     val five: Int = 5
   }
@@ -513,7 +517,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
       val p = uiBuilder.buildPage("/start", Seq(TitleCallout(headingPhrase, Seq.empty, false),
                                                 numericRowGroup))
       p.components match {
-        case Seq(_: H1, nvsl: ui.NameValueSummaryList) if nvsl.rows.forall(r => r(1).isNumericLabelRef) => succeed
+        case Seq(_: H1, nvsl: ui.NameValueSummaryList) if nvsl.rows.forall(r => r(1).equals(Text("£2.00"))) => succeed
         case x => fail(s"Found $x")
       }
 

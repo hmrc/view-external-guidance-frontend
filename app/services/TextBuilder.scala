@@ -22,7 +22,7 @@ import core.models.ocelot.{labelAndListRegex, labelScalarMatch, boldPattern, lin
 import models.ui._
 import scala.util.matching.Regex
 import Regex._
-import play.api.i18n.Lang
+import play.api.i18n.{Messages, Lang}
 import scala.annotation.tailrec
 
 object TextBuilder {
@@ -30,18 +30,29 @@ object TextBuilder {
   val Welsh: Lang = Lang("cy")
 
   object Placeholders {
+    // Indexes into the Placeholder regex match groups
+    val LabelNameIdx: Int = 1
+    val LabelFormatIdx: Int = 3
+    val BoldTextIdx: Int = 4
+    val BoldLabelNameIdx: Int = 5
+    val BoldLabelFormatIdx: Int = 7
+    val ButtonOrLinkIdx: Int = 8
+    val LinkTypeIdx: Int = 9
+    val LinkTextIdx: Int = 10
+    val LinkDestIdx: Int = 11
+    val ListNameIdx: Int = 12
     val plregex: Regex = s"$labelPattern|$boldPattern|$linkPattern|$listPattern".r
-    def labelNameOpt(m: Match): Option[String] = Option(m.group(1))
-    def labelFormatOpt(m: Match): Option[String] = Option(m.group(3))
-    def boldTextOpt(m: Match): Option[String] = Option(m.group(4))
-    def boldLabelNameOpt(m: Match): Option[String] = Option(m.group(5))
-    def boldLabelFormatOpt(m: Match): Option[String] = Option(m.group(7))
-    def buttonOrLink(m: Match): Option[String] = Option(m.group(8))
-    def linkTypeOpt(m: Match): Option[String] = Option(m.group(9))
-    def linkText(m: Match): String = m.group(10)
+    def labelNameOpt(m: Match): Option[String] = Option(m.group(LabelNameIdx))
+    def labelFormatOpt(m: Match): Option[String] = Option(m.group(LabelFormatIdx))
+    def boldTextOpt(m: Match): Option[String] = Option(m.group(BoldTextIdx))
+    def boldLabelNameOpt(m: Match): Option[String] = Option(m.group(BoldLabelNameIdx))
+    def boldLabelFormatOpt(m: Match): Option[String] = Option(m.group(BoldLabelFormatIdx))
+    def buttonOrLink(m: Match): Option[String] = Option(m.group(ButtonOrLinkIdx))
+    def linkTypeOpt(m: Match): Option[String] = Option(m.group(LinkTypeIdx))
+    def linkText(m: Match): String = m.group(LinkTextIdx)
     def linkTextOpt(m: Match): Option[String] = Option(linkText(m))
-    def linkDest(m: Match): String = m.group(11)
-    def listNameOpt(m: Match): Option[String] = Option(m.group(12))
+    def linkDest(m: Match): String = m.group(LinkDestIdx)
+    def listNameOpt(m: Match): Option[String] = Option(m.group(ListNameIdx))
   }
   import Placeholders._
 
@@ -67,18 +78,17 @@ object TextBuilder {
       })(labelName => LabelRef(labelName, OutputFormat(labelFormatOpt(m))))
     }
 
-  def expandLabels(p: Phrase)(implicit ctx: UIContext): Phrase = {
-    def replace(lang: Lang)(m: Match): String = {
-      def labelValue(name: String): Option[String] = ctx.labels.displayValue(name)(lang)
+  def expandLabels(p: Phrase)(implicit ctx: UIContext): Phrase = Phrase(expandLabels(p.english, English), expandLabels(p.welsh, Welsh))
 
-      OutputFormat(labelFormatOpt(m)).asString(labelScalarMatch(m, ctx.labels, labelValue _), ctx.messagesApi.preferred(Seq(lang)))
-    }
-    Phrase(labelAndListRegex.replaceAllIn(p.english, replace(English) _), labelAndListRegex.replaceAllIn(p.welsh, replace(Welsh) _))
+  private def expandLabels(s: String, lang: Lang)(implicit ctx: UIContext): String = {
+    val messages: Messages = ctx.messagesApi.preferred(Seq(lang))
+    def labelValue(name: String): Option[String] = ctx.labels.displayValue(name)(lang)
+    labelAndListRegex.replaceAllIn(s, { m => OutputFormat(labelFormatOpt(m)).asString(labelScalarMatch(m, ctx.labels, labelValue _), messages)})
   }
 
   def fromPhrase(txt: Phrase)(implicit ctx: UIContext): Text = {
     val isEmpty: TextItem => Boolean = _.isEmpty
-    val (texts, matches) = fromPattern(plregex, txt.value(ctx.lang))
+    val (texts, matches) = fromPattern(plregex, expandLabels(txt.value(ctx.lang), ctx.lang))
     Text(merge(texts.map(Words(_)), placeholdersToItems(matches), Nil, isEmpty))
   }
 
@@ -95,12 +105,12 @@ object TextBuilder {
   def fromPhraseWithOptionalHint(txt: Phrase)(implicit ctx: UIContext): (Text, Option[Text]) = {
     val isEmpty: TextItem => Boolean = _.isEmpty
     val (str, hint) = singleStringWithOptionalHint(txt.value(ctx.lang))
-    val (texts, matches) = fromPattern(plregex, str)
+    val (texts, matches) = fromPattern(plregex, expandLabels(str, ctx.lang))
     (Text(merge(texts.map(Words(_)), placeholdersToItems(matches), Nil, isEmpty)), hint.map(Text(_)))
   }
 
   @tailrec
-  def merge[A, B](txts: List[A], links: List[A], acc: Seq[A], isEmpty: A => Boolean): Seq[A] =
+  private def merge[A, B](txts: List[A], links: List[A], acc: Seq[A], isEmpty: A => Boolean): Seq[A] =
     (txts, links) match {
       case (Nil, Nil) => acc
       case (t :: txs, l :: lxs) if isEmpty(t) => merge(txs, lxs, acc :+ l, isEmpty)
