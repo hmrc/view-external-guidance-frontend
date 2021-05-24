@@ -18,11 +18,11 @@ package services
 
 import models._
 import core.models.ocelot.{Link, Phrase, hintRegex, labelPattern, listPattern, listLength}
-import core.models.ocelot.{labelAndListRegex, labelScalarMatch, boldPattern, linkPattern, Labels}
+import core.models.ocelot.{labelAndListRegex, labelScalarMatch, boldPattern, linkPattern}
 import models.ui._
 import scala.util.matching.Regex
 import Regex._
-import play.api.i18n.{Lang, MessagesApi}
+import play.api.i18n.Lang
 import scala.annotation.tailrec
 
 object TextBuilder {
@@ -67,15 +67,13 @@ object TextBuilder {
       })(labelName => LabelRef(labelName, OutputFormat(labelFormatOpt(m))))
     }
 
-  def expandLabels(p: Phrase, labels: Labels, messagesApi: MessagesApi): Phrase = {
-    def replace(lang: Lang, messagesApi: MessagesApi)(m: Match): String = {
-      def labelValue(name: String): Option[String] = labels.displayValue(name)(lang)
+  def expandLabels(p: Phrase)(implicit ctx: UIContext): Phrase = {
+    def replace(lang: Lang)(m: Match): String = {
+      def labelValue(name: String): Option[String] = ctx.labels.displayValue(name)(lang)
 
-      OutputFormat(labelFormatOpt(m)).asString(labelScalarMatch(m, labels, labelValue _), messagesApi.preferred(Seq(lang)))
+      OutputFormat(labelFormatOpt(m)).asString(labelScalarMatch(m, ctx.labels, labelValue _), ctx.messagesApi.preferred(Seq(lang)))
     }
-    Phrase(
-      labelAndListRegex.replaceAllIn(p.english, replace(English, messagesApi) _),
-      labelAndListRegex.replaceAllIn(p.welsh, replace(Welsh, messagesApi) _))
+    Phrase(labelAndListRegex.replaceAllIn(p.english, replace(English) _), labelAndListRegex.replaceAllIn(p.welsh, replace(Welsh) _))
   }
 
   def fromPhrase(txt: Phrase)(implicit ctx: UIContext): Text = {

@@ -16,7 +16,7 @@
 
 package services
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Singleton
 import models._
 import models.ocelot.stanzas._
 import core.models.ocelot.stanzas.{CurrencyInput, CurrencyPoundsOnlyInput, DateInput, Input, Question}
@@ -29,7 +29,7 @@ import play.api.Logger
 import play.api.i18n.{Lang, MessagesApi}
 import scala.annotation.tailrec
 
-case class UIContext(labels: Labels, lang: Lang, pageMapById: Map[String, PageDesc])
+case class UIContext(labels: Labels, lang: Lang, pageMapById: Map[String, PageDesc], messagesApi: MessagesApi)
 
 sealed trait ErrorStrategy {
   def default(stanzas: Seq[VisualStanza]): ErrorStrategy = this
@@ -43,7 +43,7 @@ case object ValueTypeError extends ErrorStrategy {
 }
 
 @Singleton
-class UIBuilder @Inject()(messagesApi: MessagesApi) {
+class UIBuilder {
   val logger: Logger = Logger(getClass)
 
   def buildPage(url: String, stanzas: Seq[VisualStanza], errStrategy: ErrorStrategy = NoError)(implicit ctx: UIContext): Page = {
@@ -55,8 +55,8 @@ class UIBuilder @Inject()(messagesApi: MessagesApi) {
   private def expandLabelReferences(acc: List[VisualStanza])(stanzas: Seq[VisualStanza])(implicit ctx: UIContext): Seq[VisualStanza] =
     stanzas match {
       case Nil => acc.reverse
-      case (i: Instruction) +: xs => expandLabelReferences(i.copy(text = TextBuilder.expandLabels(i.text, ctx.labels, messagesApi)) :: acc)(xs)
-      case (n: NoteCallout) +: xs => expandLabelReferences(n.copy(text = TextBuilder.expandLabels(n.text, ctx.labels, messagesApi)) :: acc)(xs)
+      case (i: Instruction) +: xs => expandLabelReferences(i.copy(text = TextBuilder.expandLabels(i.text)) :: acc)(xs)
+      case (n: NoteCallout) +: xs => expandLabelReferences(n.copy(text = TextBuilder.expandLabels(n.text)) :: acc)(xs)
       case s +: xs => expandLabelReferences(s :: acc)(xs)
     }
 
