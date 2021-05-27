@@ -93,7 +93,7 @@ class SessionProcessFSM @Inject() () {
 
   // Pull out the current Flow label values from a given flow stack
   private def pageHistoryLabelValues(fs: List[FlowStage]): List[Label] =
-    labelList(fs, Nil).map(lv => ScalarLabel(lv.name, List(lv.value), Nil))
+    labelList(fs, Nil).map(lv => ScalarLabel(lv.name, List(lv.value.english), List(lv.value.welsh)))
 
   @tailrec
   private def labelList(fs: List[FlowStage], acc: List[LabelValue]): List[LabelValue] =

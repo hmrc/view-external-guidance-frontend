@@ -58,7 +58,7 @@ class GuidanceController @Inject() (
         logger.info(s"Redirecting to guidance start url $url after session reset")
         Future.successful(Redirect(controllers.routes.GuidanceController.getPage(processCode, url.drop(1), None).url))
       case Left(ExpectationFailedError) =>
-        logger.error(s"Redirecting to start of processCode $processCode at ${appConfig.baseUrl}/$processCode")
+        logger.warn(s"ExpectationFailed error on sessionRestart. Redirecting to start of processCode $processCode at ${appConfig.baseUrl}/$processCode")
         Future.successful(Redirect(s"${appConfig.baseUrl}/$processCode"))
       case Left(err) =>
         logger.error(s"Request for Reset ProcessContext returned $err, returning InternalServerError")
@@ -142,7 +142,7 @@ class GuidanceController @Inject() (
         logger.warn(s"Request for PageContext at /$path returned BadRequest during form submission, returning BadRequest")
         BadRequest(errorHandler.badRequestTemplateWithProcessCode(Some(processCode)))
       case ExpectationFailedError =>
-        logger.error(s"Redirecting to start of processCode $processCode at ${appConfig.baseUrl}/$processCode")
+        logger.warn(s"ExpectationFailed error on submitPage. Redirecting to start of processCode $processCode at ${appConfig.baseUrl}/$processCode")
         Redirect(s"${appConfig.baseUrl}/$processCode")
       case err =>
         logger.error(s"Request for PageContext at /$path returned $err during form submission, returning InternalServerError")
@@ -153,15 +153,15 @@ class GuidanceController @Inject() (
     withExistingSession[ProcessContext](service.getProcessContext).map{
       case Right(ctx) => ctx.legalPageIds match {
         case Nil =>
-          logger.error(s"Redirection after ForbiddenError to beginning of process")
+          logger.warn(s"Redirection after ForbiddenError to beginning of process as legalPageIds is empty")
           Redirect(s"${appConfig.baseUrl}/$processCode")
         case x :: _ => // Current page always the head of the legalPageIds
           val idToUrlMap: Map[String, String] = ctx.pageMap.map{case (k, v) => (v.id, k)}
-          logger.error(s"Redirection after ForbiddenError to previous page at ${idToUrlMap(x)}")
+          logger.warn(s"Redirection after ForbiddenError to previous page at ${idToUrlMap(x)}")
           Redirect(s"${appConfig.baseUrl}/${processCode}${idToUrlMap(x)}")
       }
       case Left(err) =>
-        logger.error(s"Failed ($err) to retrieve current session on ForbiddenError, redirecting after ForbiddenError to beginning of process")
+        logger.warn(s"Failed ($err) to retrieve current session on ForbiddenError, redirecting after ForbiddenError to beginning of process")
         Redirect(s"${appConfig.baseUrl}/$processCode")
     }
 
@@ -174,7 +174,7 @@ class GuidanceController @Inject() (
         logger.warn(s"Request for PageContext at /$path returned NotFound, returning NotFound")
         NotFound(errorHandler.notFoundTemplateWithProcessCode(Some(processCode)))
       case ExpectationFailedError =>
-        logger.error(s"Redirecting to start of processCode $processCode at ${appConfig.baseUrl}/$processCode")
+        logger.warn(s"ExpectationFailed error on getPage. Redirecting to start of processCode $processCode at ${appConfig.baseUrl}/$processCode")
         Redirect(s"${appConfig.baseUrl}/$processCode")
       case err =>
         logger.error(s"Request for PageContext at /$path returned $err, returning InternalServerError")
