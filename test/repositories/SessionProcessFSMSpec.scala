@@ -18,7 +18,7 @@ package repositories
 
 import base.BaseSpec
 import core.models.ocelot.stanzas.{ValueStanza, Value, ScalarType}
-import core.models.ocelot.{Process, ProcessJson, SequenceJson, FlowStage, ScalarLabel, ListLabel, Flow, Continuation, Label, LabelValue}
+import core.models.ocelot.{Process, ProcessJson, SequenceJson, FlowStage, ScalarLabel, ListLabel, Flow, Continuation, Label, LabelValue, Phrase}
 import DefaultSessionRepository._
 import models.PageNext
 import java.time.Instant
@@ -34,6 +34,21 @@ class SessionProcessFSMSpec extends BaseSpec {
   }
 
   trait Test extends ProcessJson {
+    val oneEn: String = "One"
+    val oneCy: String = s"Welsh: $oneEn"
+    val twoEn: String = "Two"
+    val twoCy: String = s"Welsh: $twoEn"
+    val threeEn: String = "Three"
+    val threeCy: String = s"Welsh: $threeEn"
+    val fourEn: String = "Four"
+    val fourCy: String = s"Welsh: $fourEn"
+    val phraseOne: Phrase = Phrase(oneEn, oneCy)
+    val phraseTwo: Phrase = Phrase(twoEn, twoCy)
+    val phraseThree: Phrase = Phrase(threeEn, threeCy)
+    val phraseFour: Phrase = Phrase(fourEn, fourCy)
+    val oneTwo: List[Phrase] = List(phraseOne, phraseTwo)
+    val oneTwoThree: List[Phrase] = oneTwo :+ phraseThree
+
     val sessionProcess: SessionProcess =
       new SessionProcess(
         "id",
@@ -169,14 +184,15 @@ class SessionProcessFSMSpec extends BaseSpec {
 
   }
 
-  trait FlowStackTest extends SequenceJson {
-    val sessionProcess: SessionProcess =
+  trait FlowStackTest extends Test with SequenceJson {
+    override val sessionProcess: SessionProcess =
       new SessionProcess(
         "id",
         "processId",
         nestedSeqJson.as[Process],
-        Map("Choice" -> ScalarLabel("Choice",List("Third"),List()), "Choice_seq" -> ListLabel("Choice_seq",List("Third", "Fourth"),List())),
-        List(Flow("8",Some(LabelValue("Choice","Third"))), Flow("88",Some(LabelValue("Choice","Fourth"))), Continuation("2")),
+        Map("Choice" -> ScalarLabel("Choice",List(phraseThree.english),List(phraseThree.welsh)),
+            "Choice_seq" -> ListLabel("Choice_seq",List(phraseThree.english, phraseFour.english),List(phraseThree.welsh, phraseFour.welsh))),
+        List(Flow("8",Some(LabelValue("Choice",phraseThree))), Flow("88",Some(LabelValue("Choice",phraseFour))), Continuation("2")),
         Map("6" -> ValueStanza(List(Value(ScalarType,"SecondSeqChoice","Loop value = [label:Choice]")),Vector("end"),false)),
         Map("/done" -> PageNext("2"), "/one" -> PageNext("4"), "/third" -> PageNext("8"), "/start" -> PageNext("start"), "/fourth" -> PageNext("88")),
         Map("/start" -> "2,3"),
@@ -208,7 +224,7 @@ class SessionProcessFSMSpec extends BaseSpec {
              Some("/start"),
              Some(List(PageHistory("/start",List()),
                        PageHistory("/next",
-                          List(Flow("8",Some(LabelValue("Choice","Third"))),Flow("88",Some(LabelValue("Choice","Fourth"))),Continuation("2"))),
+                          List(Flow("8",Some(LabelValue("Choice",phraseThree))),Flow("88",Some(LabelValue("Choice",phraseFour))),Continuation("2"))),
                        )),
              None,
              Nil)
@@ -219,7 +235,7 @@ class SessionProcessFSMSpec extends BaseSpec {
              Some("/start"),
              Some(List(PageHistory("/start",List()),
                        PageHistory("/next",
-                          List(Flow("8",Some(LabelValue("Choice","Third"))),Flow("88",Some(LabelValue("Choice","Fourth"))),Continuation("2"))),
+                          List(Flow("8",Some(LabelValue("Choice",phraseThree))),Flow("88",Some(LabelValue("Choice",phraseFour))),Continuation("2"))),
                        )),
              None,
              Nil)
@@ -278,32 +294,32 @@ class SessionProcessFSMSpec extends BaseSpec {
 
     "Return backlink, PageHistory update and flow label update with multiple element history, forceForward false (BACK)" in new FlowStackTest {
         val sp: SessionProcess = sessionProcess.copy(
-          pageHistory = List(PageHistory("/fourth",List(Flow("88",Some(LabelValue("Choice","Fourth"))), Continuation("2"))),
-                             PageHistory("/third",List(Flow("8",Some(LabelValue("Choice","Third"))), Flow("88",Some(LabelValue("Choice","Fourth"))), Continuation("2"))),
+          pageHistory = List(PageHistory("/fourth",List(Flow("88",Some(LabelValue("Choice",phraseFour))), Continuation("2"))),
+                             PageHistory("/third",List(Flow("8",Some(LabelValue("Choice",phraseThree))), Flow("88",Some(LabelValue("Choice",phraseFour))), Continuation("2"))),
                              PageHistory("/start",List())).reverse,
-          flowStack = List(Flow("88",Some(LabelValue("Choice","Fourth"))), Continuation("2"))
+          flowStack = List(Flow("88",Some(LabelValue("Choice",phraseFour))), Continuation("2"))
         )
         verify(fsm("/third", sp, false, "/start"),
                Some("/start"),
                Some(List(PageHistory("/start",List()),
-                         PageHistory("/third",List(Flow("8",Some(LabelValue("Choice","Third"))), Flow("88",Some(LabelValue("Choice","Fourth"))), Continuation("2"))))),
-               Some(List(Flow("8",Some(LabelValue("Choice","Third"))), Flow("88",Some(LabelValue("Choice","Fourth"))), Continuation("2"))),
-               List(ScalarLabel("Choice",List("Third"),List())))
+                         PageHistory("/third",List(Flow("8",Some(LabelValue("Choice",phraseThree))), Flow("88",Some(LabelValue("Choice",phraseFour))), Continuation("2"))))),
+               Some(List(Flow("8",Some(LabelValue("Choice",phraseThree))), Flow("88",Some(LabelValue("Choice",phraseFour))), Continuation("2"))),
+               List(ScalarLabel("Choice",List(phraseThree.english),List(phraseThree.welsh))))
     }
 
     "Return backlink, PageHistory update with multiple element history, forceForward true (FORWARD to HISTORIC)" in new FlowStackTest {
         verify(fsm("/next",
                sessionProcess.copy(
                  pageHistory = List(PageHistory("/start", Nil),
-                                    PageHistory("/next", List(Flow("8",Some(LabelValue("Choice","Third"))),
-                                                              Flow("88",Some(LabelValue("Choice","Fourth"))),
+                                    PageHistory("/next", List(Flow("8",Some(LabelValue("Choice",phraseThree))),
+                                                              Flow("88",Some(LabelValue("Choice",phraseFour))),
                                                               Continuation("2"))),
                                     PageHistory("/another", Nil))), true, "/start"),
                Some("/another"),
                Some(List(PageHistory("/start",List()),
-                         PageHistory("/next",List(Flow("8",Some(LabelValue("Choice","Third"))), Flow("88",Some(LabelValue("Choice","Fourth"))), Continuation("2"))),
+                         PageHistory("/next",List(Flow("8",Some(LabelValue("Choice",phraseThree))), Flow("88",Some(LabelValue("Choice",phraseFour))), Continuation("2"))),
                          PageHistory("/another",List()),
-                         PageHistory("/next",List(Flow("8",Some(LabelValue("Choice","Third"))), Flow("88",Some(LabelValue("Choice","Fourth"))), Continuation("2")))
+                         PageHistory("/next",List(Flow("8",Some(LabelValue("Choice",phraseThree))), Flow("88",Some(LabelValue("Choice",phraseFour))), Continuation("2")))
                          )),
                None,
                Nil)
