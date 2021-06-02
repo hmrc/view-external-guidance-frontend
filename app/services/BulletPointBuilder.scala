@@ -17,8 +17,7 @@
 package services
 
 import core.models.ocelot.Phrase
-import core.models.ocelot.stanzas.{Instruction, NoteCallout, VisualStanza}
-import models.ocelot.stanzas.InstructionGroup
+import core.models.ocelot.stanzas.NoteCallout
 import scala.util.matching.Regex
 import Regex._
 import scala.annotation.tailrec
@@ -32,24 +31,15 @@ object BulletPointBuilder {
   val ExplicitBreak: String = "[" + Break + "]"
 
   @tailrec
-  def groupBulletPointInstructions(acc: Seq[VisualStanza])(inputSeq: Seq[VisualStanza]): Seq[VisualStanza] =
-    inputSeq match {
-      case Nil => acc
-      case x :: xs =>
-        x match {
-          case i: Instruction =>
-            val matchedInstructions: Seq[Instruction] = groupMatchedInstructions(xs, Seq(i))
-            if (matchedInstructions.size > 1) {
-              groupBulletPointInstructions(acc :+ InstructionGroup(matchedInstructions))(xs.drop(matchedInstructions.size - 1))
-            } else {
-              groupBulletPointInstructions(acc :+ matchedInstructions.head)(xs)
-            }
-          case s: VisualStanza => groupBulletPointInstructions(acc :+ s)(xs)
-        }
-    }
+  def groupBulletPointNoteCalloutPhrases(acc: Seq[Seq[Phrase]])(inputSeq: Seq[NoteCallout]): Seq[Seq[Phrase]] = {
+    @tailrec
+    def groupMatchingNoteCallouts(inputSeq: Seq[NoteCallout], calloutAcc: Seq[NoteCallout]): Seq[NoteCallout] =
+      inputSeq match {
+        case Nil => calloutAcc
+        case x :: xs if BulletPointBuilder.matchPhrases(calloutAcc.last.text, x.text) => groupMatchingNoteCallouts(xs, calloutAcc :+ x)
+        case _ => calloutAcc
+      }
 
-  @tailrec
-  def groupBulletPointNoteCalloutPhrases(acc: Seq[Seq[Phrase]])(inputSeq: Seq[NoteCallout]): Seq[Seq[Phrase]] =
     inputSeq match {
       case Nil => acc
       case x :: xs =>
@@ -60,38 +50,16 @@ object BulletPointBuilder {
           groupBulletPointNoteCalloutPhrases(acc :+ matchedCallouts.map(_.text))(xs)
         }
     }
+  }
 
-  @tailrec
-  private def groupMatchedInstructions(inputSeq: Seq[VisualStanza], acc: Seq[Instruction]): Seq[Instruction] =
-    inputSeq match {
-      case Nil => acc
-      case x :: xs =>
-        x match {
-          case i: Instruction if(i.stack && BulletPointBuilder.matchPhrases(acc.last.text, i.text)) => groupMatchedInstructions(xs, acc :+ i)
-          case _ => acc
-        }
+  def determineMatchedLeadingText(phrases: Seq[Phrase], phraseText: Phrase => String): String = {
+    val noOfMatchedLeadingWords = phrases.headOption.fold(0){first =>
+      phrases.tail.map(p => matchInstructionText(phraseText(first), phraseText(p))._3).map(_.size).min
     }
 
-  @tailrec
-  private def groupMatchingNoteCallouts(inputSeq: Seq[NoteCallout], acc: Seq[NoteCallout]): Seq[NoteCallout] =
-    inputSeq match {
-      case Nil => acc
-      case x :: xs =>
-        if(BulletPointBuilder.matchPhrases(acc.last.text, x.text)) {
-          groupMatchingNoteCallouts(xs, acc :+ x)
-        } else {
-          acc
-        }
-    }
-
-  def determineMatchedLeadingText(phraseGroup: Seq[Phrase], phraseText: Phrase => String): String = {
-
-    val noOfMatchedWords = noOfMatchedLeadingWordsForPhraseGroup(phraseGroup, phraseText)
-
-    val (texts, matches) = TextBuilder.placeholderTxtsAndMatches(phraseText(phraseGroup.head))
-
+    val (texts, matches) = TextBuilder.placeholderTxtsAndMatches(phraseText(phrases.head))
     val (wordsProcessed, outputTexts, outputMatches) = locateTextsAndMatchesContainingLeadingText(
-      noOfMatchedWords,
+      noOfMatchedLeadingWords,
       texts,
       0,
       matches,
@@ -101,20 +69,7 @@ object BulletPointBuilder {
       0
     )
 
-    constructLeadingText(noOfMatchedWords, outputTexts, 0, outputMatches, 0, Nil, wordsProcessed = 0).mkString
-  }
-
-  private def noOfMatchedLeadingWordsForPhraseGroup(phraseGroup: Seq[Phrase], phraseText: Phrase => String): Int = {
-
-    val firstPhrase: Phrase = phraseGroup.head
-
-    val remainingPhrases: Seq[Phrase] = phraseGroup.drop(1)
-
-    val matchedWordsSeq = remainingPhrases.map { p =>
-      matchInstructionText(phraseText(firstPhrase), phraseText(p))._3
-    }
-
-    matchedWordsSeq.map(_.size).min
+    constructLeadingText(noOfMatchedLeadingWords, outputTexts, 0, outputMatches, 0, Nil, wordsProcessed = 0).mkString
   }
 
   /**
@@ -132,7 +87,7 @@ object BulletPointBuilder {
     *
     * @return The method returns the text and match components that contain the matched words
     */
-  def locateTextsAndMatchesContainingLeadingText(
+  private[services] def locateTextsAndMatchesContainingLeadingText(
       noOfWordsToMatch: Int,
       inputTexts: List[String],
       textsProcessed: Int,
@@ -178,7 +133,7 @@ object BulletPointBuilder {
     }
   }
 
-  def locateMatchesContainingLeadingText(
+  private[services] def locateMatchesContainingLeadingText(
       noOfWordsToMatch: Int,
       inputTexts: List[String],
       textsProcessed: Int,
@@ -332,10 +287,9 @@ object BulletPointBuilder {
     }
   }
 
-  def matchPhrases(p1: Phrase, p2: Phrase): Boolean = {
+  private[services] def matchPhrases(p1: Phrase, p2: Phrase): Boolean = {
 
-    def explicitMatch(text1: String, text2: String): Boolean = {
-
+    def explicitMatch(text1: String, text2: String): Boolean =
       (text1, text2) match {
         case (txt1, txt2) if txt1 == txt2 => false
         case (txt1, txt2) =>
@@ -346,29 +300,19 @@ object BulletPointBuilder {
           }
       }
 
-    }
-
     def implicitMatch(text1: String, text2: String, matchLimit: Int): Boolean = {
-
       val (p1NoOfWordsToDisplay, p2NoOfWordsToDisplay, matchedWords) = matchInstructionText(text1, text2)
-
       // Matching instructions must have matching leading text followed dissimilar trailing text
       matchedWords.size >= matchLimit && (matchedWords.size < p1NoOfWordsToDisplay) && (matchedWords.size < p2NoOfWordsToDisplay)
-
     }
 
-    if(useExplicitMatch(p1, p2)) {
-      explicitMatch(p1.english, p2.english) && explicitMatch(p1.welsh, p2.welsh)
-    } else {
-      implicitMatch(p1.english, p2.english, MatchLimitEnglish) && implicitMatch(p1.welsh, p2.welsh, MatchLimitWelsh)
-    }
-
+    // If any text component of the two phrases contains the explicit break marker apply explicit matching
+    if(useExplicitMatch(p1, p2)) explicitMatch(p1.english, p2.english) && explicitMatch(p1.welsh, p2.welsh)
+    else implicitMatch(p1.english, p2.english, MatchLimitEnglish) && implicitMatch(p1.welsh, p2.welsh, MatchLimitWelsh)
   }
 
-  def useExplicitMatch(p1: Phrase, p2: Phrase): Boolean =
-    // If any text component of the two phrases contains the explicit break marker apply explicit matching
-    (p1.english.contains(ExplicitBreak) || p1.welsh.contains(ExplicitBreak)) ||
-      (p2.english.contains(ExplicitBreak) || p2.welsh.contains(ExplicitBreak))
+  private[services] def useExplicitMatch(p1: Phrase, p2: Phrase): Boolean =
+    p1.english.contains(ExplicitBreak) || p1.welsh.contains(ExplicitBreak) || p2.english.contains(ExplicitBreak) || p2.welsh.contains(ExplicitBreak)
 
   private def matchInstructionText(text1: String, text2: String): (Int, Int, Seq[String]) = {
 
@@ -458,24 +402,12 @@ object BulletPointBuilder {
     notAllWordsProcessed || textFollowingPreviousMatch
   }
 
-  private def textLeadingMatchText(textsProcessed: Int, texts: List[String], m: Match): Boolean = {
+  private def textLeadingMatchText(textsProcessed: Int, texts: List[String], m: Match): Boolean =
+    !gapBetweenTextElements(texts(textsProcessed), TextBuilder.placeholderMatchText(m))
 
-    if (gapBetweenTextElements(texts(textsProcessed), TextBuilder.placeholderMatchText(m))) false else true
-  }
+  private def textTrailingMatchText(textsProcessed: Int, texts: List[String], matchText: String): Boolean =
+    if (texts.size - 1 >= textsProcessed) !gapBetweenTextElements(matchText, texts(textsProcessed)) else false
 
-  private def textTrailingMatchText(textsProcessed: Int, texts: List[String], matchText: String): Boolean = {
-    if (texts.size - 1 >= textsProcessed) {
-      if (gapBetweenTextElements(matchText, texts(textsProcessed))) false else true
-    } else {
-      false
-    }
-  }
-
-  private def updateNoOfMatchedWords(trailingText: Boolean, noOfMatchedWords: Int): Int = {
-
-    if (trailingText) noOfMatchedWords + 1 else noOfMatchedWords
-
-  }
-
+  private def updateNoOfMatchedWords(trailingText: Boolean, noOfMatchedWords: Int): Int = if (trailingText) noOfMatchedWords + 1 else noOfMatchedWords
   private def gapBetweenTextElements(text1: String, text2: String): Boolean = text1.endsWith(" ") || text2.startsWith(" ")
 }

@@ -1071,7 +1071,8 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
           assert(pages.head.stanzas.size == 4)
 
           val visualStanzas = pages.head.stanzas.collect{case s:VisualStanza => s}
-          val stanzas: Seq[VisualStanza] = BulletPointBuilder.groupBulletPointInstructions(Nil)(visualStanzas)
+
+          val stanzas: Seq[VisualStanza] = Aggregator.aggregateStanzas(Nil)(visualStanzas)
 
           stanzas.head shouldBe Instruction(instructionStanza1, phrase1, None)
           stanzas(1) shouldBe Instruction(instructionStanza2, phrase2, None)
@@ -1102,7 +1103,7 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
           assert(pages.head.stanzas.size == 4)
 
           val visualStanzas = pages.head.stanzas.collect{case s:VisualStanza => s}
-          val stanzas: Seq[VisualStanza] = BulletPointBuilder.groupBulletPointInstructions(Nil)(visualStanzas)
+          val stanzas: Seq[VisualStanza] = Aggregator.aggregateStanzas(Nil)(visualStanzas)
 
           stanzas.head shouldBe Instruction(instructionStanza1, phrase1, None)
           stanzas(1) shouldBe Instruction(instructionStanza2, phrase2, None)
@@ -1133,7 +1134,7 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
           assert(pages.head.stanzas.size == 4)
 
           val visualStanzas = pages.head.stanzas.collect{case s:VisualStanza => s}
-          val stanzas: Seq[VisualStanza] = BulletPointBuilder.groupBulletPointInstructions(Nil)(visualStanzas)
+          val stanzas: Seq[VisualStanza] = Aggregator.aggregateStanzas(Nil)(visualStanzas)
 
           val instruction1: Instruction = Instruction(instructionStanza1, phrase1, None)
           val instruction2: Instruction = Instruction(instructionStanza2, phrase2, None)
@@ -1168,7 +1169,7 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
           assert(pages.head.stanzas.size == 4)
 
           val visualStanzas = pages.head.stanzas.collect{case s:VisualStanza => s}
-          val stanzas: Seq[VisualStanza] = BulletPointBuilder.groupBulletPointInstructions(Nil)(visualStanzas)
+          val stanzas: Seq[VisualStanza] = Aggregator.aggregateStanzas(Nil)(visualStanzas)
 
           val instruction1: Instruction = Instruction(instructionStanza1, phrase1, None)
           val instruction2: Instruction = Instruction(instructionStanza2, phrase2, None)
@@ -1205,7 +1206,7 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
           assert(pages.head.stanzas.size == 5)
 
           val visualStanzas = pages.head.stanzas.collect{case s:VisualStanza => s}
-          val stanzas: Seq[VisualStanza] = BulletPointBuilder.groupBulletPointInstructions(Nil)(visualStanzas)
+          val stanzas: Seq[VisualStanza] = Aggregator.aggregateStanzas(Nil)(visualStanzas)
 
           stanzas.head shouldBe Instruction(instructionStanza1, phrase1, None)
           stanzas(1) shouldBe Instruction(instructionStanza2, phrase2, None)
@@ -1239,7 +1240,7 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
           assert(pages.head.stanzas.size == 5)
 
           val visualStanzas = pages.head.stanzas.collect{case s:VisualStanza => s}
-          val stanzas: Seq[VisualStanza] = BulletPointBuilder.groupBulletPointInstructions(Nil)(visualStanzas)
+          val stanzas: Seq[VisualStanza] = Aggregator.aggregateStanzas(Nil)(visualStanzas)
 
           val instruction1: Instruction = Instruction(instructionStanza1, phrase1, None)
           val instruction2: Instruction = Instruction(instructionStanza2, phrase2, None)
@@ -1277,7 +1278,7 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
           assert(pages.head.stanzas.size == 5)
 
           val visualStanzas = pages.head.stanzas.collect{case s:VisualStanza => s}
-          val stanzas: Seq[VisualStanza] = BulletPointBuilder.groupBulletPointInstructions(Nil)(visualStanzas)
+          val stanzas: Seq[VisualStanza] = Aggregator.aggregateStanzas(Nil)(visualStanzas)
 
           stanzas.head shouldBe Instruction(instructionStanza1, phrase1, None)
 
@@ -1316,7 +1317,7 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
           assert(pages.head.stanzas.size == 5)
 
           val visualStanzas = pages.head.stanzas.collect{case s:VisualStanza => s}
-          val stanzas: Seq[VisualStanza] = BulletPointBuilder.groupBulletPointInstructions(Nil)(visualStanzas)
+          val stanzas: Seq[VisualStanza] = Aggregator.aggregateStanzas(Nil)(visualStanzas)
 
           val instruction1: Instruction = Instruction(instructionStanza1, phrase1, None)
           val instruction2: Instruction = Instruction(instructionStanza2, phrase2, None)
@@ -1384,7 +1385,7 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
           assert(pages.head.stanzas.size == 13)
 
           val visualStanzas = pages.head.stanzas.collect { case s: VisualStanza => s }
-          val stanzas: Seq[VisualStanza] = BulletPointBuilder.groupBulletPointInstructions(Nil)(visualStanzas)
+          val stanzas: Seq[VisualStanza] = Aggregator.aggregateStanzas(Nil)(visualStanzas)
 
           val instruction1: Instruction = Instruction(instructionStanza1, phrase1, None)
           val instruction2: Instruction = Instruction(instructionStanza2, phrase2, None)
@@ -1487,7 +1488,7 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
           assert(pages.head.stanzas.size == 4)
 
           val visualStanzas = pages.head.stanzas.collect { case s: VisualStanza => s }
-          val stanzas: Seq[VisualStanza] = BulletPointBuilder.groupBulletPointInstructions(Nil)(visualStanzas)
+          val stanzas: Seq[VisualStanza] = Aggregator.aggregateStanzas(Nil)(visualStanzas)
 
           stanzas.size shouldBe 2
 
@@ -1563,7 +1564,7 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
           val expectedInstructionGroup: InstructionGroup = InstructionGroup(Seq(instruction1, instruction2, instruction3))
 
           val visualStanzas = pages.head.stanzas.collect{case s:VisualStanza => s}
-          BulletPointBuilder.groupBulletPointInstructions(Nil)(visualStanzas).head shouldBe expectedInstructionGroup
+          Aggregator.aggregateStanzas(Nil)(visualStanzas).head shouldBe expectedInstructionGroup
 
         case Left(err) => fail(s"Flow error $err")
       }
@@ -1624,14 +1625,14 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
 
 
           val visualStanzas = pages.head.stanzas.collect{case s:VisualStanza => s}
-          BulletPointBuilder.groupBulletPointInstructions(Nil)(visualStanzas)(1) shouldBe expectedInstructionGroup1
+          Aggregator.aggregateStanzas(Nil)(visualStanzas)(1) shouldBe expectedInstructionGroup1
 
           val instruction6: Instruction = Instruction(instructionStanza6, phrase8, None)
           val instruction7: Instruction = Instruction(instructionStanza7, phrase9, None)
 
           val expectedInstructionGroup2: InstructionGroup = InstructionGroup(Seq(instruction6, instruction7))
 
-          BulletPointBuilder.groupBulletPointInstructions(Nil)(visualStanzas)(six) shouldBe expectedInstructionGroup2
+          Aggregator.aggregateStanzas(Nil)(visualStanzas)(six) shouldBe expectedInstructionGroup2
 
         case Left(err) => fail(s"Flow error $err")
       }

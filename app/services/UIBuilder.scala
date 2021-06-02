@@ -47,8 +47,7 @@ class UIBuilder {
   val logger: Logger = Logger(getClass)
 
   def buildPage(url: String, stanzas: Seq[VisualStanza], errStrategy: ErrorStrategy = NoError)(implicit ctx: UIContext): Page = {
-    val stanzaTransformPipeline: List[Seq[VisualStanza] => Seq[VisualStanza]] =
-      List(expandLabelReferences(Nil), BulletPointBuilder.groupBulletPointInstructions(Nil), Aggregator.aggregateStanzas(Nil), stackStanzas(Nil))
+    val stanzaTransformPipeline: List[Seq[VisualStanza] => Seq[VisualStanza]] = List(expandLabelReferences(Nil), Aggregator.aggregateStanzas(Nil), stackStanzas(Nil))
     Page(url, fromStanzas(stanzaTransformPipeline.foldLeft(stanzas){case (s, t) => t(s)}, Nil, errStrategy.default(stanzas)))
   }
 
@@ -299,4 +298,5 @@ class UIBuilder {
 
       TextBuilder.fromPhrase(Phrase(bulletPointEnglish, bulletPointWelsh))
     }
+
 }
