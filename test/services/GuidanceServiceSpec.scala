@@ -102,7 +102,8 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
       mockPageBuilder,
       mockPageRenderer,
       new SecuredProcessBuilder(messagesApi),
-      mockUIBuilder)
+      mockUIBuilder,
+      messagesApi)
   }
 
   "Calling saveLabels when there labels to save" should {

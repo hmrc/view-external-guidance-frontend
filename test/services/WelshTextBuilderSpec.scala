@@ -22,7 +22,7 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import base.{WelshLanguage, BaseSpec}
 import core.models.ocelot._
 import models.PageDesc
-import models.ui.{Currency, CurrencyPoundsOnly, DateStandard, LabelRef, Link, Text, Txt, Words}
+import models.ui.{Link, Text, Words}
 
 class WelshTextBuilderSpec extends BaseSpec with WelshLanguage with GuiceOneAppPerSuite {
 
@@ -56,13 +56,15 @@ class WelshTextBuilderSpec extends BaseSpec with WelshLanguage with GuiceOneAppP
     val brokenLinkPhrase = Phrase(Vector("Hello [link:Blah Blah:htts://www.bbc.co.uk]", "Welsh: Hello [link:Blah Blah:htts://www.bbc.co.uk]"))
 
     val labelsMap = Map(
+      "BLAH" -> ScalarLabel("BLAH", List("2.0")),
+      "When" -> ScalarLabel("When", List("21/09/1973")),
       "X"->ScalarLabel("X", List("33.5")),
       "Y"->ScalarLabel("Y"),
       "Name" -> ScalarLabel("Name", List("Coltrane")),
       "Colours" -> ListLabel("Colours", List("Red", "Green", "Blue"))
     )
 
-    implicit val ctx: UIContext = UIContext(LabelCache(labelsMap), lang, urlMap1)
+    implicit val ctx: UIContext = UIContext(LabelCache(labelsMap), lang, urlMap1, messagesApi)
 
     val answerWithNoHint = Phrase("Yes", "Welsh: Yes")
     val answerWithHint = Phrase("Yes[hint:You agree with the assertion]", "Welsh: Yes[hint:Welsh: You agree with the assertion]")
@@ -74,51 +76,55 @@ class WelshTextBuilderSpec extends BaseSpec with WelshLanguage with GuiceOneAppP
   "TextBuilder placeholder parsing" must {
 
     "Convert label reference with default output format placeholders within phrase to LabelRef TextItems" in new Test {
-      val p = Phrase("""Sentence with a [label:BLAH] label reference""", """Welsh: Sentence with a [label:BLAH] label reference""")
-      TextBuilder.fromPhrase(p).items shouldBe Seq(Words("Welsh: Sentence with a "), LabelRef("BLAH", Txt), Words(" label reference"))
-      TextBuilder.fromPhraseWithOptionalHint(p)._1.items shouldBe Seq(Words("Welsh: Sentence with a "), LabelRef("BLAH", Txt), Words(" label reference"))
+      val p = Phrase("""Sentence containing [label:BLAH] (label reference)""", """Welsh: Sentence containing [label:BLAH] (label reference)""")
+      TextBuilder.fromPhrase(p).items shouldBe Seq(Words("Welsh: Sentence containing 2.0 (label reference)"))
+      TextBuilder.fromPhraseWithOptionalHint(p)._1.items shouldBe Seq(Words("Welsh: Sentence containing 2.0 (label reference)"))
     }
 
     "Convert label reference with currency output format placeholders within phrase to LabelRef TextItems" in new Test {
-      val p = Phrase("""Sentence with a [label:BLAH:currency] label reference""", """Welsh: Sentence with a [label:BLAH:currency] label reference""")
-      TextBuilder.fromPhrase(p).items shouldBe Seq(Words("Welsh: Sentence with a "), LabelRef("BLAH", Currency), Words(" label reference"))
-      TextBuilder.fromPhraseWithOptionalHint(p)._1.items shouldBe Seq(Words("Welsh: Sentence with a "), LabelRef("BLAH", Currency), Words(" label reference"))
+      val p = Phrase("""Sentence containing [label:BLAH:currency] (label reference)""",
+                     """Welsh: Sentence containing [label:BLAH:currency] (label reference)""")
+      TextBuilder.fromPhrase(p).items shouldBe Seq(Words("Welsh: Sentence containing £2.00 (label reference)"))
+      TextBuilder.fromPhraseWithOptionalHint(p)._1.items shouldBe Seq(Words("Welsh: Sentence containing £2.00 (label reference)"))
     }
 
     "Convert label reference with date output format placeholders within phrase to LabelRef TextItems" in new Test {
-      val p = Phrase("""Sentence with a [label:BLAH:date] label reference""", """Welsh: Sentence with a [label:BLAH:date] label reference""")
-      TextBuilder.fromPhrase(p).items shouldBe Seq(Words("Welsh: Sentence with a "), LabelRef("BLAH", DateStandard), Words(" label reference"))
-      TextBuilder.fromPhraseWithOptionalHint(p)._1.items shouldBe Seq(Words("Welsh: Sentence with a "), LabelRef("BLAH", DateStandard), Words(" label reference"))
+      val p = Phrase("""Sentence with a [label:When:date] label reference""", """Welsh: Sentence with a [label:When:date] label reference""")
+      TextBuilder.fromPhrase(p).items shouldBe Seq(Words("Welsh: Sentence with a 21 Medi 1973 label reference"))
+      TextBuilder.fromPhraseWithOptionalHint(p)._1.items shouldBe Seq(Words("Welsh: Sentence with a 21 Medi 1973 label reference"))
     }
 
     "Convert a label placeholder within a bold placeholder to a bold label ref" in new Test {
       val p = Phrase("""Sentence with a [bold:[label:BLAH]] label reference""", """Welsh: Sentence with a [bold:[label:BLAH]] label reference""")
-      TextBuilder.fromPhrase(p).items shouldBe Seq(Words("Welsh: Sentence with a "), LabelRef("BLAH", Txt, true), Words(" label reference"))
-      TextBuilder.fromPhraseWithOptionalHint(p)._1.items shouldBe Seq(Words("Welsh: Sentence with a "), LabelRef("BLAH", Txt, true), Words(" label reference"))
+      TextBuilder.fromPhrase(p).items shouldBe Seq(Words("Welsh: Sentence with a "), Words("2.0", true), Words(" label reference"))
+      TextBuilder.fromPhraseWithOptionalHint(p)._1.items shouldBe Seq(Words("Welsh: Sentence with a "), Words("2.0", true), Words(" label reference"))
     }
 
-    "Convert a label placeholder with currency output format within a bold placeholder to a bold label ref" in new Test {
-      val p = Phrase("""Sentence with a [bold:[label:BLAH:currencyPoundsOnly]] label reference""", """Welsh: Sentence with a [bold:[label:BLAH:currencyPoundsOnly]] label reference""")
-      TextBuilder.fromPhrase(p).items shouldBe Seq(Words("Welsh: Sentence with a "), LabelRef("BLAH", CurrencyPoundsOnly, true), Words(" label reference"))
-      TextBuilder.fromPhraseWithOptionalHint(p)._1.items shouldBe Seq(Words("Welsh: Sentence with a "), LabelRef("BLAH", CurrencyPoundsOnly, true), Words(" label reference"))
+    "Convert a label placeholderwith currency output format within a bold placeholder to a bold label ref" in new Test {
+      val p = Phrase("""Sentence with a [bold:[label:BLAH:currencyPoundsOnly]] label reference""",
+                     """Welsh: Sentence with a [bold:[label:BLAH:currencyPoundsOnly]] label reference""")
+      TextBuilder.fromPhrase(p).items shouldBe Seq(Words("Welsh: Sentence with a "), Words("£2", true), Words(" label reference"))
+      TextBuilder.fromPhraseWithOptionalHint(p)._1.items shouldBe Seq(Words("Welsh: Sentence with a "), Words("£2", true), Words(" label reference"))
     }
 
     "Convert button link placeholders within phrase to Link as button TextItems" in new Test {
       val p = Phrase("""Sentence with a [button:BLAH:3] label reference""", """Welsh: Sentence with a [button:BLAH:3] label reference""")
       TextBuilder.fromPhrase(p).items shouldBe Seq(Words("Welsh: Sentence with a "), Link("dummy-path", "BLAH", false, true), Words(" label reference"))
-      TextBuilder.fromPhraseWithOptionalHint(p)._1.items shouldBe Seq(Words("Welsh: Sentence with a "), Link("dummy-path", "BLAH", false, true), Words(" label reference"))
+      TextBuilder.fromPhraseWithOptionalHint(p)._1.items shouldBe
+        Seq(Words("Welsh: Sentence with a "), Link("dummy-path", "BLAH", false, true), Words(" label reference"))
     }
 
     "Convert button link in tab placeholders within phrase to Link as button TextItems" in new Test {
       val p = Phrase("""Sentence with a [button-tab:BLAH:3] label reference""", """Welsh: Sentence with a [button-tab:BLAH:3] label reference""")
       TextBuilder.fromPhrase(p).items shouldBe Seq(Words("Welsh: Sentence with a "), Link("dummy-path", "BLAH", true, true), Words(" label reference"))
-      TextBuilder.fromPhraseWithOptionalHint(p)._1.items shouldBe Seq(Words("Welsh: Sentence with a "), Link("dummy-path", "BLAH", true, true), Words(" label reference"))
+      TextBuilder.fromPhraseWithOptionalHint(p)._1.items shouldBe
+        Seq(Words("Welsh: Sentence with a "), Link("dummy-path", "BLAH", true, true), Words(" label reference"))
     }
 
     "Convert [list:<label>:length] placeholders within phrase to Words TextItems containing the list label length" in new Test {
       val p = Phrase("""The number of colours is [list:Colours:length]""", """Welsh: The number of colours is [list:Colours:length]""")
-      TextBuilder.fromPhrase(p).items shouldBe Seq(Words("Welsh: The number of colours is "), Words("3"))
-      TextBuilder.fromPhraseWithOptionalHint(p)._1.items shouldBe Seq(Words("Welsh: The number of colours is "), Words("3"))
+      TextBuilder.fromPhrase(p).items shouldBe Seq(Words("Welsh: The number of colours is 3"))
+      TextBuilder.fromPhraseWithOptionalHint(p)._1.items shouldBe Seq(Words("Welsh: The number of colours is 3"))
     }
 
     "Convert a Text with link placeholders in lang strings to Seq[TextItem]" in new Test {
@@ -228,47 +234,52 @@ class WelshTextBuilderSpec extends BaseSpec with WelshLanguage with GuiceOneAppP
     }
   }
 
-  "TextBuilder expandLabels" must {
-    val labelsMap = Map(
+  trait ExpandTest extends Test {
+    override val labelsMap = Map(
       "BLAH"->ScalarLabel("BLAH", List("33.5"), List("43.5")),
       "SomeDate"->ScalarLabel("SomeDate", List("22/9/1973"), List("23/9/1973")),
       "SomeList" -> ListLabel("SomeList", List("x", "y", "z")))
-    val labels = LabelCache(labelsMap)
 
-    "Convert label reference with default output format placeholders within phrase" in new Test {
+    override implicit val ctx: UIContext = UIContext(LabelCache(labelsMap), lang, urlMap1, messagesApi)
+  }
+
+  "TextBuilder expandLabels" must {
+
+    "Convert label reference with default output format placeholders within phrase" in new ExpandTest {
       val phrase = Phrase("""Sentence with a [label:BLAH] label reference""", """Welsh: Sentence with a [label:BLAH] label reference""")
       val expectedPhrase = Phrase("""Sentence with a 33.5 label reference""", """Welsh: Sentence with a 43.5 label reference""")
-      TextBuilder.expandLabels(phrase, labels, messagesApi) shouldBe expectedPhrase
+      TextBuilder.expandLabels(phrase) shouldBe expectedPhrase
     }
 
-    "Convert label reference with currency output format placeholders within phrase" in new Test {
+    "Convert label reference with currency output format placeholders within phrase" in new ExpandTest {
       val phrase = Phrase("""Sentence with a [label:BLAH:currency] label reference""", """Welsh: Sentence with a [label:BLAH:currency] label reference""")
       val expectedPhrase = Phrase("""Sentence with a £33.50 label reference""", """Welsh: Sentence with a £43.50 label reference""")
-      TextBuilder.expandLabels(phrase, labels, messagesApi) shouldBe expectedPhrase
+      TextBuilder.expandLabels(phrase) shouldBe expectedPhrase
     }
 
-    "Convert label reference with date output format placeholders within phrase" in new Test {
+    "Convert label reference with date output format placeholders within phrase" in new ExpandTest {
       val phrase = Phrase("""Sentence with a [label:SomeDate:date] label reference""", """Welsh: Sentence with a [label:SomeDate:date] label reference""")
       val expectedPhrase = Phrase("""Sentence with a 22 September 1973 label reference""", """Welsh: Sentence with a 23 Medi 1973 label reference""")
-      TextBuilder.expandLabels(phrase, labels, messagesApi) shouldBe expectedPhrase
+      TextBuilder.expandLabels(phrase) shouldBe expectedPhrase
     }
 
-    "Convert a label placeholder within a bold placeholder to a bold label ref" in new Test {
+    "Convert a label placeholder within a bold placeholder to a bold label ref" in new ExpandTest {
       val phrase = Phrase("""Sentence with a [bold:[label:BLAH]] label reference""", """Welsh: Sentence with a [bold:[label:BLAH]] label reference""")
       val expectedPhrase = Phrase("""Sentence with a [bold:33.5] label reference""", """Welsh: Sentence with a [bold:43.5] label reference""")
-      TextBuilder.expandLabels(phrase, labels, messagesApi) shouldBe expectedPhrase
+      TextBuilder.expandLabels(phrase) shouldBe expectedPhrase
     }
 
-    "Convert a label placeholder with currency output format within a bold placeholder" in new Test {
-      val phrase = Phrase("""Sentence with a [bold:[label:BLAH:currencyPoundsOnly]] label reference""", """Welsh: Sentence with a [bold:[label:BLAH:currencyPoundsOnly]] label reference""")
+    "Convert a label placeholder with currency output format within a bold placeholder" in new ExpandTest {
+      val phrase = Phrase("""Sentence with a [bold:[label:BLAH:currencyPoundsOnly]] label reference""",
+                          """Welsh: Sentence with a [bold:[label:BLAH:currencyPoundsOnly]] label reference""")
       val expectedPhrase = Phrase("""Sentence with a [bold:£33] label reference""", """Welsh: Sentence with a [bold:£43] label reference""")
-      TextBuilder.expandLabels(phrase, labels, messagesApi) shouldBe expectedPhrase
+      TextBuilder.expandLabels(phrase) shouldBe expectedPhrase
     }
 
-    "Convert a list length placeholder " in new Test {
+    "Convert a list length placeholder " in new ExpandTest {
       val phrase = Phrase("""SomeList has length [list:SomeList:length]""", """Welsh: SomeList has length [list:SomeList:length]""")
       val expectedPhrase = Phrase("""SomeList has length 3""", """Welsh: SomeList has length 3""")
-      TextBuilder.expandLabels(phrase, labels, messagesApi) shouldBe expectedPhrase
+      TextBuilder.expandLabels(phrase) shouldBe expectedPhrase
     }
   }
 
