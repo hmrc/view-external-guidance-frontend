@@ -28,7 +28,8 @@ object BulletPointBuilder {
   val MatchLimitEnglish: Int = 3
   val MatchLimitWelsh: Int = 1
   val Break: String = "break"
-  val ExplicitBreak: String = "[" + Break + "]"
+  val ExplicitBreak: String = s"[$Break]"
+  val BreakMatchPattern: String = s"\\[$Break\\]"
 
   @tailrec
   def groupBulletPointNoteCalloutPhrases(acc: Seq[Seq[Phrase]])(inputSeq: Seq[NoteCallout]): Seq[Seq[Phrase]] = {
@@ -36,7 +37,7 @@ object BulletPointBuilder {
     def groupMatchingNoteCallouts(inputSeq: Seq[NoteCallout], calloutAcc: Seq[NoteCallout]): Seq[NoteCallout] =
       inputSeq match {
         case Nil => calloutAcc
-        case x :: xs if BulletPointBuilder.matchPhrases(calloutAcc.last.text, x.text) => groupMatchingNoteCallouts(xs, calloutAcc :+ x)
+        case x :: xs if matchPhrases(calloutAcc.last.text, x.text) => groupMatchingNoteCallouts(xs, calloutAcc :+ x)
         case _ => calloutAcc
       }
 
@@ -53,23 +54,14 @@ object BulletPointBuilder {
   }
 
   def determineMatchedLeadingText(phrases: Seq[Phrase], phraseText: Phrase => String): String = {
-    val noOfMatchedLeadingWords = phrases.headOption.fold(0){first =>
-      phrases.tail.map(p => matchInstructionText(phraseText(first), phraseText(p))._3).map(_.size).min
+    val matchedText: Seq[Seq[String]] = phrases.headOption.fold[Seq[Seq[String]]](Nil){first =>
+      phrases.tail.map(p => partialMatchInstructionText(phraseText(first), phraseText(p)))
     }
-
+    val noOfMatchedLeadingWords: Int = matchedText.map(_.length).min
     val (texts, matches) = TextBuilder.placeholderTxtsAndMatches(phraseText(phrases.head))
-    val (wordsProcessed, outputTexts, outputMatches) = locateTextsAndMatchesContainingLeadingText(
-      noOfMatchedLeadingWords,
-      texts,
-      0,
-      matches,
-      0,
-      Nil,
-      Nil,
-      0
-    )
+    val (wordsProcessed, outputTexts, outputMatches) = leadingTextsAndMatches(noOfMatchedLeadingWords, texts, matches)
 
-    constructLeadingText(noOfMatchedLeadingWords, outputTexts, 0, outputMatches, 0, Nil, wordsProcessed = 0).mkString
+    constructLeadingText(noOfMatchedLeadingWords, outputTexts, outputMatches).mkString
   }
 
   /**
@@ -87,26 +79,25 @@ object BulletPointBuilder {
     *
     * @return The method returns the text and match components that contain the matched words
     */
-  private[services] def locateTextsAndMatchesContainingLeadingText(
+  private[services] def leadingTextsAndMatches(
       noOfWordsToMatch: Int,
       inputTexts: List[String],
-      textsProcessed: Int,
       inputMatches: List[Match],
-      matchesProcessed: Int,
-      outputTexts: List[String],
-      outputMatches: List[Match],
-      wordsProcessed: Int
-  ): (Int, List[String], List[Match]) = {
-
+      textsProcessed: Int = 0,
+      matchesProcessed: Int = 0,
+      outputTexts: List[String] = Nil,
+      outputMatches: List[Match] = Nil,
+      wordsProcessed: Int = 0
+  ): (Int, List[String], List[Match]) =
     if (textsProcessed == inputTexts.size) {
       if (matchesProcessed == inputMatches.size) {
         (wordsProcessed, outputTexts, outputMatches)
       } else {
-        locateMatchesContainingLeadingText(
+        leadingMatches(
           noOfWordsToMatch,
           inputTexts,
-          textsProcessed,
           inputMatches,
+          textsProcessed,
           matchesProcessed,
           outputTexts,
           outputMatches,
@@ -115,13 +106,13 @@ object BulletPointBuilder {
       }
     } else {
       val text: String = inputTexts(textsProcessed)
-      val noOfWords: Int = wordsInText(text, textsProcessed, inputMatches, matchesProcessed)
-      if (processNextMatch(noOfWordsToMatch, wordsProcessed, noOfWords, inputTexts, textsProcessed, inputMatches, matchesProcessed)) {
-        locateMatchesContainingLeadingText(
+      val noOfWords: Int = wordCount(text, textsProcessed, inputMatches, matchesProcessed)
+      if (processNextMatch(noOfWordsToMatch, wordsProcessed+noOfWords, inputTexts, textsProcessed, inputMatches, matchesProcessed)) {
+        leadingMatches(
           noOfWordsToMatch,
           inputTexts,
-          textsProcessed + 1,
           inputMatches,
+          textsProcessed + 1,
           matchesProcessed,
           outputTexts :+ text,
           outputMatches,
@@ -131,30 +122,28 @@ object BulletPointBuilder {
         (wordsProcessed + noOfWords, (outputTexts :+ text), outputMatches)
       }
     }
-  }
 
-  private[services] def locateMatchesContainingLeadingText(
+  private[services] def leadingMatches(
       noOfWordsToMatch: Int,
       inputTexts: List[String],
-      textsProcessed: Int,
       inputMatches: List[Match],
+      textsProcessed: Int,
       matchesProcessed: Int,
       outputTexts: List[String],
       outputMatches: List[Match],
       wordsProcessed: Int
   ): (Int, List[String], List[Match]) = {
-
     if (matchesProcessed == inputMatches.size) {
       (wordsProcessed, outputTexts, outputMatches)
     } else {
       val text: String = TextBuilder.placeholderMatchText(inputMatches(matchesProcessed))
-      val noOfWords: Int = wordsInMatchText(text, inputTexts, textsProcessed)
-      if (processNextText(noOfWordsToMatch, wordsProcessed, noOfWords, inputTexts, textsProcessed, text)) {
-        locateTextsAndMatchesContainingLeadingText(
+      val noOfWords: Int = wordCountInMatchText(text, inputTexts, textsProcessed)
+      if (processNextText(noOfWordsToMatch, wordsProcessed+noOfWords, inputTexts, textsProcessed, text)) {
+        leadingTextsAndMatches(
           noOfWordsToMatch,
           inputTexts,
-          textsProcessed,
           inputMatches,
+          textsProcessed,
           matchesProcessed + 1,
           outputTexts,
           outputMatches :+ inputMatches(matchesProcessed),
@@ -166,7 +155,7 @@ object BulletPointBuilder {
     }
   }
 
-  /**
+  /*
     * Method gathers the leading text from the text and match components containing the match words
     *
     * @param wordLimit - The number of words in the text to be reconstructed
@@ -182,54 +171,48 @@ object BulletPointBuilder {
   private def constructLeadingText(
       wordLimit: Int,
       texts: List[String],
-      textsProcessed: Int,
       matches: List[Match],
-      matchesProcessed: Int,
-      items: List[String],
-      wordsProcessed: Int
-  ): List[String] = {
-
+      textsProcessed: Int = 0,
+      matchesProcessed: Int = 0,
+      items: List[String] = Nil,
+      wordsProcessed: Int = 0
+  ): List[String] =
     if ((textsProcessed == texts.size) && (matchesProcessed < matches.size)) {
-      constructLeadingTextFromMatches(wordLimit, texts, textsProcessed, matches, matchesProcessed, items, wordsProcessed)
+      constructLeadingTextFromMatches(wordLimit, texts, matches, textsProcessed, matchesProcessed, items, wordsProcessed)
     } else if ((texts.size - textsProcessed == 1) && (matches.size == matchesProcessed)) {
       val noOfWordsToAdd: Int = wordLimit - wordsProcessed
       val leadingText: String = extractLeadingMatchedWords(noOfWordsToAdd, texts, textsProcessed, matches, matchesProcessed)
       items :+ leadingText
     } else {
       val text: String = texts(textsProcessed)
-      val noOfWords: Int = wordsInText(text, textsProcessed, matches, matchesProcessed)
-      constructLeadingTextFromMatches(wordLimit, texts, textsProcessed + 1, matches, matchesProcessed, items :+ text, wordsProcessed + noOfWords)
+      val noOfWords: Int = wordCount(text, textsProcessed, matches, matchesProcessed)
+      constructLeadingTextFromMatches(wordLimit, texts, matches, textsProcessed + 1, matchesProcessed, items :+ text, wordsProcessed + noOfWords)
     }
-
-  }
 
   private def constructLeadingTextFromMatches(
       wordLimit: Int,
       texts: List[String],
-      textsProcessed: Int,
       matches: List[Match],
+      textsProcessed: Int,
       matchesProcessed: Int,
       items: List[String],
       wordsProcessed: Int
-  ): List[String] = {
-
+  ): List[String] =
     if ((matches.size - matchesProcessed == 1) && (texts.size == textsProcessed)) {
       items :+ matches(matchesProcessed).toString
     } else {
       val text: String = TextBuilder.placeholderMatchText(matches(matchesProcessed))
-      val noOfWords: Int = wordsInMatchText(text, texts, textsProcessed)
+      val noOfWords: Int = wordCountInMatchText(text, texts, textsProcessed)
       constructLeadingText(
         wordLimit,
         texts,
-        textsProcessed,
         matches,
+        textsProcessed,
         matchesProcessed + 1,
         items :+ matches(matchesProcessed).toString(),
         wordsProcessed + noOfWords
       )
     }
-
-  }
 
   /**
     * Method returns a substring of the input text comprising "noOfMatchedWords" words separated by white space
@@ -243,28 +226,15 @@ object BulletPointBuilder {
     * @return - Returns a sub-sample of the final input text
     */
   private def extractLeadingMatchedWords(noOfMatchedWords: Int, texts: List[String], textsProcessed: Int, matches: List[Match], matchesProcessed: Int): String = {
-
     val textElements: List[Match] = NotSpaceRegex.findAllMatchIn(texts(textsProcessed)).toList
 
     matches match {
-      case Nil => {
-        noOfMatchedWords match {
-          case x if x <= textElements.size => texts(textsProcessed).substring(0, textElements(noOfMatchedWords - 1).end)
-          case _ => texts(textsProcessed)
-        }
-      }
-      case _ => {
-        noOfMatchedWords match {
-          case 0 => {
-            // A value of zero for the number of matched words indicates single word in text immediately
-            // following a bold or link annotation
-            texts(textsProcessed).substring(0, textElements.head.end)
-          }
-          case _ => {
-            getUpdatedLeadingMatchedWords(noOfMatchedWords, textElements, texts, textsProcessed, matches, matchesProcessed)
-          }
-        }
-      }
+      case Nil if noOfMatchedWords <= textElements.size => texts(textsProcessed).substring(0, textElements(noOfMatchedWords - 1).end)
+      case Nil => texts(textsProcessed)
+      // A value of zero for the number of matched words indicates single word in text immediately
+      // following a bold or link annotation
+      case _ if noOfMatchedWords == 0 => texts(textsProcessed).substring(0, textElements.head.end)
+      case _ => getUpdatedLeadingMatchedWords(noOfMatchedWords, textElements, texts, textsProcessed, matches, matchesProcessed)
     }
   }
 
@@ -300,11 +270,7 @@ object BulletPointBuilder {
           }
       }
 
-    def implicitMatch(text1: String, text2: String, matchLimit: Int): Boolean = {
-      val (p1NoOfWordsToDisplay, p2NoOfWordsToDisplay, matchedWords) = matchInstructionText(text1, text2)
-      // Matching instructions must have matching leading text followed dissimilar trailing text
-      matchedWords.size >= matchLimit && (matchedWords.size < p1NoOfWordsToDisplay) && (matchedWords.size < p2NoOfWordsToDisplay)
-    }
+    def implicitMatch(text1: String, text2: String, matchLimit: Int): Boolean = partialMatchInstructionText(text1, text2).size >= matchLimit
 
     // If any text component of the two phrases contains the explicit break marker apply explicit matching
     if(useExplicitMatch(p1, p2)) explicitMatch(p1.english, p2.english) && explicitMatch(p1.welsh, p2.welsh)
@@ -314,100 +280,72 @@ object BulletPointBuilder {
   private[services] def useExplicitMatch(p1: Phrase, p2: Phrase): Boolean =
     p1.english.contains(ExplicitBreak) || p1.welsh.contains(ExplicitBreak) || p2.english.contains(ExplicitBreak) || p2.welsh.contains(ExplicitBreak)
 
-  private def matchInstructionText(text1: String, text2: String): (Int, Int, Seq[String]) = {
-
-    // Break instruction text into fragments
-    val text1FragmentsToDisplay: Seq[String] = TextBuilder.flattenPlaceholders(text1)
-    val text2FragmentsToDisplay: Seq[String] = TextBuilder.flattenPlaceholders(text2)
-
-    // Break fragments into a list of non-whitespace components
-    val text1WordsToDisplay: Seq[String] = text1FragmentsToDisplay.mkString.split(' ')
-    val text2WordsToDisplay: Seq[String] = text2FragmentsToDisplay.mkString.split(' ')
-
-    val matchedTextItems: Seq[String] = (text1WordsToDisplay zip text2WordsToDisplay).takeWhile(t => t._1 == t._2).map(_._1).filter(_ != "")
-
-    (text1WordsToDisplay.size, text2WordsToDisplay.size, matchedTextItems)
+  private def partialMatchInstructionText(text1: String, text2: String): Seq[String] = {
+    // Break instruction text into fragments, then tokens, retaining non space joins
+    // between placeholder tokens and string based tokens
+    val fragments1: List[TextBuilder.Fragment] = TextBuilder.placeholderFragments(text1)
+    val fragments2: List[TextBuilder.Fragment] = TextBuilder.placeholderFragments(text2)
+    val matchedItems: List[String] = TextBuilder.matchFragments(fragments1, fragments2)
+    val text1tokens: List[String] = TextBuilder.flattenFragments(fragments1)
+    val text2tokens: List[String] = TextBuilder.flattenFragments(fragments2)
+    // Return "No Match" if total match found (identical phrases)
+    // Matching instructions must have matching leading text followed dissimilar trailing text
+    if (matchedItems.size >= Math.min(text1tokens.size, text2tokens.size)) Nil else matchedItems
   }
 
-  private def wordsInString(text: String): Int = NotSpaceRegex.findAllMatchIn(text).toList.size
+  private def wordCount(text: String): Int = NotSpaceRegex.findAllMatchIn(text).toList.size
 
-  private def wordsInText(text: String, textsProcessed: Int, matches: List[Match], matchesProcessed: Int): Int = {
-
-    val wordsInText: Int = wordsInString(text)
-
-    if (textsProcessed == 0) {
-      wordsInText
-    } else {
-      // For text following after placeholder check if there is a gap between the placeholder text and the following text
-      if (!gapBetweenTextElements(TextBuilder.placeholderMatchText(matches(matchesProcessed - 1)), text)) {
-        wordsInText - 1
-      } else {
-        wordsInText
-      }
+  private def wordCount(text: String, textsProcessed: Int, matches: List[Match], matchesProcessed: Int): Int =
+    wordCount(text) match {
+      case count if textsProcessed == 0 => count
+      // No gap between placeholder and following text, reduce word count
+      case count if !intraTextGapExists(TextBuilder.placeholderMatchText(matches(matchesProcessed - 1)), text) => count - 1
+      case count => count
     }
-  }
 
-  private def wordsInMatchText(matchText: String, texts: List[String], textsProcessed: Int): Int = {
-
-    val wordsInMatchText: Int = wordsInString(matchText)
-
-    if (textsProcessed == 0) {
-      wordsInMatchText
-    } else {
-      if (texts(textsProcessed - 1).isEmpty) {
-        wordsInMatchText
-      } else {
-        if (!gapBetweenTextElements(texts(textsProcessed - 1), matchText)) {
-          wordsInMatchText - 1
-        } else {
-          wordsInMatchText
-        }
-      }
+  private def wordCountInMatchText(matchText: String, texts: List[String], textsProcessed: Int): Int =
+    wordCount(matchText) match {
+      case count if textsProcessed == 0 => count
+      case count if texts(textsProcessed - 1).isEmpty => count
+      // No gap between placeholder and following text, reduce word count
+      case count if !intraTextGapExists(texts(textsProcessed - 1), matchText) => count - 1
+      case count => count
     }
-  }
 
   private def processNextMatch(
       noOfWordsToMatch: Int,
-      wordsProcessed: Int,
-      noOfWordsInCurrentText: Int,
+      processed: Int,
       texts: List[String],
       textsProcessed: Int,
       matches: List[Match],
       matchesProcessed: Int
   ): Boolean = {
-
-    val notAllWordsProcessed = wordsProcessed + noOfWordsInCurrentText < noOfWordsToMatch
-
-    val textLeadsNextMatch: Boolean = (wordsProcessed + noOfWordsInCurrentText == noOfWordsToMatch) &&
+    val textLeadsNextMatch: Boolean = (processed == noOfWordsToMatch) &&
       (matchesProcessed < matches.size) &&
       textLeadingMatchText(textsProcessed, texts, matches(matchesProcessed))
 
-    notAllWordsProcessed || textLeadsNextMatch
+    processed < noOfWordsToMatch || textLeadsNextMatch
   }
 
   private def processNextText(
       noOfWordsToMatch: Int,
-      wordsProcessed: Int,
-      noOfWordsInCurrentText: Int,
+      processed: Int,
       texts: List[String],
       textsProcessed: Int,
       matchText: String
   ): Boolean = {
-
-    val notAllWordsProcessed: Boolean = wordsProcessed + noOfWordsInCurrentText < noOfWordsToMatch
-
-    val textFollowingPreviousMatch: Boolean = (wordsProcessed + noOfWordsInCurrentText == noOfWordsToMatch) &&
+    val textFollowingPreviousMatch: Boolean = (processed == noOfWordsToMatch) &&
       textTrailingMatchText(textsProcessed, texts, matchText)
 
-    notAllWordsProcessed || textFollowingPreviousMatch
+    processed < noOfWordsToMatch || textFollowingPreviousMatch
   }
 
   private def textLeadingMatchText(textsProcessed: Int, texts: List[String], m: Match): Boolean =
-    !gapBetweenTextElements(texts(textsProcessed), TextBuilder.placeholderMatchText(m))
+    !intraTextGapExists(texts(textsProcessed), TextBuilder.placeholderMatchText(m))
 
   private def textTrailingMatchText(textsProcessed: Int, texts: List[String], matchText: String): Boolean =
-    if (texts.size - 1 >= textsProcessed) !gapBetweenTextElements(matchText, texts(textsProcessed)) else false
+    if (texts.size - 1 >= textsProcessed) !intraTextGapExists(matchText, texts(textsProcessed)) else false
 
   private def updateNoOfMatchedWords(trailingText: Boolean, noOfMatchedWords: Int): Int = if (trailingText) noOfMatchedWords + 1 else noOfMatchedWords
-  private def gapBetweenTextElements(text1: String, text2: String): Boolean = text1.endsWith(" ") || text2.startsWith(" ")
+  private def intraTextGapExists(text1: String, text2: String): Boolean = text1.endsWith(" ") || text2.startsWith(" ")
 }

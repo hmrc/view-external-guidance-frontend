@@ -964,6 +964,43 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
       }
     }
 
+    "Process page with a simple instruction group where bullet points are links" in new Test {
+      val phrase1: Phrase = Phrase(Vector("You can also find out about: [link:tax overpayments and underpayments:https://www.gov.uk/tax-overpayments-and-underpayments]",
+                                          "Welsh: You can also find out about: [link:tax overpayments and underpayments:https://www.gov.uk/tax-overpayments-and-underpayments]"))
+      val phrase2: Phrase = Phrase(Vector("You can also find out about: [link:tax codes:https://www.gov.uk/tax-codes]",
+                                          "Welsh: You can also find out about: [link:tax codes:https://www.gov.uk/tax-codes]"))
+      val instruction1: Instruction = Instruction(phrase1, Seq("2"), None, true)
+      val instruction2: Instruction = Instruction(phrase2, Seq("end"), None, false)
+      val instructionGroup: InstructionGroup = InstructionGroup(Seq(instruction1, instruction2))
+      val bulletPointListStanzas = Seq(
+        KeyedStanza("start", PageStanza("/blah", Seq("1"), false)),
+        KeyedStanza("1", instructionGroup)
+      )
+      val bulletPointListPage = Page(Process.StartStanzaId, "/blah", bulletPointListStanzas, Seq.empty)
+      val uiPage = uiBuilder.buildPage(bulletPointListPage.url, bulletPointListPage.stanzas.collect{case s: VisualStanza => s})
+
+      uiPage.components.length shouldBe 1
+
+      // Check contents of bullet point list
+      val leadingTextItems: Text = Text(Words("Welsh: You can also find out about:"))
+      val bulletPointOne: Text = Text(Link("https://www.gov.uk/tax-overpayments-and-underpayments", "tax overpayments and underpayments"))
+      val bulletPointTwo: Text = Text(Link("https://www.gov.uk/tax-codes", "tax codes"))
+
+      uiPage.components.head match {
+        case b: BulletPointList =>
+
+          b.text shouldBe leadingTextItems
+
+          b.listItems.size shouldBe 2
+
+          b.listItems.foreach(println)
+
+          b.listItems.head shouldBe bulletPointOne
+          b.listItems.last shouldBe bulletPointTwo
+        case _ => fail("Did not find bullet point list")
+      }
+    }
+
     "Process complex page with both explicitly defined instruction groups and single instructions" in new Test {
 
       val phrase1: Phrase = Phrase(Vector("Going to the market", "Welsh: Going to the market"))

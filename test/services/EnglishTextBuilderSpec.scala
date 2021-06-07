@@ -232,6 +232,12 @@ class EnglishTextBuilderSpec extends BaseSpec with GuiceOneAppPerSuite {
       val expected = List("Welsh: Hello ", "An http link", " ", "link to stanza 5", " ", "link to beginning of guidance")
       TextBuilder.flattenPlaceholders(txt) shouldBe expected
     }
+
+    "Flatten all placeholders within a line of text with odd punctuation" in new Test {
+      val txt = "Hello:[link-tab:An http link:https://www.bbc.co.uk] Hello:[link-tab:link to stanza 5:5] [link-tab:link to beginning of guidance:start]"
+      val expected = List("Hello:", "An http link", " Hello:", "link to stanza 5", " ", "link to beginning of guidance")
+      TextBuilder.flattenPlaceholders(txt) shouldBe expected
+    }
   }
 
   trait ExpandTest extends Test {

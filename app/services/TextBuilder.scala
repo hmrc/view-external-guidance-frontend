@@ -26,6 +26,7 @@ import play.api.i18n.{Messages, Lang}
 import scala.annotation.tailrec
 
 object TextBuilder {
+  val NonWhitespaceRegex = "[^\\s]+".r
   val English: Lang = Lang("en")
   val Welsh: Lang = Lang("cy")
 
@@ -110,7 +111,7 @@ object TextBuilder {
   }
 
   @tailrec
-  private def merge[A, B](txts: List[A], links: List[A], acc: Seq[A], isEmpty: A => Boolean): Seq[A] =
+  private def merge[A, B](txts: List[A], links: List[A], acc: List[A], isEmpty: A => Boolean): List[A] =
     (txts, links) match {
       case (Nil, Nil) => acc
       case (t :: txs, l :: lxs) if isEmpty(t) => merge(txs, lxs, acc :+ l, isEmpty)
@@ -124,8 +125,38 @@ object TextBuilder {
   //
   def placeholderMatchText(m: Match): String = boldTextOpt(m).getOrElse(linkTextOpt(m).getOrElse(""))
   def placeholderTxtsAndMatches(text: String): (List[String], List[Match]) = fromPattern(plregex, text)
-  def flattenPlaceholders(text: String): Seq[String] = {
+  def flattenPlaceholders(text: String): List[String] = {
     val (txts, matches) = fromPattern(plregex, text)
-    merge[String, String](txts, matches.map(m => boldTextOpt(m).fold(linkTextOpt(m).getOrElse(""))(v => v)), Nil, _.isEmpty).filterNot(_.isEmpty)
+    merge[String, String](txts, matches.map(m => placeholderMatchText(m)), Nil, _.isEmpty).filterNot(_.isEmpty)
   }
+
+  sealed trait Fragment {
+    def fragment(s: String): List[String] = {
+      val (txts, matches) = fromPattern(NonWhitespaceRegex, s)
+      merge[String, String](txts, matches.map(_.toString), Nil, _.isEmpty)
+    }
+    val tokens: List[String]
+  }
+  case class TotalMatch(s: String) extends Fragment {val tokens: List[String] = fragment(s)}
+  case class PartialMatch(s: String) extends Fragment {val tokens: List[String] = fragment(s)}
+
+  def placeholderFragment(m: Match): Fragment = boldTextOpt(m).fold[Fragment](TotalMatch(linkTextOpt(m).getOrElse("")))(PartialMatch(_))
+  def placeholderFragments(text: String): List[Fragment] = {
+    val (txts, matches) = fromPattern(plregex, text)
+    merge[Fragment, Fragment](txts.map(PartialMatch(_)), matches.map(m => placeholderFragment(m)), Nil, _ => false)
+  }
+  def flattenFragments(f: List[Fragment]): List[String] = f.flatMap(_.tokens).mkString.split("\\s+").toList
+  def matchFragments(f1: List[Fragment], f2: List[Fragment], acc: List[String]): List[String] = (f1, f2) match {
+      case (Nil, _) | (_, Nil) => acc
+      case ((f1: Fragment) :: xs1, (f2: Fragment) :: xs2) if f1.equals(f2) => matchFragments(xs1, xs2, acc ++ f1.tokens)
+      case ((f1: PartialMatch) :: xs1, (f2: PartialMatch) :: xs2) =>
+        val matching: List[String] = (f1.tokens zip f2.tokens).takeWhile(t => t._1 == t._2 ).map(_._1)
+        acc ++ matching
+      case _ => acc
+    }
+  def matchFragments(f1: List[Fragment], f2: List[Fragment]): List[String] = matchFragments(f1, f2, Nil) match {
+      case Nil => Nil
+      case x => x.mkString.split("\\s+").toList
+    }
+  def matchText(s1: String, s2: String): List[String] = matchFragments(placeholderFragments(s1), placeholderFragments(s2))
 }
