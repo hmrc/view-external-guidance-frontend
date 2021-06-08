@@ -26,7 +26,7 @@ import play.api.i18n.{Messages, Lang}
 import scala.annotation.tailrec
 
 object TextBuilder {
-  val NonWhitespaceRegex = "[^\\s]+".r
+  val NonWhitespaceRegex: Regex = "[^\\s]+".r
   val English: Lang = Lang("en")
   val Welsh: Lang = Lang("cy")
 
@@ -42,7 +42,8 @@ object TextBuilder {
     val LinkTextIdx: Int = 10
     val LinkDestIdx: Int = 11
     val ListNameIdx: Int = 12
-    val plregex: Regex = s"$labelPattern|$boldPattern|$linkPattern|$listPattern".r
+    val placeholderPattern: String = s"$labelPattern|$boldPattern|$linkPattern|$listPattern"
+    val plregex: Regex = placeholderPattern.r
     def labelNameOpt(m: Match): Option[String] = Option(m.group(LabelNameIdx))
     def labelFormatOpt(m: Match): Option[String] = Option(m.group(LabelFormatIdx))
     def boldTextOpt(m: Match): Option[String] = Option(m.group(BoldTextIdx))
@@ -147,19 +148,22 @@ object TextBuilder {
       case (x, y) => (x.mkString.split("\\s+").toList, y)
     }
 
+  @tailrec
   def join(fragments: List[Fragment], acc: List[String]): String =
     fragments match {
       case Nil => acc.reverse.mkString
       case f :: xs => join(xs, f.original :: acc )
     }
 
-  private def matchFragments(f1: List[Fragment], f2: List[Fragment], acc: List[String], fragments: List[Fragment]): (List[String], List[Fragment]) = (f1, f2) match {
-      case (Nil, _) | (_, Nil) => (acc, fragments)
-      case ((f1: Fragment) :: xs1, (f2: Fragment) :: xs2) if f1.equals(f2) => matchFragments(xs1, xs2, acc ++ f1.tokens, fragments :+ f1)
-      case ((f1: PartialMatch) :: xs1, (f2: PartialMatch) :: xs2) =>
+  @tailrec
+  private def matchFragments(f1: List[Fragment], f2: List[Fragment], acc: List[String], facc: List[Fragment]): (List[String], List[Fragment]) =
+    (f1, f2) match {
+      case (Nil, _) | (_, Nil) => (acc, facc)
+      case ((f1: Fragment) :: xs1, (f2: Fragment) :: xs2) if f1.equals(f2) => matchFragments(xs1, xs2, acc ++ f1.tokens, facc :+ f1)
+      case ((f1: PartialMatch) :: _, (f2: PartialMatch) :: _) =>
         val matching: List[String] = (f1.tokens zip f2.tokens).takeWhile(t => t._1 == t._2 ).map(_._1)
-        (acc ++ matching, fragments :+ PartialMatch(matching.mkString))
-      case _ => (acc, fragments)
+        (acc ++ matching, facc :+ PartialMatch(matching.mkString))
+      case _ => (acc, facc)
     }
   private def placeholderText(m: Match): String = boldTextOpt(m).fold[String](linkTextOpt(m).getOrElse(""))(v => v)
 

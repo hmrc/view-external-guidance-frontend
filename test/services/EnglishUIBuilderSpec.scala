@@ -960,10 +960,10 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
     }
 
     "Process page with a simple instruction group where bullet points are links" in new Test {
-      val phrase1: Phrase = Phrase(Vector("You can also find out about: [link:tax overpayments and underpayments:https://www.gov.uk/tax-overpayments-and-underpayments]",
-                                          "Welsh: You can also find out about: [link:tax overpayments and underpayments:https://www.gov.uk/tax-overpayments-and-underpayments]"))
-      val phrase2: Phrase = Phrase(Vector("You can also find out about: [link:tax codes:https://www.gov.uk/tax-codes]",
-                                          "Welsh: You can also find out about: [link:tax codes:https://www.gov.uk/tax-codes]"))
+      val phrase1: Phrase = Phrase(Vector("You can also find out about:[link:tax overpayments and underpayments:https://www.gov.uk/tax-overpayments-and-underpayments]",
+                                          "Welsh: You can also find out about:[link:tax overpayments and underpayments:https://www.gov.uk/tax-overpayments-and-underpayments]"))
+      val phrase2: Phrase = Phrase(Vector("You can also find out about:[link:tax codes:https://www.gov.uk/tax-codes]",
+                                          "Welsh: You can also find out about:[link:tax codes:https://www.gov.uk/tax-codes]"))
       val instruction1: Instruction = Instruction(phrase1, Seq("2"), None, true)
       val instruction2: Instruction = Instruction(phrase2, Seq("end"), None, false)
       val instructionGroup: InstructionGroup = InstructionGroup(Seq(instruction1, instruction2))

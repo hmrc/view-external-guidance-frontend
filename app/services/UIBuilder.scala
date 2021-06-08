@@ -47,10 +47,11 @@ class UIBuilder {
   val logger: Logger = Logger(getClass)
 
   def buildPage(url: String, stanzas: Seq[VisualStanza], errStrategy: ErrorStrategy = NoError)(implicit ctx: UIContext): Page = {
-    val stanzaTransformPipeline: List[Seq[VisualStanza] => Seq[VisualStanza]] = List(expandLabelReferences(Nil), Aggregator.aggregateStanzas(Nil), stackStanzas(Nil))
-    Page(url, fromStanzas(stanzaTransformPipeline.foldLeft(stanzas){case (s, t) => t(s)}, Nil, errStrategy.default(stanzas)))
+    val transformPipeline: List[Seq[VisualStanza] => Seq[VisualStanza]] = List(expandLabelReferences(Nil), Aggregator.aggregateStanzas(Nil), stackStanzas(Nil))
+    Page(url, fromStanzas(transformPipeline.foldLeft(stanzas){case (s, t) => t(s)}, Nil, errStrategy.default(stanzas)))
   }
 
+  @tailrec
   private def expandLabelReferences(acc: List[VisualStanza])(stanzas: Seq[VisualStanza])(implicit ctx: UIContext): Seq[VisualStanza] =
     stanzas match {
       case Nil => acc.reverse
@@ -200,11 +201,11 @@ class UIBuilder {
   }
 
   private def fromSectionAndNoteGroup(caption: Text, ng: NoteGroup)(implicit ctx: UIContext): UIComponent = {
-
-    val noteCallouts: Seq[Seq[Phrase]] = BulletPointBuilder.groupBulletPointNoteCalloutPhrases(Nil)(ng.group)
-
-    val detailsComponents: Seq[Seq[Text]] = noteCallouts.map{ phraseSeq =>
-      if(phraseSeq.size > 1) createBulletPointList(phraseSeq) else Seq(TextBuilder.fromPhrase(phraseSeq.head))
+    val detailsComponents: Seq[Seq[Text]] = BulletPointBuilder.groupNoteCalloutPhrases(Nil)(ng.group).map{
+      case phrases if phrases.length == 1 => phrases.map(TextBuilder.fromPhrase(_))
+      case phrases =>
+        val bulletPointList = createBulletPointList(phrases)
+        bulletPointList.text +: bulletPointList.listItems
     }
 
     if(detailsComponents.forall(_.size == 1)) {
@@ -251,31 +252,27 @@ class UIBuilder {
     ui.ExclusiveSequence(text, hint, options, TextBuilder.fromPhrase(exclusiveOptionPhrase), exclusiveOptionHint, uiElements, errMsgs)
   }
 
-  private def fromInstructionGroup(grp: InstructionGroup)(implicit ctx: UIContext): UIComponent = {
-    val bulletPointItems: Seq[Text] = createBulletPointList(grp.group.map(_.text))
+  private def fromInstructionGroup(grp: InstructionGroup)(implicit ctx: UIContext): UIComponent = createBulletPointList(grp.group.map(_.text))
 
-    BulletPointList(bulletPointItems.head, bulletPointItems.tail)
-  }
-
-  def createBulletPointList(phrases: Seq[Phrase])(implicit ctx: UIContext): Seq[Text] =
+  private def createBulletPointList(phrases: Seq[Phrase])(implicit ctx: UIContext): BulletPointList =
     if(phrases.head.english.contains(ExplicitBreak)) createExplicitBulletPointList(phrases) else createImplicitBulletPointList(phrases)
 
-  def createExplicitBulletPointList(phrases: Seq[Phrase])(implicit ctx: UIContext): Seq[Text] = {
+  private def createExplicitBulletPointList(phrases: Seq[Phrase])(implicit ctx: UIContext): BulletPointList = {
 
     val leadingEn: String = phrases.head.english.take(phrases.head.english.indexOf(ExplicitBreak))
     val leadingCy: String = phrases.head.welsh.take(phrases.head.welsh.indexOf(ExplicitBreak))
+
     val cleansedPhrases: Seq[Phrase] = phrases.map(p => Phrase(p.english.replaceFirst(BreakMatchPattern, ""), p.welsh.replaceFirst(BreakMatchPattern, "")))
-    TextBuilder.fromPhrase(Phrase(leadingEn, leadingCy)) +: createBulletPoints(leadingEn.length, leadingCy.length, cleansedPhrases)
+
+    BulletPointList(TextBuilder.fromPhrase(Phrase(leadingEn, leadingCy)), createBulletPoints(leadingEn.length, leadingCy.length, cleansedPhrases))
   }
 
-  def createImplicitBulletPointList(phrases: Seq[Phrase])(implicit ctx: UIContext): Seq[Text] = {
+  private def createImplicitBulletPointList(phrases: Seq[Phrase])(implicit ctx: UIContext): BulletPointList = {
 
     val leadingEn: String = BulletPointBuilder.determineMatchedLeadingText(phrases, _.english)
     val leadingCy: String = BulletPointBuilder.determineMatchedLeadingText(phrases, _.welsh)
 
-    val bps = createBulletPoints(leadingEn.length, leadingCy.length, phrases)
-
-    TextBuilder.fromPhrase(Phrase(leadingEn, leadingCy)) +: bps
+    BulletPointList(TextBuilder.fromPhrase(Phrase(leadingEn, leadingCy)), createBulletPoints(leadingEn.length, leadingCy.length, phrases))
   }
 
   private def createBulletPoints(leadingEnLength: Int, leadingCyLength: Int, phrases: Seq[Phrase])(implicit ctx: UIContext): Seq[Text] =

@@ -19,7 +19,6 @@ package services
 import core.models.ocelot.Phrase
 import core.models.ocelot.stanzas.NoteCallout
 import scala.util.matching.Regex
-//import Regex._
 import scala.annotation.tailrec
 
 object BulletPointBuilder {
@@ -32,7 +31,7 @@ object BulletPointBuilder {
   val BreakMatchPattern: String = s"\\[$Break\\]"
 
   @tailrec
-  def groupBulletPointNoteCalloutPhrases(acc: Seq[Seq[Phrase]])(inputSeq: Seq[NoteCallout]): Seq[Seq[Phrase]] = {
+  def groupNoteCalloutPhrases(acc: Seq[Seq[Phrase]])(inputSeq: Seq[NoteCallout]): Seq[Seq[Phrase]] = {
     @tailrec
     def groupMatchingNoteCallouts(inputSeq: Seq[NoteCallout], calloutAcc: Seq[NoteCallout]): Seq[NoteCallout] =
       inputSeq match {
@@ -46,20 +45,19 @@ object BulletPointBuilder {
       case x :: xs =>
         val matchedCallouts: Seq[NoteCallout] = groupMatchingNoteCallouts(xs, Seq(x))
         if(matchedCallouts.size > 1) {
-          groupBulletPointNoteCalloutPhrases(acc :+ matchedCallouts.map(_.text))(xs.drop(matchedCallouts.size - 1))
+          groupNoteCalloutPhrases(acc :+ matchedCallouts.map(_.text))(xs.drop(matchedCallouts.size - 1))
         } else {
-          groupBulletPointNoteCalloutPhrases(acc :+ matchedCallouts.map(_.text))(xs)
+          groupNoteCalloutPhrases(acc :+ matchedCallouts.map(_.text))(xs)
         }
     }
   }
 
-  def determineMatchedLeadingText(phrases: Seq[Phrase], phraseText: Phrase => String): String =
-    phrases.headOption.fold[List[List[TextBuilder.Fragment]]](Nil){first =>
+  def determineMatchedLeadingText(phrases: Seq[Phrase], phraseText: Phrase => String): String = {
+    val matched: List[List[TextBuilder.Fragment]] = phrases.headOption.fold[List[List[TextBuilder.Fragment]]](Nil){first =>
       phrases.toList.tail.map(p => partialMatchInstructionText(phraseText(first), phraseText(p))._2)
-    } match {
-      case Nil => ""
-      case matched => TextBuilder.join(matched.reduce((x, y) => if (x.length < y.length) x else y), Nil).trim
     }
+    matched.headOption.fold("")(_ => TextBuilder.join(matched.reduce((x, y) => if (x.length < y.length) x else y), Nil).trim)
+  }
 
   private[services] def matchPhrases(p1: Phrase, p2: Phrase): Boolean = {
 
@@ -67,7 +65,7 @@ object BulletPointBuilder {
       if (text1 == text2) false
       else (text1.indexOf(ExplicitBreak), text2.indexOf(ExplicitBreak)) match {
         case (idx1, idx2) if idx1 <= 0 || idx2 <= 0 => false
-        case (idx1, idx2) if (idx1 == idx2) => text1.take(idx1) == text2.take(idx2)
+        case (idx1, idx2) if idx1 == idx2 => text1.take(idx1) == text2.take(idx2)
         case _ => false
       }
 
