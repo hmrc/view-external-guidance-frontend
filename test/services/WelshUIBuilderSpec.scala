@@ -993,8 +993,6 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
 
           b.listItems.size shouldBe 2
 
-          b.listItems.foreach(println)
-
           b.listItems.head shouldBe bulletPointOne
           b.listItems.last shouldBe bulletPointTwo
         case _ => fail("Did not find bullet point list")

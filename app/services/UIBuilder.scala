@@ -262,8 +262,8 @@ class UIBuilder {
 
   def createExplicitBulletPointList(phrases: Seq[Phrase])(implicit ctx: UIContext): Seq[Text] = {
 
-    val leadingEn: String = phrases.head.english.substring(0, phrases.head.english.indexOf(ExplicitBreak))
-    val leadingCy: String = phrases.head.welsh.substring(0, phrases.head.welsh.indexOf(ExplicitBreak))
+    val leadingEn: String = phrases.head.english.take(phrases.head.english.indexOf(ExplicitBreak))
+    val leadingCy: String = phrases.head.welsh.take(phrases.head.welsh.indexOf(ExplicitBreak))
     val cleansedPhrases: Seq[Phrase] = phrases.map(p => Phrase(p.english.replaceFirst(BreakMatchPattern, ""), p.welsh.replaceFirst(BreakMatchPattern, "")))
     TextBuilder.fromPhrase(Phrase(leadingEn, leadingCy)) +: createBulletPoints(leadingEn.length, leadingCy.length, cleansedPhrases)
   }
