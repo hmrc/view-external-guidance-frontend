@@ -54,14 +54,13 @@ object BulletPointBuilder {
     p1.english.contains(ExplicitBreak) || p1.welsh.contains(ExplicitBreak) || p2.english.contains(ExplicitBreak) || p2.welsh.contains(ExplicitBreak)
 
   private def partialMatchText(text1: String, text2: String): (Seq[String], List[TextBuilder.Fragment]) = {
-    // Break instruction text into fragments, then tokens, retaining non space joins
-    // between placeholder tokens and string based tokens
+    // Break text into fragments, then match
     val fragments1: List[TextBuilder.Fragment] = TextBuilder.fragment(text1)
     val fragments2: List[TextBuilder.Fragment] = TextBuilder.fragment(text2)
     val (matchedItems: List[String], matchedFragments: List[TextBuilder.Fragment]) = TextBuilder.matchFragments(fragments1, fragments2)
     val text1tokens: List[String] = TextBuilder.flattenFragments(fragments1)
     val text2tokens: List[String] = TextBuilder.flattenFragments(fragments2)
-    // Matching instructions must have matching leading text followed dissimilar trailing text
+    // If the matched token length is less than both of the token lengths of the original texts return the match, nothing otherwise
     if (matchedItems.size >= Math.min(text1tokens.size, text2tokens.size)) (Nil, Nil) else (matchedItems, matchedFragments)
   }
 }
