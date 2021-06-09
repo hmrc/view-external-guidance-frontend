@@ -1170,7 +1170,8 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
         noteCallout11
       )
 
-      val groupedPhrases: Seq[Seq[Phrase]] = BulletPointBuilder.groupNoteCalloutPhrases(Nil)(notCalloutSeq)
+      val uiBuilder = new UIBuilder
+      val groupedPhrases: Seq[Seq[Phrase]] = uiBuilder.groupNoteCalloutPhrases(Nil)(notCalloutSeq)
 
       groupedPhrases.size shouldBe 4
 

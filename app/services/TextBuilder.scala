@@ -143,28 +143,32 @@ object TextBuilder {
 
   def flattenFragments(f: List[Fragment]): List[String] = f.flatMap(_.tokens).mkString.split("\\s+").toList
 
-  def matchFragments(f1: List[Fragment], f2: List[Fragment]): (List[String], List[Fragment]) = matchFragments(f1, f2, Nil, Nil) match {
+  def matchFragments(f1: List[Fragment], f2: List[Fragment]): (List[String], List[Fragment]) = {
+    @tailrec
+    def matchFragments(f1: List[Fragment], f2: List[Fragment], acc: List[String], facc: List[Fragment]): (List[String], List[Fragment]) =
+      (f1, f2) match {
+        case (Nil, _) | (_, Nil) => (acc, facc)
+        case ((f1: Fragment) :: xs1, (f2: Fragment) :: xs2) if f1.equals(f2) => matchFragments(xs1, xs2, acc ++ f1.tokens, facc :+ f1)
+        case ((f1: PartialMatch) :: _, (f2: PartialMatch) :: _) =>
+          val matching: List[String] = (f1.tokens zip f2.tokens).takeWhile(t => t._1 == t._2 ).map(_._1)
+          (acc ++ matching, facc :+ PartialMatch(matching.mkString))
+        case _ => (acc, facc)
+      }
+
+    matchFragments(f1, f2, Nil, Nil) match {
       case (Nil, _) => (Nil, Nil)
       case (x, y) => (x.mkString.split("\\s+").toList, y)
     }
+  }
+
+  def join(fragments: List[Fragment]): String = join(fragments, Nil)
 
   @tailrec
-  def join(fragments: List[Fragment], acc: List[String]): String =
-    fragments match {
-      case Nil => acc.reverse.mkString
-      case f :: xs => join(xs, f.original :: acc )
-    }
+  private def join(fragments: List[Fragment], acc: List[String]): String = fragments match {
+    case Nil => acc.reverse.mkString
+    case f :: xs => join(xs, f.original :: acc )
+  }
 
-  @tailrec
-  private def matchFragments(f1: List[Fragment], f2: List[Fragment], acc: List[String], facc: List[Fragment]): (List[String], List[Fragment]) =
-    (f1, f2) match {
-      case (Nil, _) | (_, Nil) => (acc, facc)
-      case ((f1: Fragment) :: xs1, (f2: Fragment) :: xs2) if f1.equals(f2) => matchFragments(xs1, xs2, acc ++ f1.tokens, facc :+ f1)
-      case ((f1: PartialMatch) :: _, (f2: PartialMatch) :: _) =>
-        val matching: List[String] = (f1.tokens zip f2.tokens).takeWhile(t => t._1 == t._2 ).map(_._1)
-        (acc ++ matching, facc :+ PartialMatch(matching.mkString))
-      case _ => (acc, facc)
-    }
   private def placeholderText(m: Match): String = boldTextOpt(m).fold[String](linkTextOpt(m).getOrElse(""))(v => v)
 
 }

@@ -17,12 +17,9 @@
 package services
 
 import core.models.ocelot.Phrase
-import core.models.ocelot.stanzas.NoteCallout
 import scala.util.matching.Regex
-import scala.annotation.tailrec
 
 object BulletPointBuilder {
-
   val NotSpaceRegex: Regex = """([^ ]+)""".r
   val MatchLimitEnglish: Int = 3
   val MatchLimitWelsh: Int = 1
@@ -30,37 +27,14 @@ object BulletPointBuilder {
   val ExplicitBreak: String = s"[$Break]"
   val BreakMatchPattern: String = s"\\[$Break\\]"
 
-  @tailrec
-  def groupNoteCalloutPhrases(acc: Seq[Seq[Phrase]])(inputSeq: Seq[NoteCallout]): Seq[Seq[Phrase]] = {
-    @tailrec
-    def groupMatchingNoteCallouts(inputSeq: Seq[NoteCallout], calloutAcc: Seq[NoteCallout]): Seq[NoteCallout] =
-      inputSeq match {
-        case Nil => calloutAcc
-        case x :: xs if matchPhrases(calloutAcc.last.text, x.text) => groupMatchingNoteCallouts(xs, calloutAcc :+ x)
-        case _ => calloutAcc
-      }
-
-    inputSeq match {
-      case Nil => acc
-      case x :: xs =>
-        val matchedCallouts: Seq[NoteCallout] = groupMatchingNoteCallouts(xs, Seq(x))
-        if(matchedCallouts.size > 1) {
-          groupNoteCalloutPhrases(acc :+ matchedCallouts.map(_.text))(xs.drop(matchedCallouts.size - 1))
-        } else {
-          groupNoteCalloutPhrases(acc :+ matchedCallouts.map(_.text))(xs)
-        }
-    }
-  }
-
   def determineMatchedLeadingText(phrases: Seq[Phrase], phraseText: Phrase => String): String = {
     val matched: List[List[TextBuilder.Fragment]] = phrases.headOption.fold[List[List[TextBuilder.Fragment]]](Nil){first =>
-      phrases.toList.tail.map(p => partialMatchInstructionText(phraseText(first), phraseText(p))._2)
+      phrases.toList.tail.map(p => partialMatchText(phraseText(first), phraseText(p))._2)
     }
-    matched.headOption.fold("")(_ => TextBuilder.join(matched.reduce((x, y) => if (x.length < y.length) x else y), Nil).trim)
+    matched.headOption.fold("")(_ => TextBuilder.join(matched.reduce((x, y) => if (x.length < y.length) x else y)).trim)
   }
 
   private[services] def matchPhrases(p1: Phrase, p2: Phrase): Boolean = {
-
     def explicitMatch(text1: String, text2: String): Boolean =
       if (text1 == text2) false
       else (text1.indexOf(ExplicitBreak), text2.indexOf(ExplicitBreak)) match {
@@ -69,7 +43,7 @@ object BulletPointBuilder {
         case _ => false
       }
 
-    def implicitMatch(text1: String, text2: String, matchLimit: Int): Boolean = partialMatchInstructionText(text1, text2)._1.size >= matchLimit
+    def implicitMatch(text1: String, text2: String, matchLimit: Int): Boolean = partialMatchText(text1, text2)._1.size >= matchLimit
 
     // If any text component of the two phrases contains the explicit break marker apply explicit matching
     if(useExplicitMatch(p1, p2)) explicitMatch(p1.english, p2.english) && explicitMatch(p1.welsh, p2.welsh)
@@ -79,7 +53,7 @@ object BulletPointBuilder {
   private[services] def useExplicitMatch(p1: Phrase, p2: Phrase): Boolean =
     p1.english.contains(ExplicitBreak) || p1.welsh.contains(ExplicitBreak) || p2.english.contains(ExplicitBreak) || p2.welsh.contains(ExplicitBreak)
 
-  private def partialMatchInstructionText(text1: String, text2: String): (Seq[String], List[TextBuilder.Fragment]) = {
+  private def partialMatchText(text1: String, text2: String): (Seq[String], List[TextBuilder.Fragment]) = {
     // Break instruction text into fragments, then tokens, retaining non space joins
     // between placeholder tokens and string based tokens
     val fragments1: List[TextBuilder.Fragment] = TextBuilder.fragment(text1)

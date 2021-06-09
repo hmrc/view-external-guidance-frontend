@@ -200,8 +200,28 @@ class UIBuilder {
     ConfirmationPanel(texts.head, texts.tail)
   }
 
+  @tailrec
+  private[services] final def groupNoteCalloutPhrases(acc: Seq[Seq[Phrase]])(input: Seq[NoteCallout]): Seq[Seq[Phrase]] = {
+    @tailrec
+    def groupMatchingPhrases(notes: Seq[NoteCallout], calloutAcc: Seq[NoteCallout]): Seq[NoteCallout] = notes match {
+        case Nil => calloutAcc
+        case x :: xs if BulletPointBuilder.matchPhrases(calloutAcc.last.text, x.text) => groupMatchingPhrases(xs, calloutAcc :+ x)
+        case _ => calloutAcc
+      }
+
+    input match {
+      case Nil => acc
+      case x :: xs =>
+        groupMatchingPhrases(xs, Seq(x)) match {
+          case Nil => groupNoteCalloutPhrases(acc)(xs)
+          case matchedCallouts =>
+            groupNoteCalloutPhrases(acc :+ matchedCallouts.map(_.text))(xs.drop(matchedCallouts.size - 1))
+        }
+    }
+  }
+
   private def fromSectionAndNoteGroup(caption: Text, ng: NoteGroup)(implicit ctx: UIContext): UIComponent = {
-    val detailsComponents: Seq[Seq[Text]] = BulletPointBuilder.groupNoteCalloutPhrases(Nil)(ng.group).map{
+    val detailsComponents: Seq[Seq[Text]] = groupNoteCalloutPhrases(Nil)(ng.group).map{
       case phrases if phrases.length == 1 => phrases.map(TextBuilder.fromPhrase(_))
       case phrases =>
         val bulletPointList = createBulletPointList(phrases)
