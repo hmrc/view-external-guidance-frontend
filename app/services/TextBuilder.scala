@@ -107,7 +107,7 @@ object TextBuilder {
 
   def fromPhrase(txt: Phrase)(implicit ctx: UIContext): Text = {
     val isEmpty: TextItem => Boolean = _.isEmpty
-    val (texts, matches) = fromPattern(plregex, expandLabels(transform(txt.value(ctx.lang)), ctx.lang))
+    val (texts, matches) = fromPattern(plregex, transform(expandLabels(txt.value(ctx.lang), ctx.lang)))
     Text(merge(texts.map(Words(_)), placeholdersToItems(matches), Nil, isEmpty))
   }
 
@@ -124,7 +124,7 @@ object TextBuilder {
   def fromPhraseWithOptionalHint(txt: Phrase)(implicit ctx: UIContext): (Text, Option[Text]) = {
     val isEmpty: TextItem => Boolean = _.isEmpty
     val (str, hint) = singleStringWithOptionalHint(txt.value(ctx.lang))
-    val (texts, matches) = fromPattern(plregex, expandLabels(transform(str), ctx.lang))
+    val (texts, matches) = fromPattern(plregex, transform(expandLabels(str, ctx.lang)))
     (Text(merge(texts.map(Words(_)), placeholdersToItems(matches), Nil, isEmpty)), hint.map(Text(_)))
   }
 
