@@ -750,7 +750,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
       uiPage.components.length shouldBe 1
 
       // Check contents of bullet point list
-      val leadingTextItems: Text = Text("Mewn rhai amgylchiadau, nid oes rhaid i chi ddweud wrth Gyllid a Thollau EM am incwm ychwanegol rydych wedi'i wneud. Ymhob blwyddyn dreth gallwch ennill hyd at £ 11,000, yn ddi-dreth, os ydych chi:")
+      val leadingTextItems: Text = Text("Mewn rhai amgylchiadau, nid oes rhaid i chi ddweud wrth Gyllid a Thollau EM am incwm ychwanegol rydych wedi’i wneud. Ymhob blwyddyn dreth gallwch ennill hyd at £ 11,000, yn ddi-dreth, os ydych chi:")
 
       val bulletPointOne: Text = Text("gwerthu nwyddau neu wasanaethau (masnachu)")
       val bulletPointTwo: Text = Text("rhentu tir neu eiddo")
@@ -905,7 +905,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
       implicit override val ctx: UIContext = UIContext(labels, lang, extraIncomeUrlMap, messagesApi)
       val uiPage = uiBuilder.buildPage(ocelotPage.url, visualStanzas)
 
-      val leadingTextItems: Text = Text("Welsh: You've received income that you have not yet paid tax on from:")
+      val leadingTextItems: Text = Text("Welsh: You’ve received income that you have not yet paid tax on from:")
       val bulletPointOne: Text = Text("a business you own or control (such as a partnership or limited company)")
       val bulletPointTwo: Text = Text("a business a relative owns or controls")
       val bulletPointThree: Text = Text("your employer (for example for freelance services outside your normal contract hours)")

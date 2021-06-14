@@ -25,6 +25,24 @@ import Regex._
 import play.api.i18n.{Messages, Lang}
 import scala.annotation.tailrec
 
+object StringTransform {
+  val OriginalCaptureIdx: Int = 0
+  val Apostrophe: String = "'"
+  val CurlyApostrophe: String = "’"
+  val ApostropheCaptureIdx: Int = 1
+
+  val StandardDash: String = " - "
+  val LongDash: String = " – "
+  val DashCaptureIdx: Int = 2
+  val matchRegex: Regex = s"($Apostrophe)|($StandardDash)".r
+  def transform(phrase: Phrase)(implicit ctx: UIContext): String = transform(phrase.value(ctx.lang))
+  def transform(s: String): String = matchRegex.replaceAllIn(s, m =>
+    Option(m.group(ApostropheCaptureIdx)).fold{
+      Option(m.group(DashCaptureIdx)).fold(m.group(OriginalCaptureIdx))(_ => LongDash)
+    }(_ => CurlyApostrophe)
+  )
+}
+
 object TextBuilder {
   val English: Lang = Lang("en")
   val Welsh: Lang = Lang("cy")
@@ -55,6 +73,7 @@ object TextBuilder {
     def listNameOpt(m: Match): Option[String] = Option(m.group(ListNameIdx))
   }
   import Placeholders._
+  import StringTransform._
 
   private def fromPattern(pattern: Regex, text: String): (List[String], List[Match]) =
     (pattern.split(text).toList, pattern.findAllMatchIn(text).toList)
@@ -88,7 +107,7 @@ object TextBuilder {
 
   def fromPhrase(txt: Phrase)(implicit ctx: UIContext): Text = {
     val isEmpty: TextItem => Boolean = _.isEmpty
-    val (texts, matches) = fromPattern(plregex, expandLabels(txt.value(ctx.lang), ctx.lang))
+    val (texts, matches) = fromPattern(plregex, expandLabels(transform(txt.value(ctx.lang)), ctx.lang))
     Text(merge(texts.map(Words(_)), placeholdersToItems(matches), Nil, isEmpty))
   }
 
@@ -105,7 +124,7 @@ object TextBuilder {
   def fromPhraseWithOptionalHint(txt: Phrase)(implicit ctx: UIContext): (Text, Option[Text]) = {
     val isEmpty: TextItem => Boolean = _.isEmpty
     val (str, hint) = singleStringWithOptionalHint(txt.value(ctx.lang))
-    val (texts, matches) = fromPattern(plregex, expandLabels(str, ctx.lang))
+    val (texts, matches) = fromPattern(plregex, expandLabels(transform(str), ctx.lang))
     (Text(merge(texts.map(Words(_)), placeholdersToItems(matches), Nil, isEmpty)), hint.map(Text(_)))
   }
 
