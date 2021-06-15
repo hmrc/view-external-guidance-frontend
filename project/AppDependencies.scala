@@ -9,13 +9,12 @@ object AppDependencies {
     "uk.gov.hmrc" %% "bootstrap-frontend-play-27" % "3.4.0",
     "uk.gov.hmrc" %% "play-frontend-govuk" % "0.60.0-play-27",
     "uk.gov.hmrc" %% "play-frontend-hmrc" % "0.38.0-play-27",
-    "uk.gov.hmrc" %% "auth-client" % "3.3.0-play-27",
-    "uk.gov.hmrc" %% "logback-json-logger" % "4.9.0"
+    "uk.gov.hmrc" %% "auth-client" % "3.3.0-play-27"
   )
 
   val test = Seq(
     "uk.gov.hmrc" %% "reactivemongo-test" % "4.22.0-play-26",
-    "uk.gov.hmrc" %% "bootstrap-frontend-play-27" % "3.3.0" % "test",
+    "uk.gov.hmrc" %% "bootstrap-frontend-play-27" % "3.4.0" % "test",
     "org.scalamock" %% "scalamock" % "4.4.0" % "test",
     "org.scalatest" %% "scalatest" % "3.0.8" % "test",
     "org.jsoup" % "jsoup" % "1.13.1" % "test",

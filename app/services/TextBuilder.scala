@@ -26,6 +26,7 @@ import play.api.i18n.{Messages, Lang}
 import scala.annotation.tailrec
 
 object TextBuilder {
+  val NonWhitespaceRegex: Regex = "[^\\s]+".r
   val English: Lang = Lang("en")
   val Welsh: Lang = Lang("cy")
 
@@ -41,7 +42,8 @@ object TextBuilder {
     val LinkTextIdx: Int = 10
     val LinkDestIdx: Int = 11
     val ListNameIdx: Int = 12
-    val plregex: Regex = s"$labelPattern|$boldPattern|$linkPattern|$listPattern".r
+    val placeholderPattern: String = s"$labelPattern|$boldPattern|$linkPattern|$listPattern"
+    val plregex: Regex = placeholderPattern.r
     def labelNameOpt(m: Match): Option[String] = Option(m.group(LabelNameIdx))
     def labelFormatOpt(m: Match): Option[String] = Option(m.group(LabelFormatIdx))
     def boldTextOpt(m: Match): Option[String] = Option(m.group(BoldTextIdx))
@@ -110,7 +112,7 @@ object TextBuilder {
   }
 
   @tailrec
-  private def merge[A, B](txts: List[A], links: List[A], acc: Seq[A], isEmpty: A => Boolean): Seq[A] =
+  private def merge[A, B](txts: List[A], links: List[A], acc: List[A], isEmpty: A => Boolean): List[A] =
     (txts, links) match {
       case (Nil, Nil) => acc
       case (t :: txs, l :: lxs) if isEmpty(t) => merge(txs, lxs, acc :+ l, isEmpty)
@@ -122,10 +124,51 @@ object TextBuilder {
   //
   // Following used by BulletPointBuilder
   //
-  def placeholderMatchText(m: Match): String = boldTextOpt(m).getOrElse(linkTextOpt(m).getOrElse(""))
-  def placeholderTxtsAndMatches(text: String): (List[String], List[Match]) = fromPattern(plregex, text)
-  def flattenPlaceholders(text: String): Seq[String] = {
-    val (txts, matches) = fromPattern(plregex, text)
-    merge[String, String](txts, matches.map(m => boldTextOpt(m).fold(linkTextOpt(m).getOrElse(""))(v => v)), Nil, _.isEmpty).filterNot(_.isEmpty)
+  sealed trait Fragment {
+    def tokenise(s: String): List[String] = {
+      val (txts, matches) = fromPattern(NonWhitespaceRegex, s)
+      merge[String, String](txts, matches.map(_.toString), Nil, _.isEmpty)
+    }
+    val original: String
+    val tokens: List[String]
   }
+
+  case class TotalMatch(original: String, txt: String) extends Fragment {val tokens: List[String] = tokenise(txt)}
+  case class PartialMatch(original: String) extends Fragment {val tokens: List[String] = tokenise(original)}
+
+  def fragment(text: String): List[Fragment] = {
+    val (txts, matches) = fromPattern(plregex, text)
+    merge[Fragment, Fragment](txts.map(PartialMatch(_)), matches.map(m => TotalMatch(m.group(0), placeholderText(m))), Nil, _ => false)
+  }
+
+  def flattenFragments(f: List[Fragment]): List[String] = f.flatMap(_.tokens).mkString.split("\\s+").toList
+
+  def matchFragments(f1: List[Fragment], f2: List[Fragment]): (List[String], List[Fragment]) = {
+    @tailrec
+    def matchFragments(f1: List[Fragment], f2: List[Fragment], acc: List[String], facc: List[Fragment]): (List[String], List[Fragment]) =
+      (f1, f2) match {
+        case (Nil, _) | (_, Nil) => (acc, facc)
+        case ((f1: Fragment) :: xs1, (f2: Fragment) :: xs2) if f1.equals(f2) => matchFragments(xs1, xs2, acc ++ f1.tokens, facc :+ f1)
+        case ((f1: PartialMatch) :: _, (f2: PartialMatch) :: _) =>
+          val matching: List[String] = (f1.tokens zip f2.tokens).takeWhile(t => t._1 == t._2 ).map(_._1)
+          (acc ++ matching, facc :+ PartialMatch(matching.mkString))
+        case _ => (acc, facc)
+      }
+
+    matchFragments(f1, f2, Nil, Nil) match {
+      case (Nil, _) => (Nil, Nil)
+      case (x, y) => (x.mkString.split("\\s+").toList, y)
+    }
+  }
+
+  def join(fragments: List[Fragment]): String = join(fragments, Nil)
+
+  @tailrec
+  private def join(fragments: List[Fragment], acc: List[String]): String = fragments match {
+    case Nil => acc.reverse.mkString
+    case f :: xs => join(xs, f.original :: acc )
+  }
+
+  private def placeholderText(m: Match): String = boldTextOpt(m).fold[String](linkTextOpt(m).getOrElse(""))(v => v)
+
 }

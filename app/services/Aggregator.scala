@@ -27,31 +27,35 @@ object Aggregator {
     inputSeq match {
       case Nil => acc
       case (x: Row) :: xs =>
-        val (vs: VisualStanza, remainder) = aggregateRows(xs, Seq (x))
+        val (vs: VisualStanza, remainder) = aggregateRows(xs, Seq(x))
         aggregateStanzas(acc :+ vs)(remainder)
 
       case (x: NumberedListItemCallout) :: xs =>
-        val (vs: VisualStanza, remainder) = aggregateNumLists(xs, Seq (x))
+        val (vs: VisualStanza, remainder) = aggregateNumLists(xs, Seq(x))
         aggregateStanzas(acc :+ vs)(remainder)
 
       case (x: NumberedCircleListItemCallout) :: xs =>
-        val (vs: VisualStanza, remainder) = aggregateNumCircLists(xs, Seq (x))
+        val (vs: VisualStanza, remainder) = aggregateNumCircLists(xs, Seq(x))
         aggregateStanzas(acc :+ vs)(remainder)
 
       case (x: NoteCallout) :: xs =>
-        val (vs: VisualStanza , remainder) = aggregateNotes(xs, Seq (x))
+        val (vs: VisualStanza , remainder) = aggregateNotes(xs, Seq(x))
         aggregateStanzas(acc :+ vs)(remainder)
 
       case (x: ImportantCallout) :: xs =>
-        val (vs: VisualStanza , remainder) = aggregateImportant(xs, Seq (x))
+        val (vs: VisualStanza , remainder) = aggregateImportant(xs, Seq(x))
         aggregateStanzas(acc :+ vs)(remainder)
 
       case (x: YourCallCallout) :: xs =>
-        val (vs: VisualStanza, remainder) = aggregateYourCall(xs, Seq (x))
+        val (vs: VisualStanza, remainder) = aggregateYourCall(xs, Seq(x))
         aggregateStanzas(acc :+ vs)(remainder)
 
       case (x: ErrorCallout) :: xs =>
-        val (vs: VisualStanza, remainder) = aggregateError(xs, Seq (x))
+        val (vs: VisualStanza, remainder) = aggregateError(xs, Seq(x))
+        aggregateStanzas(acc :+ vs)(remainder)
+
+      case (x: Instruction) :: xs =>
+        val (vs: VisualStanza, remainder) = aggregateBulletPointInstruction(xs, Seq(x))
         aggregateStanzas(acc :+ vs)(remainder)
 
       case x :: xs => aggregateStanzas(acc :+ x)(xs)
@@ -108,6 +112,14 @@ object Aggregator {
       case (x: ErrorCallout) :: xs if x.stack => aggregateError(xs, acc :+ x)
       case xs if acc.length == 1 => (acc.head, xs)
       case xs => (RequiredErrorGroup(acc), xs)
+    }
+
+  @tailrec
+  private def aggregateBulletPointInstruction(inputSeq: Seq[VisualStanza], acc: Seq[Instruction]): (VisualStanza, Seq[VisualStanza]) =
+    inputSeq match {
+      case (x: Instruction) :: xs if x.stack && BulletPointBuilder.matchPhrases(acc.last.text, x.text)=> aggregateBulletPointInstruction(xs, acc :+ x)
+      case xs if acc.length == 1 => (acc.head, xs)
+      case xs => (InstructionGroup(acc), xs)
     }
 
 }

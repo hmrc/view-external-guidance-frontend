@@ -226,12 +226,6 @@ class EnglishTextBuilderSpec extends BaseSpec with GuiceOneAppPerSuite {
       altTxt.items(3) shouldBe Link("dummy-path/blah", "Blah Blah", true)
       altTxt.items(5) shouldBe Link("dummy-path/start", "Blah Blah", true)
     }
-
-    "Flatten all placeholders within a line of text to include the text only" in new Test {
-      val txt = "Welsh: Hello [link-tab:An http link:https://www.bbc.co.uk] [link-tab:link to stanza 5:5] [link-tab:link to beginning of guidance:start]"
-      val expected = List("Welsh: Hello ", "An http link", " ", "link to stanza 5", " ", "link to beginning of guidance")
-      TextBuilder.flattenPlaceholders(txt) shouldBe expected
-    }
   }
 
   trait ExpandTest extends Test {
