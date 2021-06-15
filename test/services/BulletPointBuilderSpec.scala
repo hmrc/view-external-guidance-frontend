@@ -53,6 +53,8 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
     Seq(phrase1, phrase2)
   }
 
+  def createPhraseGroup(texts: Seq[String]): Seq[Phrase] = texts.map(t => Phrase(t,  s"$welshPrefix $t"))
+
   val welshPrefix: String = "Welsh - "
 
   "Bullet point builder identification of bullet point list leading text" must {
@@ -396,6 +398,24 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
 
       BulletPointBuilder.determineMatchedLeadingText(phraseGroup, _.welsh) shouldBe
         s"$welshPrefix You can buy fruit and vegetables[link:<link>:http://mydomain/fruitAndVeg], such as,"
+    }
+
+
+    "Identify leading text in Trader Triage example with similar ending words: you and your" in {
+
+      val texts: Seq[String] = Seq(
+        "You have told us that: you move goods into and out of Great Britain (England, Scotland or Wales)",
+        "You have told us that: your goods will move to, from or through common transit countries",
+        "You have told us that: you process goods inside Great Britain",
+        "You have told us that: you do not have premises")
+
+      val phraseGroup: Seq[Phrase] = createPhraseGroup(texts)
+
+      BulletPointBuilder.determineMatchedLeadingText(phraseGroup, _.english) shouldBe
+        "You have told us that:"
+
+      BulletPointBuilder.determineMatchedLeadingText(phraseGroup, _.welsh) shouldBe
+        s"$welshPrefix You have told us that:"
     }
 
   }

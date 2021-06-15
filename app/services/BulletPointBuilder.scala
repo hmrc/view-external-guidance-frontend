@@ -31,7 +31,9 @@ object BulletPointBuilder {
     val matched: List[List[TextBuilder.Fragment]] = phrases.headOption.fold[List[List[TextBuilder.Fragment]]](Nil){first =>
       phrases.toList.tail.map(p => partialMatchText(phraseText(first), phraseText(p))._2)
     }
-    matched.headOption.fold("")(_ => TextBuilder.join(matched.reduce((x, y) => if (x.length < y.length) x else y)).trim)
+    matched.headOption.fold(""){_ =>
+      TextBuilder.join(matched.reduce((x, y) => if (x.map(_.tokens.length).sum < y.map(_.tokens.length).sum) x else y)).trim
+    }
   }
 
   private[services] def matchPhrases(p1: Phrase, p2: Phrase): Boolean = {
