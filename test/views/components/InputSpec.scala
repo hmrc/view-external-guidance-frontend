@@ -33,6 +33,7 @@ import play.api.mvc.{AnyContentAsEmpty, Request}
 import play.api.test.FakeRequest
 import play.twirl.api.Html
 import views.html._
+import play.api.data.FormBinding.Implicits._
 
 import scala.collection.JavaConverters._
 import models.PageContext

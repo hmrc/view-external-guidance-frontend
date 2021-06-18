@@ -31,6 +31,7 @@ import models.ui.{CurrencyInput, DateInput, FormPage, NonExclusiveSequence, Requ
 import models.ui.{SubmittedDateAnswer, SubmittedListAnswer, SubmittedTextAnswer, Text, ValueErrorMsg}
 import base.ViewFns
 import org.jsoup.nodes.{Document, Element}
+import play.api.data.FormBinding.Implicits._
 
 import scala.collection.JavaConverters._
 
