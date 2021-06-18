@@ -15,7 +15,7 @@ object AppDependencies {
     "uk.gov.hmrc" %% "reactivemongo-test" % "5.0.0-play-27",
     "uk.gov.hmrc" %% "bootstrap-frontend-play-27" % "5.4.0" % "test",
     "org.scalamock" %% "scalamock" % "5.1.0" % "test",
-    "org.scalatest" %% "scalatest" % "3.0.8" % "test",
+    "org.scalatest" %% "scalatest" % "3.0.9" % "test",
     "org.jsoup" % "jsoup" % "1.13.1" % "test",
     "com.typesafe.play" %% "play-test" % current % "test",
     "org.pegdown" % "pegdown" % "1.6.0" % "test, it",
