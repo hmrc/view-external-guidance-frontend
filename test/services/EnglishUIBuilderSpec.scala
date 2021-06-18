@@ -746,7 +746,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
       uiPage.components.length shouldBe 1
 
       // Check contents of bullet point list
-      val leadingTextItems: Text = Text("In some circumstances, you do not have to tell HMRC about extra income you've made. In each tax year you can earn up to £11,000, tax free, if you are:")
+      val leadingTextItems: Text = Text("In some circumstances, you do not have to tell HMRC about extra income you’ve made. In each tax year you can earn up to £11,000, tax free, if you are:")
 
       val bulletPointOne: Text = Text("selling goods or services (trading)")
       val bulletPointTwo: Text = Text("renting land or property")
@@ -900,7 +900,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
       val visualStanzas: Seq[VisualStanza] = ocelotPage.stanzas.collect{case s: VisualStanza => s}
       implicit override val ctx: UIContext = UIContext(labels, lang, extraIncomeUrlMap, messagesApi)
       val uiPage = uiBuilder.buildPage(ocelotPage.url, visualStanzas)
-      val leadingTextItems: Text = Text("You've received income that you have not yet paid tax on from:")
+      val leadingTextItems: Text = Text("You’ve received income that you have not yet paid tax on from:")
       val bulletPointOne: Text = Text("a business you own or control (such as a partnership or limited company)")
       val bulletPointTwo: Text = Text("a business a relative owns or controls")
       val bulletPointThree: Text = Text("your employer (for example for freelance services outside your normal contract hours)")

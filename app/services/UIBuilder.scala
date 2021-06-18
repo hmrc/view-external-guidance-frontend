@@ -117,8 +117,9 @@ class UIBuilder {
   private def fromInstruction( i:Instruction)(implicit ctx: UIContext): UIComponent =
     i match {
       case Instruction(txt, _, Some(Link(_, dest, _, window)), _, _, _) if Link.isLinkableStanzaId(dest) =>
-        Paragraph(Text.link(ctx.pageMapById(dest).url, txt.value(ctx.lang), window))
-      case Instruction(txt, _, Some(Link(_, dest, _, window)), _, _, _) => Paragraph(Text.link(dest, txt.value(ctx.lang), window))
+        Paragraph(Text.link(ctx.pageMapById(dest).url, StringTransform.transform(txt.value(ctx.lang)), window))
+      case Instruction(txt, _, Some(Link(_, dest, _, window)), _, _, _) =>
+        Paragraph(Text.link(dest, StringTransform.transform(txt.value(ctx.lang)), window))
       case Instruction(txt, _, _, _, _, _) => Paragraph(TextBuilder.fromPhrase(txt))
     }
 
@@ -175,17 +176,19 @@ class UIBuilder {
 
   private def fromRequiredErrorGroup(eg: RequiredErrorGroup, errStrategy: ErrorStrategy)(implicit ctx: UIContext): Seq[UIComponent] =
     errStrategy match {
-      case ValueMissingGroupError(Nil) =>
-        eg.group.find(co => EmbeddedParameterRegex.findAllMatchIn(co.text.value(ctx.lang)).isEmpty).fold[Seq[UIComponent]](Nil){errorCallout =>
-          Seq(RequiredErrorMsg(Text(errorCallout.text.value(ctx.lang))))
-        }
-      case e: ValueMissingGroupError =>
+      case ValueMissingGroupError(Nil) => // Nil names => all values missing
+        eg.group.find(co => EmbeddedParameterRegex.findAllMatchIn(co.text.value(ctx.lang)).isEmpty)
+                .fold[Seq[UIComponent]](Nil)(eco => Seq(RequiredErrorMsg(Text(StringTransform.transform(eco.text)))))
+      case e: ValueMissingGroupError =>   // Values missing by name
+        // Find message corresponding to the number of missing values
         eg.group.find(co => EmbeddedParameterRegex.findAllMatchIn(co.text.value(ctx.lang)).length == e.missingFieldNames.length)
-                .fold[Seq[UIComponent]](Nil){errorCallout =>
-                  Seq(RequiredErrorMsg(Text(EmbeddedParameterRegex.replaceSomeIn(errorCallout.text.value(ctx.lang), { m =>
-                    Option(m.group(1)).map(_.toInt).fold[Option[String]](None)(idx => e.missingFieldNames.lift(idx))
-                  }))))
-                }
+                .fold[Seq[UIComponent]](Nil){eco => {
+                  // Substitute positional params with the supplied field names
+                  val errorMsg = EmbeddedParameterRegex.replaceSomeIn(eco.text.value(ctx.lang), { m =>
+                                   Option(m.group(1)).map(_.toInt).fold[Option[String]](None)(idx => e.missingFieldNames.lift(idx))
+                                 })
+                  Seq(RequiredErrorMsg(Text(StringTransform.transform(errorMsg))))
+                }}
       case _ => Nil
     }
 

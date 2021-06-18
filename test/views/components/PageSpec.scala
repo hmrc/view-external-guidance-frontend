@@ -135,8 +135,8 @@ class PageSpec extends WordSpec with Matchers with ViewSpec with ViewFns with Gu
     val complexDetailsPage: StandardPage = StandardPage("/complex-details-page", Seq(complexDetails))
 
     def expectedTitleText(h1Text: String, section: Option[String] = None): String =
-      section.fold(s"${h1Text} - ${messages("service.name")} - ${messages("service.govuk")}"){s =>
-        s"${h1Text} - ${s} - ${messages("service.name")} - ${messages("service.govuk")}"
+      section.fold(s"${h1Text} – ${messages("service.name")} – ${messages("service.govuk")}"){s =>
+        s"${h1Text} – ${s} – ${messages("service.name")} – ${messages("service.govuk")}"
       }
 
     def checkTitle(doc: Document, section: Option[String] = None, prefix: Option[String] = None): Unit =

@@ -60,7 +60,7 @@ class SessionTimeoutSpec extends BaseSpec with ViewFns with ViewSpec with GuiceO
 
       val pageTitleElement: Element = getSingleElementByTag(doc, "title")
 
-      pageTitleElement.text shouldBe s"${messages("session.timeout.session.has.expired")} - ${messages("service.name")} - ${messages("service.govuk")}"
+      pageTitleElement.text shouldBe s"${messages("session.timeout.session.has.expired")} – ${messages("service.name")} – ${messages("service.govuk")}"
 
       val htmlHeaderDivElement: Element = getSingleElementByClass(doc, "govuk-header__content")
 
@@ -112,7 +112,7 @@ class SessionTimeoutSpec extends BaseSpec with ViewFns with ViewSpec with GuiceO
 
       val pageTitleElement: Element = getSingleElementByTag(doc, "title")
 
-      pageTitleElement.text shouldBe s"${messages("session.timeout.delete.your.answers")} - ${messages("service.name")} - ${messages("service.govuk")}"
+      pageTitleElement.text shouldBe s"${messages("session.timeout.delete.your.answers")} – ${messages("service.name")} – ${messages("service.govuk")}"
 
       val htmlHeaderDivElement: Element = getSingleElementByClass(doc, "govuk-header__content")
 
