@@ -23,6 +23,7 @@ import play.api.i18n.Messages
 import core.models.ocelot.stanzas.{Input, DateInput, DataInput, Question, Sequence}
 import models.ui.{SubmittedAnswer, SubmittedDateAnswer, SubmittedListAnswer, SubmittedTextAnswer}
 import services.{ErrorStrategy, ValueMissingError, ValueMissingGroupError}
+import play.api.data.FormBinding.Implicits._
 
 object FormsHelper {
 
