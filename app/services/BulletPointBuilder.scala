@@ -32,7 +32,7 @@ object BulletPointBuilder {
       phrases.toList.tail.map(p => partialMatchText(phraseText(first), phraseText(p))._2)
     }
     matched.headOption.fold(""){_ =>
-      TextBuilder.join(matched.reduce((x, y) => if (x.map(_.tokens.length).sum < y.map(_.tokens.length).sum) x else y)).trim
+      TextBuilder.join(matched.reduce((fs1, fs2) => if (fs1.map(_.size).sum < fs2.map(_.size).sum) fs1 else fs2)).trim
     }
   }
 
