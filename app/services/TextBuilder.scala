@@ -150,6 +150,7 @@ object TextBuilder {
     }
     val original: String
     val tokens: List[String]
+    lazy val size:Int = tokens.length
   }
 
   case class TotalMatch(original: String, txt: String) extends Fragment {val tokens: List[String] = tokenise(txt)}
@@ -176,7 +177,7 @@ object TextBuilder {
 
     matchFragments(f1, f2, Nil, Nil) match {
       case (Nil, _) => (Nil, Nil)
-      case (x, y) => (x.mkString.split("\\s+").toList, y)
+      case (stringList, fragments) => (stringList.mkString.split("\\s+").toList, fragments)
     }
   }
 

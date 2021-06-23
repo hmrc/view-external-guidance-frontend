@@ -81,7 +81,7 @@ class UIBuilder {
       case (wt: ImportantGroup) :: xs => fromStanzas(xs, acc ++ Seq(fromImportantGroup(wt)), errStrategy)
       case (ycg: YourCallGroup) :: xs => fromStanzas(xs, acc ++ Seq(fromYourCallGroup(ycg)), errStrategy)
       case x :: xs =>
-        logger.error(s"Encountered and ignored VisualStanza invalid due to accessibility rules, $x")
+        logger.error(s"Encountered and ignored invalid VisualStanza due to accessibility rules, $x")
         fromStanzas(xs, acc, errStrategy)
     }
 

@@ -29,7 +29,7 @@ trait SessionFrontendController {
 
   protected def withExistingSession[T](block: String => Future[RequestOutcome[T]])(implicit request: Request[_]): Future[RequestOutcome[T]] =
     hc.sessionId.fold {
-      logger.error(s"Session Id missing from request when required")
+      logger.warn(s"Session Id missing from request when required")
       Future.successful(Left(ExpectationFailedError): RequestOutcome[T])
     } { sessionId =>
       logger.info(s"Found existing sessionId = $sessionId")
