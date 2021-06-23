@@ -122,7 +122,7 @@ class GuidanceService @Inject() (
         logger.warn(s"Referenced session ( $sessionId ) does not contain a process with processCode $processCode")
         Left(ExpectationFailedError)
       case Left(err) =>
-        logger.error(s"Repository returned $err, when attempting retrieve process using id (sessionId) $sessionId")
+        logger.warn(s"Repository returned $err, when attempting retrieve process using id (sessionId) $sessionId")
         Left(err)
     }
 
