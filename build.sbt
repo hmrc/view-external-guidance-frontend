@@ -18,13 +18,13 @@ import uk.gov.hmrc.DefaultBuildSettings.integrationTestSettings
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin.publishingSettings
 
 val appName = "view-external-guidance-frontend"
-val silencerVersion = "1.6.0"
+val silencerVersion = "1.7.1"
 
 lazy val microservice = Project(appName, file("."))
   .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin)
   .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427
   .settings(
-    scalaVersion := "2.12.10",
+    scalaVersion := "2.12.12",
     majorVersion := 0,
     scalacOptions ++= Seq("-feature"),
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
