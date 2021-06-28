@@ -212,7 +212,7 @@ class InputStanzaSpec extends BaseSpec {
       input.validInput("100.78") shouldBe None
       input.validInput("100.7a") shouldBe None
       input.validInput("£33") shouldBe None
-      input.validInput("1,000") shouldBe None
+      input.validInput("1,000") shouldBe Some("1000")
       input.validInput("") shouldBe None
     }
 
