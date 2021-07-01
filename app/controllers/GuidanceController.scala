@@ -36,7 +36,7 @@ import controllers.actions.SessionIdAction
 import play.twirl.api.Html
 
 import scala.concurrent.Future
-import forms.FormsHelper.{bindFormData, populatedForm}
+import forms.FormBinder
 
 @Singleton
 class GuidanceController @Inject() (
@@ -51,6 +51,7 @@ class GuidanceController @Inject() (
   with SessionFrontendController {
 
   val logger: Logger = Logger(getClass)
+  val binder: FormBinder = new FormBinder(mcc.messagesApi)
 
   def sessionRestart(processCode: String): Action[AnyContent] = sessionIdAction.async { implicit request =>
     withExistingSession[String](service.sessionRestart(processCode, _)).flatMap {
@@ -81,7 +82,7 @@ class GuidanceController @Inject() (
           case page: FormPage => pageCtx.dataInput match {
             case Some(input) =>
               val inputName: String = formInputName(path)
-              Future.successful(Ok(formView(page, pageCtx, inputName, populatedForm(input, inputName, pageCtx.answer))))
+              Future.successful(Ok(formView(page, pageCtx, inputName, binder.populated(input, inputName, pageCtx.answer))))
             case _ =>
               logger.error(s"Unable to locate input stanza for process ${pageCtx.processCode} on page load")
               Future.successful(BadRequest(errorHandler.badRequestTemplateWithProcessCode(Some(processCode))))
@@ -101,7 +102,7 @@ class GuidanceController @Inject() (
           Future.successful(BadRequest(errorHandler.badRequestTemplateWithProcessCode(Some(processCode))))
         }{ input =>
           val inputName: String = formInputName(path)
-          bindFormData(input, inputName) match {
+          binder.bind(input, inputName) match {
             case Left((formWithErrors: Form[_], errorStrategy: ErrorStrategy)) =>
                 Future.successful(BadRequest(createInputView(service.getPageContext(ctx, errorStrategy), inputName, formWithErrors)))
             case Right((form: Form[_], submittedAnswer: SubmittedAnswer)) =>
