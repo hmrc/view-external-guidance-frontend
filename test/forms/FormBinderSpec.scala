@@ -307,7 +307,7 @@ class FormBinderSpec extends BaseSpec with GuiceOneAppPerSuite {
     "return a form in welsh with errors if a date is not fully defined in the request - missing day" in new WelshTest {
 
       implicit val request: Request[_] = FakeRequest("POST", path)
-        .withFormUrlEncodedBody("month" -> monthAnswer, "year" -> yearAnswer).withTransientLang(Lang("cy"))
+        .withFormUrlEncodedBody("month" -> monthAnswer, "year" -> yearAnswer).withTransientLang(messages.lang)
 
       val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = binder.bind(dateInput, relativePath)
 
@@ -339,7 +339,7 @@ class FormBinderSpec extends BaseSpec with GuiceOneAppPerSuite {
     "return a form in welsh with errors if a date is not fully defined in the request - missing month" in new WelshTest {
 
       implicit val request: Request[_] = FakeRequest("POST", path)
-        .withFormUrlEncodedBody("day" -> dayAnswer, "year" -> yearAnswer).withTransientLang(Lang("cy"))
+        .withFormUrlEncodedBody("day" -> dayAnswer, "year" -> yearAnswer).withTransientLang(messages.lang)
 
       val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = binder.bind(dateInput, relativePath)
 
@@ -371,7 +371,7 @@ class FormBinderSpec extends BaseSpec with GuiceOneAppPerSuite {
     "return a form in welsh with errors if a date is not fully defined in the request - missing year" in new WelshTest {
 
       implicit val request: Request[_] = FakeRequest("POST", path)
-        .withFormUrlEncodedBody("day" -> dayAnswer, "month" -> monthAnswer).withTransientLang(Lang("cy"))
+        .withFormUrlEncodedBody("day" -> dayAnswer, "month" -> monthAnswer).withTransientLang(messages.lang)
 
       val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = binder.bind(dateInput, relativePath)
 
@@ -405,7 +405,7 @@ class FormBinderSpec extends BaseSpec with GuiceOneAppPerSuite {
     "return a form in welsh with errors if a date is not fully defined in the request - missing day and year" in new WelshTest {
 
       implicit val request: Request[_] = FakeRequest("POST", path)
-        .withFormUrlEncodedBody("month" -> monthAnswer).withTransientLang(Lang("cy"))
+        .withFormUrlEncodedBody("month" -> monthAnswer).withTransientLang(messages.lang)
 
       val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = binder.bind(dateInput, relativePath)
 
