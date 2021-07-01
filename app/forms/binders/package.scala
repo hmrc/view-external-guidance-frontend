@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package formspackage.scala
+package forms
 
 import play.api.data.Form
 import services.ErrorStrategy

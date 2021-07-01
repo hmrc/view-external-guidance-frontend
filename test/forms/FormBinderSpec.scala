@@ -30,12 +30,9 @@ import play.api.test.FakeRequest
 import base.BaseSpec
 
 class FormBinderSpec extends BaseSpec with GuiceOneAppPerSuite {
-
   private trait Test {
-
     val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
-    val lang: Lang = Lang("en")
-    implicit val messages: Messages = messagesApi.preferred(Seq(lang))
+    implicit val messages: Messages = messagesApi.preferred(Seq(Lang("en")))
     val binder = new FormBinder(messagesApi)
     val processId: String = "ext90000"
     val path: String = s"/guidance/$processId/question"
@@ -137,7 +134,7 @@ class FormBinderSpec extends BaseSpec with GuiceOneAppPerSuite {
     "be able to bind data for a question input component" in new Test {
 
       implicit val request: Request[_] = FakeRequest("POST", path)
-        .withFormUrlEncodedBody(relativePath -> questionAnswer).withTransientLang(lang)
+        .withFormUrlEncodedBody(relativePath -> questionAnswer).withTransientLang(messages.lang)
 
       val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = binder.bind(question, relativePath)
 
@@ -152,7 +149,7 @@ class FormBinderSpec extends BaseSpec with GuiceOneAppPerSuite {
     "be able to bind data for a currency input component" in new Test {
 
       implicit val request: Request[_] = FakeRequest("POST", path)
-        .withFormUrlEncodedBody(relativePath -> currencyAnswer).withTransientLang(lang)
+        .withFormUrlEncodedBody(relativePath -> currencyAnswer).withTransientLang(messages.lang)
 
       val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = binder.bind(currencyInput, relativePath)
 
@@ -168,7 +165,7 @@ class FormBinderSpec extends BaseSpec with GuiceOneAppPerSuite {
     "be able to bind data for a currency pounds only input component" in new Test {
 
       implicit val request: Request[_] = FakeRequest("POST", path)
-        .withFormUrlEncodedBody(relativePath -> currencyPoundsOnlyAnswer).withTransientLang(lang)
+        .withFormUrlEncodedBody(relativePath -> currencyPoundsOnlyAnswer).withTransientLang(messages.lang)
 
       val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = binder.bind(currencyPoundsOnlyInput, relativePath)
 
@@ -184,7 +181,7 @@ class FormBinderSpec extends BaseSpec with GuiceOneAppPerSuite {
     "be able to bind data for a date input component" in new Test {
 
       implicit val request: Request[_] = FakeRequest("POST", path)
-        .withFormUrlEncodedBody("day" -> dayAnswer, "month" -> monthAnswer, "year" -> yearAnswer).withTransientLang(lang)
+        .withFormUrlEncodedBody("day" -> dayAnswer, "month" -> monthAnswer, "year" -> yearAnswer).withTransientLang(messages.lang)
 
       val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = binder.bind(dateInput, relativePath)
 
@@ -206,7 +203,7 @@ class FormBinderSpec extends BaseSpec with GuiceOneAppPerSuite {
           s"$relativePath[0]" -> "0",
           s"$relativePath[2]" -> "2",
           s"$relativePath[4]" -> "4"
-        ).withTransientLang(lang)
+        ).withTransientLang(messages.lang)
 
       val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = binder.bind(nonExclusiveSequence, relativePath)
 
@@ -226,7 +223,7 @@ class FormBinderSpec extends BaseSpec with GuiceOneAppPerSuite {
         .withFormUrlEncodedBody(
           s"$relativePath[0]" -> "0",
           s"$relativePath[2]" -> "2"
-        ).withTransientLang(lang)
+        ).withTransientLang(messages.lang)
 
       val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = binder.bind(exclusiveSequence, relativePath)
 
@@ -243,7 +240,7 @@ class FormBinderSpec extends BaseSpec with GuiceOneAppPerSuite {
     "return a form with errors if the question answer is not mapped to the correct key in the request" in new Test {
 
       implicit val request: Request[_] = FakeRequest("POST", path)
-        .withFormUrlEncodedBody(incorrectPath -> questionAnswer).withTransientLang(lang)
+        .withFormUrlEncodedBody(incorrectPath -> questionAnswer).withTransientLang(messages.lang)
 
       val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = binder.bind(question, relativePath)
 
@@ -260,7 +257,7 @@ class FormBinderSpec extends BaseSpec with GuiceOneAppPerSuite {
     "return a form with errors if the currency value is not mapped to the correct key in the request" in new Test {
 
       implicit val request: Request[_] = FakeRequest("POST", path)
-        .withFormUrlEncodedBody(incorrectPath -> currencyAnswer).withTransientLang(lang)
+        .withFormUrlEncodedBody(incorrectPath -> currencyAnswer).withTransientLang(messages.lang)
 
       val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = binder.bind(currencyInput, relativePath)
 
@@ -277,7 +274,7 @@ class FormBinderSpec extends BaseSpec with GuiceOneAppPerSuite {
     "return a form with errors if the currency pounds only value is not mapped to the correct key in the request" in new Test {
 
       implicit val request: Request[_] = FakeRequest("POST", path)
-        .withFormUrlEncodedBody(incorrectPath -> currencyPoundsOnlyAnswer).withTransientLang(lang)
+        .withFormUrlEncodedBody(incorrectPath -> currencyPoundsOnlyAnswer).withTransientLang(messages.lang)
 
       val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = binder.bind(currencyPoundsOnlyInput, relativePath)
 
@@ -293,7 +290,7 @@ class FormBinderSpec extends BaseSpec with GuiceOneAppPerSuite {
     "return a form in english with errors if a date is not fully defined in the request - missing day" in new Test {
 
       implicit val request: Request[_] = FakeRequest("POST", path)
-        .withFormUrlEncodedBody("month" -> monthAnswer, "year" -> yearAnswer).withTransientLang(lang)
+        .withFormUrlEncodedBody("month" -> monthAnswer, "year" -> yearAnswer).withTransientLang(messages.lang)
 
       val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = binder.bind(dateInput, relativePath)
 
@@ -325,7 +322,7 @@ class FormBinderSpec extends BaseSpec with GuiceOneAppPerSuite {
     "return a form in english with errors if a date is not fully defined in the request - missing month" in new Test {
 
       implicit val request: Request[_] = FakeRequest("POST", path)
-        .withFormUrlEncodedBody("day" -> dayAnswer, "year" -> yearAnswer).withTransientLang(lang)
+        .withFormUrlEncodedBody("day" -> dayAnswer, "year" -> yearAnswer).withTransientLang(messages.lang)
 
       val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = binder.bind(dateInput, relativePath)
 
@@ -357,7 +354,7 @@ class FormBinderSpec extends BaseSpec with GuiceOneAppPerSuite {
     "return a form in english with errors if a date is not fully defined in the request - missing year" in new Test {
 
       implicit val request: Request[_] = FakeRequest("POST", path)
-        .withFormUrlEncodedBody("day" -> dayAnswer, "month" -> monthAnswer).withTransientLang(lang)
+        .withFormUrlEncodedBody("day" -> dayAnswer, "month" -> monthAnswer).withTransientLang(messages.lang)
 
       val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = binder.bind(dateInput, relativePath)
 
@@ -389,7 +386,7 @@ class FormBinderSpec extends BaseSpec with GuiceOneAppPerSuite {
     "return a form in english with errors if a date is not fully defined in the request - missing day and year" in new Test {
 
       implicit val request: Request[_] = FakeRequest("POST", path)
-        .withFormUrlEncodedBody("month" -> monthAnswer).withTransientLang(lang)
+        .withFormUrlEncodedBody("month" -> monthAnswer).withTransientLang(messages.lang)
 
       val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = binder.bind(dateInput, relativePath)
 
@@ -423,7 +420,7 @@ class FormBinderSpec extends BaseSpec with GuiceOneAppPerSuite {
     "return a form with errors if a date is not fully defined in the request - all values missing" in new Test {
 
       implicit val request: Request[_] = FakeRequest("POST", path)
-        .withFormUrlEncodedBody().withTransientLang(lang)
+        .withFormUrlEncodedBody().withTransientLang(messages.lang)
 
       val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = binder.bind(dateInput, relativePath)
 
@@ -444,7 +441,7 @@ class FormBinderSpec extends BaseSpec with GuiceOneAppPerSuite {
     "return a form with error if the non-exclusive sequence is not mapped to the correct key in the request" in new Test {
 
       implicit val request: Request[_] = FakeRequest("POST", path)
-        .withFormUrlEncodedBody(s"$incorrectPath[0]" -> "0").withTransientLang(lang)
+        .withFormUrlEncodedBody(s"$incorrectPath[0]" -> "0").withTransientLang(messages.lang)
 
       val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = binder.bind(nonExclusiveSequence, relativePath)
 
@@ -459,7 +456,7 @@ class FormBinderSpec extends BaseSpec with GuiceOneAppPerSuite {
     "return a form with error if the exclusive sequence is not mapped to the correct key in the request" in new Test {
 
       implicit val request: Request[_] = FakeRequest("POST", path)
-        .withFormUrlEncodedBody(s"$incorrectPath[0]" -> "0").withTransientLang(lang)
+        .withFormUrlEncodedBody(s"$incorrectPath[0]" -> "0").withTransientLang(messages.lang)
 
       val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = binder.bind(exclusiveSequence, relativePath)
 
