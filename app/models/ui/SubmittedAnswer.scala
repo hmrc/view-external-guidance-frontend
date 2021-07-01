@@ -17,21 +17,15 @@
 package models.ui
 
 trait SubmittedAnswer {
-
   val text: String
-
 }
 
 case class SubmittedTextAnswer(text: String) extends SubmittedAnswer
 
 case class SubmittedDateAnswer(day: String, month: String, year: String) extends SubmittedAnswer {
-
-    override val text: String = day + "/" + month + "/" + year
-
+  override val text: String = day + "/" + month + "/" + year
 }
 
 case class SubmittedListAnswer(items: List[String]) extends SubmittedAnswer {
-
-    override val text: String = items.mkString(",")
-
+  override val text: String = items.mkString(",")
 }
