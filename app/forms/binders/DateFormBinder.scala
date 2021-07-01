@@ -28,8 +28,13 @@ import play.api.data.FormBinding.Implicits._
 
 class DateFormBinder(messagesApi: MessagesApi) extends TypedFormBinder {
   val inputDateRegex: Regex = "(.+?)\\/(.+?)\\/(.+?)$".r
-  val form: Form[SubmittedDateAnswer] = Form(mapping("day" -> nonEmptyText, "month" -> nonEmptyText, "year" -> nonEmptyText)
-                                                    (SubmittedDateAnswer.apply)(SubmittedDateAnswer.unapply))
+
+  val form: Form[SubmittedDateAnswer] =
+    Form(mapping("day" -> nonEmptyText,
+                 "month" -> nonEmptyText,
+                 "year" -> nonEmptyText)
+        (SubmittedDateAnswer.apply)(SubmittedDateAnswer.unapply)
+    )
 
   def bind(name: String)(implicit request: Request[_]): Binding =
     form.bindFromRequest().fold(formWithErrors =>

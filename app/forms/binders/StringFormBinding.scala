@@ -28,7 +28,9 @@ class StringFormBinder extends TypedFormBinder {
   def bind(name: String)(implicit request: Request[_]): Binding =
     form(name).bindFromRequest().fold(fe => Left((fe, ValueMissingError)), fd => Right((form(name).fill(fd), fd)))
 
-  def populated(name: String, answer: Option[String]): Form[SubmittedTextAnswer] = answer.fold(form(name))(value => form(name).bind(Map(name -> value)))
+  def populated(name: String, answer: Option[String]): Form[SubmittedTextAnswer] =
+    answer.fold(form(name))(value => form(name).bind(Map(name -> value)))
 
-  def form(name: String): Form[SubmittedTextAnswer] = Form(mapping(name -> nonEmptyText)(SubmittedTextAnswer.apply)(SubmittedTextAnswer.unapply))
+  def form(name: String): Form[SubmittedTextAnswer] =
+    Form(mapping(name -> nonEmptyText)(SubmittedTextAnswer.apply)(SubmittedTextAnswer.unapply))
 }

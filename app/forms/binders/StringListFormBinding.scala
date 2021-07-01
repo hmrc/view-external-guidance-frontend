@@ -35,8 +35,7 @@ class StringListFormBinder extends TypedFormBinder {
     }
 
   def form(name: String): Form[SubmittedListAnswer] =
-    Form(
-      mapping(name -> list(text).verifying(Constraint[List[String]]("constraint.required")
-                                (l => if(l.nonEmpty) Valid else Invalid(ValidationError("error.required")))))
+    Form(mapping(name -> list(text).verifying(Constraint[List[String]]("constraint.required")
+                                             (l => if(l.nonEmpty) Valid else Invalid(ValidationError("error.required")))))
     (SubmittedListAnswer.apply)(SubmittedListAnswer.unapply))
 }
