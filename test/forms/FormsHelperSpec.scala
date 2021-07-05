@@ -114,8 +114,8 @@ class FormsHelperSpec extends BaseSpec with GuiceOneAppPerSuite {
         Phrase("Green", "Welsh: Green"),
         Phrase("Blue", "Welsh: Blue"),
         Phrase(
-          "Not a primary colour [exclusive:Selecting this checkbox will deselect the other checkboxes]",
-          "Welsh: Not a primary colour [exclusive:Welsh: Selecting this checkbox will deselect the other checkboxes]")
+          "Not a primary colour [exclusive][hint:Selecting this checkbox will deselect the other checkboxes]",
+          "Welsh: Not a primary colour [exclusive][hint:Welsh: Selecting this checkbox will deselect the other checkboxes]")
       ),
       None,
       stack = false

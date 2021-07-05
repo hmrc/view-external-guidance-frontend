@@ -19,7 +19,6 @@ package services
 import play.api.inject.Injector
 import play.api.i18n.MessagesApi
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-
 import core.services._
 import base.{BaseSpec, WelshLanguage}
 import core.models.ocelot._
@@ -27,8 +26,7 @@ import core.models.ocelot.stanzas._
 import models.ocelot.stanzas._
 import models.PageDesc
 import models.ui
-import models.ui.{BulletPointList, ComplexDetails, ConfirmationPanel, CyaSummaryList, Details, ErrorMsg, FormPage, H1, H3, H4}
-import models.ui.{InsetText, Link, Paragraph, RequiredErrorMsg, ExclusiveSequenceFormComponent, NonExclusiveSequenceFormComponent, Table, Text, WarningText, Words}
+import models.ui.{BulletPointList, ComplexDetails, ConfirmationPanel, CyaSummaryList, Details, ErrorMsg, FormPage, H1, H3, H4, InsetText, Link, Paragraph, RequiredErrorMsg, SequenceFormComponent, Table, Text, WarningText, Words}
 
 class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage with GuiceOneAppPerSuite {
   implicit val labels: Labels = LabelCache()
@@ -2169,11 +2167,11 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
       uiPage match {
         case f: FormPage if(f.formComponent.errorMsgs.isEmpty) =>
           f.formComponent match {
-            case s: NonExclusiveSequenceFormComponent =>
+            case s: SequenceFormComponent =>
               s.text.asString shouldBe "Welsh: Select type of bee"
               s.options.size shouldBe  2
-              s.options.head.asString shouldBe "Welsh: Drone"
-              s.options.last.asString shouldBe "Welsh: Worker"
+              s.options.head.text.asString shouldBe "Welsh: Drone"
+              s.options.last.text.asString shouldBe "Welsh: Worker"
               s.body.size shouldBe 2
               s.body.head match {
                 case h3: H3 => h3.text.asString shouldBe "Welsh: Questions about bees"
@@ -2201,7 +2199,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
       uiPageWithHint match {
         case f: FormPage =>
           f.formComponent match {
-            case s: NonExclusiveSequenceFormComponent =>
+            case s: SequenceFormComponent =>
               s.text.asString shouldBe "Welsh: Select type of bee"
               s.hint match {
                 case Some(value) => value.asString shouldBe "Welsh: For example Worker or Drone"
@@ -2225,7 +2223,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
       uiPage match {
         case f: FormPage if(f.formComponent.errorMsgs.nonEmpty) =>
           f.formComponent match {
-            case s: NonExclusiveSequenceFormComponent =>
+            case s: SequenceFormComponent =>
               s.errorMsgs.size shouldBe 1
               s.errorMsgs.head match {
                 case r: RequiredErrorMsg => r.text.asString shouldBe "Welsh: You must select a kind of bee"
@@ -2266,8 +2264,8 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
         Phrase(Vector("Drone", "Welsh: Drone")),
         Phrase(Vector("Worker", "Welsh: Worker")),
         Phrase(Vector(
-          "Queen [exclusive:Selecting this checkbox will deselect the other checkboxes]",
-          "Welsh: Queen [exclusive:Welsh: Selecting this checkbox will deselect the other checkboxes]"
+          "Queen [exclusive][hint:Selecting this checkbox will deselect the other checkboxes]",
+          "Welsh: Queen [exclusive][hint:Welsh: Selecting this checkbox will deselect the other checkboxes]"
         ))
       )
 
@@ -2318,12 +2316,12 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
       uiPage match {
         case f: FormPage if(f.formComponent.errorMsgs.isEmpty) =>
           f.formComponent match {
-            case s: ExclusiveSequenceFormComponent =>
+            case s: SequenceFormComponent =>
               s.text.asString shouldBe "Welsh: Select type of bee"
-              s.options.size shouldBe  2
-              s.options.head.asString shouldBe "Welsh: Drone"
-              s.options.last.asString shouldBe "Welsh: Worker"
-              s.exclusiveOption.asString shouldBe "Welsh: Queen"
+              s.options.size shouldBe 3
+              s.options.head.text.asString shouldBe "Welsh: Drone"
+              s.options(1).text.asString shouldBe "Welsh: Worker"
+              s.options.last.text.asString shouldBe "Welsh: Queen"
               s.body.size shouldBe 2
               s.body.head match {
                 case h3: H3 => h3.text.asString shouldBe "Welsh: Questions about bees"
@@ -2351,7 +2349,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
       uiPageWithHint match {
         case f: FormPage =>
           f.formComponent match {
-            case s: ExclusiveSequenceFormComponent =>
+            case s: SequenceFormComponent =>
               s.text.asString shouldBe "Welsh: Select type of bee"
               s.hint match {
                 case Some(value) => value.asString shouldBe "Welsh: For example Worker or Drone"
@@ -2375,7 +2373,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
       uiPage match {
         case f: FormPage if(f.formComponent.errorMsgs.nonEmpty) =>
           f.formComponent match {
-            case s: ExclusiveSequenceFormComponent =>
+            case s: SequenceFormComponent =>
               s.errorMsgs.size shouldBe 1
               s.errorMsgs.head match {
                 case r: RequiredErrorMsg => r.text.asString shouldBe "Welsh: You must select a kind of bee"

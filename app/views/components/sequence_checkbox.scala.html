@@ -17,7 +17,7 @@
 @import models.ui._
 @import uk.gov.hmrc.hmrcfrontend.views.html.components._
 
-@(name: String, option: models.ui.Text, idx: Int, exclusiveOptionHint: Option[models.ui.Text], form: Form[_])(implicit request: Request[_], messages: Messages, ctx: PageContext)
+@(name: String, option: SequenceAnswer, idx: Int, form: Form[_])(implicit request: Request[_], messages: Messages, ctx: PageContext)
 
 @checkboxIdentifier(name:String, idx: Int) = @{s"$name-$idx"}
 @checkboxName(name:String, idx: Int) = @{s"$name[$idx]"}
@@ -28,12 +28,34 @@
     }
 }
 
-@itemChecked(idx: Int) = @{form.data.valuesIterator.exists(_ == idx.toString)}
+@hintClass = @{
+  if(option.exclusive) {
+    "exclusive-hint"
+  } else {
+    s"checkbox-hint-$idx"
+  }
+}
+
+@ariaDescribed = @{
+    if (option.hint) {
+        val dataExclusive = if (option.exclusive) {
+            "data-exclusive='true'"
+        } else {
+            ""
+        }
+
+        Html(dataExclusive + s"aria-describedby='$hintClass'")
+    } else {
+        Html(None)
+    }
+}
+
+@itemChecked(idx: Int) = @{form.data.valuesIterator.contains(idx.toString)}
 
 <div class="govuk-checkboxes__item">
- <input class="govuk-checkboxes__input" id="@checkboxIdentifier(name, idx)" name="@checkboxName(name, idx)" type="checkbox" value="@idx" @{if(itemChecked(idx)) "checked"} @{if(exclusiveOptionHint.isDefined) dataExclusive()}>
- <label class="govuk-label govuk-checkboxes__label" for="@checkboxIdentifier(name, idx)">@components.render_text(option)</label>
- @if(exclusiveOptionHint.isDefined){<div id="exclusive-hint" class="govuk-hint govuk-checkboxes__hint">@renderExclusiveOptionHint(exclusiveOptionHint)</div>}
+ <input class="govuk-checkboxes__input" id="@checkboxIdentifier(name, idx)" name="@checkboxName(name, idx)" type="checkbox" value="@idx" @{if(itemChecked(idx)) "checked"} @ariaDescribed>
+ <label class="govuk-label govuk-checkboxes__label" for="@checkboxIdentifier(name, idx)">@components.render_text(option.text)</label>
+ @if(option.hint.isDefined){<div id="@hintClass" class="govuk-hint govuk-checkboxes__hint">@renderExclusiveOptionHint(option.hint)</div>}
 </div>
 @{
 //$COVERAGE-OFF$

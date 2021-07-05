@@ -25,10 +25,9 @@ import play.api.i18n.{Lang, Messages, MessagesApi}
 import play.api.mvc.Request
 import play.api.test.FakeRequest
 import views.html._
-import forms.{SubmittedListAnswerFormProvider, SubmittedDateAnswerFormProvider, SubmittedTextAnswerFormProvider}
+import forms.{SubmittedDateAnswerFormProvider, SubmittedListAnswerFormProvider, SubmittedTextAnswerFormProvider}
 import models.PageContext
-import models.ui.{CurrencyInput, DateInput, FormPage, NonExclusiveSequence, RequiredErrorMsg, TypeErrorMsg}
-import models.ui.{SubmittedDateAnswer, SubmittedListAnswer, SubmittedTextAnswer, Text, ValueErrorMsg}
+import models.ui.{CurrencyInput, DateInput, FormPage, RequiredErrorMsg, Sequence, SubmittedDateAnswer, SubmittedListAnswer, SubmittedTextAnswer, Text, TypeErrorMsg, ValueErrorMsg}
 import base.ViewFns
 import org.jsoup.nodes.{Document, Element}
 import play.api.data.FormBinding.Implicits._
@@ -73,7 +72,7 @@ class ErrorSpec extends WordSpec with Matchers with GuiceOneAppPerSuite with Vie
       currencyInputWithErrorsPage, Seq.empty, None, "sessionId", None, Text(), "processId", "processCode"
     )
 
-    val sequenceWithErrors: NonExclusiveSequence = NonExclusiveSequence(Text(), None, Seq.empty, Seq.empty, requiredErrMsgs)
+    val sequenceWithErrors: Sequence = Sequence(Text(), None, Seq.empty, Seq.empty, requiredErrMsgs)
     val sequenceWithErrorsPage: FormPage = FormPage("/sequenceInput", sequenceWithErrors)
 
     implicit val sequenceWithErrorsCtx: PageContext = PageContext(

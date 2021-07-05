@@ -116,8 +116,8 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
         Phrase("Americas", "Welsh: Americas"),
         Phrase("Asia", "Welsh: Asia"),
         Phrase(
-          "Elsewhere [exclusive:Selecting this checkbox will deselect the other checkboxes]",
-          "Welsh: Elsewhere [exclusive:Welsh: Selecting this checkbox will deselect the other checkboxes]")
+          "Elsewhere [exclusive][hint:Selecting this checkbox will deselect the other checkboxes]",
+          "Welsh: Elsewhere [exclusive][hint:Welsh: Selecting this checkbox will deselect the other checkboxes]")
       ),
       None,
       stack = false
@@ -1543,15 +1543,15 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
 
       override lazy val expectedPage: ui.Page = FormPage(
         path,
-        ui.NonExclusiveSequence(
+        ui.Sequence(
           Text("Select a working day of the week"),
           None,
           Seq(
-            Text("Monday"),
-            Text("Tuesday"),
-            Text("Wednesday"),
-            Text("Thursday"),
-            Text("Friday")
+            SequenceAnswer(Text("Monday"), None),
+            SequenceAnswer(Text("Tuesday"), None),
+            SequenceAnswer(Text("Wednesday"), None),
+            SequenceAnswer(Text("Thursday"), None),
+            SequenceAnswer(Text("Friday"), None)
           ),
           Seq(Paragraph(Text("When did you go into work?"))),
           Seq.empty
@@ -1745,17 +1745,16 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
 
       override lazy val expectedPage: ui.Page = FormPage(
         path,
-        ui.ExclusiveSequence(
+        ui.Sequence(
           Text("Select a holiday destination"),
           None,
           Seq(
-            Text("Europe"),
-            Text("Africa"),
-            Text("Americas"),
-            Text("Asia")
+            SequenceAnswer(Text("Europe"), None),
+            SequenceAnswer(Text("Africa"), None),
+            SequenceAnswer(Text("Americas"), None),
+            SequenceAnswer(Text("Asia"), None),
+            SequenceAnswer(Text("Elsewhere"), Some(Text("Selecting this option will deselect all the other checkboxes")), exclusive = true)
           ),
-          Text("Elsewhere"),
-          Some(Text("Selecting this option will deselect all the other checkboxes")),
           Seq(Paragraph(Text("When did you go into work?"))),
           Seq.empty
         )

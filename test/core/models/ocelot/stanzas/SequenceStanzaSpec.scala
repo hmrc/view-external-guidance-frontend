@@ -82,8 +82,8 @@ class SequenceStanzaSpec extends BaseSpec {
     val phraseTwo: Phrase = Phrase(twoEn, twoCy)
     val phraseThree: Phrase = Phrase(threeEn, threeCy)
     val phraseFour: Phrase = Phrase(fourEn, fourCy)
-    val phraseFourExclusive: Phrase = Phrase(s"$fourEn [exclusive:Selecting this checkbox will deselect the other checkboxes]",
-                                             s"$fourCy [exclusive:Welsh: Selecting this checkbox will deselect the other checkboxes]")
+    val phraseFourExclusive: Phrase = Phrase(s"$fourEn [exclusive][hint:Selecting this checkbox will deselect the other checkboxes]",
+                                             s"$fourCy [exclusive][hint:Welsh: Selecting this checkbox will deselect the other checkboxes]")
     val oneTwo: List[Phrase] = List(phraseOne, phraseTwo)
     val oneTwoThree: List[Phrase] = oneTwo :+ phraseThree
     val oneTwoThreeFour: List[Phrase] = oneTwoThree :+ phraseFour
