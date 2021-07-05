@@ -42,6 +42,7 @@ case class DateOperand(v: LocalDate) extends Scalar[LocalDate]
 
 sealed trait Operation {
   val logger: Logger = Logger(this.getClass)
+
   val left: String
   val right: String
   val label: String
