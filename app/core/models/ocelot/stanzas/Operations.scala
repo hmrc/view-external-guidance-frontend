@@ -19,7 +19,7 @@ package core.models.ocelot.stanzas
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
-import core.models.ocelot.{asAnyInt, asDecimal, asDate, labelReference, labelScalarValue, Labels}
+import core.models.ocelot.{asDecimal, asDate, labelReference, labelScalarValue, Labels}
 import play.api.Logger
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -89,7 +89,7 @@ sealed trait Operation {
     }
 
   protected def unsupported[A](): Option[A] = {
-    logger.error("Unsupported \"" + getClass().toString + "\" calculation stanza operation defined in guidance")
+    logger.error("Unsupported \"" + getClass.getSimpleName + "\" calculation stanza operation defined in guidance")
     None
   }
 }
@@ -121,13 +121,11 @@ case class DivideOperation(left: String, right: String, label: String) extends O
 }
 
 case class CeilingOperation(left: String, right: String, label: String) extends Operation {
-  override def evalNumericOp(left: BigDecimal, right: BigDecimal): Option[String] =
-    asAnyInt(right.toString).fold[Option[String]](unsupported())(scale => Some(left.setScale(scale, RoundingMode.CEILING).bigDecimal.toPlainString))
+  override def evalNumericOp(left: BigDecimal, right: BigDecimal): Option[String] = Some(left.setScale(right.toInt, RoundingMode.CEILING).bigDecimal.toPlainString)
 }
 
 case class FloorOperation(left: String, right: String, label: String) extends Operation {
-  override def evalNumericOp(left: BigDecimal, right: BigDecimal): Option[String] =
-    asAnyInt(right.toString).fold[Option[String]](unsupported())(scale => Some(left.setScale(scale, RoundingMode.FLOOR).bigDecimal.toPlainString))
+  override def evalNumericOp(left: BigDecimal, right: BigDecimal): Option[String] = Some(left.setScale(right.toInt, RoundingMode.FLOOR).bigDecimal.toPlainString)
 }
 
 object Operation {
