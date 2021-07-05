@@ -37,11 +37,11 @@ class DateFormBinder(messagesApi: MessagesApi) extends TypedFormBinder {
     )
 
   def bind(name: String)(implicit request: Request[_]): Binding =
-    form.bindFromRequest().fold(formWithErrors =>
-      if (formWithErrors.errors.size == 3) Left((formWithErrors, ValueMissingGroupError(Nil)))
+    form.bindFromRequest().fold(fe =>
+      if (fe.errors.size == 3) { Left((fe, ValueMissingGroupError(Nil))) }
       else {
-        val errorItems: List[String] = formWithErrors.errors.toList.map(err => messagesApi.preferred(request)(s"label.${err.key}"))
-        Left((formWithErrors, ValueMissingGroupError(errorItems.map(_.toLowerCase))))
+        val missingFieldNames: List[String] = fe.errors.map(e => (messagesApi.preferred(request)(s"label.${e.key}")).toLowerCase).toList
+        Left((fe, ValueMissingGroupError(missingFieldNames)))
       },
       formData => Right((form.fill(formData), formData))
     )

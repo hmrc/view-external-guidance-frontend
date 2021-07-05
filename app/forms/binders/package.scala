@@ -21,5 +21,5 @@ import services.ErrorStrategy
 import models.ui.SubmittedAnswer
 
 package object binders {
-  type Binding = Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] 
+  type Binding = Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)]
 }
