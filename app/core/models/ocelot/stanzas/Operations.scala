@@ -55,18 +55,18 @@ sealed trait Operation {
 
   def eval(labels: Labels): Labels =
     (operand(left, labels), operand(right, labels)) match {
+      case (Some(NumericOperand(l)), Some(NumericOperand(r))) =>
+        evalNumericOp(l, r).fold(labels)(result => labels.update(label, result))
+      case (Some(DateOperand(l)), Some(DateOperand(r))) =>
+        evalDateOp(l, r).fold(labels)(result => labels.update(label, result))
+      case (Some(StringOperand(l)), Some(StringOperand(r))) =>
+        evalStringOp(l, r).fold(labels)(result => labels.update(label, result))
       case (Some(StringCollection(l)), Some(StringCollection(r))) =>
         evalCollectionCollectionOp(l,r).fold(labels)(result => labels.updateList(label, result))
       case (Some(StringCollection(l)), Some(r: Scalar[_])) =>
         evalCollectionScalarOp(l,r.toString).fold(labels)(result => labels.updateList(label, result))
       case (Some(l: Scalar[_]), Some(StringCollection(r))) =>
         evalScalarCollectionOp(l.toString,r).fold(labels)(result => labels.updateList(label, result))
-      case (Some(DateOperand(l)), Some(DateOperand(r))) =>
-        evalDateOp(l, r).fold(labels)(result => labels.update(label, result))
-      case (Some(NumericOperand(l)), Some(NumericOperand(r))) =>
-        evalNumericOp(l, r).fold(labels)(result => labels.update(label, result))
-      case (Some(StringOperand(l)), Some(StringOperand(r))) =>
-        evalStringOp(l, r).fold(labels)(result => labels.update(label, result))
       case _ =>
         unsupported()
         labels
