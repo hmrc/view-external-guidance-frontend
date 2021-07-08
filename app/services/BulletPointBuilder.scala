@@ -18,6 +18,7 @@ package services
 
 import core.models.ocelot.Phrase
 import scala.util.matching.Regex
+import scala.annotation.tailrec
 
 object BulletPointBuilder {
   val NotSpaceRegex: Regex = """([^ ]+)""".r
@@ -27,7 +28,7 @@ object BulletPointBuilder {
   val ExplicitBreak: String = s"[$Break]"
   val BreakMatchPattern: String = s"\\[$Break\\]"
 
-  def determineMatchedLeadingText(phrases: Seq[Phrase], phraseText: Phrase => String): String = {
+  def findLeadingText(phrases: Seq[Phrase], phraseText: Phrase => String): String = {
     val matched: List[List[TextBuilder.Fragment]] = phrases.headOption.fold[List[List[TextBuilder.Fragment]]](Nil){first =>
       phrases.toList.tail.map(p => partialMatchText(phraseText(first), phraseText(p))._2)
     }
@@ -55,7 +56,7 @@ object BulletPointBuilder {
   private[services] def useExplicitMatch(p1: Phrase, p2: Phrase): Boolean =
     p1.english.contains(ExplicitBreak) || p1.welsh.contains(ExplicitBreak) || p2.english.contains(ExplicitBreak) || p2.welsh.contains(ExplicitBreak)
 
-  private def partialMatchText(text1: String, text2: String): (Seq[String], List[TextBuilder.Fragment]) = {
+  private def partialMatchText(text1: String, text2: String): (List[String], List[TextBuilder.Fragment]) = {
     // Break text into fragments, then match
     val fragments1: List[TextBuilder.Fragment] = TextBuilder.fragment(text1)
     val fragments2: List[TextBuilder.Fragment] = TextBuilder.fragment(text2)
@@ -65,4 +66,24 @@ object BulletPointBuilder {
     // If the matched token length is less than both of the token lengths of the original texts return the match, nothing otherwise
     if (matchedItems.size >= Math.min(text1tokens.size, text2tokens.size)) (Nil, Nil) else (matchedItems, matchedFragments)
   }
+
+  @tailrec
+  private[services] final def groupMatchingPhrases(acc: List[List[Phrase]])(input: Seq[Phrase]): List[List[Phrase]] = {
+    @tailrec
+    def groupPhrases(phrases: List[Phrase], acc: List[Phrase]): (List[Phrase], List[Phrase]) = phrases match {
+        case Nil => (acc, Nil)
+        case x :: xs if BulletPointBuilder.matchPhrases(acc.last, x) => groupPhrases(xs, acc :+ x)
+        case _ => (acc, phrases)
+      }
+
+    input match {
+      case Nil => acc
+      case x :: xs =>
+        groupPhrases(xs, List(x)) match {
+          case (Nil, _) => groupMatchingPhrases(acc)(xs)
+          case (groupedPhrases, remainder) => groupMatchingPhrases(acc :+ groupedPhrases)(remainder)
+        }
+    }
+  }
+
 }

@@ -22,7 +22,7 @@ import models.ocelot.stanzas._
 import core.models.ocelot.stanzas.{CurrencyInput, CurrencyPoundsOnlyInput, DateInput, Input, Question}
 import core.models.ocelot.stanzas.{ExclusiveSequence, NonExclusiveSequence, _}
 import core.models.ocelot.{Labels, Link, Phrase, EmbeddedParameterRegex, exclusiveOptionRegex}
-import models.ui.{Answer, BulletPointList, ComplexDetails, ConfirmationPanel, CyaSummaryList, Details, ErrorMsg, H1, H2, H3, H4, InsetText, WarningText}
+import models.ui.{Answer, BulletPointList, ConfirmationPanel, CyaSummaryList, Details, ErrorMsg, H1, H2, H3, H4, InsetText, WarningText}
 import models.ui.{NameValueSummaryList, Page, Paragraph, RequiredErrorMsg, Table, Text, TypeErrorMsg, UIComponent, ValueErrorMsg, stackStanzas}
 import BulletPointBuilder.{BreakMatchPattern, ExplicitBreak}
 import play.api.Logger
@@ -203,43 +203,17 @@ class UIBuilder {
     ConfirmationPanel(texts.head, texts.tail)
   }
 
-  @tailrec
-  private[services] final def groupNoteCalloutPhrases(acc: Seq[Seq[Phrase]])(input: Seq[NoteCallout]): Seq[Seq[Phrase]] = {
-    @tailrec
-    def groupMatchingPhrases(notes: Seq[NoteCallout], calloutAcc: Seq[NoteCallout]): Seq[NoteCallout] = notes match {
-        case Nil => calloutAcc
-        case x :: xs if BulletPointBuilder.matchPhrases(calloutAcc.last.text, x.text) => groupMatchingPhrases(xs, calloutAcc :+ x)
-        case _ => calloutAcc
-      }
-
-    input match {
-      case Nil => acc
-      case x :: xs =>
-        groupMatchingPhrases(xs, Seq(x)) match {
-          case Nil => groupNoteCalloutPhrases(acc)(xs)
-          case matchedCallouts =>
-            groupNoteCalloutPhrases(acc :+ matchedCallouts.map(_.text))(xs.drop(matchedCallouts.size - 1))
-        }
-    }
-  }
-
   private def fromSectionAndNoteGroup(caption: Text, ng: NoteGroup)(implicit ctx: UIContext): UIComponent = {
-    val detailsComponents: Seq[Seq[Text]] = groupNoteCalloutPhrases(Nil)(ng.group).map{
-      case phrases if phrases.length == 1 => phrases.map(TextBuilder.fromPhrase(_))
-      case phrases =>
-        val bulletPointList = createBulletPointList(phrases)
-        bulletPointList.text +: bulletPointList.listItems
+    val disclosureComponents: Seq[UIComponent] = BulletPointBuilder.groupMatchingPhrases(Nil)(ng.group.map(_.text)).map{
+      case phraseList if phraseList.length == 1 => Paragraph(TextBuilder.fromPhrase(phraseList.head))
+      case phraseList => bulletPointList(phraseList)
     }
 
-    if(detailsComponents.forall(_.size == 1)) {
-      Details(caption, detailsComponents.flatten)
-    } else {
-      ComplexDetails(caption, detailsComponents)
-    }
+    Details(caption, disclosureComponents)
   }
 
   private def fromSectionAndNoteCallout(caption: Text, nc: NoteCallout)(implicit ctx: UIContext): UIComponent =
-    Details(caption, Seq(TextBuilder.fromPhrase(nc.text)))
+    Details(caption, Seq(Paragraph(TextBuilder.fromPhrase(nc.text))))
 
   private def fromNonExclusiveSequence(nonExclusiveSequence: NonExclusiveSequence, components: Seq[UIComponent])(implicit ctx: UIContext): UIComponent = {
     val (errMsgs, uiElements) = partitionComponents(components, Seq.empty, Seq.empty)
@@ -275,29 +249,27 @@ class UIBuilder {
     ui.ExclusiveSequence(text, hint, options, TextBuilder.fromPhrase(exclusiveOptionPhrase), exclusiveOptionHint, uiElements, errMsgs)
   }
 
-  private def fromInstructionGroup(grp: InstructionGroup)(implicit ctx: UIContext): UIComponent = createBulletPointList(grp.group.map(_.text))
+  private def fromInstructionGroup(grp: InstructionGroup)(implicit ctx: UIContext): UIComponent = bulletPointList(grp.group.map(_.text))
 
-  private def createBulletPointList(phrases: Seq[Phrase])(implicit ctx: UIContext): BulletPointList =
-    if(phrases.head.english.contains(ExplicitBreak)) createExplicitBulletPointList(phrases) else createImplicitBulletPointList(phrases)
+  private def bulletPointList(phrases: Seq[Phrase])(implicit ctx: UIContext): BulletPointList = {
+    def bulletPoints(enLength: Int, cyLength: Int, ps: Seq[Phrase]): Seq[Text] =
+      ps.map(p => TextBuilder.fromPhrase(Phrase(p.english.drop(enLength).trim, p.welsh.drop(cyLength).trim)))
 
-  private def createExplicitBulletPointList(phrases: Seq[Phrase])(implicit ctx: UIContext): BulletPointList = {
+    def explicit(ps: Seq[Phrase]): BulletPointList = {
+      val en: String = ps.head.english.take(ps.head.english.indexOf(ExplicitBreak))
+      val cy: String = ps.head.welsh.take(ps.head.welsh.indexOf(ExplicitBreak))
+      val cleaned: Seq[Phrase] = ps.map(p => Phrase(p.english.replaceFirst(BreakMatchPattern, ""), p.welsh.replaceFirst(BreakMatchPattern, "")))
 
-    val leadingEn: String = phrases.head.english.take(phrases.head.english.indexOf(ExplicitBreak))
-    val leadingCy: String = phrases.head.welsh.take(phrases.head.welsh.indexOf(ExplicitBreak))
+      BulletPointList(TextBuilder.fromPhrase(Phrase(en, cy)), bulletPoints(en.length, cy.length, cleaned))
+    }
 
-    val cleansedPhrases: Seq[Phrase] = phrases.map(p => Phrase(p.english.replaceFirst(BreakMatchPattern, ""), p.welsh.replaceFirst(BreakMatchPattern, "")))
+    def standard(ps: Seq[Phrase]): BulletPointList = {
+      val en: String = BulletPointBuilder.findLeadingText(ps, _.english)
+      val cy: String = BulletPointBuilder.findLeadingText(ps, _.welsh)
+      BulletPointList(TextBuilder.fromPhrase(Phrase(en, cy)), bulletPoints(en.length, cy.length, ps))
+    }
 
-    BulletPointList(TextBuilder.fromPhrase(Phrase(leadingEn, leadingCy)), createBulletPoints(leadingEn.length, leadingCy.length, cleansedPhrases))
+    if (phrases.head.english.contains(ExplicitBreak)) explicit(phrases) else standard(phrases)
   }
 
-  private def createImplicitBulletPointList(phrases: Seq[Phrase])(implicit ctx: UIContext): BulletPointList = {
-
-    val leadingEn: String = BulletPointBuilder.determineMatchedLeadingText(phrases, _.english)
-    val leadingCy: String = BulletPointBuilder.determineMatchedLeadingText(phrases, _.welsh)
-
-    BulletPointList(TextBuilder.fromPhrase(Phrase(leadingEn, leadingCy)), createBulletPoints(leadingEn.length, leadingCy.length, phrases))
-  }
-
-  private def createBulletPoints(leadingEnLength: Int, leadingCyLength: Int, phrases: Seq[Phrase])(implicit ctx: UIContext): Seq[Text] =
-    phrases.map(p => TextBuilder.fromPhrase(Phrase(p.english.drop(leadingEnLength).trim, p.welsh.drop(leadingCyLength).trim)))
 }

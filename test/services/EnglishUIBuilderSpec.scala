@@ -22,12 +22,12 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 
 import core.services._
 import base.{BaseSpec, EnglishLanguage}
-import core.models.ocelot.{Phrase, _}
+import core.models.ocelot._
 import core.models.ocelot.stanzas._
 import models.ocelot.stanzas._
 import models.PageDesc
 import models.ui
-import models.ui.{BulletPointList, ComplexDetails, ConfirmationPanel, CyaSummaryList, Details, ErrorMsg, FormPage, H1, H3, H4}
+import models.ui.{BulletPointList, ConfirmationPanel, CyaSummaryList, Details, ErrorMsg, FormPage, H1, H3, H4}
 import models.ui.{InsetText, Link, Paragraph, RequiredErrorMsg, ExclusiveSequenceFormComponent, NonExclusiveSequenceFormComponent, Table, Text, WarningText, Words}
 
 class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguage with GuiceOneAppPerSuite {
@@ -1163,7 +1163,6 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
         case x => fail(s"Found $x")
       }
     }
-
   }
 
   trait InputTest extends BaseTest {
@@ -1847,15 +1846,17 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
       )
 
       p.components match {
-        case Seq(complexDetails: ComplexDetails) =>
-
-          complexDetails.additionalTextComponents.size shouldBe 1
-          complexDetails.additionalTextComponents.head.size shouldBe 4
-
-          complexDetails.additionalTextComponents.head.head.asString shouldBe "The days of the week include"
-          complexDetails.additionalTextComponents.head(1).asString shouldBe "Monday"
-          complexDetails.additionalTextComponents.head(2).asString shouldBe "Tuesday"
-          complexDetails.additionalTextComponents.head.last.asString shouldBe "Wednesday"
+        case Seq(details: Details) =>
+          details.disclosure.size shouldBe 1
+          details.disclosure.map {
+            case bp: BulletPointList =>
+              bp.listItems.size shouldBe 3
+              bp.text.asString shouldBe "The days of the week include"
+              bp.listItems(0).asString shouldBe "Monday"
+              bp.listItems(1).asString shouldBe "Tuesday"
+              bp.listItems(2).asString shouldBe "Wednesday"
+            case _ => fail
+          }
 
         case err => fail(s"UIBuilder created page with components $err")
       }
@@ -1875,15 +1876,14 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
       )
 
       p.components match {
-        case Seq(complexDetails: ComplexDetails) =>
+        case Seq(details: Details) =>
+          details.disclosure.size shouldBe 2
 
-          complexDetails.additionalTextComponents.size shouldBe 2
-
-          complexDetails.additionalTextComponents.head.size shouldBe 1
-          complexDetails.additionalTextComponents.head.head.asString shouldBe "Start"
-
-          complexDetails.additionalTextComponents.last.size shouldBe 4
-
+          details.disclosure.map {
+            case bp: BulletPointList => bp.listItems.size shouldBe 3
+            case p: Paragraph => p.text.asString shouldBe "Start"
+            case _ => fail
+          }
         case err => fail(s"UIBuilder created page with components $err")
       }
     }
@@ -1902,14 +1902,14 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
       )
 
       p.components match {
-        case Seq(complexDetails: ComplexDetails) =>
+        case Seq(details: Details) =>
+          details.disclosure.size shouldBe 2
 
-          complexDetails.additionalTextComponents.size shouldBe 2
-
-          complexDetails.additionalTextComponents.head.size shouldBe 4
-
-          complexDetails.additionalTextComponents.last.size shouldBe 1
-          complexDetails.additionalTextComponents.last.head.asString shouldBe "End"
+          details.disclosure.zipWithIndex.map {
+            case (bp: BulletPointList, 0) => bp.listItems.size shouldBe 3
+            case (p: Paragraph, 1) => p.text.asString shouldBe "End"
+            case _ => fail
+          }
 
         case err => fail(s"UIBuilder created page with components $err")
       }
@@ -1933,15 +1933,17 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
       )
 
       p.components match {
-        case Seq(complexDetails: ComplexDetails) =>
+        case Seq(details: Details) =>
+          details.disclosure.size shouldBe 5
 
-          complexDetails.additionalTextComponents.size shouldBe 5
-
-          complexDetails.additionalTextComponents.head.size shouldBe 1
-          complexDetails.additionalTextComponents(1).size shouldBe 4
-          complexDetails.additionalTextComponents(2).size  shouldBe 1
-          complexDetails.additionalTextComponents(3).size shouldBe 3
-          complexDetails.additionalTextComponents.last.size shouldBe 1
+          details.disclosure.zipWithIndex.map {
+            case (p: Paragraph, 0) =>
+            case (bp: BulletPointList, 1) => bp.listItems.size shouldBe 3
+            case (p: Paragraph, 2) =>
+            case (bp: BulletPointList, 3) => bp.listItems.size shouldBe 2
+            case (p: Paragraph, 4) =>
+            case _ => fail
+          }
 
         case err => fail(s"UIBuilder created page with components $err")
       }
@@ -1960,11 +1962,13 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
       )
 
       p.components match {
-        case Seq(complexDetails: ComplexDetails) =>
+        case Seq(details: Details) =>
+          details.disclosure.size shouldBe 1
 
-          complexDetails.additionalTextComponents.size shouldBe 1
-
-          complexDetails.additionalTextComponents.head.head.asString shouldBe "The days of the week include"
+          details.disclosure.zipWithIndex.map {
+            case (bp: BulletPointList, 0) => bp.text.asString shouldBe "The days of the week include"
+            case _ => fail
+          }
 
         case err => fail(s"UIBuilder created page with components $err")
       }
@@ -1983,13 +1987,17 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
       )
 
       p.components match {
-        case Seq(complexDetails: ComplexDetails) =>
+        case Seq(details: Details) =>
+          details.disclosure.size shouldBe 1
 
-          complexDetails.additionalTextComponents.size shouldBe 1
-
-          complexDetails.additionalTextComponents.head.head.asString shouldBe "I like to go on holiday to the following:"
-          complexDetails.additionalTextComponents.head(1).asString shouldBe "Switzerland"
-          complexDetails.additionalTextComponents.head.last.asString shouldBe "Jamaica"
+          details.disclosure.zipWithIndex.map {
+            case (bp: BulletPointList, 0) =>
+              bp.listItems.size shouldBe 2
+              bp.text.asString shouldBe "I like to go on holiday to the following:"
+              bp.listItems(0).asString shouldBe "Switzerland"
+              bp.listItems(1).asString shouldBe "Jamaica"
+            case _ => fail
+          }
 
         case err => fail(s"UIBuilder created page with components $err")
       }
@@ -2013,25 +2021,36 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
       )
 
       p.components match {
-        case Seq(complexDetails: ComplexDetails) =>
+        case Seq(details: Details) =>
+          details.disclosure.size shouldBe 4
 
-          complexDetails.additionalTextComponents.size shouldBe 4
+          details.disclosure.zipWithIndex.map {
+            case (bp: BulletPointList, 0) =>
+              bp.listItems.size shouldBe 2
+              bp.text.asString shouldBe "I like to go on holiday to the following:"
+              bp.listItems(0).asString shouldBe "Switzerland"
+              bp.listItems(1).asString shouldBe "Jamaica"
 
-          complexDetails.additionalTextComponents.head.head.asString shouldBe "I like to go on holiday to the following:"
-          complexDetails.additionalTextComponents.head(1).asString shouldBe "Switzerland"
-          complexDetails.additionalTextComponents.head.last.asString shouldBe "Jamaica"
+            case (bp: BulletPointList, 1) =>
+              bp.listItems.size shouldBe 2
+              bp.text.asString shouldBe "I like to go on holiday to the following:"
+              bp.listItems(0).asString shouldBe "Australia"
+              bp.listItems(1).asString shouldBe "New Zealand"
 
-          complexDetails.additionalTextComponents(1).head.asString shouldBe "I like to go on holiday to the following:"
-          complexDetails.additionalTextComponents(1)(1).asString shouldBe "Australia"
-          complexDetails.additionalTextComponents(1).last.asString shouldBe "New Zealand"
+            case (bp: BulletPointList, 2) =>
+              bp.listItems.size shouldBe 2
+              bp.text.asString shouldBe "I like to go on holiday to the following:"
+              bp.listItems(0).asString shouldBe "France"
+              bp.listItems(1).asString shouldBe "Hawaii"
 
-          complexDetails.additionalTextComponents(2).head.asString shouldBe "I like to go on holiday to the following:"
-          complexDetails.additionalTextComponents(2)(1).asString shouldBe "France"
-          complexDetails.additionalTextComponents(2).last.asString shouldBe "Hawaii"
+            case (bp: BulletPointList, 3) =>
+              bp.listItems.size shouldBe 2
+              bp.text.asString shouldBe "I like to go on holiday to the following:"
+              bp.listItems(0).asString shouldBe "Bognor Regis"
+              bp.listItems(1).asString shouldBe "Prestatyn"
 
-          complexDetails.additionalTextComponents.last.head.asString shouldBe "I like to go on holiday to the following:"
-          complexDetails.additionalTextComponents.last(1).asString shouldBe "Bognor Regis"
-          complexDetails.additionalTextComponents.last.last.asString shouldBe "Prestatyn"
+            case _ => fail
+          }
 
         case err => fail(s"UIBuilder created page with components $err")
       }
@@ -2040,8 +2059,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
 
   }
 
-  "UIBuilder Important processing" must {
-
+  "UIBuilder Important Group processing" must {
     trait ImportantTest extends Test {
       val num1Phrase = Phrase(Vector("Line1", "Welsh Line1"))
       val num2Phrase = Phrase(Vector("Line2", "Welsh Line2"))
