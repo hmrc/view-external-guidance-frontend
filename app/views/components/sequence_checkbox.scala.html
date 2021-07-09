@@ -39,7 +39,7 @@
         name="@checkboxName(name, idx)"
         type="checkbox"
         value="@idx"
-        data-exclusive="@if(isExclusive){true} else {false}"
+        @if(isExclusive){data-exclusive="true"}
         @{if(itemChecked(idx)) "checked"}
         @if(option.hint.isDefined) {@ariaDescribedBy(hintClass)}
         >
