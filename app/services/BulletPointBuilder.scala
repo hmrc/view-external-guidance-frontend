@@ -17,6 +17,7 @@
 package services
 
 import core.models.ocelot.Phrase
+import models.ui.Text
 import scala.util.matching.Regex
 import scala.annotation.tailrec
 
@@ -28,7 +29,28 @@ object BulletPointBuilder {
   val ExplicitBreak: String = s"[$Break]"
   val BreakMatchPattern: String = s"\\[$Break\\]"
 
-  def findLeadingText(phrases: Seq[Phrase], phraseText: Phrase => String): String = {
+  def leadingAndBulletText(phrases: Seq[Phrase])(implicit ctx: UIContext): (Text, Seq[Text]) = {
+    def bulletPoints(enLength: Int, cyLength: Int, ps: Seq[Phrase]): Seq[Text] =
+      ps.map(p => TextBuilder.fromPhrase(Phrase(p.english.drop(enLength).trim, p.welsh.drop(cyLength).trim)))
+
+    def explicit(ps: Seq[Phrase]): (Text, Seq[Text]) = {
+      val en: String = ps.head.english.take(ps.head.english.indexOf(ExplicitBreak))
+      val cy: String = ps.head.welsh.take(ps.head.welsh.indexOf(ExplicitBreak))
+      val cleaned: Seq[Phrase] = ps.map(p => Phrase(p.english.replaceFirst(BreakMatchPattern, ""), p.welsh.replaceFirst(BreakMatchPattern, "")))
+
+      (TextBuilder.fromPhrase(Phrase(en, cy)), bulletPoints(en.length, cy.length, cleaned))
+    }
+
+    def standard(ps: Seq[Phrase]): (Text, Seq[Text]) = {
+      val en: String = BulletPointBuilder.findLeadingText(ps, _.english)
+      val cy: String = BulletPointBuilder.findLeadingText(ps, _.welsh)
+      (TextBuilder.fromPhrase(Phrase(en, cy)), bulletPoints(en.length, cy.length, ps))
+    }
+
+    if (phrases.head.english.contains(ExplicitBreak)) explicit(phrases) else standard(phrases)
+  }
+
+  private[services]def findLeadingText(phrases: Seq[Phrase], phraseText: Phrase => String): String = {
     val matched: List[List[TextBuilder.Fragment]] = phrases.headOption.fold[List[List[TextBuilder.Fragment]]](Nil){first =>
       phrases.toList.tail.map(p => partialMatchText(phraseText(first), phraseText(p))._2)
     }
@@ -85,5 +107,4 @@ object BulletPointBuilder {
         }
     }
   }
-
 }

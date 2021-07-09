@@ -123,6 +123,11 @@ class UIBuilder {
       case Instruction(txt, _, _, _, _, _) => Paragraph(TextBuilder.fromPhrase(txt))
     }
 
+  private def fromInstructionGroup(grp: InstructionGroup)(implicit ctx: UIContext): UIComponent = {
+    val (leading: Text, bullets: Seq[Text]) = BulletPointBuilder.leadingAndBulletText(grp.group.map(_.text))
+    BulletPointList(leading, bullets)
+  }
+
   private def fromQuestion(q: Question, components: Seq[UIComponent])(implicit ctx: UIContext): UIComponent = {
     val answers = q.answers.map { ans =>
       val (answer, hint) = TextBuilder.fromPhraseWithOptionalHint(ans)
@@ -206,7 +211,9 @@ class UIBuilder {
   private def fromSectionAndNoteGroup(caption: Text, ng: NoteGroup)(implicit ctx: UIContext): UIComponent = {
     val disclosureComponents: Seq[UIComponent] = BulletPointBuilder.groupMatchingPhrases(Nil)(ng.group.map(_.text)).map{
       case phraseList if phraseList.length == 1 => Paragraph(TextBuilder.fromPhrase(phraseList.head))
-      case phraseList => bulletPointList(phraseList)
+      case phraseList =>
+        val (leading: Text, bullets: Seq[Text]) = BulletPointBuilder.leadingAndBulletText(phraseList)
+        BulletPointList(leading, bullets)
     }
 
     Details(caption, disclosureComponents)
@@ -248,28 +255,4 @@ class UIBuilder {
 
     ui.ExclusiveSequence(text, hint, options, TextBuilder.fromPhrase(exclusiveOptionPhrase), exclusiveOptionHint, uiElements, errMsgs)
   }
-
-  private def fromInstructionGroup(grp: InstructionGroup)(implicit ctx: UIContext): UIComponent = bulletPointList(grp.group.map(_.text))
-
-  private def bulletPointList(phrases: Seq[Phrase])(implicit ctx: UIContext): BulletPointList = {
-    def bulletPoints(enLength: Int, cyLength: Int, ps: Seq[Phrase]): Seq[Text] =
-      ps.map(p => TextBuilder.fromPhrase(Phrase(p.english.drop(enLength).trim, p.welsh.drop(cyLength).trim)))
-
-    def explicit(ps: Seq[Phrase]): BulletPointList = {
-      val en: String = ps.head.english.take(ps.head.english.indexOf(ExplicitBreak))
-      val cy: String = ps.head.welsh.take(ps.head.welsh.indexOf(ExplicitBreak))
-      val cleaned: Seq[Phrase] = ps.map(p => Phrase(p.english.replaceFirst(BreakMatchPattern, ""), p.welsh.replaceFirst(BreakMatchPattern, "")))
-
-      BulletPointList(TextBuilder.fromPhrase(Phrase(en, cy)), bulletPoints(en.length, cy.length, cleaned))
-    }
-
-    def standard(ps: Seq[Phrase]): BulletPointList = {
-      val en: String = BulletPointBuilder.findLeadingText(ps, _.english)
-      val cy: String = BulletPointBuilder.findLeadingText(ps, _.welsh)
-      BulletPointList(TextBuilder.fromPhrase(Phrase(en, cy)), bulletPoints(en.length, cy.length, ps))
-    }
-
-    if (phrases.head.english.contains(ExplicitBreak)) explicit(phrases) else standard(phrases)
-  }
-
 }
