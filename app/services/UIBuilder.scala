@@ -24,7 +24,6 @@ import core.models.ocelot.stanzas.{ExclusiveSequence, NonExclusiveSequence, _}
 import core.models.ocelot.{Labels, Link, Phrase, EmbeddedParameterRegex, exclusiveOptionRegex}
 import models.ui.{Answer, BulletPointList, ConfirmationPanel, CyaSummaryList, Details, ErrorMsg, H1, H2, H3, H4, InsetText, WarningText}
 import models.ui.{NameValueSummaryList, Page, Paragraph, RequiredErrorMsg, Table, Text, TypeErrorMsg, UIComponent, ValueErrorMsg, stackStanzas}
-import BulletPointBuilder.{BreakMatchPattern, ExplicitBreak}
 import play.api.Logger
 import play.api.i18n.{Lang, MessagesApi}
 import scala.annotation.tailrec
