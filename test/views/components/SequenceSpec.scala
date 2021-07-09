@@ -67,9 +67,9 @@ class SequenceSpec extends WordSpec with Matchers with ViewSpec with ViewFns wit
     val exclusiveSequenceTitle: Text = Text("Where are you going on your holidays?")
     val holidayOptions = Seq(
       SequenceAnswer(Text("The UK"), None),
-      SequenceAnswer(Text("Europe"), None),
-      SequenceAnswer(exclusiveHolidayOption, Some(exclusiveHint), exclusive = true)
+      SequenceAnswer(Text("Europe"), None)
     )
+    val exclusiveHolidayAnswer: SequenceAnswer = SequenceAnswer(exclusiveHolidayOption, Some(exclusiveHint))
 
     val h2: H2 = H2(Text("Subtitle"))
     val p: Paragraph = Paragraph(Text("Introduction to sweets"))
@@ -78,6 +78,7 @@ class SequenceSpec extends WordSpec with Matchers with ViewSpec with ViewFns wit
       sequenceTitle,
       None,
       sweetOptions,
+      None,
       Seq.empty,
       Seq.empty
     )
@@ -86,6 +87,7 @@ class SequenceSpec extends WordSpec with Matchers with ViewSpec with ViewFns wit
       sequenceTitle,
       None,
       sweetOptionsOneOptionHint,
+      None,
       Seq.empty,
       Seq.empty
     )
@@ -94,6 +96,7 @@ class SequenceSpec extends WordSpec with Matchers with ViewSpec with ViewFns wit
       sequenceTitle,
       Some(sequenceHint),
       sweetOptions,
+      None,
       Seq.empty,
       Seq.empty
     )
@@ -102,6 +105,7 @@ class SequenceSpec extends WordSpec with Matchers with ViewSpec with ViewFns wit
       sequenceTitle,
       None,
       sweetOptions,
+      None,
       Seq(h2, p),
       Seq.empty
     )
@@ -110,6 +114,7 @@ class SequenceSpec extends WordSpec with Matchers with ViewSpec with ViewFns wit
       sequenceTitle,
       None,
       sweetOptions,
+      None,
       Seq.empty,
       Seq(errorMsg)
     )
@@ -118,6 +123,7 @@ class SequenceSpec extends WordSpec with Matchers with ViewSpec with ViewFns wit
       exclusiveSequenceTitle,
       None,
       holidayOptions,
+      Some(exclusiveHolidayAnswer),
       Seq(h2, p),
       Seq.empty
     )

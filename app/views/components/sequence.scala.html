@@ -17,7 +17,7 @@
 @import models.ui._
 @import uk.gov.hmrc.hmrcfrontend.views.html.components._
 
-@(sequence: SequenceFormComponent, name: String, form: Form[_])(implicit request: Request[_], messages: Messages, ctx: PageContext)
+@(sequence: Sequence, name: String, form: Form[_])(implicit request: Request[_], messages: Messages, ctx: PageContext)
 
 <div class="govuk-form-group @if(sequence.errorMsgs.nonEmpty) {govuk-form-group--error}">
 
@@ -34,7 +34,7 @@
     @{sequence.hint.map(hintText => <span id="sequence-hint" class="govuk-hint">{components.render_text(hintText)}</span>)}
     @components.error_message(sequence.errorMsgs)
 
-    @components.sequence_checkboxes(name, sequence.options, form)
+    @components.sequence_checkboxes(name, sequence.options, sequence.exclusiveOption, form)
  </fieldset>
 
 </div>

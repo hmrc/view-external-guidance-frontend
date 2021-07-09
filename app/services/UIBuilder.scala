@@ -20,8 +20,8 @@ import javax.inject.Singleton
 import models._
 import models.ocelot.stanzas._
 import core.models.ocelot.stanzas.{CurrencyInput, CurrencyPoundsOnlyInput, DateInput, Input, Question}
-import core.models.ocelot.stanzas.{ExclusiveSequence, NonExclusiveSequence, _}
-import core.models.ocelot.{EmbeddedParameterRegex, Labels, Link, Phrase, exclusiveOptionRegex}
+import core.models.ocelot.stanzas.{Sequence => SequenceStanza, _}
+import core.models.ocelot.{EmbeddedParameterRegex, Labels, Link, Phrase, exclusiveOptionPattern}
 import models.ui.{Answer, BulletPointList, ComplexDetails, ConfirmationPanel, CyaSummaryList, Details, ErrorMsg, H1, H2, H3, H4, InsetText, NameValueSummaryList, Page, Paragraph, RequiredErrorMsg, SequenceAnswer, Table, Text, TypeErrorMsg, UIComponent, ValueErrorMsg, WarningText, stackStanzas}
 import BulletPointBuilder.{BreakMatchPattern, ExplicitBreak}
 import play.api.Logger
@@ -75,8 +75,7 @@ class UIBuilder {
       case (c: Callout) :: xs => fromStanzas(xs, acc ++ fromCallout(c, errStrategy), errStrategy)
       case (in: Input) :: _ => fromStanzas(Nil, Seq(fromInput(in, acc)), errStrategy)
       case (q: Question) :: _ => fromStanzas(Nil, Seq(fromQuestion(q, acc)), errStrategy)
-      case (ns: NonExclusiveSequence) :: _ => fromStanzas(Nil, Seq(fromSequence(ns, acc)), errStrategy)
-      case (es: ExclusiveSequence) :: _ => fromStanzas(Nil, Seq(fromSequence(es, acc)), errStrategy)
+      case (ns: SequenceStanza) :: _ => fromStanzas(Nil, Seq(fromSequence(ns, acc)), errStrategy)
       case (ng: NoteGroup) :: xs => fromStanzas(xs, acc ++ Seq(fromNoteGroup(ng)), errStrategy)
       case (wt: ImportantGroup) :: xs => fromStanzas(xs, acc ++ Seq(fromImportantGroup(wt)), errStrategy)
       case (ycg: YourCallGroup) :: xs => fromStanzas(xs, acc ++ Seq(fromYourCallGroup(ycg)), errStrategy)
@@ -241,21 +240,33 @@ class UIBuilder {
   private def fromSectionAndNoteCallout(caption: Text, nc: NoteCallout)(implicit ctx: UIContext): UIComponent =
     Details(caption, Seq(TextBuilder.fromPhrase(nc.text)))
 
-  private def fromSequence(sequence: Sequence, components: Seq[UIComponent])(implicit ctx: UIContext): UIComponent = {
-    val answers = sequence.options.map { ans =>
-      val isExclusive: Boolean = exclusiveOptionRegex.findFirstMatchIn(ans.english).nonEmpty
+  private def fromSequence(sequence: SequenceStanza, components: Seq[UIComponent])(implicit ctx: UIContext): UIComponent = {
+    val (exclusiveAnswers, nonExclusiveAnswers) = sequence.options.partition { phrase =>
+      phrase.english.contains(exclusiveOptionPattern)
+    }
+
+    val optionalExclusiveSequenceAnswer = exclusiveAnswers.headOption.map { phrase =>
       val exclusivePhrase = Phrase(
-        exclusiveOptionRegex.replaceAllIn(ans.english, "").trim,
-        exclusiveOptionRegex.replaceAllIn(ans.welsh, "").trim
+        phrase.english.replace(exclusiveOptionPattern, "").trim,
+        phrase.welsh.replace(exclusiveOptionPattern, "").trim
       )
+
       val (answer, hint) = TextBuilder.fromPhraseWithOptionalHint(exclusivePhrase)
 
-      SequenceAnswer(answer, hint, isExclusive)
+      SequenceAnswer(answer, hint)
     }
+
+    val nonExclusiveSequenceAnswers = nonExclusiveAnswers.map { phrase =>
+      val (answer, hint) = TextBuilder.fromPhraseWithOptionalHint(phrase)
+
+      SequenceAnswer(answer, hint)
+    }
+
     // Split out an Error callouts from body components
     val (errorMsgs, uiElements) = partitionComponents(components, Seq.empty, Seq.empty)
     val (question, hint) = TextBuilder.fromPhraseWithOptionalHint(sequence.text)
-    ui.Sequence(question, hint, answers, uiElements, errorMsgs)
+
+    ui.Sequence(question, hint, nonExclusiveSequenceAnswers, optionalExclusiveSequenceAnswer, uiElements, errorMsgs)
   }
 
   private def fromInstructionGroup(grp: InstructionGroup)(implicit ctx: UIContext): UIComponent = createBulletPointList(grp.group.map(_.text))

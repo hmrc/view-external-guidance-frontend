@@ -92,8 +92,8 @@ class SequenceStanzaSpec extends BaseSpec {
     val expectedStanza: SequenceStanza =
       SequenceStanza(0, Seq("1","2","3","4","end"), Seq(1,2,3,four), Some("Items"), stack = false)
 
-    val expectedNonExclusiveSequence: NonExclusiveSequence =
-      NonExclusiveSequence(
+    val expectedNonExclusiveSequence: Sequence =
+      Sequence(
         Phrase("Select","Select"),
         expectedStanza.next,
         oneTwoThreeFour,
@@ -101,8 +101,8 @@ class SequenceStanzaSpec extends BaseSpec {
         expectedStanza.stack
       )
 
-    val expectedExclusiveSequence: ExclusiveSequence =
-    ExclusiveSequence(
+    val expectedExclusiveSequence: Sequence =
+      Sequence(
       Phrase("Select","Select"),
       expectedStanza.next,
       oneTwoThreeFourExclusive,

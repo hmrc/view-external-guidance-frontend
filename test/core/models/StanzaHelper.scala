@@ -97,14 +97,14 @@ trait StanzaHelper extends TestConstants {
   val sqpQpDateInput: DateInput = DateInput(Seq("4"), phrases(two), Some(phrases(three)), "label", None, stack = false)
   val sqpQpNumberInput: NumberInput = NumberInput(Seq("4"), phrases(two), Some(phrases(three)), "label", None, stack = false)
   val sqpQpTextInput: TextInput = TextInput(Seq("4"), phrases(two), Some(phrases(three)), "label", None, stack = false)
-  val sqpQpNonExclusiveSequence: NonExclusiveSequence = NonExclusiveSequence(
+  val sqpQpNonExclusiveSequence: Sequence = Sequence(
     phrases(seven),
     Seq("4", "6"),
     Seq(phrases(eight)),
     None,
     stack = false)
 
-  val sqpQpExclusiveSequence: ExclusiveSequence = ExclusiveSequence(
+  val sqpQpExclusiveSequence: Sequence = Sequence(
     exclusiveSequencePhrases(nine),
     Seq("4", "4", "4", "4", "6"),
     Seq(

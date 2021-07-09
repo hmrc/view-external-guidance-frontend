@@ -20,13 +20,11 @@ import play.api.mvc._
 import play.api.data.Form
 import play.api.i18n.{Lang, Messages, MessagesApi}
 import core.models.ocelot.Phrase
-import core.models.ocelot.stanzas.{CurrencyInput, CurrencyPoundsOnlyInput, DateInput, Question, ExclusiveSequence, NonExclusiveSequence}
+import core.models.ocelot.stanzas.{CurrencyInput, CurrencyPoundsOnlyInput, DateInput, Question, Sequence}
 import models.ui.SubmittedAnswer
 import services.{ErrorStrategy, ValueMissingError, ValueMissingGroupError}
-
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.test.FakeRequest
-
 import base.BaseSpec
 
 class FormsHelperSpec extends BaseSpec with GuiceOneAppPerSuite {
@@ -92,7 +90,7 @@ class FormsHelperSpec extends BaseSpec with GuiceOneAppPerSuite {
       stack = false
     )
 
-    val nonExclusiveSequence: NonExclusiveSequence = NonExclusiveSequence(
+    val nonExclusiveSequence: Sequence = Sequence(
       Phrase("Select a day in the working week", "Welsh: Select a day in the working week"),
       Seq("10", "20", "30", "40", "50", "60"),
       Seq(
@@ -106,7 +104,7 @@ class FormsHelperSpec extends BaseSpec with GuiceOneAppPerSuite {
       stack = false
     )
 
-    val exclusiveSequence: ExclusiveSequence = ExclusiveSequence(
+    val exclusiveSequence: Sequence = Sequence(
       Phrase("Select your favorite colour", "Welsh: Select your favourite colour"),
       Seq("10", "20", "30", "40"),
       Seq(

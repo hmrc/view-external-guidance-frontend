@@ -72,7 +72,7 @@ class ErrorSpec extends WordSpec with Matchers with GuiceOneAppPerSuite with Vie
       currencyInputWithErrorsPage, Seq.empty, None, "sessionId", None, Text(), "processId", "processCode"
     )
 
-    val sequenceWithErrors: Sequence = Sequence(Text(), None, Seq.empty, Seq.empty, requiredErrMsgs)
+    val sequenceWithErrors: Sequence = Sequence(Text(), None, Seq.empty, None, Seq.empty, requiredErrMsgs)
     val sequenceWithErrorsPage: FormPage = FormPage("/sequenceInput", sequenceWithErrors)
 
     implicit val sequenceWithErrorsCtx: PageContext = PageContext(

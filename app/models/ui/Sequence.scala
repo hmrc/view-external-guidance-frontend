@@ -16,10 +16,11 @@
 
 package models.ui
 
-case class SequenceAnswer(text: Text, hint: Option[Text], exclusive: Boolean = false) extends UIComponent
+case class SequenceAnswer(text: Text, hint: Option[Text]) extends UIComponent
 
 case class Sequence(text: Text,
                     hint: Option[Text],
                     options: Seq[SequenceAnswer],
+                    exclusiveOption: Option[SequenceAnswer] = None,
                     body: Seq[UIComponent],
-                    errorMsgs: Seq[ErrorMsg]) extends SequenceFormComponent
+                    errorMsgs: Seq[ErrorMsg]) extends FormComponent

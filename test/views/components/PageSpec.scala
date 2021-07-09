@@ -100,20 +100,21 @@ class PageSpec extends WordSpec with Matchers with ViewSpec with ViewFns with Gu
       SequenceAnswer(Text("Pears"), None),
       SequenceAnswer(Text("Mangoes"), None)
     )
-    val fruitSequence: Sequence = Sequence(sequenceTitle, None, fruitOptions, Seq.empty, Seq.empty)
+    val fruitSequence: Sequence = Sequence(sequenceTitle, None, fruitOptions, None, Seq.empty, Seq.empty)
     val sequencePage: FormPage = FormPage("/selectFruit", fruitSequence)
 
     val exclusiveSequenceTitle: Text = Text("What kind of car would you like?")
     val carTypeOptions: Seq[SequenceAnswer] = Seq(
       SequenceAnswer(Text("Sports car"), None),
       SequenceAnswer(Text("SUV"), None),
-      SequenceAnswer(Text("People carrier"), None),
-      SequenceAnswer(Text("Other"), Some(Text("Selecting this option will deselect all the other checkboxes")), exclusive = true)
+      SequenceAnswer(Text("People carrier"), None)
     )
+    val carTypeExclusiveAnswer: SequenceAnswer = SequenceAnswer(Text("Other"), Some(Text("Selecting this option will deselect all the other checkboxes")))
     var exclusiveSequence: Sequence = Sequence(
       exclusiveSequenceTitle,
       None,
       carTypeOptions,
+      Some(carTypeExclusiveAnswer),
       Seq.empty,
       Seq.empty
     )

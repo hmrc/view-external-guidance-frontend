@@ -14,14 +14,13 @@
  * limitations under the License.
  *@
 
-@import models.ui.{Question, Input, DateInput, SequenceFormComponent, FormComponent}
-
+@import models.ui.{DateInput, FormComponent, Input, Question, Sequence}
 @(formElement: FormComponent, name: String, form: Form[_])(implicit request: Request[_], messages: Messages, ctx: PageContext)
   @{formElement match {
       case q: Question => components.question(q, name, form)
       case di: DateInput => components.input_date(di, name, form)
       case i: Input => components.input(i, name, form)
-      case s: SequenceFormComponent => components.sequence(s, name, form)
+      case s: Sequence => components.sequence(s, name, form)
     }
   }
 

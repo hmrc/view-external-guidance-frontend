@@ -16,7 +16,7 @@
 
 package core.models.ocelot.stanzas
 
-import core.models.ocelot.{labelReferences, Page, Labels, Phrase, asListOfInt, exclusiveOptionRegex}
+import core.models.ocelot.{labelReferences, Page, Labels, Phrase, asListOfInt, exclusiveOptionPattern}
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
 import play.api.libs.json.{JsSuccess, JsError, JsValue, JsonValidationError, JsPath, OWrites, Reads}
@@ -52,7 +52,7 @@ object SequenceStanza {
     )(unlift(SequenceStanza.unapply))
 }
 
-trait Sequence extends VisualStanza with Populated with DataInput {
+trait SequenceLike extends VisualStanza with Populated with DataInput {
   val text: Phrase
   val options: Seq[Phrase]
   val label: Option[String]
@@ -80,38 +80,29 @@ trait Sequence extends VisualStanza with Populated with DataInput {
         }
       }
     }
-
-  def validInput(value: String): Option[String] =
-    asListOfInt(value).fold[Option[String]](None)(l => if (l.forall(options.indices.contains(_))) Some(value) else None)
 }
 
 object Sequence {
   def apply(s: SequenceStanza, text: Phrase, options: Seq[Phrase]): Sequence =
-    if (options.exists(o => exclusiveOptionRegex.findFirstMatchIn(o.english).nonEmpty &&
-    exclusiveOptionRegex.findFirstMatchIn(o.welsh).nonEmpty))
-      ExclusiveSequence(text, s.next, options, s.label, s.stack)
-    else
-      NonExclusiveSequence(text, s.next, options, s.label, s.stack)
+    Sequence(text, s.next, options, s.label, s.stack)
 }
 
-case class NonExclusiveSequence(text: Phrase,
-                                override val next: Seq[String],
-                                options: Seq[Phrase],
-                                label: Option[String],
-                                stack: Boolean) extends Sequence
-
-case class ExclusiveSequence(text: Phrase,
+case class Sequence(text: Phrase,
                              override val next: Seq[String],
                              options: Seq[Phrase],
                              label: Option[String],
-                             stack: Boolean) extends Sequence {
+                             stack: Boolean) extends SequenceLike {
   lazy val (exclusiveOptions: Seq[Phrase], nonExclusiveOptions: Seq[Phrase]) =
-    options.partition{p => exclusiveOptionRegex.findFirstMatchIn(p.english).nonEmpty &&
-      exclusiveOptionRegex.findFirstMatchIn(p.welsh).nonEmpty}
+    options.partition{p => p.english.contains(exclusiveOptionPattern) &&
+      p.welsh.contains(exclusiveOptionPattern)}
 
-  override def validInput(value: String): Option[String] =
+  def validInput(value: String): Option[String] =
     asListOfInt(value).fold[Option[String]](None){l =>
       if (l.forall(nonExclusiveOptions.indices.contains(_)) ||
-         (l.length == 1 && l.head == nonExclusiveOptions.length)) Some(value) else None
+         (l.length == 1 && l.head == nonExclusiveOptions.length)) {
+        Some(value)
+      } else {
+        None
+      }
     }
 }

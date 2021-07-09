@@ -17,7 +17,7 @@
 @import models.ui._
 @import uk.gov.hmrc.hmrcfrontend.views.html.components._
 
-@(name: String, option: SequenceAnswer, idx: Int, form: Form[_])(implicit request: Request[_], messages: Messages, ctx: PageContext)
+@(name: String, option: SequenceAnswer, idx: Int, form: Form[_], isExclusive: Boolean = false)(implicit request: Request[_], messages: Messages, ctx: PageContext)
 
 @checkboxIdentifier(name:String, idx: Int) = @{s"$name-$idx"}
 @checkboxName(name:String, idx: Int) = @{s"$name[$idx]"}
@@ -29,7 +29,7 @@
 }
 
 @hintClass = @{
-  if(option.exclusive) {
+  if(isExclusive) {
     "exclusive-hint"
   } else {
     s"checkbox-hint-$idx"
@@ -38,8 +38,8 @@
 
 @ariaDescribed = @{
     if (option.hint) {
-        val dataExclusive = if (option.exclusive) {
-            "data-exclusive='true'"
+        val dataExclusive = if (isExclusive) {
+            """data-exclusive="true" """
         } else {
             ""
         }
