@@ -21,6 +21,8 @@ import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import scala.math.BigDecimal.RoundingMode
 
+import core.models.ocelot._
+
 class OperationsSpec extends BaseSpec {
   val aNumber: BigDecimal = BigDecimal(32.6)
   val aDate: LocalDate = LocalDate.now
@@ -28,6 +30,19 @@ class OperationsSpec extends BaseSpec {
   val aList: List[String] = List("One")
   val otherList: List[String] = List("One", "Two", "London")
 
+  "AddOperation" must {
+    "correctly sum two numbers" in {
+      val labels = AddOperation("32", "65", "Answer").eval(LabelCache())
+
+      labels.value("Answer") shouldBe Some("97")
+    }
+    "correctly sum two strings" in {
+      val labels = AddOperation("Hello", "Universe", "Answer").eval(LabelCache())
+
+      labels.value("Answer") shouldBe Some("HelloUniverse")
+    }
+
+  }
   "Addition Operation evaluation overrides" must {
     "Evaluate two numbers correctly or return None" in {
       AddOperation("","","").evalNumericOp(aNumber, aNumber) shouldBe Some(s"${aNumber + aNumber}")

@@ -647,52 +647,52 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
 
   "Bullet point explicit testing determination" must {
 
-    "not apply explicit testing if neither of the phrases contains the explicit break marker" in {
+    "not apply explicit testing if neither of the phrases contains the break marker" in {
 
       val firstPhrase: Phrase = Phrase("","")
       val secondPhrase: Phrase = Phrase("","")
 
-      BulletPointBuilder.useExplicitMatch(firstPhrase, secondPhrase) shouldBe false
+      BulletPointBuilder.useBreakMatch(firstPhrase, secondPhrase) shouldBe false
     }
 
-    "apply explicit testing if the english component of the first phrase contains the explicit break marker" in {
+    "apply explicit testing if the english component of the first phrase contains the break marker" in {
 
       val firstPhrase: Phrase = Phrase("My favourite fruits are[break]oranges","Welsh: My favourite fruits are oranges")
       val secondPhrase: Phrase = Phrase("My favourite fruits are bananas","Welsh: My favourite fruits are bananas")
 
-      BulletPointBuilder.useExplicitMatch(firstPhrase, secondPhrase) shouldBe true
+      BulletPointBuilder.useBreakMatch(firstPhrase, secondPhrase) shouldBe true
     }
 
-    "apply explicit testing if the welsh component of the first phrase contains the explicit break marker" in {
+    "apply explicit testing if the welsh component of the first phrase contains the break marker" in {
 
       val firstPhrase: Phrase = Phrase("My favourite fruits are oranges","Welsh: My favourite fruits are[break]oranges")
       val secondPhrase: Phrase = Phrase("My favourite fruits are bananas","Welsh: My favourite fruits are bananas")
 
-      BulletPointBuilder.useExplicitMatch(firstPhrase, secondPhrase) shouldBe true
+      BulletPointBuilder.useBreakMatch(firstPhrase, secondPhrase) shouldBe true
     }
 
-    "apply explicit testing if the english component of the second phrase contains the explicit break marker" in {
+    "apply explicit testing if the english component of the second phrase contains the break marker" in {
 
       val firstPhrase: Phrase = Phrase("My favourite fruits are oranges","Welsh: My favourite fruits are oranges")
       val secondPhrase: Phrase = Phrase("My favourite fruits are[break]bananas","Welsh: My favourite fruits are bananas")
 
-      BulletPointBuilder.useExplicitMatch(firstPhrase, secondPhrase) shouldBe true
+      BulletPointBuilder.useBreakMatch(firstPhrase, secondPhrase) shouldBe true
     }
 
-    "apply explicit testing if the welsh component of the second phrase contains the explicit break marker" in {
+    "apply explicit testing if the welsh component of the second phrase contains the break marker" in {
 
       val firstPhrase: Phrase = Phrase("My favourite fruits are oranges","Welsh: My favourite fruits are oranges")
       val secondPhrase: Phrase = Phrase("My favourite fruits are bananas","Welsh: My favourite fruits are[break]bananas")
 
-      BulletPointBuilder.useExplicitMatch(firstPhrase, secondPhrase) shouldBe true
+      BulletPointBuilder.useBreakMatch(firstPhrase, secondPhrase) shouldBe true
     }
 
-    "apply explicit testing if all components of the two phrases contain the explicit break marker" in {
+    "apply explicit testing if all components of the two phrases contain the break marker" in {
 
       val firstPhrase: Phrase = Phrase("My favourite fruits are[break]oranges","Welsh: My favourite fruits are[break]oranges")
       val secondPhrase: Phrase = Phrase("My favourite fruits are[break]bananas","Welsh: My favourite fruits are[break]bananas")
 
-      BulletPointBuilder.useExplicitMatch(firstPhrase, secondPhrase) shouldBe true
+      BulletPointBuilder.useBreakMatch(firstPhrase, secondPhrase) shouldBe true
     }
   }
 
@@ -754,7 +754,7 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
       BulletPointBuilder.matchPhrases(firstPhrase, secondPhrase) shouldBe true
     }
 
-    "not match two phrases where the first phrase defines an explicit break but the second does not but there is an implicit match" in {
+    "not match two phrases where the first phrase defines a break but the second does not but there is an implicit match" in {
 
       val firstPhrase: Phrase = Phrase("The long and winding road[break] leads to Manchester","Welsh: The long and winding road[break] leads to Manchester")
       val secondPhrase: Phrase = Phrase("The long and winding road leads to Leeds","Welsh: The long and winding road leads to Leeds")
@@ -762,7 +762,7 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
       BulletPointBuilder.matchPhrases(firstPhrase, secondPhrase) shouldBe false
     }
 
-    "not match two phrases where the second phrase defines an explicit break but the first does not but there is an implicit match" in {
+    "not match two phrases where the second phrase defines a break but the first does not but there is an implicit match" in {
 
       val firstPhrase: Phrase = Phrase("The long and winding road leads to Leeds","Welsh: The long and winding road leads to Leeds")
       val secondPhrase: Phrase = Phrase("The long and winding road[break] leads to Manchester","Welsh: The long and winding road[break] leads to Manchester")
@@ -1166,7 +1166,7 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
 
       val calloutPhrases: Seq[Phrase] = Seq(phrase1, phrase2, phrase3, phrase4, phrase5, phrase6, phrase7, phrase8, phrase9, phrase10, phrase11)
 
-      val groupedPhrases: Seq[Seq[Phrase]] = BulletPointBuilder.groupMatchingPhrases(Nil)(calloutPhrases)
+      val groupedPhrases: Seq[Seq[Phrase]] = BulletPointBuilder.groupMatchingPhrases(calloutPhrases)
 
       groupedPhrases.size shouldBe 4
 
@@ -1177,7 +1177,7 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
 
     }
 
-    "not group two phrases that match implicitly, but the english components of the phrases contain the explicit break marker" in {
+    "not group two phrases that match implicitly, but the english components of the phrases contain the break marker" in {
 
       val instructionStanza1: InstructionStanza = InstructionStanza(0, Seq("2"), None, stack = false)
       val instructionStanza2: InstructionStanza = InstructionStanza(1, Seq("end"), None, stack = true)

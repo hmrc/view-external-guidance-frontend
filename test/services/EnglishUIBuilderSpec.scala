@@ -922,7 +922,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
       }
     }
 
-    "Process page with a simple instruction group with explicit break markers" in new Test {
+    "Process page with a simple instruction group with break markers" in new Test {
 
       val phrase1: Phrase = Phrase(Vector("My favourite sweets are[break] wine gums", "Fy hoff losin yw[break] deintgig gwin"))
       val phrase2: Phrase = Phrase(Vector("My favourite sweets are[break] humbugs", "Fy hoff losin yw[break] humbugs"))
@@ -994,7 +994,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
       }
     }
 
-    "Process complex page with both explicitly defined instruction groups and single instructions" in new Test {
+    "Process complex page with defined instruction groups and single instructions" in new Test {
 
       val phrase1: Phrase = Phrase(Vector("Going to the market", "Welsh: Going to the market"))
       val phrase2: Phrase = Phrase(Vector("Fruit and Vegetables", "Welsh: Fruit and Vegetables"))
@@ -1068,7 +1068,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
       }
     }
 
-    "Process page with multiple line bullet point list defined using an explicit break marker" in new Test {
+    "Process page with multiple line bullet point list defined using a break marker" in new Test {
 
       val phrase1: Phrase = Phrase(Vector("You must have[break] a tea bag", "Welsh: You require[break] a tea bag"))
       val phrase2: Phrase = Phrase(Vector("You must have[break] a cup", "Welsh: You require[break] a cup"))
@@ -1747,7 +1747,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
       val detailStackedNote10: NoteCallout = NoteCallout(bpl3Phrase2, Seq(""), stack = true)
       val detailStackedNote11: NoteCallout = NoteCallout(bpl3Phrase3, Seq(""), stack = true)
 
-      // Define components for explicitly defined bullet point list
+      // Define components for break defined bullet point list
       val bpl4Phrase1: Phrase = Phrase(
         "I like to go on holiday to the following:[break] Switzerland",
         "Welsh: I like to go on holiday to the following:[break] Switzerland"
@@ -1975,7 +1975,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
 
     }
 
-    "convert a sub section callout followed by note callouts with explicit break markers into a details component with a bullet point list" in new DetailsTest {
+    "convert a sub section callout followed by note callouts with break markers into a details component with a bullet point list" in new DetailsTest {
 
       val p: models.ui.Page = uiBuilder.buildPage(
         "/start",

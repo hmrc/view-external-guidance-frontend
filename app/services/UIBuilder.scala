@@ -208,7 +208,7 @@ class UIBuilder {
   }
 
   private def fromSectionAndNoteGroup(caption: Text, ng: NoteGroup)(implicit ctx: UIContext): UIComponent = {
-    val disclosureComponents: Seq[UIComponent] = BulletPointBuilder.groupMatchingPhrases(Nil)(ng.group.map(_.text)).map{
+    val disclosureComponents: Seq[UIComponent] = BulletPointBuilder.groupMatchingPhrases(ng.group.map(_.text)).map{
       case phraseList if phraseList.length == 1 => Paragraph(TextBuilder.fromPhrase(phraseList.head))
       case phraseList =>
         val (leading: Text, bullets: Seq[Text]) = BulletPointBuilder.leadingAndBulletText(phraseList)
