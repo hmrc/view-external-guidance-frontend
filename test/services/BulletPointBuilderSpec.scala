@@ -645,9 +645,9 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
     }
   }
 
-  "Bullet point explicit testing determination" must {
+  "Bullet point useBreakMatch" must {
 
-    "not apply explicit testing if neither of the phrases contains the break marker" in {
+    "return false if neither of the phrases contains the break marker" in {
 
       val firstPhrase: Phrase = Phrase("","")
       val secondPhrase: Phrase = Phrase("","")
@@ -655,7 +655,7 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
       BulletPointBuilder.useBreakMatch(firstPhrase, secondPhrase) shouldBe false
     }
 
-    "apply explicit testing if the english component of the first phrase contains the break marker" in {
+    "return true if the english component of the first phrase contains the break marker" in {
 
       val firstPhrase: Phrase = Phrase("My favourite fruits are[break]oranges","Welsh: My favourite fruits are oranges")
       val secondPhrase: Phrase = Phrase("My favourite fruits are bananas","Welsh: My favourite fruits are bananas")
@@ -663,7 +663,7 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
       BulletPointBuilder.useBreakMatch(firstPhrase, secondPhrase) shouldBe true
     }
 
-    "apply explicit testing if the welsh component of the first phrase contains the break marker" in {
+    "return true if the welsh component of the first phrase contains the break marker" in {
 
       val firstPhrase: Phrase = Phrase("My favourite fruits are oranges","Welsh: My favourite fruits are[break]oranges")
       val secondPhrase: Phrase = Phrase("My favourite fruits are bananas","Welsh: My favourite fruits are bananas")
@@ -671,7 +671,7 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
       BulletPointBuilder.useBreakMatch(firstPhrase, secondPhrase) shouldBe true
     }
 
-    "apply explicit testing if the english component of the second phrase contains the break marker" in {
+    "return true if the english component of the second phrase contains the break marker" in {
 
       val firstPhrase: Phrase = Phrase("My favourite fruits are oranges","Welsh: My favourite fruits are oranges")
       val secondPhrase: Phrase = Phrase("My favourite fruits are[break]bananas","Welsh: My favourite fruits are bananas")
@@ -679,7 +679,7 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
       BulletPointBuilder.useBreakMatch(firstPhrase, secondPhrase) shouldBe true
     }
 
-    "apply explicit testing if the welsh component of the second phrase contains the break marker" in {
+    "return true if the welsh component of the second phrase contains the break marker" in {
 
       val firstPhrase: Phrase = Phrase("My favourite fruits are oranges","Welsh: My favourite fruits are oranges")
       val secondPhrase: Phrase = Phrase("My favourite fruits are bananas","Welsh: My favourite fruits are[break]bananas")
@@ -687,7 +687,7 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
       BulletPointBuilder.useBreakMatch(firstPhrase, secondPhrase) shouldBe true
     }
 
-    "apply explicit testing if all components of the two phrases contain the break marker" in {
+    "return true if all components of the two phrases contain the break marker" in {
 
       val firstPhrase: Phrase = Phrase("My favourite fruits are[break]oranges","Welsh: My favourite fruits are[break]oranges")
       val secondPhrase: Phrase = Phrase("My favourite fruits are[break]bananas","Welsh: My favourite fruits are[break]bananas")
@@ -696,7 +696,7 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
     }
   }
 
-  "Bullet point list explicit and implicit phrase match testing" must {
+  "Bullet point list break and standard phrase match testing" must {
 
     "not match two empty phrases" in {
 
@@ -722,7 +722,7 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
       BulletPointBuilder.matchPhrases(firstPhrase, secondPhrase) shouldBe false
     }
 
-    "not match two phrases where one phrase contains a break marker and the other does not and there is no implicit match" in {
+    "not match two phrases where one phrase contains a break marker and the other does not and there is no standard match" in {
 
       val firstPhrase: Phrase = Phrase("The long[break] and winding road leads to Manchester","Welsh: The long[break] and winding road leads to Manchester")
       val secondPhrase: Phrase = Phrase("The long and winding road leads to Leeds","Welsh: The long and winding road leads to Leeds")
@@ -730,7 +730,7 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
       BulletPointBuilder.matchPhrases(firstPhrase, secondPhrase) shouldBe false
     }
 
-    "not match two phrases where both phrases start with the break marker and there is no implicit match" in {
+    "not match two phrases where both phrases start with the break marker and there is no standard match" in {
 
       val firstPhrase: Phrase = Phrase("[break]The long and winding road","Welsh: [break]The long and winding road")
       val secondPhrase: Phrase = Phrase("[break]Every day is an adventure","Welsh: [break]Every day is an adventure")
@@ -754,7 +754,7 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
       BulletPointBuilder.matchPhrases(firstPhrase, secondPhrase) shouldBe true
     }
 
-    "not match two phrases where the first phrase defines a break but the second does not but there is an implicit match" in {
+    "not match two phrases where the first phrase defines a break but the second does not but there is a standard match" in {
 
       val firstPhrase: Phrase = Phrase("The long and winding road[break] leads to Manchester","Welsh: The long and winding road[break] leads to Manchester")
       val secondPhrase: Phrase = Phrase("The long and winding road leads to Leeds","Welsh: The long and winding road leads to Leeds")
@@ -762,7 +762,7 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
       BulletPointBuilder.matchPhrases(firstPhrase, secondPhrase) shouldBe false
     }
 
-    "not match two phrases where the second phrase defines a break but the first does not but there is an implicit match" in {
+    "not match two phrases where the second phrase defines a break but the first does not but there is a standard match" in {
 
       val firstPhrase: Phrase = Phrase("The long and winding road leads to Leeds","Welsh: The long and winding road leads to Leeds")
       val secondPhrase: Phrase = Phrase("The long and winding road[break] leads to Manchester","Welsh: The long and winding road[break] leads to Manchester")

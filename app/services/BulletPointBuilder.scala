@@ -88,11 +88,11 @@ object BulletPointBuilder {
   }
 
   private[services] final def groupMatchingPhrases(phrases: Seq[Phrase]): List[List[Phrase]] =
-    phrases.foldLeft[List[List[Phrase]]](Nil){ (acc, p) =>
+    phrases.foldRight[List[List[Phrase]]](Nil){ (p, acc) =>
       acc match {
         case Nil => List(List(p))
-        case x :+ current if matchPhrases(current.last, p) => acc.init :+ (current :+ p)
-        case _ => acc ::: List(List(p))
+        case current :: x if matchPhrases(p, current.head) => (p :: current) :: acc.tail
+        case _ => List(List(p)) ::: acc
       }
     }
 }
