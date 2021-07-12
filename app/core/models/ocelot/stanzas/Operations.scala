@@ -18,8 +18,7 @@ package core.models.ocelot.stanzas
 
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
-
-import core.models.ocelot.{asDecimal, asDate, labelReference, labelScalarValue, Labels}
+import core.models.ocelot.{stringFromDate, asDecimal, asDate, labelReference, labelScalarValue, Labels}
 import play.api.Logger
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -40,6 +39,23 @@ case class NumericOperand(v: BigDecimal) extends Scalar[BigDecimal]
 case class StringCollection(v: List[String]) extends Collection[String]
 case class DateOperand(v: LocalDate) extends Scalar[LocalDate]
 
+object Operand {
+  def apply(s: String, labels: Labels): Option[Operand[_]] =
+    scalar(s, labels).fold[Option[Operand[_]]](collection(s, labels).fold[Option[Operand[_]]](None)(o => Some(o))){o => Some(o)}
+
+  def scalar(v: String, labels: Labels): Option[Scalar[_]] =
+    labelScalarValue(v)(labels).fold[Option[Scalar[_]]](None){s =>
+      asDate(s).fold[Option[Scalar[_]]]{
+        asDecimal(s).fold[Option[Scalar[_]]](Some(StringOperand(s)))(dec => Some(NumericOperand(dec)))
+      }(dte => Some(DateOperand(dte)))
+    }
+
+  def collection(v: String, labels: Labels): Option[Collection[_]] =
+    labelReference(v).fold[Option[Collection[_]]](None){lo =>
+      labels.valueAsList(lo).fold[Option[Collection[_]]](None)(l => Some(StringCollection(l)))
+    }
+}
+
 sealed trait Operation {
   val logger: Logger = Logger(this.getClass)
 
@@ -47,15 +63,15 @@ sealed trait Operation {
   val right: String
   val label: String
 
-  def evalScalarCollectionOp(left: String, right: List[String]): Option[List[String]] = unsupported[List[String]]()
-  def evalCollectionScalarOp(left: List[String], right: String): Option[List[String]] = unsupported[List[String]]()
-  def evalCollectionCollectionOp(left: List[String], right: List[String]): Option[List[String]] = unsupported[List[String]]()
-  def evalDateOp(left: LocalDate, right: LocalDate): Option[String] = unsupported[String]()
-  def evalNumericOp(left: BigDecimal, right: BigDecimal): Option[String] = unsupported[String]()
-  def evalStringOp(left: String, right: String): Option[String] = unsupported[String]()
+  private[stanzas] def evalScalarCollectionOp(left: String, right: List[String]): Option[List[String]] = unsupported[List[String]]()
+  private[stanzas] def evalCollectionScalarOp(left: List[String], right: String): Option[List[String]] = unsupported[List[String]]()
+  private[stanzas] def evalCollectionCollectionOp(left: List[String], right: List[String]): Option[List[String]] = unsupported[List[String]]()
+  private[stanzas] def evalDateOp(left: LocalDate, right: LocalDate): Option[String] = unsupported[String]()
+  private[stanzas] def evalNumericOp(left: BigDecimal, right: BigDecimal): Option[String] = unsupported[String]()
+  private[stanzas] def evalStringOp(left: String, right: String): Option[String] = unsupported[String]()
 
   def eval(labels: Labels): Labels =
-    (operand(left, labels), operand(right, labels)) match {
+    (Operand(left, labels), Operand(right, labels)) match {
       case (Some(NumericOperand(l)), Some(NumericOperand(r))) =>
         evalNumericOp(l, r).fold(labels)(result => labels.update(label, result))
       case (Some(DateOperand(l)), Some(DateOperand(r))) =>
@@ -68,24 +84,13 @@ sealed trait Operation {
         evalCollectionScalarOp(l,r.toString).fold(labels)(result => labels.updateList(label, result))
       case (Some(l: Scalar[_]), Some(StringCollection(r))) =>
         evalScalarCollectionOp(l.toString,r).fold(labels)(result => labels.updateList(label, result))
+      case (Some(DateOperand(l)), Some(r: Operand[_])) => // No typed op, try Date , anything
+        evalStringOp(stringFromDate(l), r.v.toString).fold(labels)(result => labels.update(label, result))
+      case (Some(l: Operand[_]), Some(DateOperand(r))) => // No typed op, try anything, Date
+        evalStringOp(l.v.toString, stringFromDate(r)).fold(labels)(result => labels.update(label, result))
       case (Some(l: Operand[_]), Some(r: Operand[_])) => // No typed op, fall back to String, String op
         evalStringOp(l.v.toString, r.v.toString).fold(labels)(result => labels.update(label, result))
       case _ => unsupported(); labels
-    }
-
-  private def operand(s: String, labels: Labels): Option[Operand[_]] =
-    scalarOperand(s, labels).fold[Option[Operand[_]]](collectionOperand(s, labels).fold[Option[Operand[_]]](None)(o => Some(o))){o => Some(o)}
-
-  private def scalarOperand(v: String, labels: Labels): Option[Scalar[_]] =
-    labelScalarValue(v)(labels).fold[Option[Scalar[_]]](None){s =>
-      asDate(s).fold[Option[Scalar[_]]]{
-        asDecimal(s).fold[Option[Scalar[_]]](Some(StringOperand(s)))(dec => Some(NumericOperand(dec)))
-      }(dte => Some(DateOperand(dte)))
-    }
-
-  private def collectionOperand(v: String, labels: Labels): Option[Collection[_]] =
-    labelReference(v).fold[Option[Collection[_]]](None){lo =>
-      labels.valueAsList(lo).fold[Option[Collection[_]]](None)(l => Some(StringCollection(l)))
     }
 
   protected def unsupported[A](): Option[A] = {
@@ -125,7 +130,8 @@ case class CeilingOperation(left: String, right: String, label: String) extends 
 }
 
 case class FloorOperation(left: String, right: String, label: String) extends Operation {
-  override def evalNumericOp(left: BigDecimal, right: BigDecimal): Option[String] = Some(left.setScale(right.toInt, RoundingMode.FLOOR).bigDecimal.toPlainString)
+  override def evalNumericOp(left: BigDecimal, right: BigDecimal): Option[String] =
+    Some(left.setScale(right.toInt, RoundingMode.FLOOR).bigDecimal.toPlainString)
 }
 
 object Operation {
