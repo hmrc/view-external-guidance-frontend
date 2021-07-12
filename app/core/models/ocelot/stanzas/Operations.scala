@@ -103,7 +103,6 @@ case class AddOperation(left: String, right: String, label: String) extends Oper
   override def evalScalarCollectionOp(left: String, right: List[String]): Option[List[String]] = Some(left :: right)
   override def evalCollectionScalarOp(left: List[String], right: String): Option[List[String]] = Some((right :: left.reverse).reverse)
   override def evalCollectionCollectionOp(left: List[String], right: List[String]): Option[List[String]] = Some(left ::: right)
-
   override def evalNumericOp(left: BigDecimal, right: BigDecimal): Option[String] = Some((left + right).bigDecimal.toPlainString)
   override def evalStringOp(left: String, right: String): Option[String] = Some(left + right)
 }
@@ -111,7 +110,6 @@ case class AddOperation(left: String, right: String, label: String) extends Oper
 case class SubtractOperation(left: String, right: String, label: String) extends Operation {
   override def evalCollectionScalarOp(left: List[String], right: String): Option[List[String]] = Some(left.filterNot(_ == right))
   override def evalCollectionCollectionOp(left: List[String], right: List[String]): Option[List[String]] = Some(left.filterNot(right.contains(_)))
-
   override def evalNumericOp(left: BigDecimal, right: BigDecimal): Option[String] = Some((left - right).bigDecimal.toPlainString)
   override def evalDateOp(left: LocalDate, right: LocalDate): Option[String] =  Some(right.until(left, ChronoUnit.DAYS).toString)
 }
@@ -126,7 +124,8 @@ case class DivideOperation(left: String, right: String, label: String) extends O
 }
 
 case class CeilingOperation(left: String, right: String, label: String) extends Operation {
-  override def evalNumericOp(left: BigDecimal, right: BigDecimal): Option[String] = Some(left.setScale(right.toInt, RoundingMode.CEILING).bigDecimal.toPlainString)
+  override def evalNumericOp(left: BigDecimal, right: BigDecimal): Option[String] =
+    Some(left.setScale(right.toInt, RoundingMode.CEILING).bigDecimal.toPlainString)
 }
 
 case class FloorOperation(left: String, right: String, label: String) extends Operation {
