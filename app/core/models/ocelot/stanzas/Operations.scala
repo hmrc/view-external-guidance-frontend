@@ -37,7 +37,7 @@ sealed trait Collection[+A] extends Operand[List[A]]
 case class StringOperand(v: String) extends Scalar[String]
 case class NumericOperand(v: BigDecimal) extends Scalar[BigDecimal]
 case class StringCollection(v: List[String]) extends Collection[String]
-case class DateOperand(v: LocalDate) extends Scalar[LocalDate]
+case class DateOperand(v: LocalDate) extends Scalar[LocalDate] {override def toString: String = stringFromDate(v)}
 
 object Operand {
   def apply(s: String, labels: Labels): Option[Operand[_]] =
@@ -79,17 +79,13 @@ sealed trait Operation {
       case (Some(StringOperand(l)), Some(StringOperand(r))) =>
         evalStringOp(l, r).fold(labels)(result => labels.update(label, result))
       case (Some(StringCollection(l)), Some(StringCollection(r))) =>
-        evalCollectionCollectionOp(l,r).fold(labels)(result => labels.updateList(label, result))
+        evalCollectionCollectionOp(l, r).fold(labels)(result => labels.updateList(label, result))
       case (Some(StringCollection(l)), Some(r: Scalar[_])) =>
-        evalCollectionScalarOp(l,r.toString).fold(labels)(result => labels.updateList(label, result))
+        evalCollectionScalarOp(l, r.toString).fold(labels)(result => labels.updateList(label, result))
       case (Some(l: Scalar[_]), Some(StringCollection(r))) =>
-        evalScalarCollectionOp(l.toString,r).fold(labels)(result => labels.updateList(label, result))
-      case (Some(DateOperand(l)), Some(r: Operand[_])) => // No typed op, try Date , anything
-        evalStringOp(stringFromDate(l), r.v.toString).fold(labels)(result => labels.update(label, result))
-      case (Some(l: Operand[_]), Some(DateOperand(r))) => // No typed op, try anything, Date
-        evalStringOp(l.v.toString, stringFromDate(r)).fold(labels)(result => labels.update(label, result))
+        evalScalarCollectionOp(l.toString, r).fold(labels)(result => labels.updateList(label, result))
       case (Some(l: Operand[_]), Some(r: Operand[_])) => // No typed op, fall back to String, String op
-        evalStringOp(l.v.toString, r.v.toString).fold(labels)(result => labels.update(label, result))
+        evalStringOp(l.toString, r.toString).fold(labels)(result => labels.update(label, result))
       case _ => unsupported(); labels
     }
 

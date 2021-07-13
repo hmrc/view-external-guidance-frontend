@@ -75,6 +75,20 @@ class OperationsSpec extends BaseSpec {
 
       labels.value("Answer") shouldBe Some("Hello-1/2/2018")
     }
+    "correctly append an element to a list" in {
+      val labels: Labels = LabelCache().updateList("AList", List("Hello", "my", "name"))
+
+      val updatedLabels = AddOperation("[label:AList]", "is", "Answer").eval(labels)
+
+      updatedLabels.valueAsList("Answer") shouldBe Some(List("Hello", "my", "name", "is"))
+    }
+    "correctly prepend an element to a list" in {
+      val labels: Labels = LabelCache().updateList("AList", List("Hello", "my", "name"))
+
+      val updatedLabels = AddOperation("is", "[label:AList]", "Answer").eval(labels)
+
+      updatedLabels.valueAsList("Answer") shouldBe Some(List("is", "Hello", "my", "name"))
+    }
   }
 
   "SubtractOperation" must {
@@ -87,6 +101,13 @@ class OperationsSpec extends BaseSpec {
       val labels = SubtractOperation(stringFromDate(aDate), stringFromDate(aDate), "Answer").eval(LabelCache())
 
       labels.value("Answer") shouldBe Some(aDate.until(aDate, ChronoUnit.DAYS).toString)
+    }
+    "correctly remove an element from a list" in {
+      val labels: Labels = LabelCache().updateList("AList", List("Hello", "my", "name"))
+
+      val updatedLabels = SubtractOperation("[label:AList]", "my", "Answer").eval(labels)
+
+      updatedLabels.valueAsList("Answer") shouldBe Some(List("Hello", "name"))
     }
   }
   "MultiplyOperation" must {
