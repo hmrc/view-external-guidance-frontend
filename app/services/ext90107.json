@@ -1,0 +1,180 @@
+{
+  "meta": {
+    "id": "ext90107",
+    "title": "disclosure bps",
+    "ocelot": 5,
+    "lastAuthor": "7903085",
+    "lastUpdate": 1625676246886,
+    "version": 1,
+    "filename": "ext90107.js",
+    "titlePhrase": 0,
+    "processCode": "disclosure"
+  },
+  "flow": {
+    "12": {
+      "next": [
+        "5"
+      ],
+      "noteType": "Note",
+      "stack": true,
+      "text": 7,
+      "type": "CalloutStanza"
+    },
+    "8": {
+      "next": [
+        "9",
+        "9"
+      ],
+      "stack": false,
+      "answers": [
+        11,
+        12
+      ],
+      "text": 10,
+      "type": "QuestionStanza"
+    },
+    "4": {
+      "next": [
+        "10"
+      ],
+      "noteType": "SubSection",
+      "stack": false,
+      "text": 4,
+      "type": "CalloutStanza"
+    },
+    "11": {
+      "next": [
+        "12"
+      ],
+      "noteType": "Note",
+      "stack": true,
+      "text": 6,
+      "type": "CalloutStanza"
+    },
+    "9": {
+      "next": [
+        "end"
+      ],
+      "stack": false,
+      "type": "PageStanza",
+      "url": "/fin"
+    },
+    "5": {
+      "next": [
+        "7"
+      ],
+      "noteType": "Note",
+      "stack": true,
+      "text": 8,
+      "type": "CalloutStanza"
+    },
+    "10": {
+      "next": [
+        "11"
+      ],
+      "noteType": "Note",
+      "stack": true,
+      "text": 5,
+      "type": "CalloutStanza"
+    },
+    "1": {
+      "next": [
+        "2"
+      ],
+      "stack": true,
+      "text": 1,
+      "type": "InstructionStanza"
+    },
+    "2": {
+      "next": [
+        "3"
+      ],
+      "stack": true,
+      "text": 2,
+      "type": "InstructionStanza"
+    },
+    "end": {
+      "type": "EndStanza"
+    },
+    "7": {
+      "next": [
+        "8"
+      ],
+      "noteType": "Note",
+      "stack": true,
+      "text": 9,
+      "type": "CalloutStanza"
+    },
+    "start": {
+      "next": [
+        "1"
+      ],
+      "stack": false,
+      "type": "PageStanza",
+      "url": "/start"
+    },
+    "3": {
+      "next": [
+        "4"
+      ],
+      "stack": true,
+      "text": 3,
+      "type": "InstructionStanza"
+    }
+  },
+  "phrases": [
+    [
+      "disclosure bps",
+      "Welsh: disclosure bps"
+    ],
+    [
+      "The 40 days don not need to have been in a row.",
+      "Welsh: The 40 days don not need to have been in a row."
+    ],
+    [
+      "This includes any employed and self-employed work.",
+      "Welsh: This includes any employed and self-employed work."
+    ],
+    [
+      "Do not include any voluntary work.",
+      "Welsh: Do not include any voluntary work."
+    ],
+    [
+      "What counts as work",
+      "Welsh: What counts as work"
+    ],
+    [
+      "The deeming rule applies if you: were UK resident in at least one of the 3 previous tax years",
+      "Welsh: The deeming rule applies if you: were UK resident in at least one of the 3 previous tax years"
+    ],
+    [
+      "The deeming rule applies if you: have at least 3 UK ties",
+      "Welsh: The deeming rule applies if you: have at least 3 UK ties"
+    ],
+    [
+      "The deeming rule applies if you: spent more than 40 days during .....",
+      "Welsh: The deeming rule applies if you: spent more than 40 days during ....."
+    ],
+    [
+      "If you're an employee, work includes anything you do to perform your job, such as training or time spent travelling",
+      "Welsh: If you're an employee, work includes anything you do to perform your job, such as training or time spent travelling"
+    ],
+    [
+      "If you're self-employed, work includes anything you do as part of your trade or profession",
+      "Welsh: If you're self-employed, work includes anything you do as part of your trade or profession"
+    ],
+    [
+      "Did you work more than 3 hours in the UK on at least 40 days between 6 April and 5 April ?",
+      "Welsh: Did you work more than 3 hours in the UK on at least 40 days between 6 April and 5 April ?"
+    ],
+    [
+      "Yes",
+      "Welsh: Yes"
+    ],
+    [
+      "No",
+      "Welsh: No"
+    ]
+  ],
+  "links": []
+}
