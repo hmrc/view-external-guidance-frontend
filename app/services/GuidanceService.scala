@@ -62,7 +62,7 @@ class GuidanceService @Inject() (
         Left(ExpectationFailedError)
       case Left(NotFoundError) =>
         Left(ExpectationFailedError)
-      case Left(err) =>
+      case Left(_) =>
         Left(InternalServerError)
     }
 
@@ -106,7 +106,7 @@ class GuidanceService @Inject() (
                   dataInput,
                   sessionId,
                   pageMapById,
-                  ctx.process.startUrl.map( startUrl => s"${appConfig.baseUrl}/${processCode}/session-restart"),
+                  ctx.process.startUrl.map(_ => s"${appConfig.baseUrl}/${processCode}/session-restart"),
                   ctx.process.title,
                   ctx.process.meta.id,
                   processCode,
@@ -122,7 +122,7 @@ class GuidanceService @Inject() (
         logger.warn(s"Referenced session ( $sessionId ) does not contain a process with processCode $processCode")
         Left(ExpectationFailedError)
       case Left(err) =>
-        logger.error(s"Repository returned $err, when attempting retrieve process using id (sessionId) $sessionId")
+        logger.warn(s"Repository returned $err, when attempting retrieve process using id (sessionId) $sessionId")
         Left(err)
     }
 

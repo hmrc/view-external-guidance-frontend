@@ -26,7 +26,8 @@ import core.models.ocelot.stanzas._
 import models.ocelot.stanzas._
 import models.PageDesc
 import models.ui
-import models.ui.{BulletPointList, ComplexDetails, ConfirmationPanel, CyaSummaryList, Details, ErrorMsg, FormPage, H1, H3, H4, InsetText, Link, Paragraph, RequiredErrorMsg, Sequence => UISequence, Table, Text, WarningText, Words}
+import models.ui.{BulletPointList, ConfirmationPanel, CyaSummaryList, Details, ErrorMsg, FormPage, H1, H3, H4, Sequence => UISequence}
+import models.ui.{InsetText, Link, Paragraph, RequiredErrorMsg, Table, Text, WarningText, Words}
 
 class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage with GuiceOneAppPerSuite {
   implicit val labels: Labels = LabelCache()
@@ -37,7 +38,6 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
   }
 
   trait QuestionTest extends BaseTest {
-
     implicit val urlMap: Map[String, PageDesc] =
       Map(
         Process.StartStanzaId -> PageDesc(Process.StartStanzaId, "/blah"),
@@ -70,15 +70,14 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
       Page(Process.StartStanzaId, "/test-page", stanzas :+ KeyedStanza("5", Question(questionWithHintPhrase, answers, answerDestinations, None, false)), Seq.empty)
 
     val uiBuilder: UIBuilder = new UIBuilder()
-
-    val four: Int = 4
     implicit val ctx: UIContext = UIContext(labels, lang, urlMap, messagesApi)
+    val four: Int = 4
   }
 
   "UIBulider Question processing" must {
 
     "Ignore Error Callouts when there are no errors" in new QuestionTest {
-      uiBuilder.buildPage(page.url, page.stanzas.collect { case s: VisualStanza => s }, NoError) match {
+      uiBuilder.buildPage(page.url, page.stanzas.collect{case s: VisualStanza => s}, NoError) match {
         case s: FormPage if s.formComponent.errorMsgs.isEmpty => succeed
         case s: FormPage => fail("No error messages should be included on page")
         case _ => fail("Should return FormPage")
@@ -925,7 +924,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
       }
     }
 
-    "Process page with a simple instruction group with explicit break markers" in new Test {
+    "Process page with a simple instruction group with break markers" in new Test {
 
       val phrase1: Phrase = Phrase(Vector("My favourite sweets are[break] wine gums", "Fy hoff losin yw[break] deintgig gwin"))
       val phrase2: Phrase = Phrase(Vector("My favourite sweets are[break] humbugs", "Fy hoff losin yw[break] humbugs"))
@@ -997,7 +996,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
       }
     }
 
-    "Process complex page with both explicitly defined instruction groups and single instructions" in new Test {
+    "Process complex page with both defined instruction groups and single instructions" in new Test {
 
       val phrase1: Phrase = Phrase(Vector("Going to the market", "Welsh: Going to the market"))
       val phrase2: Phrase = Phrase(Vector("Fruit and Vegetables", "Welsh: Fruit and Vegetables"))
@@ -1071,7 +1070,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
       }
     }
 
-    "Process page with multiple line bullet point list defined using an explicit break marker" in new Test {
+    "Process page with multiple line bullet point list defined using a break marker" in new Test {
 
       val phrase1: Phrase = Phrase(Vector("You must have[break] a tea bag", "Welsh: You require[break] a tea bag"))
       val phrase2: Phrase = Phrase(Vector("You must have[break] a cup", "Welsh: You require[break] a cup"))
@@ -1178,7 +1177,6 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
         "6" -> PageDesc("6", "dummy-path/anotherquestion"),
         "34" -> PageDesc("34", "dummy-path/next")
       )
-
     val inputNext = Seq("4")
     val inputPhrase: Phrase = Phrase(Vector("Some Text", "Welsh: Some Text"))
     val helpPhrase: Phrase = Phrase(Vector("Help text", "Welsh: Help text"))
@@ -1752,7 +1750,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
       val detailStackedNote10: NoteCallout = NoteCallout(bpl3Phrase2, Seq(""), stack = true)
       val detailStackedNote11: NoteCallout = NoteCallout(bpl3Phrase3, Seq(""), stack = true)
 
-      // Define components for explicitly defined bullet point list
+      // Define components for break defined bullet point list
       val bpl4Phrase1: Phrase = Phrase(
         "I like to go on holiday to the following:[break] Switzerland",
         "Welsh: I like to go on holiday to the following:[break] Switzerland"
@@ -1838,7 +1836,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
       }
     }
 
-    "convert a subSection callout followed by three note callouts into a complex details component with a bullet point list group" in new DetailsTest {
+    "convert a subSection callout followed by three note callouts into a Details component with a bullet point list group" in new DetailsTest {
 
       val p: models.ui.Page = uiBuilder.buildPage(
         "/start",
@@ -1851,21 +1849,23 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
       )
 
       p.components match {
-        case Seq(complexDetails: ComplexDetails) =>
-
-          complexDetails.additionalTextComponents.size shouldBe 1
-          complexDetails.additionalTextComponents.head.size shouldBe 4
-
-          complexDetails.additionalTextComponents.head.head.asString shouldBe "Welsh: The days of the week include"
-          complexDetails.additionalTextComponents.head(1).asString shouldBe "Monday"
-          complexDetails.additionalTextComponents.head(2).asString shouldBe "Tuesday"
-          complexDetails.additionalTextComponents.head.last.asString shouldBe "Wednesday"
+        case Seq(details: Details) =>
+          details.disclosure.size shouldBe 1
+          details.disclosure.map {
+            case bp: BulletPointList =>
+              bp.listItems.size shouldBe 3
+              bp.text.asString shouldBe "Welsh: The days of the week include"
+              bp.listItems(0).asString shouldBe "Monday"
+              bp.listItems(1).asString shouldBe "Tuesday"
+              bp.listItems(2).asString shouldBe "Wednesday"
+            case _ => fail
+          }
 
         case err => fail(s"UIBuilder created page with components $err")
       }
     }
 
-    "convert a SubSection callout followed by four note callouts into a complex details component with text and a bullet point list group" in new DetailsTest {
+    "convert a SubSection callout followed by four note callouts into a Details component with text and a bullet point list group" in new DetailsTest {
 
       val p: models.ui.Page = uiBuilder.buildPage(
         "/start",
@@ -1879,20 +1879,19 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
       )
 
       p.components match {
-        case Seq(complexDetails: ComplexDetails) =>
+        case Seq(details: Details) =>
+          details.disclosure.size shouldBe 2
 
-          complexDetails.additionalTextComponents.size shouldBe 2
-
-          complexDetails.additionalTextComponents.head.size shouldBe 1
-          complexDetails.additionalTextComponents.head.head.asString shouldBe "Welsh: Start"
-
-          complexDetails.additionalTextComponents.last.size shouldBe 4
-
+          details.disclosure.map {
+            case bp: BulletPointList => bp.listItems.size shouldBe 3
+            case p: Paragraph => p.text.asString shouldBe "Welsh: Start"
+            case _ => fail
+          }
         case err => fail(s"UIBuilder created page with components $err")
       }
     }
 
-    "convert a SubSection callout followed by four note callouts into a complex details component with bullet point group followed by text" in new DetailsTest {
+    "convert a SubSection callout followed by four note callouts into a Details component with bullet point group followed by text" in new DetailsTest {
 
       val p: models.ui.Page = uiBuilder.buildPage(
         "/start",
@@ -1906,14 +1905,14 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
       )
 
       p.components match {
-        case Seq(complexDetails: ComplexDetails) =>
+        case Seq(details: Details) =>
+          details.disclosure.size shouldBe 2
 
-          complexDetails.additionalTextComponents.size shouldBe 2
-
-          complexDetails.additionalTextComponents.head.size shouldBe 4
-
-          complexDetails.additionalTextComponents.last.size shouldBe 1
-          complexDetails.additionalTextComponents.last.head.asString shouldBe "Welsh: End"
+          details.disclosure.zipWithIndex.map {
+            case (bp: BulletPointList, 0) => bp.listItems.size shouldBe 3
+            case (p: Paragraph, 1) => p.text.asString shouldBe "Welsh: End"
+            case _ => fail
+          }
 
         case err => fail(s"UIBuilder created page with components $err")
       }
@@ -1937,21 +1936,23 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
       )
 
       p.components match {
-        case Seq(complexDetails: ComplexDetails) =>
+        case Seq(details: Details) =>
+          details.disclosure.size shouldBe 5
 
-          complexDetails.additionalTextComponents.size shouldBe 5
-
-          complexDetails.additionalTextComponents.head.size shouldBe 1
-          complexDetails.additionalTextComponents(1).size shouldBe 4
-          complexDetails.additionalTextComponents(2).size  shouldBe 1
-          complexDetails.additionalTextComponents(3).size shouldBe 3
-          complexDetails.additionalTextComponents.last.size shouldBe 1
+          details.disclosure.zipWithIndex.map {
+            case (p: Paragraph, 0) =>
+            case (bp: BulletPointList, 1) => bp.listItems.size shouldBe 3
+            case (p: Paragraph, 2) =>
+            case (bp: BulletPointList, 3) => bp.listItems.size shouldBe 2
+            case (p: Paragraph, 4) =>
+            case _ => fail
+          }
 
         case err => fail(s"UIBuilder created page with components $err")
       }
     }
 
-    "convert a subSection callout followed by three note callouts with labels into a complex details component with a bullet point list" in new DetailsTest {
+    "convert a subSection callout followed by three note callouts with labels into a Details component with a bullet point list" in new DetailsTest {
 
       val p: models.ui.Page = uiBuilder.buildPage(
         "/start",
@@ -1964,18 +1965,20 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
       )
 
       p.components match {
-        case Seq(complexDetails: ComplexDetails) =>
+        case Seq(details: Details) =>
+          details.disclosure.size shouldBe 1
 
-          complexDetails.additionalTextComponents.size shouldBe 1
-
-          complexDetails.additionalTextComponents.head.head.asString shouldBe "Welsh: The days of the Welsh: week include"
+          details.disclosure.zipWithIndex.map {
+            case (bp: BulletPointList, 0) => bp.text.asString shouldBe "Welsh: The days of the Welsh: week include"
+            case _ => fail
+          }
 
         case err => fail(s"UIBuilder created page with components $err")
       }
 
     }
 
-    "convert a sub section callout followed by note callouts with explicit break markers into a details component with a bullet point list" in new DetailsTest {
+    "convert a sub section callout followed by note callouts with break markers into a details component with a bullet point list" in new DetailsTest {
 
       val p: models.ui.Page = uiBuilder.buildPage(
         "/start",
@@ -1987,13 +1990,17 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
       )
 
       p.components match {
-        case Seq(complexDetails: ComplexDetails) =>
+        case Seq(details: Details) =>
+          details.disclosure.size shouldBe 1
 
-          complexDetails.additionalTextComponents.size shouldBe 1
-
-          complexDetails.additionalTextComponents.head.head.asString shouldBe "Welsh: I like to go on holiday to the following:"
-          complexDetails.additionalTextComponents.head(1).asString shouldBe "Switzerland"
-          complexDetails.additionalTextComponents.head.last.asString shouldBe "Jamaica"
+          details.disclosure.zipWithIndex.map {
+            case (bp: BulletPointList, 0) =>
+              bp.listItems.size shouldBe 2
+              bp.text.asString shouldBe "Welsh: I like to go on holiday to the following:"
+              bp.listItems(0).asString shouldBe "Switzerland"
+              bp.listItems(1).asString shouldBe "Jamaica"
+            case _ => fail
+          }
 
         case err => fail(s"UIBuilder created page with components $err")
       }
@@ -2017,25 +2024,36 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
       )
 
       p.components match {
-        case Seq(complexDetails: ComplexDetails) =>
+        case Seq(details: Details) =>
+          details.disclosure.size shouldBe 4
 
-          complexDetails.additionalTextComponents.size shouldBe 4
+          details.disclosure.zipWithIndex.map {
+            case (bp: BulletPointList, 0) =>
+              bp.listItems.size shouldBe 2
+              bp.text.asString shouldBe "Welsh: I like to go on holiday to the following:"
+              bp.listItems(0).asString shouldBe "Switzerland"
+              bp.listItems(1).asString shouldBe "Jamaica"
 
-          complexDetails.additionalTextComponents.head.head.asString shouldBe "Welsh: I like to go on holiday to the following:"
-          complexDetails.additionalTextComponents.head(1).asString shouldBe "Switzerland"
-          complexDetails.additionalTextComponents.head.last.asString shouldBe "Jamaica"
+            case (bp: BulletPointList, 1) =>
+              bp.listItems.size shouldBe 2
+              bp.text.asString shouldBe "Welsh: I like to go on holiday to the following:"
+              bp.listItems(0).asString shouldBe "Australia"
+              bp.listItems(1).asString shouldBe "New Zealand"
 
-          complexDetails.additionalTextComponents(1).head.asString shouldBe "Welsh: I like to go on holiday to the following:"
-          complexDetails.additionalTextComponents(1)(1).asString shouldBe "Australia"
-          complexDetails.additionalTextComponents(1).last.asString shouldBe "New Zealand"
+            case (bp: BulletPointList, 2) =>
+              bp.listItems.size shouldBe 2
+              bp.text.asString shouldBe "Welsh: I like to go on holiday to the following:"
+              bp.listItems(0).asString shouldBe "France"
+              bp.listItems(1).asString shouldBe "Hawaii"
 
-          complexDetails.additionalTextComponents(2).head.asString shouldBe "Welsh: I like to go on holiday to the following:"
-          complexDetails.additionalTextComponents(2)(1).asString shouldBe "France"
-          complexDetails.additionalTextComponents(2).last.asString shouldBe "Hawaii"
+            case (bp: BulletPointList, 3) =>
+              bp.listItems.size shouldBe 2
+              bp.text.asString shouldBe "Welsh: I like to go on holiday to the following:"
+              bp.listItems(0).asString shouldBe "Bognor Regis"
+              bp.listItems(1).asString shouldBe "Prestatyn"
 
-          complexDetails.additionalTextComponents.last.head.asString shouldBe "Welsh: I like to go on holiday to the following:"
-          complexDetails.additionalTextComponents.last(1).asString shouldBe "Bognor Regis"
-          complexDetails.additionalTextComponents.last.last.asString shouldBe "Prestatyn"
+            case _ => fail
+          }
 
         case err => fail(s"UIBuilder created page with components $err")
       }
@@ -2058,11 +2076,11 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
 
      val importantGroup = ImportantGroup(Seq(important1Co, important2Co, important3Co, important4Co))
 
-     val emptyImportantText = ImportantGroup(Seq.empty)
+      val emptyImportantGroup = ImportantGroup(Seq.empty)
     }
 
-    "Convert a empty Important list into an importantGroup" in new ImportantTest {
-      val p = uiBuilder.buildPage("/start", Seq(emptyImportantText))
+    "Convert a empty important list into a ImportantGroup" in new ImportantTest {
+      val p = uiBuilder.buildPage("/start", Seq(emptyImportantGroup))
       p.components match {
       case Seq(_: WarningText) => succeed
       case x => fail(s"Found $x")

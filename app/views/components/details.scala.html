@@ -16,18 +16,17 @@
 
 @import models.ui.Details
 
-@(details: Details)(implicit messages: Messages, ctx: PageContext)
+@(details: Details)(implicit request: Request[_], messages: Messages, ctx: PageContext)
 
 <details class="govuk-details" data-module="govuk-details">
-  <summary class="govuk-details__summary">
+    <summary class="govuk-details__summary">
     <span class="govuk-details__summary-text">
       @components.render_text(details.text)
     </span>
-  </summary>
-  <div class="govuk-details__text">
-    @for(additionalText <- details.additionalText.init){@components.render_text(additionalText)<br>}
-    @components.render_text(details.additionalText.last)
-  </div>
+    </summary>
+    <div class="govuk-details__text">
+      @components.render_components(details.disclosure)
+    </div>
 </details>
 @{
 //$COVERAGE-OFF$

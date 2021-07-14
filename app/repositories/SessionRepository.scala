@@ -216,7 +216,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
                 case _ => Right(processContext)
               }
             } else {
-              logger.error(s"Attempt to move to illegal page $url, LEGALPIDS ${sp.legalPageIds}")
+              logger.warn(s"Attempt to move to illegal page $url, LEGALPIDS ${sp.legalPageIds}")
               Future.successful(Left(ForbiddenError))
             }
           }
