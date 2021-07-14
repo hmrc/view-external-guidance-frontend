@@ -104,7 +104,7 @@ object TextBuilder {
   private def expandLabels(s: String, lang: Lang)(implicit ctx: UIContext): String = {
     val messages: Messages = ctx.messagesApi.preferred(Seq(lang))
     def labelValue(name: String): Option[String] = ctx.labels.displayValue(name)(lang)
-    labelAndListRegex.replaceAllIn(s, { m => OutputFormat(labelFormatOpt(m)).asString(labelScalarMatch(m, ctx.labels, labelValue _), messages)})
+    labelAndListRegex.replaceAllIn(s, { m => OutputFormat(labelFormatOpt(m)).asString(labelScalarMatch(m, ctx.labels, labelValue), messages)})
   }
 
   def fromPhrase(txt: Phrase)(implicit ctx: UIContext): Text = {
@@ -158,7 +158,7 @@ object TextBuilder {
 
   def fragment(text: String): List[Fragment] = {
     val (txts, matches) = fromPattern(plregex, text)
-    merge[Fragment, Fragment](txts.map(PartialMatch(_)), matches.map(m => TotalMatch(m.group(0), placeholderText(m))), Nil, _ => false)
+    merge[Fragment, Fragment](txts.map(PartialMatch), matches.map(m => TotalMatch(m.group(0), placeholderText(m))), Nil, _ => false)
   }
 
   def flattenFragments(f: List[Fragment]): List[String] = f.flatMap(_.tokens).mkString.split("\\s+").toList

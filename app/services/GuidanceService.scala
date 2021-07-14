@@ -62,7 +62,7 @@ class GuidanceService @Inject() (
         Left(ExpectationFailedError)
       case Left(NotFoundError) =>
         Left(ExpectationFailedError)
-      case Left(err) =>
+      case Left(_) =>
         Left(InternalServerError)
     }
 
@@ -106,7 +106,7 @@ class GuidanceService @Inject() (
                   dataInput,
                   sessionId,
                   pageMapById,
-                  ctx.process.startUrl.map( startUrl => s"${appConfig.baseUrl}/${processCode}/session-restart"),
+                  ctx.process.startUrl.map(_ => s"${appConfig.baseUrl}/${processCode}/session-restart"),
                   ctx.process.title,
                   ctx.process.meta.id,
                   processCode,
