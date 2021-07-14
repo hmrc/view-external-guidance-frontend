@@ -82,7 +82,7 @@ class DetailsSpec extends BaseSpec with ViewFns with ViewSpec with GuiceOneAppPe
       labels
     )
 
-    // Complex details with text and bullet point
+    // Details with text and bullet point
     val text1: Text = Text("Text1")
 
     val para1 = Paragraph(text1)
@@ -103,7 +103,7 @@ class DetailsSpec extends BaseSpec with ViewFns with ViewSpec with GuiceOneAppPe
       labels
     )
 
-    // Complex details with bullet point followed by two text items
+    // Details with bullet point followed by two text items
     val text2: Text = Text("Text2")
     val para2 = Paragraph(text2)
     val details3: Details = Details(caption, Seq(bpList1, para1, para2))
@@ -122,7 +122,7 @@ class DetailsSpec extends BaseSpec with ViewFns with ViewSpec with GuiceOneAppPe
       labels
     )
 
-    // Complex details with two bullet point lists and three text items
+    // Details with two bullet point lists and three text items
     val bpl2LeadingText: Text = Text("Your favourite holiday destinations are")
 
     val bpl2ListItem1: Text = Text("Acapulca")
@@ -159,7 +159,7 @@ class DetailsSpec extends BaseSpec with ViewFns with ViewSpec with GuiceOneAppPe
     )
   }
 
-  "Complex details component" must {
+  "Details component" must {
 
     "render a single bullet point list text group" in new Test {
 
