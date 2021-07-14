@@ -25,13 +25,13 @@ class TimePeriodSpec extends BaseSpec {
       asTimePeriod("23455day") shouldBe Some(TimePeriod(23455, Day))
     }
     "construct from a number of weeks" in {
-      asTimePeriod("23455day") shouldBe Some(TimePeriod(23455, Day))
+      asTimePeriod("23455week") shouldBe Some(TimePeriod(23455, Week))
     }
     "construct from a number of months" in {
-      asTimePeriod("23455day") shouldBe Some(TimePeriod(23455, Day))
+      asTimePeriod("23455month") shouldBe Some(TimePeriod(23455, Month))
     }
     "construct from a number of years" in {
-      asTimePeriod("23455day") shouldBe Some(TimePeriod(23455, Day))
+      asTimePeriod("23455year") shouldBe Some(TimePeriod(23455, Year))
     }
 
     "not construct when the count digit length is greater than the digit length of Int.MaxValue" in {
