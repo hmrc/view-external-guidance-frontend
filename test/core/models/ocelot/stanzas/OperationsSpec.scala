@@ -81,7 +81,7 @@ class OperationsSpec extends BaseSpec {
     "correctly sum string and date" in {
       val labels = AddOperation("Hello-", stringFromDate(aDate), "Answer").eval(LabelCache())
 
-      labels.value("Answer") shouldBe Some("Hello-1/2/2018")
+      labels.value("Answer") shouldBe Some("Hello-20/2/2018")
     }
     "correctly append an element to a list" in {
       val labels: Labels = LabelCache().updateList("AList", List("Hello", "my", "name"))
@@ -100,6 +100,11 @@ class OperationsSpec extends BaseSpec {
   }
 
   "SubtractOperation" must {
+    "correctly subtract a time period from a date" in {
+      val labels = SubtractOperation(stringFromDate(aDate),"4day","Answer").eval(LabelCache())
+
+      labels.value("Answer") shouldBe Some("16/2/2018")
+    }
     "correctly subtract two numbers" in {
       val labels = SubtractOperation("32", "65", "Answer").eval(LabelCache())
 

@@ -16,18 +16,15 @@
 
 package core.models.ocelot.stanzas
 
-import core.models.ocelot.TimePeriodSupport.TimePeriodArithmeticOps
+import core.models.ocelot.TimePeriodSupport._
 import core.models.ocelot._
 import play.api.Logger
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
 import play.api.libs.json._
-
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import scala.math.BigDecimal.RoundingMode
-
-import TimePeriodSupport._
 
 sealed trait Operand[+A] {
   val v: A
@@ -124,7 +121,7 @@ case class AddOperation(left: String, right: String, label: String) extends Oper
 
 case class SubtractOperation(left: String, right: String, label: String) extends Operation {
   //TODO add the override here
-  override def evalDateTimePeriod(date: LocalDate, period1: TimePeriod): Option[String] = ???
+  override def evalDateTimePeriod(date: LocalDate, period1: TimePeriod): Option[String] = Some(stringFromDate(date.minus(period1)))
   override def evalCollectionScalarOp(left: List[String], right: String): Option[List[String]] = Some(left.filterNot(_ == right))
   override def evalCollectionCollectionOp(left: List[String], right: List[String]): Option[List[String]] = Some(left.filterNot(right.contains(_)))
   override def evalNumericOp(left: BigDecimal, right: BigDecimal): Option[String] = Some((left - right).bigDecimal.toPlainString)
