@@ -25,12 +25,15 @@ import core.models.ocelot._
 
 class OperationsSpec extends BaseSpec {
   val aNumber: BigDecimal = BigDecimal(32.6)
-  val aDate: LocalDate = LocalDate.of(2018,2,1)
+  val aDate: LocalDate = LocalDate.of(2018,2,20)
   val aString: String = "Some text"
   val aList: List[String] = List("One")
   val otherList: List[String] = List("One", "Two", "London")
 
   "Operand" must {
+    "detect a Time period operand" in {
+      Operand("31day", LabelCache()) shouldBe Some(TimePeriodOperand(TimePeriod(31,Day)))
+    }
     "detect a date operand" in {
       Operand("1/12/1999", LabelCache()) shouldBe Some(DateOperand(LocalDate.of(1999,12,1)))
     }
@@ -50,6 +53,11 @@ class OperationsSpec extends BaseSpec {
   }
 
   "AddOperation" must {
+    "correctly add a time period to a date" in {
+      val labels = AddOperation(stringFromDate(aDate),"4day","Answer").eval(LabelCache())
+
+      labels.value("Answer") shouldBe Some("16/2/2018")
+    }
     "correctly sum two numbers" in {
       val labels = AddOperation("32.76", "65.2", "Answer").eval(LabelCache())
 
@@ -68,7 +76,7 @@ class OperationsSpec extends BaseSpec {
     "correctly sum date and string" in {
       val labels = AddOperation(stringFromDate(aDate), "-Universe", "Answer").eval(LabelCache())
 
-      labels.value("Answer") shouldBe Some("1/2/2018-Universe")
+      labels.value("Answer") shouldBe Some("20/2/2018-Universe")
     }
     "correctly sum string and date" in {
       val labels = AddOperation("Hello-", stringFromDate(aDate), "Answer").eval(LabelCache())

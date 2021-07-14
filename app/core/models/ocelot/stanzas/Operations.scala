@@ -16,42 +16,54 @@
 
 package core.models.ocelot.stanzas
 
-import java.time.LocalDate
-import java.time.temporal.ChronoUnit
-import core.models.ocelot.{stringFromDate, asDecimal, asDate, labelReference, labelScalarValue, Labels}
+import core.models.ocelot.TimePeriodSupport.TimePeriodArithmeticOps
+import core.models.ocelot._
 import play.api.Logger
 import play.api.libs.functional.syntax._
-import play.api.libs.json._
 import play.api.libs.json.Reads._
+import play.api.libs.json._
 
+import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 import scala.math.BigDecimal.RoundingMode
 
 sealed trait Operand[+A] {
   val v: A
+
   override def toString: String = v.toString
 }
 
 sealed trait Scalar[+A] extends Operand[A]
+
 sealed trait Collection[+A] extends Operand[List[A]]
 
 case class StringOperand(v: String) extends Scalar[String]
+
 case class NumericOperand(v: BigDecimal) extends Scalar[BigDecimal]
+
 case class StringCollection(v: List[String]) extends Collection[String]
-case class DateOperand(v: LocalDate) extends Scalar[LocalDate] {override def toString: String = stringFromDate(v)}
+
+case class DateOperand(v: LocalDate) extends Scalar[LocalDate] {
+  override def toString: String = stringFromDate(v)
+}
+
+case class TimePeriodOperand(v: TimePeriod) extends Scalar[TimePeriod]
 
 object Operand {
   def apply(s: String, labels: Labels): Option[Operand[_]] =
-    scalar(s, labels).fold[Option[Operand[_]]](collection(s, labels).fold[Option[Operand[_]]](None)(o => Some(o))){o => Some(o)}
+    scalar(s, labels).fold[Option[Operand[_]]](collection(s, labels).fold[Option[Operand[_]]](None)(o => Some(o))) { o => Some(o) }
 
   def scalar(v: String, labels: Labels): Option[Scalar[_]] =
-    labelScalarValue(v)(labels).fold[Option[Scalar[_]]](None){s =>
-      asDate(s).fold[Option[Scalar[_]]]{
-        asDecimal(s).fold[Option[Scalar[_]]](Some(StringOperand(s)))(dec => Some(NumericOperand(dec)))
+    labelScalarValue(v)(labels).fold[Option[Scalar[_]]](None) { s =>
+      asDate(s).fold[Option[Scalar[_]]] {
+        asTimePeriod(s).fold[Option[Scalar[_]]] {
+          asDecimal(s).fold[Option[Scalar[_]]](Some(StringOperand(s)))(dec => Some(NumericOperand(dec)))
+        }(timeperiod => Some(TimePeriodOperand(timeperiod)))
       }(dte => Some(DateOperand(dte)))
     }
 
   def collection(v: String, labels: Labels): Option[Collection[_]] =
-    labelReference(v).fold[Option[Collection[_]]](None){lo =>
+    labelReference(v).fold[Option[Collection[_]]](None) { lo =>
       labels.valueAsList(lo).fold[Option[Collection[_]]](None)(l => Some(StringCollection(l)))
     }
 }
@@ -69,9 +81,12 @@ sealed trait Operation {
   private[stanzas] def evalDateOp(left: LocalDate, right: LocalDate): Option[String] = unsupported[String]()
   private[stanzas] def evalNumericOp(left: BigDecimal, right: BigDecimal): Option[String] = unsupported[String]()
   private[stanzas] def evalStringOp(left: String, right: String): Option[String] = unsupported[String]()
+  private[stanzas] def evalDateTimePeriod(date: LocalDate, period1: TimePeriod): Option[String] = unsupported[String]()
 
   def eval(labels: Labels): Labels =
     (Operand(left, labels), Operand(right, labels)) match {
+      case (Some(DateOperand(l)), Some(TimePeriodOperand(r))) =>
+        evalDateTimePeriod(l,r).fold(labels)(result => labels.update(label, result))//TODO Add the new eval here
       case (Some(NumericOperand(l)), Some(NumericOperand(r))) =>
         evalNumericOp(l, r).fold(labels)(result => labels.update(label, result))
       case (Some(DateOperand(l)), Some(DateOperand(r))) =>
@@ -95,19 +110,32 @@ sealed trait Operation {
   }
 }
 
-case class AddOperation(left: String, right: String, label: String) extends Operation {
+case class AddOperation(left: String, right: String, label: String) extends Operation with TimePeriodArithmetic[LocalDate] {
+  //TODO add the override here
+  override def evalDateTimePeriod(date: LocalDate, period1: TimePeriod): Option[String] = Some(date.add(period1)())
+
   override def evalScalarCollectionOp(left: String, right: List[String]): Option[List[String]] = Some(left :: right)
+
   override def evalCollectionScalarOp(left: List[String], right: String): Option[List[String]] = Some((right :: left.reverse).reverse)
+
   override def evalCollectionCollectionOp(left: List[String], right: List[String]): Option[List[String]] = Some(left ::: right)
+
   override def evalNumericOp(left: BigDecimal, right: BigDecimal): Option[String] = Some((left + right).bigDecimal.toPlainString)
+
   override def evalStringOp(left: String, right: String): Option[String] = Some(left + right)
 }
 
 case class SubtractOperation(left: String, right: String, label: String) extends Operation {
+  //TODO add the override here
+  override def evalDateTimePeriod(date: LocalDate, period1: TimePeriod): Option[String] = ???
+
   override def evalCollectionScalarOp(left: List[String], right: String): Option[List[String]] = Some(left.filterNot(_ == right))
+
   override def evalCollectionCollectionOp(left: List[String], right: List[String]): Option[List[String]] = Some(left.filterNot(right.contains(_)))
+
   override def evalNumericOp(left: BigDecimal, right: BigDecimal): Option[String] = Some((left - right).bigDecimal.toPlainString)
-  override def evalDateOp(left: LocalDate, right: LocalDate): Option[String] =  Some(right.until(left, ChronoUnit.DAYS).toString)
+
+  override def evalDateOp(left: LocalDate, right: LocalDate): Option[String] = Some(right.until(left, ChronoUnit.DAYS).toString)
 }
 
 case class MultiplyOperation(left: String, right: String, label: String) extends Operation {
@@ -155,40 +183,44 @@ object Operation {
   }
 }
 
-object AddOperation{
+object AddOperation {
   implicit val reads: Reads[AddOperation] =
-    ((JsPath \ "left").read[String] and (JsPath \ "right").read[String] and (JsPath \ "label").read[String])(AddOperation.apply _)
+    ((JsPath \ "left").read[String] and (JsPath \ "right").read[String] and (JsPath \ "label").read[String]) (AddOperation.apply _)
   implicit val writes: OWrites[AddOperation] =
-    ((JsPath \ "left").write[String] and (JsPath \ "right").write[String] and (JsPath \ "label").write[String])(unlift(AddOperation.unapply))
+    ((JsPath \ "left").write[String] and (JsPath \ "right").write[String] and (JsPath \ "label").write[String]) (unlift(AddOperation.unapply))
 }
 
-object SubtractOperation{
+object SubtractOperation {
   implicit val reads: Reads[SubtractOperation] =
-    ((JsPath \ "left").read[String] and (JsPath \ "right").read[String] and (JsPath \ "label").read[String])(SubtractOperation.apply _)
+    ((JsPath \ "left").read[String] and (JsPath \ "right").read[String] and (JsPath \ "label").read[String]) (SubtractOperation.apply _)
   implicit val writes: OWrites[SubtractOperation] =
-    ((JsPath \ "left").write[String] and (JsPath \ "right").write[String] and (JsPath \ "label").write[String])(unlift(SubtractOperation.unapply))
+    ((JsPath \ "left").write[String] and (JsPath \ "right").write[String] and (JsPath \ "label").write[String]) (unlift(SubtractOperation.unapply))
 }
-object MultiplyOperation{
+
+object MultiplyOperation {
   implicit val reads: Reads[MultiplyOperation] =
-    ((JsPath \ "left").read[String] and (JsPath \ "right").read[String] and (JsPath \ "label").read[String])(MultiplyOperation.apply _)
+    ((JsPath \ "left").read[String] and (JsPath \ "right").read[String] and (JsPath \ "label").read[String]) (MultiplyOperation.apply _)
   implicit val writes: OWrites[MultiplyOperation] =
-    ((JsPath \ "left").write[String] and (JsPath \ "right").write[String] and (JsPath \ "label").write[String])(unlift(MultiplyOperation.unapply))
+    ((JsPath \ "left").write[String] and (JsPath \ "right").write[String] and (JsPath \ "label").write[String]) (unlift(MultiplyOperation.unapply))
 }
-object DivideOperation{
+
+object DivideOperation {
   implicit val reads: Reads[DivideOperation] =
-    ((JsPath \ "left").read[String] and (JsPath \ "right").read[String] and (JsPath \ "label").read[String])(DivideOperation.apply _)
+    ((JsPath \ "left").read[String] and (JsPath \ "right").read[String] and (JsPath \ "label").read[String]) (DivideOperation.apply _)
   implicit val writes: OWrites[DivideOperation] =
-    ((JsPath \ "left").write[String] and (JsPath \ "right").write[String] and (JsPath \ "label").write[String])(unlift(DivideOperation.unapply))
+    ((JsPath \ "left").write[String] and (JsPath \ "right").write[String] and (JsPath \ "label").write[String]) (unlift(DivideOperation.unapply))
 }
-object CeilingOperation{
+
+object CeilingOperation {
   implicit val reads: Reads[CeilingOperation] =
-    ((JsPath \ "left").read[String] and (JsPath \ "right").read[String] and (JsPath \ "label").read[String])(CeilingOperation.apply _)
+    ((JsPath \ "left").read[String] and (JsPath \ "right").read[String] and (JsPath \ "label").read[String]) (CeilingOperation.apply _)
   implicit val writes: OWrites[CeilingOperation] =
-    ((JsPath \ "left").write[String] and (JsPath \ "right").write[String] and (JsPath \ "label").write[String])(unlift(CeilingOperation.unapply))
+    ((JsPath \ "left").write[String] and (JsPath \ "right").write[String] and (JsPath \ "label").write[String]) (unlift(CeilingOperation.unapply))
 }
-object FloorOperation{
+
+object FloorOperation {
   implicit val reads: Reads[FloorOperation] =
-    ((JsPath \ "left").read[String] and (JsPath \ "right").read[String] and (JsPath \ "label").read[String])(FloorOperation.apply _)
+    ((JsPath \ "left").read[String] and (JsPath \ "right").read[String] and (JsPath \ "label").read[String]) (FloorOperation.apply _)
   implicit val writes: OWrites[FloorOperation] =
-    ((JsPath \ "left").write[String] and (JsPath \ "right").write[String] and (JsPath \ "label").write[String])(unlift(FloorOperation.unapply))
+    ((JsPath \ "left").write[String] and (JsPath \ "right").write[String] and (JsPath \ "label").write[String]) (unlift(FloorOperation.unapply))
 }
