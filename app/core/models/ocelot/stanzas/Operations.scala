@@ -27,6 +27,8 @@ import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import scala.math.BigDecimal.RoundingMode
 
+import TimePeriodSupport._
+
 sealed trait Operand[+A] {
   val v: A
 
@@ -85,8 +87,6 @@ sealed trait Operation {
 
   def eval(labels: Labels): Labels =
     (Operand(left, labels), Operand(right, labels)) match {
-      case (Some(DateOperand(l)), Some(TimePeriodOperand(r))) =>
-        evalDateTimePeriod(l,r).fold(labels)(result => labels.update(label, result))//TODO Add the new eval here
       case (Some(NumericOperand(l)), Some(NumericOperand(r))) =>
         evalNumericOp(l, r).fold(labels)(result => labels.update(label, result))
       case (Some(DateOperand(l)), Some(DateOperand(r))) =>
@@ -99,6 +99,8 @@ sealed trait Operation {
         evalCollectionScalarOp(l, r.toString).fold(labels)(result => labels.updateList(label, result))
       case (Some(l: Scalar[_]), Some(StringCollection(r))) =>
         evalScalarCollectionOp(l.toString, r).fold(labels)(result => labels.updateList(label, result))
+      case (Some(DateOperand(l)), Some(TimePeriodOperand(r))) =>
+        evalDateTimePeriod(l,r).fold(labels)(result => labels.update(label, result))//TODO Add the new eval here
       case (Some(l: Operand[_]), Some(r: Operand[_])) => // No typed op, fall back to String, String op
         evalStringOp(l.toString, r.toString).fold(labels)(result => labels.update(label, result))
       case _ => unsupported(); labels
@@ -110,31 +112,22 @@ sealed trait Operation {
   }
 }
 
-case class AddOperation(left: String, right: String, label: String) extends Operation with TimePeriodArithmetic[LocalDate] {
+case class AddOperation(left: String, right: String, label: String) extends Operation {
   //TODO add the override here
-  override def evalDateTimePeriod(date: LocalDate, period1: TimePeriod): Option[String] = Some(date.add(period1)())
-
+  override def evalDateTimePeriod(date: LocalDate, period1: TimePeriod): Option[String] = Some(stringFromDate(date.add(period1)))
   override def evalScalarCollectionOp(left: String, right: List[String]): Option[List[String]] = Some(left :: right)
-
   override def evalCollectionScalarOp(left: List[String], right: String): Option[List[String]] = Some((right :: left.reverse).reverse)
-
   override def evalCollectionCollectionOp(left: List[String], right: List[String]): Option[List[String]] = Some(left ::: right)
-
   override def evalNumericOp(left: BigDecimal, right: BigDecimal): Option[String] = Some((left + right).bigDecimal.toPlainString)
-
   override def evalStringOp(left: String, right: String): Option[String] = Some(left + right)
 }
 
 case class SubtractOperation(left: String, right: String, label: String) extends Operation {
   //TODO add the override here
   override def evalDateTimePeriod(date: LocalDate, period1: TimePeriod): Option[String] = ???
-
   override def evalCollectionScalarOp(left: List[String], right: String): Option[List[String]] = Some(left.filterNot(_ == right))
-
   override def evalCollectionCollectionOp(left: List[String], right: List[String]): Option[List[String]] = Some(left.filterNot(right.contains(_)))
-
   override def evalNumericOp(left: BigDecimal, right: BigDecimal): Option[String] = Some((left - right).bigDecimal.toPlainString)
-
   override def evalDateOp(left: LocalDate, right: LocalDate): Option[String] = Some(right.until(left, ChronoUnit.DAYS).toString)
 }
 

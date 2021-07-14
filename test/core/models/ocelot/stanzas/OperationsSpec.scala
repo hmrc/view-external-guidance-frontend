@@ -56,7 +56,7 @@ class OperationsSpec extends BaseSpec {
     "correctly add a time period to a date" in {
       val labels = AddOperation(stringFromDate(aDate),"4day","Answer").eval(LabelCache())
 
-      labels.value("Answer") shouldBe Some("16/2/2018")
+      labels.value("Answer") shouldBe Some("24/2/2018")
     }
     "correctly sum two numbers" in {
       val labels = AddOperation("32.76", "65.2", "Answer").eval(LabelCache())
