@@ -17,6 +17,7 @@
 package core.models.ocelot
 
 import base.BaseSpec
+import java.time.LocalDate
 
 class TimePeriodSpec extends BaseSpec {
 
@@ -37,5 +38,18 @@ class TimePeriodSpec extends BaseSpec {
     "not construct when the count digit length is greater than the digit length of Int.MaxValue" in {
       asTimePeriod("12345678901day") shouldBe None
     }
+  }
+
+  import TimePeriodSupport._
+
+  "TimePeriodSupport" must {
+    "Allow addition of TimePeriods to LocalDates" in {
+      LocalDate.of(1999, 12, 1).add(TimePeriod(1, Day)) shouldBe LocalDate.of(1999, 12, 2)
+    }
+
+    "Allow subtraction of TimePeriods to LocalDates" in {
+      LocalDate.of(1999, 12, 1).minus(TimePeriod(1, Day)) shouldBe LocalDate.of(1999, 11, 30)
+    }
+
   }
 }

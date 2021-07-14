@@ -16,6 +16,8 @@
 
 package core.models.ocelot
 
+import java.time.LocalDate
+
 trait TimeUnit
 
 case object Day extends TimeUnit
@@ -25,3 +27,36 @@ case object Year extends TimeUnit
 
 case class TimePeriod(value: Int, unit: TimeUnit)
 
+trait TimePeriodArithmetic[A] {
+  def add(value: A, tp: TimePeriod): A
+  def minus(value: A, tp: TimePeriod): A
+}
+
+object TimePeriodSupport {
+  implicit val dateArithmetic: TimePeriodArithmetic[LocalDate] =
+    new TimePeriodArithmetic[LocalDate]{
+      def add(value: LocalDate, tp: TimePeriod): LocalDate =
+        tp.unit match {
+          case Day => value.plusDays(tp.value)
+          case Week => value.plusWeeks(tp.value)
+          case Month => value.plusMonths(tp.value)
+          case Year => value.plusYears(tp.value)
+        }
+      def minus(value: LocalDate, tp: TimePeriod): LocalDate =
+        tp.unit match {
+          case Day => value.minusDays(tp.value)
+          case Week => value.minusWeeks(tp.value)
+          case Month => value.minusMonths(tp.value)
+          case Year => value.minusYears(tp.value)
+        }
+    }
+
+  // Interface
+  def add[A](value: A, tp: TimePeriod)(implicit a: TimePeriodArithmetic[A]): A = a.add(value, tp)
+  def minus[A](value: A, tp: TimePeriod)(implicit a: TimePeriodArithmetic[A]): A = a.minus(value, tp)
+  // Syntax
+  implicit class TimePeriodArithmeticOps[A](value: A) {
+    def add(tp: TimePeriod)(implicit a: TimePeriodArithmetic[A]): A = a.add(value, tp)
+    def minus(tp: TimePeriod)(implicit a: TimePeriodArithmetic[A]): A = a.minus(value, tp)
+  }
+}
