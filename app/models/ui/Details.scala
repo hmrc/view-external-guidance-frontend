@@ -16,6 +16,4 @@
 
 package models.ui
 
-case class Details(text: Text, additionalText: Seq[Text]) extends UIComponent
-
-case class ComplexDetails(text: Text, additionalTextComponents: Seq[Seq[Text]]) extends UIComponent
+case class Details(text: Text, disclosure: Seq[UIComponent]) extends UIComponent
