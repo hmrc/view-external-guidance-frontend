@@ -258,7 +258,7 @@ class DetailsSpec extends BaseSpec with ViewFns with ViewSpec with GuiceOneAppPe
       children.last.text shouldBe text2.asString
     }
 
-    "render a complex details component with three texts and two bullet point liost groups" in new Test {
+    "render a Details component with three texts and two bullet point liost groups" in new Test {
 
       val doc: Document = asDocument(components.details(details4)(fakeRequest, messages, page4Ctx))
 

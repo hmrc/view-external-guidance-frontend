@@ -1837,7 +1837,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
       }
     }
 
-    "convert a subSection callout followed by three note callouts into a complex details component with a bullet point list group" in new DetailsTest {
+    "convert a subSection callout followed by three note callouts into a Details component with a bullet point list group" in new DetailsTest {
 
       val p: models.ui.Page = uiBuilder.buildPage(
         "/start",
@@ -1866,7 +1866,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
       }
     }
 
-    "convert a SubSection callout followed by four note callouts into a complex details component with text and a bullet point list group" in new DetailsTest {
+    "convert a SubSection callout followed by four note callouts into a Details component with text and a bullet point list group" in new DetailsTest {
 
       val p: models.ui.Page = uiBuilder.buildPage(
         "/start",
@@ -1892,7 +1892,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
       }
     }
 
-    "convert a SubSection callout followed by four note callouts into a complex details component with bullet point group followed by text" in new DetailsTest {
+    "convert a SubSection callout followed by four note callouts into a Details component with bullet point group followed by text" in new DetailsTest {
 
       val p: models.ui.Page = uiBuilder.buildPage(
         "/start",
@@ -1953,7 +1953,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
       }
     }
 
-    "convert a subSection callout followed by three note callouts with labels into a complex details component with a bullet point list" in new DetailsTest {
+    "convert a subSection callout followed by three note callouts with labels into a Details component with a bullet point list" in new DetailsTest {
 
       val p: models.ui.Page = uiBuilder.buildPage(
         "/start",

@@ -114,7 +114,7 @@ class PageSpec extends WordSpec with Matchers with ViewSpec with ViewFns with Gu
     )
     var exclusiveSequencePage: FormPage = FormPage("/cars-you-like", exclusiveSequence)
 
-    // Complex details with single bullet point
+    // Details with single bullet point
     val caption: Text = Text("Title")
 
     val bpl1LeadingText: Text = Text("Choose your favourite sweets")
@@ -439,9 +439,9 @@ class PageSpec extends WordSpec with Matchers with ViewSpec with ViewFns with Gu
     }
   }
 
-  "complex details page" should {
+  "Details page" should {
 
-    "generate a complex details page with a single bullet point list" in new Test {
+    "generate a Details page with a single bullet point list" in new Test {
 
       val doc: Document = asDocument(standardPageView(detailsPage, detailsContext)(fakeRequest, messages))
 
