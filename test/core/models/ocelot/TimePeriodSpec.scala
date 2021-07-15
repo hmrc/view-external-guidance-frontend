@@ -21,6 +21,8 @@ import java.time.LocalDate
 
 class TimePeriodSpec extends BaseSpec {
 
+  val testDate : LocalDate = LocalDate.of(1999, 9, 10)
+
   "A TimePeriod instance" must {
     "construct from a number of days" in {
       asTimePeriod("23455day") shouldBe Some(TimePeriod(23455, Day))
@@ -43,12 +45,36 @@ class TimePeriodSpec extends BaseSpec {
   import TimePeriodSupport._
 
   "TimePeriodSupport" must {
-    "Allow addition of TimePeriods to LocalDates" in {
-      LocalDate.of(1999, 12, 1).add(TimePeriod(1, Day)) shouldBe LocalDate.of(1999, 12, 2)
+    "Allow addition of Days to LocalDates" in {
+      testDate.add(TimePeriod(1, Day)) shouldBe LocalDate.of(1999, 9, 11)
     }
 
-    "Allow subtraction of TimePeriods to LocalDates" in {
-      LocalDate.of(1999, 12, 1).minus(TimePeriod(1, Day)) shouldBe LocalDate.of(1999, 11, 30)
+    "Allow subtraction of Days to LocalDates" in {
+      testDate.minus(TimePeriod(1, Day)) shouldBe LocalDate.of(1999, 9, 9)
+    }
+
+    "Allow addition of Weeks to LocalDates" in {
+      testDate.add(TimePeriod(1, Week)) shouldBe LocalDate.of(1999, 9, 17)
+    }
+
+    "Allow subtraction of Weeks to LocalDates" in {
+      testDate.minus(TimePeriod(1, Week)) shouldBe LocalDate.of(1999, 9, 3)
+    }
+
+    "Allow addition of Months to LocalDates" in {
+      testDate.add(TimePeriod(1, Month)) shouldBe LocalDate.of(1999, 10, 10)
+    }
+
+    "Allow subtraction of Months to LocalDates" in {
+      testDate.minus(TimePeriod(1, Month)) shouldBe LocalDate.of(1999, 8, 10)
+    }
+
+    "Allow addition of Years to LocalDates" in {
+      testDate.add(TimePeriod(1, Year)) shouldBe LocalDate.of(2000, 9, 10)
+    }
+
+    "Allow subtraction of Years to LocalDates" in {
+      testDate.minus(TimePeriod(1, Year)) shouldBe LocalDate.of(1998, 9, 10)
     }
 
   }
