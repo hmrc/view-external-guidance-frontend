@@ -212,7 +212,7 @@ class OcelotPackageSpec extends BaseSpec {
 
       val optionText: String = "Other [exclusive][hint:Selection of this checkbox will cause the other checkboxes to be deselected]"
 
-      val optionMatch: Boolean = optionText contains exclusiveOptionPattern
+      optionText contains exclusiveOptionPattern
 
     }
 

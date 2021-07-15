@@ -52,36 +52,6 @@ object SequenceStanza {
     )(unlift(SequenceStanza.unapply))
 }
 
-trait SequenceLike extends VisualStanza with Populated with DataInput {
-  val text: Phrase
-  val options: Seq[Phrase]
-  val label: Option[String]
-  override val labelRefs: List[String] = labelReferences(text.english) ++ options.flatMap(a => labelReferences(a.english))
-  override val labels: List[String] = label.fold[List[String]](Nil)(l => List(l))
-
-  def eval(value: String, page: Page, labels: Labels): (Option[String], Labels) =
-    validInput(value).fold[(Option[String], Labels)]((None, labels)){checkedItems =>
-      asListOfPositiveInt(checkedItems).fold[(Option[String], Labels)]((None, labels)){checked => {
-        val chosenOptions: List[Phrase] = checked.flatMap(idx => options.lift(idx).fold[List[Phrase]](Nil)(p => List(p)))
-        // Collect any Evaluate stanzas following this Sequence for use when the Continuation is followed
-        val continuationStanzas: Map[String, Stanza] = page.keyedStanzas
-          .dropWhile{ks => ks.stanza match {
-              case s: Sequence => false
-              case _ => true
-            }
-          }
-          .drop(1)  // Drop the Sequence
-          .collect{case ks @ KeyedStanza(_, s: Stanza with Evaluate) => (ks.key, ks.stanza)}
-          .toMap
-        // push the flows and Continuation corresponding to the checked items, then
-        // nextFlow and redirect to the first flow (setting list and first flow label)
-        label.fold(labels)(l => labels.updateList(s"${l}_seq", chosenOptions.map(_.english), chosenOptions.map(_.welsh)))
-          .pushFlows(checked.flatMap(idx => next.lift(idx).fold[List[String]](Nil)(List(_))), next.last, label, chosenOptions, continuationStanzas)
-        }
-      }
-    }
-}
-
 object Sequence {
   def apply(s: SequenceStanza, text: Phrase, options: Seq[Phrase]): Sequence =
     Sequence(text, s.next, options, s.label, s.stack)
@@ -91,10 +61,35 @@ case class Sequence(text: Phrase,
                              override val next: Seq[String],
                              options: Seq[Phrase],
                              label: Option[String],
-                             stack: Boolean) extends SequenceLike {
+                             stack: Boolean) extends VisualStanza with Populated with DataInput {
+  override val labelRefs: List[String] = labelReferences(text.english) ++ options.flatMap(a => labelReferences(a.english))
+  override val labels: List[String] = label.fold[List[String]](Nil)(l => List(l))
+
   lazy val (exclusiveOptions: Seq[Phrase], nonExclusiveOptions: Seq[Phrase]) =
     options.partition{p => p.english.contains(exclusiveOptionPattern) &&
       p.welsh.contains(exclusiveOptionPattern)}
+
+  def eval(value: String, page: Page, labels: Labels): (Option[String], Labels) =
+    validInput(value).fold[(Option[String], Labels)]((None, labels)){checkedItems =>
+      asListOfPositiveInt(checkedItems).fold[(Option[String], Labels)]((None, labels)){checked => {
+        val chosenOptions: List[Phrase] = checked.flatMap(idx => options.lift(idx).fold[List[Phrase]](Nil)(p => List(p)))
+        // Collect any Evaluate stanzas following this Sequence for use when the Continuation is followed
+        val continuationStanzas: Map[String, Stanza] = page.keyedStanzas
+          .dropWhile{ks => ks.stanza match {
+            case s: Sequence => false
+            case _ => true
+          }
+          }
+          .drop(1)  // Drop the Sequence
+          .collect{case ks @ KeyedStanza(_, s: Stanza with Evaluate) => (ks.key, ks.stanza)}
+          .toMap
+        // push the flows and Continuation corresponding to the checked items, then
+        // nextFlow and redirect to the first flow (setting list and first flow label)
+        label.fold(labels)(l => labels.updateList(s"${l}_seq", chosenOptions.map(_.english), chosenOptions.map(_.welsh)))
+          .pushFlows(checked.flatMap(idx => next.lift(idx).fold[List[String]](Nil)(List(_))), next.last, label, chosenOptions, continuationStanzas)
+      }
+      }
+    }
 
   def validInput(value: String): Option[String] =
     asListOfPositiveInt(value).fold[Option[String]](None){l =>
