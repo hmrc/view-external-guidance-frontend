@@ -23,7 +23,7 @@ import play.api.inject.Injector
 import play.api.i18n.{Lang, Messages, MessagesApi}
 import play.api.test.FakeRequest
 import views.html._
-import forms.SubmittedListAnswerFormProvider
+import forms.binders._
 import models.PageContext
 import models.ui.{FormPage, H2, Paragraph, RequiredErrorMsg, ExclusiveSequence, NonExclusiveSequence, SubmittedListAnswer, Text}
 import core.models.ocelot.{LabelCache, Labels}
@@ -40,7 +40,7 @@ class SequenceSpec extends WordSpec with Matchers with ViewSpec with ViewFns wit
     private def injector: Injector = app.injector
 
     def messagesApi: MessagesApi = injector.instanceOf[MessagesApi]
-    def formProvider: SubmittedListAnswerFormProvider = injector.instanceOf[SubmittedListAnswerFormProvider]
+    val formProvider: StringListFormBinder = new StringListFormBinder()
 
     implicit def messages: Messages = messagesApi.preferred(Seq(Lang("en")))
 
@@ -181,7 +181,7 @@ class SequenceSpec extends WordSpec with Matchers with ViewSpec with ViewFns wit
     "render sequence title for sequence without body inside legend" in new Test {
 
       val doc: Document = asDocument(
-        components.sequence(sequenceWithoutHint, path, formProvider(path))
+        components.sequence(sequenceWithoutHint, path, formProvider.form(path))
         (fakeRequest, messages, pageWithoutHintCtx)
       )
 
@@ -201,7 +201,7 @@ class SequenceSpec extends WordSpec with Matchers with ViewSpec with ViewFns wit
     "render sequence hint for sequence when present" in new Test {
 
       val doc: Document = asDocument(
-        components.sequence(sequenceWithHint, path, formProvider(path))
+        components.sequence(sequenceWithHint, path, formProvider.form(path))
         (fakeRequest, messages, pageWithHintCtx)
       )
 
@@ -219,7 +219,7 @@ class SequenceSpec extends WordSpec with Matchers with ViewSpec with ViewFns wit
     "sequence with hint should include hint id in aria-describedBy on field set" in new Test {
 
       val doc: Document = asDocument(
-        components.sequence(sequenceWithHint, path, formProvider(path))
+        components.sequence(sequenceWithHint, path, formProvider.form(path))
         (fakeRequest, messages, pageWithHintCtx)
       )
 
@@ -233,7 +233,7 @@ class SequenceSpec extends WordSpec with Matchers with ViewSpec with ViewFns wit
     "render title for sequence with body outside legend" in new Test {
 
       val doc: Document = asDocument(
-        components.sequence(sequenceWithBody, path, formProvider(path))
+        components.sequence(sequenceWithBody, path, formProvider.form(path))
         (fakeRequest, messages, pageWithBodyCtx)
       )
 
@@ -271,7 +271,7 @@ class SequenceSpec extends WordSpec with Matchers with ViewSpec with ViewFns wit
     "render a checkbox for each sequence option" in new Test {
 
       val doc: Document = asDocument(
-        components.sequence(sequenceWithoutHint, path, formProvider(path))
+        components.sequence(sequenceWithoutHint, path, formProvider.form(path))
         (fakeRequest, messages, pageWithoutHintCtx)
       )
 
@@ -331,7 +331,7 @@ class SequenceSpec extends WordSpec with Matchers with ViewSpec with ViewFns wit
     "not render a paragraph element inside the field set of a non-exclusive sequence" in new Test {
 
       val doc: Document = asDocument(
-        components.sequence(sequenceWithoutHint, path, formProvider(path))
+        components.sequence(sequenceWithoutHint, path, formProvider.form(path))
       (fakeRequest, messages, pageWithoutHintCtx)
       )
 
@@ -344,7 +344,7 @@ class SequenceSpec extends WordSpec with Matchers with ViewSpec with ViewFns wit
 
     "render checkboxes as 'checked' when they have been selected" in new Test {
 
-      val form: Form[SubmittedListAnswer] = formProvider(path)
+      val form: Form[SubmittedListAnswer] = formProvider.form(path)
 
       val populatedForm: Form[SubmittedListAnswer] = form.fill(SubmittedListAnswer(List("0", "1")))
 
@@ -382,7 +382,7 @@ class SequenceSpec extends WordSpec with Matchers with ViewSpec with ViewFns wit
     "render an error message if an input error occurs" in new Test {
 
       val doc: Document = asDocument(
-        components.sequence(sequenceWithError, path, formProvider(path))
+        components.sequence(sequenceWithError, path, formProvider.form(path))
         (fakeRequest, messages, pageWithErrorCtx)
       )
 
@@ -414,7 +414,7 @@ class SequenceSpec extends WordSpec with Matchers with ViewSpec with ViewFns wit
     "render checkboxes with a dividing paragraph element for an exclusive sequence" in new Test {
 
       val doc: Document = asDocument(
-        components.sequence(exclusiveSequence, path, formProvider(path))
+        components.sequence(exclusiveSequence, path, formProvider.form(path))
         (fakeRequest, messages, pageWithExclusiveSequenceCtx)
       )
 

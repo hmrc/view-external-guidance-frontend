@@ -14,18 +14,12 @@
  * limitations under the License.
  */
 
-package models.ui
+package forms
 
-trait SubmittedAnswer {
-  val text: String
-}
+import play.api.data.Form
+import services.ErrorStrategy
+import models.ui.SubmittedAnswer
 
-case class SubmittedTextAnswer(text: String) extends SubmittedAnswer
-
-case class SubmittedDateAnswer(day: String, month: String, year: String) extends SubmittedAnswer {
-  override val text: String = day + "/" + month + "/" + year
-}
-
-case class SubmittedListAnswer(items: List[String]) extends SubmittedAnswer {
-  override val text: String = items.mkString(",")
+package object bindings {
+  type Binding = Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)]
 }

@@ -14,18 +14,12 @@
  * limitations under the License.
  */
 
-package models.ui
+package forms.bindings
 
-trait SubmittedAnswer {
-  val text: String
-}
+import play.api.mvc.Request
+import play.api.data.Form
 
-case class SubmittedTextAnswer(text: String) extends SubmittedAnswer
-
-case class SubmittedDateAnswer(day: String, month: String, year: String) extends SubmittedAnswer {
-  override val text: String = day + "/" + month + "/" + year
-}
-
-case class SubmittedListAnswer(items: List[String]) extends SubmittedAnswer {
-  override val text: String = items.mkString(",")
+trait FormBinding {
+  def bind(name: String)(implicit request: Request[_]): Binding
+  def populated(name: String, answer: Option[String]): Form[_]
 }
