@@ -105,7 +105,6 @@ sealed trait Operation {
 }
 
 case class AddOperation(left: String, right: String, label: String) extends Operation {
-  //TODO add the override here
   override def evalDateTimePeriod(date: LocalDate, period1: TimePeriod): Option[String] = Some(stringFromDate(date.add(period1)))
   override def evalScalarCollectionOp(left: String, right: List[String]): Option[List[String]] = Some(left :: right)
   override def evalCollectionScalarOp(left: List[String], right: String): Option[List[String]] = Some((right :: left.reverse).reverse)
@@ -115,7 +114,6 @@ case class AddOperation(left: String, right: String, label: String) extends Oper
 }
 
 case class SubtractOperation(left: String, right: String, label: String) extends Operation {
-  //TODO add the override here
   override def evalDateTimePeriod(date: LocalDate, period1: TimePeriod): Option[String] = Some(stringFromDate(date.minus(period1)))
   override def evalCollectionScalarOp(left: List[String], right: String): Option[List[String]] = Some(left.filterNot(_ == right))
   override def evalCollectionCollectionOp(left: List[String], right: List[String]): Option[List[String]] = Some(left.filterNot(right.contains(_)))
