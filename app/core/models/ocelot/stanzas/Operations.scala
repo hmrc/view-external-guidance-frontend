@@ -28,20 +28,15 @@ import scala.math.BigDecimal.RoundingMode
 
 sealed trait Operand[+A] {
   val v: A
-
   override def toString: String = v.toString
 }
 
 sealed trait Scalar[+A] extends Operand[A]
-
 sealed trait Collection[+A] extends Operand[List[A]]
 
 case class StringOperand(v: String) extends Scalar[String]
-
 case class NumericOperand(v: BigDecimal) extends Scalar[BigDecimal]
-
 case class StringCollection(v: List[String]) extends Collection[String]
-
 case class DateOperand(v: LocalDate) extends Scalar[LocalDate] {
   override def toString: String = stringFromDate(v)
 }
@@ -74,13 +69,13 @@ sealed trait Operation {
   val right: String
   val label: String
 
-  private[stanzas] def evalScalarCollectionOp(left: String, right: List[String]): Option[List[String]] = unsupported[List[String]]()
-  private[stanzas] def evalCollectionScalarOp(left: List[String], right: String): Option[List[String]] = unsupported[List[String]]()
-  private[stanzas] def evalCollectionCollectionOp(left: List[String], right: List[String]): Option[List[String]] = unsupported[List[String]]()
-  private[stanzas] def evalDateOp(left: LocalDate, right: LocalDate): Option[String] = unsupported[String]()
-  private[stanzas] def evalNumericOp(left: BigDecimal, right: BigDecimal): Option[String] = unsupported[String]()
-  private[stanzas] def evalStringOp(left: String, right: String): Option[String] = unsupported[String]()
-  private[stanzas] def evalDateTimePeriod(date: LocalDate, period1: TimePeriod): Option[String] = unsupported[String]()
+  private[stanzas] def evalScalarCollectionOp(l: String, r: List[String]): Option[List[String]] = unsupported(l, r)
+  private[stanzas] def evalCollectionScalarOp(l: List[String], r: String): Option[List[String]] = unsupported(l, r)
+  private[stanzas] def evalCollectionCollectionOp(l: List[String], r: List[String]): Option[List[String]] = unsupported(l, r)
+  private[stanzas] def evalDateOp(l: LocalDate, r: LocalDate): Option[String] = unsupported(l, r)
+  private[stanzas] def evalNumericOp(l: BigDecimal, r: BigDecimal): Option[String] = unsupported(l, r)
+  private[stanzas] def evalStringOp(l: String, r: String): Option[String] = unsupported(l, r)
+  private[stanzas] def evalDateTimePeriod(l: LocalDate, r: TimePeriod): Option[String] = unsupported(l, r)
 
   def eval(labels: Labels): Labels =
     (Operand(left, labels), Operand(right, labels)) match {
@@ -100,11 +95,11 @@ sealed trait Operation {
         evalDateTimePeriod(l,r).fold(labels)(result => labels.update(label, result))//TODO Add the new eval here
       case (Some(l: Operand[_]), Some(r: Operand[_])) => // No typed op, fall back to String, String op
         evalStringOp(l.toString, r.toString).fold(labels)(result => labels.update(label, result))
-      case _ => unsupported(); labels
+      case _ => unsupported("",""); labels
     }
 
-  protected def unsupported[A](): Option[A] = {
-    logger.error("Unsupported \"" + getClass.getSimpleName + "\" calculation stanza operation defined in guidance")
+  protected def unsupported[A, B, C](l: A, r: B): Option[C] = {
+    logger.error(s"Unsupported ${getClass.getSimpleName} calculation stanza operation defined in guidance. Evaluated Left $l, Right $r, Original Left $left, Right $right")
     None
   }
 }
