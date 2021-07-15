@@ -28,21 +28,21 @@ case object Year extends TimeUnit
 case class TimePeriod(value: Int, unit: TimeUnit)
 
 trait TimePeriodArithmetic[A] {
-  def add(value: A, tp: TimePeriod): A
-  def minus(value: A, tp: TimePeriod): A
+  def add(tp: TimePeriod)(value: A): A
+  def minus(tp: TimePeriod)(value: A): A
 }
 
 object TimePeriodSupport {
   implicit val dateArithmetic: TimePeriodArithmetic[LocalDate] =
     new TimePeriodArithmetic[LocalDate]{
-      def add(value: LocalDate, tp: TimePeriod): LocalDate =
+      def add(tp: TimePeriod)(value: LocalDate): LocalDate =
         tp.unit match {
           case Day => value.plusDays(tp.value)
           case Week => value.plusWeeks(tp.value)
           case Month => value.plusMonths(tp.value)
           case Year => value.plusYears(tp.value)
         }
-      def minus(value: LocalDate, tp: TimePeriod): LocalDate =
+      def minus(tp: TimePeriod)(value: LocalDate): LocalDate =
         tp.unit match {
           case Day => value.minusDays(tp.value)
           case Week => value.minusWeeks(tp.value)
@@ -53,7 +53,7 @@ object TimePeriodSupport {
 
   // Syntax
   implicit class TimePeriodArithmeticOps[A](value: A) {
-    def add(tp: TimePeriod)(implicit a: TimePeriodArithmetic[A]): A = a.add(value, tp)
-    def minus(tp: TimePeriod)(implicit a: TimePeriodArithmetic[A]): A = a.minus(value, tp)
+    def add(tp: TimePeriod)(implicit a: TimePeriodArithmetic[A]): A = a.add(tp)(value)
+    def minus(tp: TimePeriod)(implicit a: TimePeriodArithmetic[A]): A = a.minus(tp)(value)
   }
 }
