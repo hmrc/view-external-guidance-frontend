@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package forms.binders
+package forms.bindings
 
 import play.api.mvc._
 import play.api.data.Form
@@ -24,7 +24,7 @@ import models.ui.SubmittedTextAnswer
 import services.ValueMissingError
 import play.api.data.FormBinding.Implicits._
 
-class StringFormBinder extends TypedFormBinder {
+object StringBinding extends FormBinding {
   def bind(name: String)(implicit request: Request[_]): Binding =
     form(name).bindFromRequest().fold(fe => Left((fe, ValueMissingError)), fd => Right((form(name).fill(fd), fd)))
 

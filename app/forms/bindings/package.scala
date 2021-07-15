@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package forms.binders
+package forms
 
-import play.api.mvc._
 import play.api.data.Form
+import services.ErrorStrategy
+import models.ui.SubmittedAnswer
 
-trait TypedFormBinder {
-  def bind(name: String)(implicit request: Request[_]): Binding
-  def populated(name: String, answer: Option[String]): Form[_]
+package object bindings {
+  type Binding = Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)]
 }

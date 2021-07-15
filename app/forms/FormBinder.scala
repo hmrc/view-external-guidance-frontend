@@ -16,28 +16,20 @@
 
 package forms
 
-import forms.binders._
+import forms.bindings._
 import play.api.mvc._
 import play.api.data.Form
 import play.api.i18n.MessagesApi
 import core.models.ocelot.stanzas.{DateInput, DataInput, Input, Question, Sequence}
 
 class FormBinder(messagesApi: MessagesApi) {
-  val dateInputBinder: DateFormBinder = new DateFormBinder(messagesApi)
-  val stringInputBinder: StringFormBinder = new StringFormBinder
-  val stringListBinder: StringListFormBinder = new StringListFormBinder
+  lazy val dateBinding: FormBinding = new DateBinding(messagesApi)
 
-  def bind(input: DataInput, name: String)(implicit request: Request[_]): Binding =
-    input match {
-      case _: DateInput => dateInputBinder.bind(name)
-      case _: Input | _: Question => stringInputBinder.bind(name)
-      case _: Sequence => stringListBinder.bind(name)
-    }
-
-  def populated(input: DataInput, name: String, answer: Option[String]): Form[_] =
-    input match {
-      case _: DateInput => dateInputBinder.populated(name, answer)
-      case _: Input | _: Question => stringInputBinder.populated(name, answer)
-      case _: Sequence => stringListBinder.populated(name, answer)
+  def bind(input: DataInput, name: String)(implicit request: Request[_]): Binding = binding(input).bind(name)
+  def populated(input: DataInput, name: String, answer: Option[String]): Form[_] = binding(input).populated(name, answer)
+  def binding(input: DataInput): FormBinding = input match {
+      case _: DateInput => dateBinding
+      case _: Input | _: Question => StringBinding
+      case _: Sequence => StringListBinding
     }
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package forms.binders
+package forms.bindings
 
 import play.api.mvc._
 import play.api.data.Form
@@ -26,7 +26,7 @@ import models.ui.SubmittedDateAnswer
 import services.ValueMissingGroupError
 import play.api.data.FormBinding.Implicits._
 
-class DateFormBinder(messagesApi: MessagesApi) extends TypedFormBinder {
+class DateBinding(messagesApi: MessagesApi) extends FormBinding {
   val inputDateRegex: Regex = "(.+?)\\/(.+?)\\/(.+?)$".r
 
   val form: Form[SubmittedDateAnswer] =
