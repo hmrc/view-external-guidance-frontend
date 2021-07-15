@@ -38,7 +38,7 @@ class StartGuidanceController @Inject() (
 ) extends FrontendController(mcc)
     with I18nSupport {
 
-  val logger = Logger(getClass)
+  val logger: Logger = Logger(getClass)
 
   def scratch(uuid: String): Action[AnyContent] = Action.async { implicit request =>
     logger.info(s"Starting scratch journey")
@@ -69,7 +69,7 @@ class StartGuidanceController @Inject() (
       case Right((url, processCode)) =>
         val target = controllers.routes.GuidanceController.getPage(processCode, url.drop(1), None).url
         logger.debug(s"Redirecting to begin viewing process $id/$processCode at ${target} using sessionId $sessionId, EG_NEW_SESSIONID = $egNewSessionId")
-        egNewSessionId.fold(Redirect(target))(newId => Redirect(target).addingToSession((sessionIdAction.EgNewSessionIdName -> newId)))
+        egNewSessionId.fold(Redirect(target))(newId => Redirect(target).addingToSession(sessionIdAction.EgNewSessionIdName -> newId))
       case Left(NotFoundError) =>
         logger.warn(s"Unable to find process $id and render using sessionId $sessionId")
         NotFound(errorHandler.notFoundTemplate)

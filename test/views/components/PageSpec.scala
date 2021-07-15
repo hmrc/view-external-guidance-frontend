@@ -24,7 +24,7 @@ import play.api.i18n.{Lang, Messages, MessagesApi}
 import play.api.test.FakeRequest
 import forms.binders._
 import models.PageContext
-import models.ui.{Answer, BulletPointList, ComplexDetails, ConfirmationPanel, CurrencyInput, CyaSummaryList}
+import models.ui.{Answer, BulletPointList, Details, ConfirmationPanel, CurrencyInput, CyaSummaryList}
 import models.ui.{ExclusiveSequence, FormPage, H1, InsetText, NonExclusiveSequence, NumberedCircleList, NumberedList}
 import models.ui.{Paragraph, Question, RequiredErrorMsg, StandardPage, Text, WarningText}
 import org.jsoup.nodes.{Document, Element}
@@ -115,7 +115,7 @@ class PageSpec extends WordSpec with Matchers with ViewSpec with ViewFns with Gu
     )
     var exclusiveSequencePage: FormPage = FormPage("/cars-you-like", exclusiveSequence)
 
-    // Complex details with single bullet point
+    // Details with single bullet point
     val caption: Text = Text("Title")
 
     val bpl1LeadingText: Text = Text("Choose your favourite sweets")
@@ -125,15 +125,15 @@ class PageSpec extends WordSpec with Matchers with ViewSpec with ViewFns with Gu
     val bpl1ListItem3: Text = Text("Fruit pastilles")
 
     val bpl1TextGroup1: Seq[Text] = Seq(
-      bpl1LeadingText,
       bpl1ListItem1,
       bpl1ListItem2,
       bpl1ListItem3
     )
+    val bpList1 = BulletPointList(bpl1LeadingText, bpl1TextGroup1)
 
-    val complexDetails: ComplexDetails = ComplexDetails(caption, Seq(bpl1TextGroup1))
+    val details: Details = Details(caption, Seq(bpList1))
 
-    val complexDetailsPage: StandardPage = StandardPage("/complex-details-page", Seq(complexDetails))
+    val detailsPage: StandardPage = StandardPage("/complex-details-page", Seq(details))
 
     def expectedTitleText(h1Text: String, section: Option[String] = None): String =
       section.fold(s"${h1Text} – ${messages("service.name")} – ${messages("service.govuk")}"){s =>
@@ -171,12 +171,12 @@ class PageSpec extends WordSpec with Matchers with ViewSpec with ViewFns with Gu
       "processId",
       "processCode"
     )
-    val complexDetailsContext: PageContext = PageContext(
-      complexDetailsPage,
+    val detailsContext: PageContext = PageContext(
+      detailsPage,
       Seq.empty,
       None,
       "sessionId",
-      Some("/complexDetails"),
+      Some("/details"),
       Text(),
       "processId",
       "processCode"
@@ -440,23 +440,23 @@ class PageSpec extends WordSpec with Matchers with ViewSpec with ViewFns with Gu
     }
   }
 
-  "complex details page" should {
+  "Details page" should {
 
-    "generate a complex details page with a single bullet point list" in new Test {
+    "generate a Details page with a single bullet point list" in new Test {
 
-      val doc: Document = asDocument(standardPageView(complexDetailsPage, complexDetailsContext)(fakeRequest, messages))
+      val doc: Document = asDocument(standardPageView(detailsPage, detailsContext)(fakeRequest, messages))
 
-      val details: Elements = doc.getElementsByTag("details")
+      val detailsElements: Elements = doc.getElementsByTag("details")
 
-      details.size shouldBe 1
+      detailsElements.size shouldBe 1
 
-      val summaries: Elements = details.first.getElementsByTag("summary")
+      val summaries: Elements = detailsElements.first.getElementsByTag("summary")
 
       summaries.size shouldBe 1
 
       summaries.text() shouldBe caption.asString
 
-      val divs: Elements = details.first.getElementsByTag("div")
+      val divs: Elements = detailsElements.first.getElementsByTag("div")
 
       divs.size shouldBe 1
 

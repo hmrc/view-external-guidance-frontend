@@ -64,7 +64,7 @@ class RenderComponentsSpec extends ViewSpec with ViewFns with GuiceOneAppPerSuit
     }
 
     "generate a Details section when required" in new Test {
-      val details: Details = Details(Text("Detail header"), Seq(Text("hidden text")))
+      val details: Details = Details(Text("Detail header"), Seq(Paragraph(Text("hidden text"))))
       val html: Html = components.render_components(Seq(details))
       val detailsSection: Element = getSingleElementByTag(html, "details")
 
