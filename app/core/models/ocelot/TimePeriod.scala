@@ -51,9 +51,6 @@ object TimePeriodSupport {
         }
     }
 
-  // Interface
-  def add[A](value: A, tp: TimePeriod)(implicit a: TimePeriodArithmetic[A]): A = a.add(value, tp)
-  def minus[A](value: A, tp: TimePeriod)(implicit a: TimePeriodArithmetic[A]): A = a.minus(value, tp)
   // Syntax
   implicit class TimePeriodArithmeticOps[A](value: A) {
     def add(tp: TimePeriod)(implicit a: TimePeriodArithmetic[A]): A = a.add(value, tp)
