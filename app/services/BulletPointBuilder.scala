@@ -59,8 +59,7 @@ object BulletPointBuilder {
 
   private[services] def matchPhrases(p1: Phrase, p2: Phrase): Boolean = {
     def breakMatch(text1: String, text2: String): Boolean =
-      if (text1 == text2) false
-      else (text1.indexOf(Break), text2.indexOf(Break)) match {
+      (text1.indexOf(Break), text2.indexOf(Break)) match {
         case (idx1, idx2) if idx1 <= 0 || idx2 <= 0 => false
         case (idx1, idx2) if idx1 == idx2 => text1.take(idx1) == text2.take(idx2)
         case _ => false
@@ -69,23 +68,16 @@ object BulletPointBuilder {
     def standardMatch(text1: String, text2: String, matchLimit: Int): Boolean = partialMatchText(text1, text2)._1.size >= matchLimit
 
     // If any text component of the two phrases contains the break marker apply break matching
-    if(useBreakMatch(p1, p2)) breakMatch(p1.english, p2.english) && breakMatch(p1.welsh, p2.welsh)
+    if (p1.equals(p2)) false
+    else if(useBreakMatch(p1, p2)) breakMatch(p1.english, p2.english) && breakMatch(p1.welsh, p2.welsh)
     else standardMatch(p1.english, p2.english, MatchLimitEnglish) && standardMatch(p1.welsh, p2.welsh, MatchLimitWelsh)
   }
 
   private[services] def useBreakMatch(p1: Phrase, p2: Phrase): Boolean =
     p1.english.contains(Break) || p1.welsh.contains(Break) || p2.english.contains(Break) || p2.welsh.contains(Break)
 
-  private def partialMatchText(text1: String, text2: String): (List[String], List[TextBuilder.Fragment]) = {
-    // Break text into fragments, then match
-    val fragments1: List[TextBuilder.Fragment] = TextBuilder.fragment(text1)
-    val fragments2: List[TextBuilder.Fragment] = TextBuilder.fragment(text2)
-    val (matchedItems: List[String], matchedFragments: List[TextBuilder.Fragment]) = TextBuilder.matchFragments(fragments1, fragments2)
-    val text1tokens: List[String] = TextBuilder.flattenFragments(fragments1)
-    val text2tokens: List[String] = TextBuilder.flattenFragments(fragments2)
-    // If the matched token length is less than both of the token lengths of the original texts return the match, nothing otherwise
-    if (matchedItems.size >= Math.min(text1tokens.size, text2tokens.size)) (Nil, Nil) else (matchedItems, matchedFragments)
-  }
+  private def partialMatchText(text1: String, text2: String): (List[String], List[TextBuilder.Fragment]) =
+    TextBuilder.matchFragments(TextBuilder.fragment(text1), TextBuilder.fragment(text2))
 
   private[services] final def groupMatchingPhrases(phrases: Seq[Phrase]): List[List[Phrase]] =
     phrases.foldRight[List[List[Phrase]]](Nil){ (p, acc) =>
