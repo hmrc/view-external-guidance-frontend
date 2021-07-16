@@ -16,18 +16,11 @@
 
 package models.ui
 
-case class NonExclusiveSequence(text: Text,
-                                hint: Option[Text],
-                                options: Seq[Text],
-                                body: Seq[UIComponent],
-                                errorMsgs: Seq[ErrorMsg])
-  extends NonExclusiveSequenceFormComponent
+case class SequenceAnswer(text: Text, hint: Option[Text]) extends UIComponent
 
-case class ExclusiveSequence(text: Text,
-                             hint: Option[Text],
-                             options: Seq[Text],
-                             exclusiveOption: Text,
-                             exclusiveOptionHint: Option[Text],
-                             body: Seq[UIComponent],
-                             errorMsgs: Seq[ErrorMsg]
-                            ) extends ExclusiveSequenceFormComponent
+case class Sequence(text: Text,
+                    hint: Option[Text],
+                    options: Seq[SequenceAnswer],
+                    exclusiveOption: Option[SequenceAnswer] = None,
+                    body: Seq[UIComponent],
+                    errorMsgs: Seq[ErrorMsg]) extends FormComponent

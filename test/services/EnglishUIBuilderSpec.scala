@@ -19,7 +19,6 @@ package services
 import play.api.inject.Injector
 import play.api.i18n.MessagesApi
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-
 import core.services._
 import base.{BaseSpec, EnglishLanguage}
 import core.models.ocelot._
@@ -27,8 +26,8 @@ import core.models.ocelot.stanzas._
 import models.ocelot.stanzas._
 import models.PageDesc
 import models.ui
-import models.ui.{BulletPointList, ConfirmationPanel, CyaSummaryList, Details, ErrorMsg, FormPage, H1, H3, H4}
-import models.ui.{InsetText, Link, Paragraph, RequiredErrorMsg, ExclusiveSequenceFormComponent, NonExclusiveSequenceFormComponent, Table, Text, WarningText, Words}
+import models.ui.{BulletPointList, ConfirmationPanel, CyaSummaryList, Details, ErrorMsg, FormPage, H1, H3, H4, Sequence => UISequence}
+import models.ui.{InsetText, Link, Paragraph, RequiredErrorMsg, Table, Text, WarningText, Words}
 
 class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguage with GuiceOneAppPerSuite {
   implicit val labels: Labels = LabelCache()
@@ -2163,8 +2162,8 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
         )
       )
 
-      val nonExclusiveSequence = core.models.ocelot.stanzas.NonExclusiveSequence(textPhrase, next, optionsPhrases, None, stack = false)
-      val nonExclusiveSequenceWithHint = core.models.ocelot.stanzas.NonExclusiveSequence(textPhraseWithHint, next, optionsPhrases, None, stack = false)
+      val nonExclusiveSequence = core.models.ocelot.stanzas.Sequence(textPhrase, next, optionsPhrases, None, stack = false)
+      val nonExclusiveSequenceWithHint = core.models.ocelot.stanzas.Sequence(textPhraseWithHint, next, optionsPhrases, None, stack = false)
 
       val page: Page = Page(Process.StartStanzaId, "/start", stanzas :+ KeyedStanza("4", nonExclusiveSequence), Seq.empty)
       val pageWithHint: Page = Page(Process.StartStanzaId, "/start", stanzas :+ KeyedStanza("4", nonExclusiveSequenceWithHint), Seq.empty)
@@ -2182,11 +2181,11 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
       uiPage match {
         case f: FormPage if(f.formComponent.errorMsgs.isEmpty) =>
           f.formComponent match {
-            case s: NonExclusiveSequenceFormComponent =>
+            case s: UISequence =>
               s.text.asString shouldBe "Select type of bee"
               s.options.size shouldBe 2
-              s.options.head.asString shouldBe "Drone"
-              s.options.last.asString shouldBe "Worker"
+              s.options.head.text.asString shouldBe "Drone"
+              s.options.last.text.asString shouldBe "Worker"
               s.body.size shouldBe 2
               s.body.head match {
                 case h3: H3 => h3.text.asString shouldBe "Questions about bees"
@@ -2214,7 +2213,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
       uiPageWithHint match {
         case f: FormPage =>
           f.formComponent match {
-            case s: NonExclusiveSequenceFormComponent =>
+            case s: UISequence =>
               s.text.asString shouldBe "Select type of bee"
               s.hint match {
                 case Some(value) => value.asString shouldBe "For example Worker or Drone"
@@ -2238,7 +2237,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
       uiPage match {
         case f: FormPage if(f.formComponent.errorMsgs.nonEmpty) =>
           f.formComponent match {
-            case s: NonExclusiveSequenceFormComponent =>
+            case s: UISequence =>
               s.errorMsgs.size shouldBe 1
               s.errorMsgs.head match {
                 case r: RequiredErrorMsg => r.text.asString shouldBe "You must select a type of bee"
@@ -2280,8 +2279,8 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
         Phrase(Vector("Drone", "Welsh: Drone")),
         Phrase(Vector("Worker", "Welsh: Worker")),
         Phrase(Vector(
-          "Queen [exclusive:Selecting this checkbox will deselect the other checkboxes]",
-          "Welsh: Queen [exclusive:Welsh: Selecting this checkbox will deselect the other checkboxes]"
+          "Queen [exclusive][hint:Selecting this checkbox will deselect the other checkboxes]",
+          "Welsh: Queen [exclusive][hint:Welsh: Selecting this checkbox will deselect the other checkboxes]"
         ))
       )
 
@@ -2313,8 +2312,8 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
         )
       )
 
-      val exclusiveSequence = core.models.ocelot.stanzas.ExclusiveSequence(textPhrase, next, optionsPhrases, None, stack = false)
-      val exclusiveSequenceWithHint = core.models.ocelot.stanzas.ExclusiveSequence(textPhraseWithHint, next, optionsPhrases, None, stack = false)
+      val exclusiveSequence = core.models.ocelot.stanzas.Sequence(textPhrase, next, optionsPhrases, None, stack = false)
+      val exclusiveSequenceWithHint = core.models.ocelot.stanzas.Sequence(textPhraseWithHint, next, optionsPhrases, None, stack = false)
 
       val page: Page = Page(Process.StartStanzaId, "/start", stanzas :+ KeyedStanza("4", exclusiveSequence), Seq.empty)
       val pageWithHint: Page = Page(Process.StartStanzaId, "/start", stanzas :+ KeyedStanza("4", exclusiveSequenceWithHint), Seq.empty)
@@ -2332,12 +2331,12 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
       uiPage match {
         case f: FormPage if(f.formComponent.errorMsgs.isEmpty) =>
           f.formComponent match {
-            case s: ExclusiveSequenceFormComponent =>
+            case s: UISequence =>
               s.text.asString shouldBe "Select type of bee"
               s.options.size shouldBe 2
-              s.options.head.asString shouldBe "Drone"
-              s.options.last.asString shouldBe "Worker"
-              s.exclusiveOption.asString shouldBe "Queen"
+              s.options.head.text.asString shouldBe "Drone"
+              s.options.last.text.asString shouldBe "Worker"
+              s.exclusiveOption.get.text.asString shouldBe "Queen"
               s.body.size shouldBe 2
               s.body.head match {
                 case h3: H3 => h3.text.asString shouldBe "Questions about bees"
@@ -2365,7 +2364,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
       uiPageWithHint match {
         case f: FormPage =>
           f.formComponent match {
-            case s: ExclusiveSequenceFormComponent =>
+            case s: UISequence =>
               s.text.asString shouldBe "Select type of bee"
               s.hint match {
                 case Some(value) => value.asString shouldBe "For example Worker or Drone"
@@ -2389,7 +2388,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
       uiPage match {
         case f: FormPage if(f.formComponent.errorMsgs.nonEmpty) =>
           f.formComponent match {
-            case s: ExclusiveSequenceFormComponent =>
+            case s: UISequence =>
               s.errorMsgs.size shouldBe 1
               s.errorMsgs.head match {
                 case r: RequiredErrorMsg => r.text.asString shouldBe "You must select a type of bee"

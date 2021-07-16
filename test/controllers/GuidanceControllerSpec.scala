@@ -31,9 +31,9 @@ import play.api.test.Helpers.stubMessagesControllerComponents
 import uk.gov.hmrc.http.SessionKeys
 import models.{PageContext, PageDesc, PageNext, ProcessContext, PageEvaluationContext}
 import core.models.ocelot.{KeyedStanza, Labels, Page, Phrase, Process, Meta, ProcessJson}
-import core.models.ocelot.stanzas.{CurrencyInput, DateInput, ExclusiveSequence, NonExclusiveSequence, Question, _}
-import models.ui
+import core.models.ocelot.stanzas.{CurrencyInput, DateInput, Question, Sequence => SequenceStanza, _}
 import models.ui._
+import models.ui
 import play.api.test.CSRFTokenHelper._
 import play.api.data.FormError
 import core.models.errors._
@@ -94,7 +94,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
     val questionStanza: Question = Question(Phrase("Which?","Which?"), Seq(Phrase("yes","yes"),Phrase("no","no")), Seq("4","5"), None, false)
     val currencyInputStanza: CurrencyInput = CurrencyInput(Seq("4"),Phrase("",""), None, "PRICE", None, false)
     val dateInputStanza: DateInput = DateInput(Seq("4"),Phrase("",""), None, "Date of birth?", None, false)
-    val nonExclusiveSequence: NonExclusiveSequence = NonExclusiveSequence(
+    val nonExclusiveSequence: SequenceStanza = SequenceStanza(
       Phrase("Select a working day of the week", "Welsh: Select a working day of the week"),
       Seq("10", "20", "30", "40", "50", "60"),
       Seq(
@@ -107,7 +107,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
       None,
       stack = false
     )
-    val exclusiveSequence: ExclusiveSequence = ExclusiveSequence(
+    val exclusiveSequence: SequenceStanza = SequenceStanza(
       Phrase("Select a holiday destination", "Welsh: Select a holiday destination"),
       Seq("10", "20", "30", "40", "50", "60"),
       Seq(
@@ -116,8 +116,8 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
         Phrase("Americas", "Welsh: Americas"),
         Phrase("Asia", "Welsh: Asia"),
         Phrase(
-          "Elsewhere [exclusive:Selecting this checkbox will deselect the other checkboxes]",
-          "Welsh: Elsewhere [exclusive:Welsh: Selecting this checkbox will deselect the other checkboxes]")
+          "Elsewhere [exclusive][hint:Selecting this checkbox will deselect the other checkboxes]",
+          "Welsh: Elsewhere [exclusive][hint:Welsh: Selecting this checkbox will deselect the other checkboxes]")
       ),
       None,
       stack = false
@@ -1543,16 +1543,17 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
 
       override lazy val expectedPage: ui.Page = FormPage(
         path,
-        ui.NonExclusiveSequence(
+        ui.Sequence(
           Text("Select a working day of the week"),
           None,
           Seq(
-            Text("Monday"),
-            Text("Tuesday"),
-            Text("Wednesday"),
-            Text("Thursday"),
-            Text("Friday")
+            SequenceAnswer(Text("Monday"), None),
+            SequenceAnswer(Text("Tuesday"), None),
+            SequenceAnswer(Text("Wednesday"), None),
+            SequenceAnswer(Text("Thursday"), None),
+            SequenceAnswer(Text("Friday"), None)
           ),
+          None,
           Seq(Paragraph(Text("When did you go into work?"))),
           Seq.empty
         )
@@ -1745,17 +1746,16 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
 
       override lazy val expectedPage: ui.Page = FormPage(
         path,
-        ui.ExclusiveSequence(
+        ui.Sequence(
           Text("Select a holiday destination"),
           None,
           Seq(
-            Text("Europe"),
-            Text("Africa"),
-            Text("Americas"),
-            Text("Asia")
+            SequenceAnswer(Text("Europe"), None),
+            SequenceAnswer(Text("Africa"), None),
+            SequenceAnswer(Text("Americas"), None),
+            SequenceAnswer(Text("Asia"), None)
           ),
-          Text("Elsewhere"),
-          Some(Text("Selecting this option will deselect all the other checkboxes")),
+          Some(SequenceAnswer(Text("Elsewhere"), Some(Text("Selecting this option will deselect all the other checkboxes")))),
           Seq(Paragraph(Text("When did you go into work?"))),
           Seq.empty
         )

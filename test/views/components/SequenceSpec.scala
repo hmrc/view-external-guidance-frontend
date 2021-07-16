@@ -25,11 +25,10 @@ import play.api.test.FakeRequest
 import views.html._
 import forms.SubmittedListAnswerFormProvider
 import models.PageContext
-import models.ui.{FormPage, H2, Paragraph, RequiredErrorMsg, ExclusiveSequence, NonExclusiveSequence, SubmittedListAnswer, Text}
+import models.ui.{FormPage, H2, Paragraph, RequiredErrorMsg, Sequence, SequenceAnswer, SubmittedListAnswer, Text}
 import core.models.ocelot.{LabelCache, Labels}
 import org.jsoup.nodes.{Document, Element}
 import org.jsoup.select.Elements
-
 import base.{ViewFns, ViewSpec}
 
 import scala.collection.JavaConverters._
@@ -53,58 +52,78 @@ class SequenceSpec extends WordSpec with Matchers with ViewSpec with ViewFns wit
     // Create test sequence data
     val sequenceTitle: Text = Text("Select your favourite sweets")
     val sequenceHint: Text = Text("Consider both chocolate and sugar style sweets")
-    val sweetOptions: Seq[Text] = Seq(Text("Wine gums"), Text("Munchies"))
+    val sweetOptions = Seq(
+      SequenceAnswer(Text("Wine gums"), None),
+      SequenceAnswer(Text("Munchies"), None)
+    )
+    val sweetOptionsOneOptionHint = Seq(
+      SequenceAnswer(Text("Wine gums"), None),
+      SequenceAnswer(Text("Munchies"), Some(Text("Munchies are chocolatey")))
+    )
     val errorMsg: RequiredErrorMsg = RequiredErrorMsg(Text("An input error has occurred"))
 
-    val exclusiveSequenceTitle: Text = Text("Where are you going on your holidays?")
-    val holidayOptions: Seq[Text] = Seq(
-      Text("The UK"),
-      Text("Europe")
-    )
     val exclusiveHolidayOption: Text = Text("Elsewhere")
     val exclusiveHint: Text = Text("Selecting this option will deselect all the other checkboxes")
+    val exclusiveSequenceTitle: Text = Text("Where are you going on your holidays?")
+    val holidayOptions = Seq(
+      SequenceAnswer(Text("The UK"), None),
+      SequenceAnswer(Text("Europe"), None)
+    )
+    val exclusiveHolidayAnswer: SequenceAnswer = SequenceAnswer(exclusiveHolidayOption, Some(exclusiveHint))
 
     val h2: H2 = H2(Text("Subtitle"))
     val p: Paragraph = Paragraph(Text("Introduction to sweets"))
 
-    val sequenceWithoutHint: NonExclusiveSequence = NonExclusiveSequence(
+    val sequenceWithoutHint: Sequence = Sequence(
       sequenceTitle,
       None,
       sweetOptions,
+      None,
       Seq.empty,
       Seq.empty
     )
 
-    val sequenceWithHint: NonExclusiveSequence = NonExclusiveSequence(
+    val sequenceWithoutHintButOptionWithHint: Sequence = Sequence(
+      sequenceTitle,
+      None,
+      sweetOptionsOneOptionHint,
+      None,
+      Seq.empty,
+      Seq.empty
+    )
+
+    val sequenceWithHint: Sequence = Sequence(
       sequenceTitle,
       Some(sequenceHint),
       sweetOptions,
+      None,
       Seq.empty,
       Seq.empty
     )
 
-    val sequenceWithBody: NonExclusiveSequence = NonExclusiveSequence(
+    val sequenceWithBody: Sequence = Sequence(
       sequenceTitle,
       None,
       sweetOptions,
+      None,
       Seq(h2, p),
       Seq.empty
     )
 
-    val sequenceWithError: NonExclusiveSequence = NonExclusiveSequence(
+    val sequenceWithError: Sequence = Sequence(
       sequenceTitle,
       None,
       sweetOptions,
+      None,
       Seq.empty,
       Seq(errorMsg)
     )
 
-    val exclusiveSequence: ExclusiveSequence = ExclusiveSequence(
+    val exclusiveSequence: Sequence = Sequence(
       exclusiveSequenceTitle,
       None,
       holidayOptions,
-      exclusiveHolidayOption,
-      Some(exclusiveHint),
+      Some(exclusiveHolidayAnswer),
       Seq(h2, p),
       Seq.empty
     )
@@ -271,7 +290,7 @@ class SequenceSpec extends WordSpec with Matchers with ViewSpec with ViewFns wit
     "render a checkbox for each sequence option" in new Test {
 
       val doc: Document = asDocument(
-        components.sequence(sequenceWithoutHint, path, formProvider(path))
+        components.sequence(sequenceWithoutHintButOptionWithHint, path, formProvider(path))
         (fakeRequest, messages, pageWithoutHintCtx)
       )
 
@@ -313,19 +332,23 @@ class SequenceSpec extends WordSpec with Matchers with ViewSpec with ViewFns wit
 
       checkbox2Labels.size shouldBe 1
 
+      val checkbox2Hints: Elements = checkboxDivs.last.getElementsByClass("govuk-checkboxes__hint")
+
+      checkbox2Hints.size shouldBe 1
+
       val checkbox2LabelAttrs: Map[String, String] = elementAttrs(checkbox2Labels.first)
 
       checkbox1InputAttrs("id") shouldBe "path-0"
       checkbox1InputAttrs("name") shouldBe "path[0]"
       checkbox1InputAttrs("value") shouldBe "0"
       checkbox1LabelAttrs("for") shouldBe "path-0"
-      checkbox1Labels.first.text() shouldBe sweetOptions.head.asString
+      checkbox1Labels.first.text() shouldBe sweetOptions.head.text.asString
 
       checkbox2InputAttrs("id") shouldBe "path-1"
       checkbox2InputAttrs("name") shouldBe "path[1]"
       checkbox2InputAttrs("value") shouldBe "1"
       checkbox2LabelAttrs("for") shouldBe "path-1"
-      checkbox2Labels.first.text shouldBe sweetOptions.last.asString
+      checkbox2Labels.first.text shouldBe sweetOptions.last.text.asString
     }
 
     "not render a paragraph element inside the field set of a non-exclusive sequence" in new Test {

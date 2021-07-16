@@ -16,22 +16,22 @@
 
 package views.components
 
+import base.{ViewFns, ViewSpec}
 import org.scalatest.{Matchers, WordSpec}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.data.Forms.nonEmptyText
-import play.api.inject.Injector
 import play.api.i18n.{Lang, Messages, MessagesApi}
+import play.api.inject.Injector
 import play.api.test.FakeRequest
 import forms.{SubmittedListAnswerFormProvider, SubmittedTextAnswerFormProvider}
 import models.PageContext
 import models.ui.{Answer, BulletPointList, Details, ConfirmationPanel, CurrencyInput, CyaSummaryList}
-import models.ui.{ExclusiveSequence, FormPage, H1, InsetText, NonExclusiveSequence, NumberedCircleList, NumberedList}
+import models.ui.{FormPage, H1, InsetText, NumberedCircleList, NumberedList, Sequence, SequenceAnswer}
 import models.ui.{Paragraph, Question, RequiredErrorMsg, StandardPage, Text, WarningText}
 import org.jsoup.nodes.{Document, Element}
 import org.jsoup.select.Elements
 
 import scala.collection.JavaConverters._
-import base.{ViewFns, ViewSpec}
 
 class PageSpec extends WordSpec with Matchers with ViewSpec with ViewFns with GuiceOneAppPerSuite {
 
@@ -97,18 +97,26 @@ class PageSpec extends WordSpec with Matchers with ViewSpec with ViewFns with Gu
     val inputPageWithErrors = FormPage("root", inputWithErrors)
 
     val sequenceTitle: Text = Text("Select your fruit")
-    val fruitOptions: Seq[Text] = Seq(Text("Oranges"), Text("Pears"), Text("Mangoes"))
-    val fruitSequence: NonExclusiveSequence = NonExclusiveSequence(sequenceTitle, None, fruitOptions, Seq.empty, Seq.empty)
+    val fruitOptions: Seq[SequenceAnswer] = Seq(
+      SequenceAnswer(Text("Oranges"), None),
+      SequenceAnswer(Text("Pears"), None),
+      SequenceAnswer(Text("Mangoes"), None)
+    )
+    val fruitSequence: Sequence = Sequence(sequenceTitle, None, fruitOptions, None, Seq.empty, Seq.empty)
     val sequencePage: FormPage = FormPage("/selectFruit", fruitSequence)
 
     val exclusiveSequenceTitle: Text = Text("What kind of car would you like?")
-    val carTypeOptions: Seq[Text] = Seq(Text("Sports car"), Text("SUV"), Text("People carrier"))
-    var exclusiveSequence: ExclusiveSequence = ExclusiveSequence(
+    val carTypeOptions: Seq[SequenceAnswer] = Seq(
+      SequenceAnswer(Text("Sports car"), None),
+      SequenceAnswer(Text("SUV"), None),
+      SequenceAnswer(Text("People carrier"), None)
+    )
+    val carTypeExclusiveAnswer: SequenceAnswer = SequenceAnswer(Text("Other"), Some(Text("Selecting this option will deselect all the other checkboxes")))
+    var exclusiveSequence: Sequence = Sequence(
       exclusiveSequenceTitle,
       None,
       carTypeOptions,
-      Text("Other"),
-      Some(Text("Selecting this option will deselect all the other checkboxes")),
+      Some(carTypeExclusiveAnswer),
       Seq.empty,
       Seq.empty
     )
