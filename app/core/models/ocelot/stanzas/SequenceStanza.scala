@@ -16,11 +16,10 @@
 
 package core.models.ocelot.stanzas
 
-import core.models.ocelot.{labelReferences, Page, Labels, Phrase, asListOfPositiveInt, exclusiveOptionPattern}
+import core.models.ocelot.{KeyedStanza, labelReferences, Page, Labels, Phrase, asListOfPositiveInt, exclusiveOptionPattern}
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
 import play.api.libs.json.{JsSuccess, JsError, JsValue, JsonValidationError, JsPath, OWrites, Reads}
-import core.models.ocelot.KeyedStanza
 
 case class SequenceStanza(text: Int,
                           override val next: Seq[String],
@@ -58,10 +57,10 @@ object Sequence {
 }
 
 case class Sequence(text: Phrase,
-                             override val next: Seq[String],
-                             options: Seq[Phrase],
-                             label: Option[String],
-                             stack: Boolean) extends VisualStanza with Populated with DataInput {
+                    override val next: Seq[String],
+                    options: Seq[Phrase],
+                    label: Option[String],
+                    stack: Boolean) extends VisualStanza with Populated with DataInput {
   override val labelRefs: List[String] = labelReferences(text.english) ++ options.flatMap(a => labelReferences(a.english))
   override val labels: List[String] = label.fold[List[String]](Nil)(l => List(l))
 
@@ -94,7 +93,7 @@ case class Sequence(text: Phrase,
   def validInput(value: String): Option[String] =
     asListOfPositiveInt(value).fold[Option[String]](None){l =>
       if (l.forall(nonExclusiveOptions.indices.contains(_)) ||
-         (l.length == 1 && l.head == nonExclusiveOptions.length)) {
+        (l.length == 1 && l.head == nonExclusiveOptions.length)) {
         Some(value)
       } else {
         None
