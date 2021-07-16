@@ -125,6 +125,12 @@ class EnglishTextBuilderSpec extends BaseSpec with GuiceOneAppPerSuite {
       TextBuilder.fromPhraseWithOptionalHint(p)._1.items shouldBe Seq(Words("The number of colours is 3"))
     }
 
+    "Convert [list:<label>:length] placeholders within phrase when list does not exist" in new Test {
+      val p = Phrase("""The number of colours is [list:NonExistent:length]""", """Welsh: The number of colours is [list:NonExistent:length]""")
+      TextBuilder.fromPhrase(p).items shouldBe Seq(Words("The number of colours is "))
+      TextBuilder.fromPhraseWithOptionalHint(p)._1.items shouldBe Seq(Words("The number of colours is "))
+    }
+
     "Convert a Text with link placeholders in lang strings to Seq[TextItem]" in new Test {
       val txt = TextBuilder.fromPhrase(txtWithLinks)
       txt.items(0) shouldBe words1

@@ -698,6 +698,13 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper
 
   "Bullet point list break and standard phrase match testing" must {
 
+    "not match identical phrases" in {
+      val p1 =  Phrase("Hello world", "Welsh: Hello world")
+      val p2 =  Phrase("Hello world", "Welsh: Hello world")
+
+      BulletPointBuilder.matchPhrases(p1, p2) shouldBe false
+    }
+
     "not match two empty phrases" in {
 
       val firstPhrase: Phrase = Phrase("","")
