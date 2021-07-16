@@ -16,8 +16,6 @@
 
 package core.models.ocelot
 
-import scala.util.matching.Regex.Match
-
 import base.BaseSpec
 import org.scalatest.Inspectors.forAll
 
