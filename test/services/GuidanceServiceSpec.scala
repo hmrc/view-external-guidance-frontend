@@ -470,7 +470,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
         .returns((Some("2"), LabelCache()))
 
       MockSessionRepository
-        .saveFormPageState(processId,"/last-page", "yes", labels, List("2", "start"))
+        .saveFormPageState(processId,"/last-page", "yes", labels, List("2"))
         .returns(Future.successful(Right({})))
 
       target.submitPage(pec, "/last-page", "yes", "yes").map{

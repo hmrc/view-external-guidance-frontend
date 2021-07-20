@@ -145,8 +145,7 @@ class GuidanceService @Inject() (
     val (optionalNext, labels) = pageRenderer.renderPagePostSubmit(ctx.page, ctx.labels, validatedAnswer)
     optionalNext.fold[Future[RequestOutcome[(Option[String], Labels)]]](Future.successful(Right((None, labels)))){next =>
       logger.debug(s"Next page found at stanzaId: $next")
-      val legalPageIds = next :: Process.StartStanzaId :: ctx.pageMapById(next).next
-      sessionRepository.saveFormPageState(ctx.sessionId, url, submittedAnswer, labels, legalPageIds).map{
+      sessionRepository.saveFormPageState(ctx.sessionId, url, submittedAnswer, labels, List(next)).map{
         case Left(err) =>
           logger.error(s"Failed to save updated labels, error = $err")
           Left(InternalServerError)
@@ -199,10 +198,11 @@ class GuidanceService @Inject() (
             logger.debug(s"PAGE MAP:")
             pages.foreach{pge =>
               logger.debug(s"PAGE: ${pge.id}, ${pge.url}")
-              (pge.next ++ pge.linked).distinct.foreach(id => logger.debug(s"\t=> $id, ${urlMap(id)}"))
+              pge.next.foreach(id => logger.debug(s"\tnxt:=> $id, ${urlMap(id)}"))
+              pge.linked.foreach(id => logger.debug(s"\tlnk:=> $id, ${urlMap(id)}"))
             }
           }
-          sessionRepository.set(docId, process, pages.map(p => p.url -> PageNext(p.id, (p.next ++ p.linked).toList.distinct)).toMap).map {
+          sessionRepository.set(docId, process, pages.map(p => p.url -> PageNext(p.id, p.next.toList, p.linked.toList)).toMap).map {
             case Right(_) => Right((pages.head.url, process.meta.processCode))
             case Left(err) =>
               logger.error(s"Failed to store new parsed process in session repository, $err")
