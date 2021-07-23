@@ -101,6 +101,7 @@ class FormsHelperSpec extends BaseSpec with GuiceOneAppPerSuite {
         Phrase("Friday", "Welsh: Friday")
       ),
       None,
+      None,
       stack = false
     )
 
@@ -110,7 +111,9 @@ class FormsHelperSpec extends BaseSpec with GuiceOneAppPerSuite {
       Seq(
         Phrase("Red", "Welsh: Red"),
         Phrase("Green", "Welsh: Green"),
-        Phrase("Blue", "Welsh: Blue"),
+        Phrase("Blue", "Welsh: Blue")
+      ),
+      Some(
         Phrase(
           "Not a primary colour [exclusive][hint:Selecting this checkbox will deselect the other checkboxes]",
           "Welsh: Not a primary colour [exclusive][hint:Welsh: Selecting this checkbox will deselect the other checkboxes]")

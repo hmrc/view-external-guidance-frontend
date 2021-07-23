@@ -26,7 +26,7 @@ import core.models.ocelot.stanzas._
 import models.ocelot.stanzas._
 import models.PageDesc
 import models.ui
-import models.ui.{BulletPointList, ConfirmationPanel, CyaSummaryList, Details, ErrorMsg, FormPage, H1, H3, H4, Sequence => UISequence}
+import models.ui.{BulletPointList, ConfirmationPanel, CyaSummaryList, Details, ErrorMsg, FormPage, H1, H3, H4, Sequence => Sequence}
 import models.ui.{InsetText, Link, Paragraph, RequiredErrorMsg, Table, Text, WarningText, Words}
 
 class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage with GuiceOneAppPerSuite {
@@ -2166,8 +2166,8 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
         )
       )
 
-      val nonExclusiveSequence = core.models.ocelot.stanzas.Sequence(textPhrase, next, optionsPhrases, None, stack = false)
-      val nonExclusiveSequenceWithHint = core.models.ocelot.stanzas.Sequence(textPhraseWithHint, next, optionsPhrases, None, stack = false)
+      val nonExclusiveSequence = core.models.ocelot.stanzas.Sequence(textPhrase, next, optionsPhrases, None, None, stack = false)
+      val nonExclusiveSequenceWithHint = core.models.ocelot.stanzas.Sequence(textPhraseWithHint, next, optionsPhrases, None, None, stack = false)
 
       val page: Page = Page(Process.StartStanzaId, "/start", stanzas :+ KeyedStanza("4", nonExclusiveSequence), Seq.empty)
       val pageWithHint: Page = Page(Process.StartStanzaId, "/start", stanzas :+ KeyedStanza("4", nonExclusiveSequenceWithHint), Seq.empty)
@@ -2185,7 +2185,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
       uiPage match {
         case f: FormPage if(f.formComponent.errorMsgs.isEmpty) =>
           f.formComponent match {
-            case s: UISequence =>
+            case s: Sequence =>
               s.text.asString shouldBe "Welsh: Select type of bee"
               s.options.size shouldBe  2
               s.options.head.text.asString shouldBe "Welsh: Drone"
@@ -2217,7 +2217,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
       uiPageWithHint match {
         case f: FormPage =>
           f.formComponent match {
-            case s: UISequence =>
+            case s: Sequence =>
               s.text.asString shouldBe "Welsh: Select type of bee"
               s.hint match {
                 case Some(value) => value.asString shouldBe "Welsh: For example Worker or Drone"
@@ -2241,7 +2241,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
       uiPage match {
         case f: FormPage if(f.formComponent.errorMsgs.nonEmpty) =>
           f.formComponent match {
-            case s: UISequence =>
+            case s: Sequence =>
               s.errorMsgs.size shouldBe 1
               s.errorMsgs.head match {
                 case r: RequiredErrorMsg => r.text.asString shouldBe "Welsh: You must select a kind of bee"
@@ -2278,14 +2278,16 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
           "Welsh: Select type of bee [hint:Welsh: For example Worker or Drone]"
         )
       )
+
       val optionsPhrases: Seq[Phrase] = Seq(
         Phrase(Vector("Drone", "Welsh: Drone")),
-        Phrase(Vector("Worker", "Welsh: Worker")),
-        Phrase(Vector(
-          "Queen [exclusive][hint:Selecting this checkbox will deselect the other checkboxes]",
-          "Welsh: Queen [exclusive][hint:Welsh: Selecting this checkbox will deselect the other checkboxes]"
-        ))
+        Phrase(Vector("Worker", "Welsh: Worker"))
       )
+
+      val optionsExclusivePhrase: Option[Phrase] = Some(Phrase(Vector(
+          "Queen [hint:Selecting this checkbox will deselect the other checkboxes]",
+          "Welsh: Queen [hint:Welsh: Selecting this checkbox will deselect the other checkboxes]"
+        )))
 
       val stanzas: Seq[KeyedStanza] = Seq(
         KeyedStanza("start", PageStanza("/start", Seq("1"), stack = false)),
@@ -2315,8 +2317,8 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
         )
       )
 
-      val exclusiveSequence = core.models.ocelot.stanzas.Sequence(textPhrase, next, optionsPhrases, None, stack = false)
-      val exclusiveSequenceWithHint = core.models.ocelot.stanzas.Sequence(textPhraseWithHint, next, optionsPhrases, None, stack = false)
+      val exclusiveSequence = core.models.ocelot.stanzas.Sequence(textPhrase, next, optionsPhrases, optionsExclusivePhrase, None, stack = false)
+      val exclusiveSequenceWithHint = core.models.ocelot.stanzas.Sequence(textPhraseWithHint, next, optionsPhrases, optionsExclusivePhrase, None, stack = false)
 
       val page: Page = Page(Process.StartStanzaId, "/start", stanzas :+ KeyedStanza("4", exclusiveSequence), Seq.empty)
       val pageWithHint: Page = Page(Process.StartStanzaId, "/start", stanzas :+ KeyedStanza("4", exclusiveSequenceWithHint), Seq.empty)
@@ -2334,7 +2336,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
       uiPage match {
         case f: FormPage if(f.formComponent.errorMsgs.isEmpty) =>
           f.formComponent match {
-            case s: UISequence =>
+            case s: Sequence =>
               s.text.asString shouldBe "Welsh: Select type of bee"
               s.options.size shouldBe 2
               s.options.head.text.asString shouldBe "Welsh: Drone"
@@ -2367,7 +2369,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
       uiPageWithHint match {
         case f: FormPage =>
           f.formComponent match {
-            case s: UISequence =>
+            case s: Sequence =>
               s.text.asString shouldBe "Welsh: Select type of bee"
               s.hint match {
                 case Some(value) => value.asString shouldBe "Welsh: For example Worker or Drone"
@@ -2391,7 +2393,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
       uiPage match {
         case f: FormPage if(f.formComponent.errorMsgs.nonEmpty) =>
           f.formComponent match {
-            case s: UISequence =>
+            case s: Sequence =>
               s.errorMsgs.size shouldBe 1
               s.errorMsgs.head match {
                 case r: RequiredErrorMsg => r.text.asString shouldBe "Welsh: You must select a kind of bee"
