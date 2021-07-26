@@ -191,14 +191,14 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
           sp.pageMap.get(url.drop(sp.process.meta.processCode.length)).fold[Future[RequestOutcome[ProcessContext]]]{
             logger.warn(s"Attempt to move to unknown page $url")
             Future.successful(Left(NotFoundError))
-          }{pageDesc =>
-            logger.debug(s"Incoming Page: ${pageDesc.id}, $url, current legalPageIds: ${sp.legalPageIds}")
-            if (sp.legalPageIds.isEmpty || sp.legalPageIds.contains(pageDesc.id)){ // Wild card or fixed list of valid page ids
+          }{pageNext =>
+            logger.debug(s"Incoming Page: ${pageNext.id}, $url, current legalPageIds: ${sp.legalPageIds}")
+            if (sp.legalPageIds.isEmpty || sp.legalPageIds.contains(pageNext.id)){ // Wild card or fixed list of valid page ids
               val firstPageUrl: String = s"${sp.process.meta.processCode}${sp.process.startUrl.getOrElse("")}"
               val (backLink, historyUpdate, flowStackUpdate, labelUpdates) = sessionProcessTransition(url, sp, previousPageByLink, firstPageUrl)
               val labels: Map[String, Label] = sp.labels ++ labelUpdates.map(l => l.name -> l).toMap
-              val legalPageIds = (pageDesc.id :: Process.StartStanzaId :: pageDesc.next ++
-                                  backLink.fold[List[String]](Nil)(bl => List(sp.pageMap(bl.drop(sp.process.meta.processCode.length)).id))).distinct
+              val legalPageIds = (pageNext.id :: Process.StartStanzaId :: pageNext.linked ++
+                                  backLink.fold(List.empty[String])(bl => List(sp.pageMap(bl.drop(sp.process.meta.processCode.length)).id))).distinct
               val processContext = ProcessContext(
                                     sp.process,
                                     sp.answers,
@@ -208,7 +208,6 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
                                     sp.pageMap,
                                     legalPageIds,
                                     backLink)
-              logger.debug(s"NewLegalIds: ${legalPageIds}")
               saveUpdates(key, historyUpdate, flowStackUpdate, labelUpdates, legalPageIds).map {
                 case Left(err) =>
                   logger.error(s"Unable to update session data, error = $err")

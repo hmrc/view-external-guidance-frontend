@@ -33,7 +33,7 @@ case class ProcessContext(process: Process,
   }
 }
 
-case class PageNext(id: String, next: List[String] = Nil)
+case class PageNext(id: String, next: List[String] = Nil, linked: List[String] = Nil)
 object PageNext {
   implicit val formats: OFormat[PageNext] = Json.format[PageNext]
 }
