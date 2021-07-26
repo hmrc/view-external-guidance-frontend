@@ -58,18 +58,6 @@ trait StanzaHelper extends TestConstants {
     Phrase(Vector("Oranges", "Welsh: Oranges"))
   )
 
-  // val multipleExclusiveSequencePhrases: Vector[Phrase] = phrases ++ Vector(
-  //   Phrase(Vector("What kind of fruit do you like?", "Welsh: What kind of fruit do you like?")),
-  //   Phrase(Vector(
-  //     "Other [exclusive][hint:Selecting this checkbox will deselect the other checkboxes]",
-  //     "Welsh: Other [exclusive][hint:Welsh: Selecting this checkbox will deselect the other checkboxes]")),
-  //   Phrase(Vector("Apples", "Welsh: Apples")),
-  //   Phrase(Vector(
-  //     "Bananas [exclusive][hint:Selecting this checkbox will deselect the other checkboxes]",
-  //     "Welsh: Bananas [exclusive][hint:Welsh: Selecting this checkbox will deselect the other checkboxes]")),
-  //   Phrase(Vector("Oranges", "Welsh: Oranges"))
-  // )
-
   val links: Vector[Link] = Vector(Link(0, "http://my.com/news", "MyCOM Daily News", window = true))
 
   // Define stanzas used in simple question page test
