@@ -31,10 +31,6 @@ class PageRendererSpec extends BaseSpec with ProcessJson  {
 
   val meta: Meta = Json.parse(prototypeMetaSection).as[Meta]
 
-  case object DummyStanza extends Stanza {
-    override val next: Seq[String] = Seq("1")
-  }
-
   trait Test {
     val pageId1 = Process.StartStanzaId
     val pageId2 = "4"
