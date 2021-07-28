@@ -17,7 +17,7 @@
 package services
 
 import models._
-import core.models.ocelot.{Link, Phrase, hintRegex, labelPattern, listPattern, listLength}
+import core.models.ocelot.{Link, Phrase, labelPattern, listPattern, listLength, stringWithOptionalHint, fromPattern}
 import core.models.ocelot.{labelAndListRegex, labelScalarMatch, boldPattern, linkPattern}
 import models.ui._
 import scala.util.matching.Regex
@@ -77,9 +77,6 @@ object TextBuilder {
   import Placeholders._
   import StringTransform._
 
-  private def fromPattern(pattern: Regex, text: String): (List[String], List[Match]) =
-    (pattern.split(text).toList, pattern.findAllMatchIn(text).toList)
-
   private def placeholdersToItems(matches: List[Match])(implicit ctx: UIContext): List[TextItem] =
     matches.map { m =>
       labelNameOpt(m).fold[TextItem]({
@@ -88,7 +85,7 @@ object TextBuilder {
             val window: Boolean = linkTypeOpt(m).fold(false)(modifier => modifier == "-tab")
             val dest: String = if (Link.isLinkableStanzaId(linkDest(m))) ctx.pageMapById(linkDest(m)).url else linkDest(m)
             val asButton: Boolean = buttonOrLink(m).fold(false)(_ == "button")
-            val (lnkText, lnkHint) = singleStringWithOptionalHint(linkText(m))
+            val (lnkText, lnkHint) = stringWithOptionalHint(linkText(m))
             ui.Link(dest, lnkText, window, asButton, lnkHint)
           }){listName => Words(listLength(listName, ctx.labels).getOrElse("0"))}
         }){txt =>
@@ -113,19 +110,13 @@ object TextBuilder {
     Text(merge(texts.map(Words(_)), placeholdersToItems(matches), Nil, isEmpty))
   }
 
-  private def singleStringWithOptionalHint(str: String): (String, Option[String]) = {
-    val (txts, matches) = fromPattern(hintRegex, str)
-    val hint = matches.headOption.map(m => m.group(1))
-    (txts.head.trim, hint)
-  }
-
   // Parses current lang value of Phrase potentially containing a hint pattern[hint:<Text Hint>]
   // The string before the first hint will be converted to a Text object
   // and returned along with optional hint
   // All characters after the optional hint pattern are discarded
   def fromPhraseWithOptionalHint(txt: Phrase)(implicit ctx: UIContext): (Text, Option[Text]) = {
     val isEmpty: TextItem => Boolean = _.isEmpty
-    val (str, hint) = singleStringWithOptionalHint(txt.value(ctx.lang))
+    val (str, hint) = stringWithOptionalHint(txt.value(ctx.lang))
     val (texts, matches) = fromPattern(plregex, transform(expandLabels(str, ctx.lang)))
     (Text(merge(texts.map(Words(_)), placeholdersToItems(matches), Nil, isEmpty)), hint.map(Text(_)))
   }

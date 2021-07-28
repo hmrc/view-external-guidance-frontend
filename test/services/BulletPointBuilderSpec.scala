@@ -21,18 +21,13 @@ import base.BaseSpec
 import core.models.ocelot._
 import core.models.ocelot.stanzas._
 import models.ocelot.stanzas._
-import core.models.StanzaHelper
 
-class BulletPointBuilderSpec extends BaseSpec with ProcessJson with StanzaHelper {
+class BulletPointBuilderSpec extends BaseSpec with ProcessJson {
 
   def asString(elements: Seq[String]): String = elements.mkString
 
   // Define instance of class used in testing
   val pageBuilder: PageBuilder = new PageBuilder(new Placeholders(new DefaultTodayProvider))
-
-  case object DummyStanza extends Stanza {
-    override val next: Seq[String] = Seq("1")
-  }
 
   def createInstructionGroup(text1: String, text2: String): InstructionGroup = {
 

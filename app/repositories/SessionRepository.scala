@@ -237,6 +237,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
             toFieldPair(FlowStackKey, List[FlowStage]()),
             toFieldPair(PageHistoryKey, List[PageHistory]()),
             toFieldPair(ContinuationPoolKey, Map[String, Stanza]()),
+            toFieldPair(s"${AnswersKey}./${SecuredProcess.SecuredProcessStartUrl}", ""),
             toFieldPair(LabelsKey, Map[String, Label]())).toArray: _*
         )
       ),
