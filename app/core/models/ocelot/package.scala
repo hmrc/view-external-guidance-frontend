@@ -32,7 +32,7 @@ package object ocelot {
   val timeConstantPattern: String = "^(\\d{1,10})(day|week|month|year)$"
   val csPositiveIntPattern: String = "^\\d{1,10}(?:,\\d{1,10})*$"
   val listPattern: String = "\\[list:([A-Za-z0-9\\s\\-_]+):length\\]"
-  val singleLabelOrListPattern: String = s"^$labelPattern|$listPattern$$"
+  val singleLabelOrListPattern: String = s"^$labelPattern|$listPattern|$datePlaceHolderPattern$$"
   val singleLabelOrListRegex: Regex = singleLabelOrListPattern.r
   val labelAndListPattern: String = s"$labelPattern|$listPattern"
   val labelAndListRegex: Regex = labelAndListPattern.r
@@ -48,6 +48,7 @@ package object ocelot {
   val EmbeddedParameterRegex: Regex = """\{(\d)\}""".r
   val ExclusivePlaceholder: String = "[exclusive]"
   val timeConstantRegex: Regex = timeConstantPattern.r
+  val datePlaceHolderPattern: Regex = "^\\[date:([0-9]{1,2}\\/[0-9]{1,2}\\/[0-9]{4})?:(year|month_num|month_start|month_end|month_name|dow_num|dow_name|day|)\\]$$".r
 
   val DateOutputFormat = "d MMMM uuuu"
   val ignoredCurrencyChars: Seq[Char] = Seq(' ','£', ',')
