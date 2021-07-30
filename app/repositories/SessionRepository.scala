@@ -79,7 +79,7 @@ object DefaultSessionRepository {
               process: Process,
               pageMap: Map[String, PageNext] = Map(),
               lastAccessed: Instant = Instant.now()): SessionProcess =
-      SessionProcess(id, processId, process, Map(), Nil, Map(), pageMap, Map(), Nil, List(process.startPageId), lastAccessed)
+      SessionProcess(id, processId, process, Map(), Nil, Map(), pageMap, Map(), Nil, Nil, lastAccessed)
 
 
     implicit val dateFormat: Format[Instant] = MongoDateTimeFormats.instantFormats

@@ -32,7 +32,7 @@ package object ocelot {
 
   val LabelPattern: String = s"\\[label:($LabelNamePattern)(?::(currency|currencyPoundsOnly|date|number))?\\]"
   val boldPattern: String = s"\\[bold:($LabelPattern|[^\\]]+)\\]"
-  val DateAddPattern: String = s"\\[date_add:(?:$LabelPattern|($DatePattern)):($TimescaleIdPattern)\\]"
+  val DateAddPattern: String = s"\\[date_add:(?:($LabelNamePattern)|($DatePattern)):($TimescaleIdPattern)\\]"
   val linkToPageOnlyPattern: String = s"\\[link:(.+?):($StanzaIdPattern)\\]"
   val pageLinkPattern: String = s"\\[(button|link)(-same|-tab)?:(.+?):($StanzaIdPattern)\\]"
   val buttonLinkPattern: String = s"\\[(button)(-same|-tab)?:(.+?):($StanzaIdPattern)\\]"
@@ -42,8 +42,8 @@ package object ocelot {
   val listPattern: String = s"\\[list:($LabelNamePattern):length\\]"
   val operandPattern: String = s"^$LabelPattern|$listPattern|$DateAddPattern$$"
   val operandRegex: Regex = operandPattern.r
-  val labelsAndPlaceholdersPattern: String = s"$LabelPattern|$listPattern"
-  val labelsAndPlaceholdersRegex: Regex = labelsAndPlaceholdersPattern.r
+  val labelsListDateAddPattern: String = s"$LabelPattern|$listPattern"
+  val labelsListDateAddRegex: Regex = labelsListDateAddPattern.r
   val hintRegex: Regex = "\\[hint:([^\\]]+)\\]".r
   val pageLinkRegex: Regex = pageLinkPattern.r
   val buttonLinkRegex: Regex = buttonLinkPattern.r
@@ -66,10 +66,11 @@ package object ocelot {
   def operandValue(str: String)(implicit labels: Labels): Option[String] =
     operandRegex.findFirstMatchIn(str).fold[Option[String]](Some(str)){scalarMatch(_, labels, labels.value)}
   val LabelNameGroup: Int = 1
+  val LabelOutputFormatGroup: Int = 2
   val ListLengthLabelNameGroup: Int = 3
   val DateAddLabelNameGroup: Int = 4
-  val DateAddLiteralGroup: Int = 6
-  val DateAddTimescaleIdGroup: Int = 7
+  val DateAddLiteralGroup: Int = 5
+  val DateAddTimescaleIdGroup: Int = 6
   def scalarMatch(m: Regex.Match, labels: Labels, lbl: String => Option[String]): Option[String] =
     Option(m.group(LabelNameGroup)).fold{
       Option(m.group(ListLengthLabelNameGroup)).fold{
@@ -111,16 +112,16 @@ package object ocelot {
   def asTimePeriod(value: String): Option[TimePeriod] =
     timeConstantRegex.findFirstMatchIn(value.trim).flatMap{m =>
     Option(m.group(1)).fold[Option[TimePeriod]](None)(n =>
-      Option(m.group(2)).fold[Option[TimePeriod]](None){unit => unit match {
+      Option(m.group(2)).fold[Option[TimePeriod]](None){
         case "day" | "days" => Some(TimePeriod(n.toInt, Day))
         case "week" | "weeks" => Some(TimePeriod(n.toInt, Week))
         case "month" | "months" => Some(TimePeriod(n.toInt, Month))
         case "year" | "years" => Some(TimePeriod(n.toInt, Year))
       }
-    })
+    )
   }
 
-  def timescaleDays(tsId: String): Option[String] = Some("14")           //TODO
+  def timescaleDays(tsId: String): Option[String] = if (tsId.equals("UNKNOWN")) None else Some("14")           //TODO
   def dateAdd(date: Option[String], tsId: String): Option[String] =
     timescaleDays(tsId).flatMap(days => date.flatMap(asDate).map(dt => stringFromDate(dt.plusDays(days.toLong))))
 

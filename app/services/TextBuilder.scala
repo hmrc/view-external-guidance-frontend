@@ -18,7 +18,7 @@ package services
 
 import models._
 import core.models.ocelot.{Link, Phrase, LabelPattern, listPattern, listLength, stringWithOptionalHint, fromPattern}
-import core.models.ocelot.{labelsAndPlaceholdersRegex, scalarMatch, boldPattern, linkPattern}
+import core.models.ocelot.{labelsListDateAddRegex, LabelOutputFormatGroup, scalarMatch, boldPattern, linkPattern}
 import models.ui._
 import scala.util.matching.Regex
 import Regex._
@@ -48,7 +48,7 @@ object TextBuilder {
   val English: Lang = Lang("en")
   val Welsh: Lang = Lang("cy")
 
-  object TextPlaceholders {
+  private object TextPlaceholders {
     // Indexes into the Placeholder regex match groups
     val LabelNameIdx: Int = 1
     val LabelFormatIdx: Int = 2
@@ -73,40 +73,45 @@ object TextBuilder {
     def linkTextOpt(m: Match): Option[String] = Option(linkText(m))
     def linkDest(m: Match): String = m.group(LinkDestIdx)
     def listNameOpt(m: Match): Option[String] = Option(m.group(ListNameIdx))
+    def from(text: String):(List[String], List[Match]) = fromPattern(plregex, text)
+
+    def placeholdersToItems(matches: List[Match])(implicit ctx: UIContext): List[TextItem] =
+      matches.map { m =>
+        labelNameOpt(m).fold[TextItem]({
+          boldTextOpt(m).fold[TextItem]({
+            listNameOpt(m).fold[TextItem]({
+              val window: Boolean = linkTypeOpt(m).fold(false)(modifier => modifier == "-tab")
+              val dest: String = if (Link.isLinkableStanzaId(linkDest(m))) ctx.pageMapById(linkDest(m)).url else linkDest(m)
+              val asButton: Boolean = buttonOrLink(m).fold(false)(_ == "button")
+              val (lnkText, lnkHint) = stringWithOptionalHint(linkText(m))
+              ui.Link(dest, lnkText, window, asButton, lnkHint)
+            }){listName => Words(listLength(listName, ctx.labels).getOrElse("0"))}
+          }){txt =>
+            boldLabelNameOpt(m).fold[TextItem](Words(txt, true)){labelName =>
+              LabelRef(labelName, OutputFormat(boldLabelFormatOpt(m)), true)
+            }
+          }
+        })(labelName => LabelRef(labelName, OutputFormat(labelFormatOpt(m))))
+      }
   }
+
   import TextPlaceholders._
   import StringTransform._
 
-  private def placeholdersToItems(matches: List[Match])(implicit ctx: UIContext): List[TextItem] =
-    matches.map { m =>
-      labelNameOpt(m).fold[TextItem]({
-        boldTextOpt(m).fold[TextItem]({
-          listNameOpt(m).fold[TextItem]({
-            val window: Boolean = linkTypeOpt(m).fold(false)(modifier => modifier == "-tab")
-            val dest: String = if (Link.isLinkableStanzaId(linkDest(m))) ctx.pageMapById(linkDest(m)).url else linkDest(m)
-            val asButton: Boolean = buttonOrLink(m).fold(false)(_ == "button")
-            val (lnkText, lnkHint) = stringWithOptionalHint(linkText(m))
-            ui.Link(dest, lnkText, window, asButton, lnkHint)
-          }){listName => Words(listLength(listName, ctx.labels).getOrElse("0"))}
-        }){txt =>
-          boldLabelNameOpt(m).fold[TextItem](Words(txt, true)){labelName =>
-            LabelRef(labelName, OutputFormat(boldLabelFormatOpt(m)), true)
-          }
-        }
-      })(labelName => LabelRef(labelName, OutputFormat(labelFormatOpt(m))))
-    }
 
   def expandLabels(p: Phrase)(implicit ctx: UIContext): Phrase = Phrase(expandLabels(p.english, English), expandLabels(p.welsh, Welsh))
 
   private def expandLabels(s: String, lang: Lang)(implicit ctx: UIContext): String = {
     val messages: Messages = ctx.messagesApi.preferred(Seq(lang))
     def labelValue(name: String): Option[String] = ctx.labels.displayValue(name)(lang)
-    labelsAndPlaceholdersRegex.replaceAllIn(s, { m => OutputFormat(labelFormatOpt(m)).asString(scalarMatch(m, ctx.labels, labelValue), messages)})
+    labelsListDateAddRegex.replaceAllIn(s, {m =>
+      OutputFormat(Option(m.group(LabelOutputFormatGroup))).asString(scalarMatch(m, ctx.labels, labelValue), messages)
+    })
   }
 
   def fromPhrase(txt: Phrase)(implicit ctx: UIContext): Text = {
     val isEmpty: TextItem => Boolean = _.isEmpty
-    val (texts, matches) = fromPattern(plregex, transform(expandLabels(txt.value(ctx.lang), ctx.lang)))
+    val (texts, matches) = from(transform(expandLabels(txt.value(ctx.lang), ctx.lang)))
     Text(merge(texts.map(Words(_)), placeholdersToItems(matches), Nil, isEmpty))
   }
 
@@ -117,7 +122,7 @@ object TextBuilder {
   def fromPhraseWithOptionalHint(txt: Phrase)(implicit ctx: UIContext): (Text, Option[Text]) = {
     val isEmpty: TextItem => Boolean = _.isEmpty
     val (str, hint) = stringWithOptionalHint(txt.value(ctx.lang))
-    val (texts, matches) = fromPattern(plregex, transform(expandLabels(str, ctx.lang)))
+    val (texts, matches) = from(transform(expandLabels(str, ctx.lang)))
     (Text(merge(texts.map(Words(_)), placeholdersToItems(matches), Nil, isEmpty)), hint.map(Text(_)))
   }
 

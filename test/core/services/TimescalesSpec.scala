@@ -82,6 +82,14 @@ class TimescalesSpec extends BaseSpec {
       pls.expand("A date literal: [timescale:23/5/1999]", today) shouldBe s"A date literal: 23/5/1999"
     }
 
+    "expand valid timescale days" in {
+      pls.expand("Timescale in days: [timescale:NTCReAwardManAward:days]", today) shouldBe s"Timescale in days: 14"
+    }
+
+    "expand invalid timescale days" in {
+      pls.expand("Timescale in days: [timescale:UNKNOWN:days]", today) shouldBe s"Timescale in days: [timescale:UNKNOWN:days]"
+    }
+
   }
 
   "Timescales with overridden TodayProvider" must {
