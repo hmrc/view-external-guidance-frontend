@@ -27,7 +27,7 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson {
   def asString(elements: Seq[String]): String = elements.mkString
 
   // Define instance of class used in testing
-  val pageBuilder: PageBuilder = new PageBuilder(new Placeholders(new DefaultTodayProvider))
+  val pageBuilder: PageBuilder = new PageBuilder(new Timescales(new DefaultTodayProvider))
 
   def createInstructionGroup(text1: String, text2: String): InstructionGroup = {
 
@@ -789,7 +789,7 @@ class BulletPointBuilderSpec extends BaseSpec with ProcessJson {
     val phrase12: Phrase = Phrase("My favourite sweets are[break] wine gums", "Welsh: My favourite sweets are wine gums")
     val phrase13: Phrase = Phrase("My favourite sweets are[break] porkie percys", "Welsh: My favourite sweets are porkie percys")
 
-    val pageBuilder: PageBuilder = new PageBuilder(new Placeholders(new DefaultTodayProvider))
+    val pageBuilder: PageBuilder = new PageBuilder(new Timescales(new DefaultTodayProvider))
 
     "Create two separate instructions for two instruction stanzas where both stanzas disable stacking" in {
 

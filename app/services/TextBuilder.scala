@@ -17,8 +17,8 @@
 package services
 
 import models._
-import core.models.ocelot.{Link, Phrase, labelPattern, listPattern, listLength, stringWithOptionalHint, fromPattern}
-import core.models.ocelot.{labelAndListRegex, labelScalarMatch, boldPattern, linkPattern}
+import core.models.ocelot.{Link, Phrase, LabelPattern, listPattern, listLength, stringWithOptionalHint, fromPattern}
+import core.models.ocelot.{labelsAndPlaceholdersRegex, scalarMatch, boldPattern, linkPattern}
 import models.ui._
 import scala.util.matching.Regex
 import Regex._
@@ -48,19 +48,19 @@ object TextBuilder {
   val English: Lang = Lang("en")
   val Welsh: Lang = Lang("cy")
 
-  object Placeholders {
+  object TextPlaceholders {
     // Indexes into the Placeholder regex match groups
     val LabelNameIdx: Int = 1
-    val LabelFormatIdx: Int = 3
-    val BoldTextIdx: Int = 4
-    val BoldLabelNameIdx: Int = 5
-    val BoldLabelFormatIdx: Int = 7
-    val ButtonOrLinkIdx: Int = 8
-    val LinkTypeIdx: Int = 9
-    val LinkTextIdx: Int = 10
-    val LinkDestIdx: Int = 11
-    val ListNameIdx: Int = 12
-    val placeholderPattern: String = s"$labelPattern|$boldPattern|$linkPattern|$listPattern"
+    val LabelFormatIdx: Int = 2
+    val BoldTextIdx: Int = 3
+    val BoldLabelNameIdx: Int = 4
+    val BoldLabelFormatIdx: Int = 5
+    val ButtonOrLinkIdx: Int = 6
+    val LinkTypeIdx: Int = 7
+    val LinkTextIdx: Int = 8
+    val LinkDestIdx: Int = 9
+    val ListNameIdx: Int = 10
+    val placeholderPattern: String = s"$LabelPattern|$boldPattern|$linkPattern|$listPattern"
     val plregex: Regex = placeholderPattern.r
     def labelNameOpt(m: Match): Option[String] = Option(m.group(LabelNameIdx))
     def labelFormatOpt(m: Match): Option[String] = Option(m.group(LabelFormatIdx))
@@ -74,7 +74,7 @@ object TextBuilder {
     def linkDest(m: Match): String = m.group(LinkDestIdx)
     def listNameOpt(m: Match): Option[String] = Option(m.group(ListNameIdx))
   }
-  import Placeholders._
+  import TextPlaceholders._
   import StringTransform._
 
   private def placeholdersToItems(matches: List[Match])(implicit ctx: UIContext): List[TextItem] =
@@ -101,7 +101,7 @@ object TextBuilder {
   private def expandLabels(s: String, lang: Lang)(implicit ctx: UIContext): String = {
     val messages: Messages = ctx.messagesApi.preferred(Seq(lang))
     def labelValue(name: String): Option[String] = ctx.labels.displayValue(name)(lang)
-    labelAndListRegex.replaceAllIn(s, { m => OutputFormat(labelFormatOpt(m)).asString(labelScalarMatch(m, ctx.labels, labelValue), messages)})
+    labelsAndPlaceholdersRegex.replaceAllIn(s, { m => OutputFormat(labelFormatOpt(m)).asString(scalarMatch(m, ctx.labels, labelValue), messages)})
   }
 
   def fromPhrase(txt: Phrase)(implicit ctx: UIContext): Text = {
