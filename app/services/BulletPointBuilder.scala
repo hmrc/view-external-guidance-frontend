@@ -83,7 +83,7 @@ object BulletPointBuilder {
     phrases.foldRight[List[List[Phrase]]](Nil){ (p, acc) =>
       acc match {
         case Nil => List(List(p))
-        case current :: x if matchPhrases(p, current.head) => (p :: current) :: acc.tail
+        case current :: _ if matchPhrases(p, current.head) => (p :: current) :: acc.tail
         case _ => List(List(p)) ::: acc
       }
     }

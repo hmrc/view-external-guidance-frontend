@@ -26,7 +26,7 @@ import play.api.i18n.Lang
 class PageRendererSpec extends BaseSpec with ProcessJson  {
 
   // Define instance of class used in testing
-  val pageBuilder = new PageBuilder(new Placeholders(new DefaultTodayProvider))
+  val pageBuilder = new PageBuilder(new Timescales(new DefaultTodayProvider))
   val renderer: PageRenderer = new PageRenderer()
 
   val meta: Meta = Json.parse(prototypeMetaSection).as[Meta]

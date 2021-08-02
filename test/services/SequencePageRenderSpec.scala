@@ -23,7 +23,7 @@ import core.models.ocelot._
 class SequencePageRenderSpec extends BaseSpec with ProcessJson  {
 
   // Define instance of class used in testing
-  val pageBuilder = new PageBuilder(new Placeholders(new DefaultTodayProvider))
+  val pageBuilder = new PageBuilder(new Timescales(new DefaultTodayProvider))
   val renderer: PageRenderer = new PageRenderer()
 
   trait FlowTest extends SequenceJson {

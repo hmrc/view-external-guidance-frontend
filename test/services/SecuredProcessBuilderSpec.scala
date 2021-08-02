@@ -16,7 +16,7 @@
 
 package services
 
-import core.services.{Placeholders, DefaultTodayProvider, PageBuilder}
+import core.services.{Timescales, DefaultTodayProvider, PageBuilder}
 import base.BaseSpec
 import core.models.ocelot._
 import core.models.ocelot.stanzas.Stanza
@@ -37,7 +37,7 @@ class SecuredProcessBuilderSpec extends BaseSpec with ProcessJson with GuiceOneA
   val process: Process = prototypeJson.as[Process]
   val passphraseProcess: Process = validOnePageProcessWithPassPhrase.as[Process]
   val securedProcessBuilder = new SecuredProcessBuilder(messagesApi)
-  val pageBuilder = new PageBuilder(new Placeholders(new DefaultTodayProvider))
+  val pageBuilder = new PageBuilder(new Timescales(new DefaultTodayProvider))
 
   "SecuredProcessBuilder" should {
     "create a secured process with an additional passphrase page" in {

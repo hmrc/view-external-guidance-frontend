@@ -288,7 +288,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
 
     val brokenLinkPhrase = Phrase(Vector("Hello [link:Blah Blah:htts://www.bbc.co.uk]", "Welsh: Hello [link:Blah Blah:htts://www.bbc.co.uk]"))
     // for multi page testing
-    val pageBuilder: PageBuilder = new PageBuilder(new Placeholders(new DefaultTodayProvider))
+    val pageBuilder: PageBuilder = new PageBuilder(new Timescales(new DefaultTodayProvider))
     val stanzaPages = pageBuilder.pages(prototypeJson.as[Process]).right.get
     val prototypeUrlMap = stanzaPages.map(p => (p.id, p.url)).toMap
 
