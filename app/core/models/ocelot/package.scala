@@ -121,7 +121,7 @@ package object ocelot {
     )
   }
 
-  def timescaleDays(tsId: String): Option[String] = if (tsId.equals("UNKNOWN")) None else Some("14")           //TODO
+  def timescaleDays(tsId: String): Option[String] = TimescaleDB.timescaleMap.get(tsId).map(_.toString)
   def dateAdd(date: Option[String], tsId: String): Option[String] =
     timescaleDays(tsId).flatMap(days => date.flatMap(asDate).map(dt => stringFromDate(dt.plusDays(days.toLong))))
 

@@ -53,7 +53,7 @@ class GuidanceService @Inject() (
       case Right(ctx) if processCode == ctx.process.meta.processCode =>
         ctx.pageMap.collectFirst{case (k,v) if v.id == ctx.process.startPageId => k}
           .fold[RequestOutcome[String]]{
-            logger.error(s"Process start pageId (${ctx.process.startPageId}) missing from retreived session map" )
+            logger.error(s"Process start pageId (${ctx.process.startPageId}) missing from retrieved session map" )
             Left(InternalServerError)
           }(Right(_))
 

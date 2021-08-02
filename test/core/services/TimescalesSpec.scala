@@ -86,6 +86,10 @@ class TimescalesSpec extends BaseSpec {
       pls.expand("Timescale in days: [timescale:NTCReAwardManAward:days]", today) shouldBe s"Timescale in days: 14"
     }
 
+    "expand another valid timescale days" in {
+      pls.expand("Timescale in days: [timescale:CHBIntCorrCOC:days]", today) shouldBe s"Timescale in days: 147"
+    }
+
     "expand invalid timescale days" in {
       pls.expand("Timescale in days: [timescale:UNKNOWN:days]", today) shouldBe s"Timescale in days: [timescale:UNKNOWN:days]"
     }

@@ -98,7 +98,6 @@ object TextBuilder {
   import TextPlaceholders._
   import StringTransform._
 
-
   def expandLabels(p: Phrase)(implicit ctx: UIContext): Phrase = Phrase(expandLabels(p.english, English), expandLabels(p.welsh, Welsh))
 
   private def expandLabels(s: String, lang: Lang)(implicit ctx: UIContext): String = {
