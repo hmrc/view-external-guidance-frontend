@@ -22,6 +22,33 @@ import org.scalatest.Inspectors.forAll
 
 class OcelotPackageSpec extends BaseSpec {
 
+  "convertDatePlaceHolder" must {
+    "correctly convert a date place holder into a day number" in {
+
+    }
+    "correctly convert date place holder into a day name" in {
+
+    }
+    "correctly convert date place holder into day????" in { //TODO check this
+
+    }
+    "correctly convert date place holder into a month number" in {
+
+    }
+    "correctly convert date place holder into a month name" in {
+
+    }
+    "correctly convert date place holder into a month start" in {
+
+    }
+    "correctly convert date place holder into a month end" in {
+
+    }
+    "correcly convert date place holder into a four digit year" in {
+
+    }
+  }
+
   "Date conversion" must {
     "recognise a valid date" in {
       val validDates: List[String] = List("30/04/2000", "3/12/2000", "13/4/2000", "31/3/2130")

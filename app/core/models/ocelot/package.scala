@@ -76,6 +76,7 @@ package object ocelot {
   def asCurrencyPounds(value: String): Option[BigDecimal] =
     inputCurrencyPoundsRegex.findFirstIn(value.filterNot(c => c==' ')).map(s => BigDecimal(s.filterNot(ignoredCurrencyChars.contains(_))))
   def asDate(value: String): Option[LocalDate] = Try(LocalDate.parse(value.filterNot(_.equals(' ')), dateFormatter)).map(d => d).toOption
+  def convertDatePlaceHolder(value: LocalDate, operation: String): LocalDate = ???
   def stringFromDate(when: LocalDate): String = when.format(dateFormatter)
   def asPositiveInt(value: String): Option[Int] = matchedInt(value, positiveIntRegex)
   def asAnyInt(value: String): Option[Int] = matchedInt(value, anyIntegerRegex)
