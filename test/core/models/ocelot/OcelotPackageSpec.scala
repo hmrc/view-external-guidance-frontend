@@ -23,13 +23,13 @@ import org.scalatest.Inspectors.forAll
 class OcelotPackageSpec extends BaseSpec {
 
   "convertDatePlaceHolder" must {
-    "correctly convert a date place holder into a day number" in {
+    "correctly convert a date place holder into a day of week number" in {
 
     }
     "correctly convert date place holder into a day name" in {
 
     }
-    "correctly convert date place holder into day????" in { //TODO check this
+    "correctly convert date place holder into day of month number" in { //TODO check this
 
     }
     "correctly convert date place holder into a month number" in {
