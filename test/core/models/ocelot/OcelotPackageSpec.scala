@@ -277,7 +277,7 @@ class OcelotPackageSpec extends BaseSpec {
       val datePlaceHolder: String = "[date:4/5/1999:dow_name]"
 
       val dayName = datePlaceHolderToString(datePlaceHolder)
-      dayName shouldBe Some("Tuesday")
+      dayName shouldBe Some("TUESDAY")
     }
 
     }

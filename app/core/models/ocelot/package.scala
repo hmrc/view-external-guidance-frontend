@@ -16,6 +16,8 @@
 
 package core.models
 
+import core.models.ocelot.asDate
+
 import java.time.LocalDate
 import java.time.format.{DateTimeFormatter, ResolverStyle}
 import scala.util.Try
@@ -30,7 +32,8 @@ package object ocelot {
   val buttonLinkPattern: String = s"\\[(button)(-same|-tab)?:(.+?):(\\d+|${Process.StartStanzaId})\\]"
   val linkPattern: String = s"\\[(button|link)(-same|-tab)?:(.+?):(\\d+|${Process.StartStanzaId}|https?:[a-zA-Z0-9\\/\\.\\-\\?_\\.=&#]+)\\]"
   val timeConstantPattern: String = "^(\\d{1,10})(day|week|month|year)$"
-  val datePlaceHolderPattern: String = "\\[date:([0-9]{1,2}\\/[0-9]{1,2}\\/[0-9]{4})?:(year|month_num|month_start|month_end|month_name|dow_num|dow_name|day|)\\]$"
+  val datePattern: String = "[0-9]{1,2}\\/[0-9]{1,2}\\/[0-9]{4}"
+  val datePlaceHolderPattern: String = s"\\[date:($datePattern)?:(year|month_num|month_start|month_end|month_name|dow_num|dow_name|day|)\\]"
   val csPositiveIntPattern: String = "^\\d{1,10}(?:,\\d{1,10})*$"
   val listPattern: String = "\\[list:([A-Za-z0-9\\s\\-_]+):length\\]"
   val singleLabelOrListPattern: String = s"^$labelPattern|$listPattern|$datePlaceHolderPattern$$"
@@ -57,55 +60,32 @@ package object ocelot {
   val boldOnlyPattern: String = s"^${boldPattern}$$"
 
   def plSingleGroupCaptures(regex: Regex, str: String, index: Int = 1): List[String] = regex.findAllMatchIn(str).map(_.group(index)).toList
-
   def buttonLinkIds(str: String): List[String] = plSingleGroupCaptures(buttonLinkRegex, str, 4)
-
   def buttonLinkIds(phrases: Seq[Phrase]): List[String] = phrases.flatMap(phrase => buttonLinkIds(phrase.english)).toList
-
   def pageLinkIds(str: String): List[String] = plSingleGroupCaptures(pageLinkRegex, str, 4)
-
   def pageLinkIds(phrases: Seq[Phrase]): List[String] = phrases.flatMap(phrase => pageLinkIds(phrase.english)).toList
-
   def labelReferences(str: String): List[String] = plSingleGroupCaptures(labelRefRegex, str)
-
   def labelReference(str: String): Option[String] = plSingleGroupCaptures(labelRefRegex, str).headOption
-
   def listLength(listName: String, labels: Labels): Option[String] = labels.valueAsList(listName).fold[Option[String]](None) { l => Some(l.length.toString) }
-
   def labelScalarMatch(m: Regex.Match, labels: Labels, lbl: String => Option[String]): Option[String] =
     Option(m.group(1)).fold[Option[String]] {
       Option(m.group(4)).fold[Option[String]](None)(list => listLength(list, labels))
     } { label => lbl(label) }
-
   def labelScalarValue(str: String)(implicit labels: Labels): Option[String] =
     singleLabelOrListRegex.findFirstMatchIn(str).fold[Option[String]](Some(str)) {
       labelScalarMatch(_, labels, labels.value)
     }
-
   def asTextString(value: String): Option[String] = value.trim.headOption.fold[Option[String]](None)(_ => Some(value.trim))
-
   def asDecimal(value: String): Option[BigDecimal] =
     inputCurrencyRegex.findFirstIn(value.filterNot(c => c == ' ')).map(s => BigDecimal(s.filterNot(ignoredCurrencyChars.contains(_))))
-
   def asCurrencyPounds(value: String): Option[BigDecimal] =
     inputCurrencyPoundsRegex.findFirstIn(value.filterNot(c => c == ' ')).map(s => BigDecimal(s.filterNot(ignoredCurrencyChars.contains(_))))
-
   def asDate(value: String): Option[LocalDate] = Try(LocalDate.parse(value.filterNot(_.equals(' ')), dateFormatter)).map(d => d).toOption
-
   def stringFromDate(when: LocalDate): String = when.format(dateFormatter)
-
   def asPositiveInt(value: String): Option[Int] = matchedInt(value, positiveIntRegex)
-
   def asAnyInt(value: String): Option[Int] = matchedInt(value, anyIntegerRegex)
-
   def asListOfPositiveInt(value: String): Option[List[Int]] = listOfPositiveIntRegex.findFirstIn(value.filterNot(_.equals(' ')))
     .flatMap(s => lOfOtoOofL(s.split(",").toList.map(asPositiveInt)))
-
-  //  def datePlaceHolderOperation(string: String): String = datePlaceHolderRegex.findFirstMatchIn(string.trim).flatMap(m =>
-  //  Option(m.group(2))).fold("")(n => n)
-
-  //  def datePlaceHolderToYear(string: String): String = datePlaceHolderRegex.findFirstMatchIn(string.trim).flatMap(m =>
-  //    Option(m.group(1))).fold("")(n => n).takeRight(4)
 
   def datePlaceHolderToString(value: String): Option[String] =
     datePlaceHolderRegex.findFirstMatchIn(value.trim).map { m =>
@@ -113,21 +93,10 @@ package object ocelot {
         Option(m.group(2)).fold("") { unit =>
           unit match {
             case "year" => m.group(1).takeRight(4)
-            case "dow_name" => m.group(1)
+            case "dow_name" => asDate(value).get.getDayOfWeek.toString
           }
         })
     }
-
-
-
-  //  def datePlaceHolderToYear(string: String): Option[String] = datePlaceHolderRegex.findFirstMatchIn(string.trim).flatMap{m =>
-  //    Option(m.group(1))).fold("")(n =>
-  //      Option(m.group(2)).fold(""){unit => unit match {
-  //        case "day" =>
-  //      }
-  //
-  //      })
-  //  }
 
   def asTimePeriod(value: String): Option[TimePeriod] =
     timeConstantRegex.findFirstMatchIn(value.trim).flatMap { m =>
