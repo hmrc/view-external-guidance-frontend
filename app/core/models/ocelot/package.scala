@@ -52,7 +52,7 @@ package object ocelot {
   val EmbeddedParameterRegex: Regex = """\{(\d)\}""".r
   val ExclusivePlaceholder: String = "[exclusive]"
   val timeConstantRegex: Regex = timeConstantPattern.r
-  val datePlaceHolderRegex: Regex = datePlaceHolderPattern.r
+  val datePlaceHolderRegex: Regex = s"^$datePlaceHolderPattern$$".r
   val DateOutputFormat = "d MMMM uuuu"
   val ignoredCurrencyChars: Seq[Char] = Seq(' ', '£', ',')
   val dateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("d/M/uuuu", java.util.Locale.UK).withResolverStyle(ResolverStyle.STRICT)
@@ -93,7 +93,9 @@ package object ocelot {
         Option(m.group(2)).fold("") { unit =>
           unit match {
             case "year" => m.group(1).takeRight(4)
-            case "dow_name" => asDate(value).get.getDayOfWeek.toString
+            case "dow_name" =>  asDate(m.group(1)).get.getDayOfWeek.toString
+            case "month_num" => asDate(m.group(1)).get.getMonthValue.toString
+            case "month_start" => asDate(m.group(1)).get.withDayOfMonth(1).format(dateFormatter)
           }
         })
     }

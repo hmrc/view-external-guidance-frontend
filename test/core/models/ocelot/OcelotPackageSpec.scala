@@ -279,6 +279,46 @@ class OcelotPackageSpec extends BaseSpec {
       val dayName = datePlaceHolderToString(datePlaceHolder)
       dayName shouldBe Some("TUESDAY")
     }
+    "correctly convert a date place holder into a month number" in {
+      val datePlaceHolder: String = "[date:4/5/1999:month_num]"
+
+      val monthNumber = datePlaceHolderToString(datePlaceHolder)
+      monthNumber shouldBe Some("5")
+    }
+    "correctly convert a date place holder into a month start" in {
+      val datePlaceHolder: String = "[date:4/5/1999:month_start]"
+
+      val monthStart = datePlaceHolderToString(datePlaceHolder)
+      monthStart shouldBe Some("1/5/1999")
+    }
+    "correctly convert a date place holder into a month end" in {
+      pending
+      val datePlaceHolder: String = "[date:4/5/1999:dow_name]"
+
+      val monthEnd = datePlaceHolderToString(datePlaceHolder)
+      monthEnd shouldBe Some("TUESDAY")
+    }
+    "correctly convert a date place holder into a month name" in {
+      pending
+      val datePlaceHolder: String = "[date:4/5/1999:dow_name]"
+
+      val monthName = datePlaceHolderToString(datePlaceHolder)
+      monthName shouldBe Some("TUESDAY")
+    }
+    "correctly convert a date place holder into a day of the week number" in {
+      pending
+      val datePlaceHolder: String = "[date:4/5/1999:dow_name]"
+
+      val dayOfTheWeekNumber = datePlaceHolderToString(datePlaceHolder)
+      dayOfTheWeekNumber shouldBe Some("TUESDAY")
+    }
+    "correctly convert a date place holder into a day of the month" in {
+      pending
+      val datePlaceHolder: String = "[date:4/5/1999:dow_name]"
+
+      val dayOfTheMonth = datePlaceHolderToString(datePlaceHolder)
+      dayOfTheMonth shouldBe Some("TUESDAY")
+    }
 
     }
   }
