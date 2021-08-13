@@ -270,8 +270,14 @@ class OcelotPackageSpec extends BaseSpec {
     "correctly convert a date place holder into a year" in {
       val datePlaceHolder: String = "[date:4/5/1999:year]"
 
-      val datePlaceHolderYear = datePlaceHolderToYear(datePlaceHolder)
-      datePlaceHolderYear shouldBe "1999"
+      val year = datePlaceHolderToString(datePlaceHolder)
+      year shouldBe Some("1999")
+    }
+    "correctly convert a date place holder into a day name" in {
+      val datePlaceHolder: String = "[date:4/5/1999:dow_name]"
+
+      val dayName = datePlaceHolderToString(datePlaceHolder)
+      dayName shouldBe Some("Tuesday")
     }
 
     }
