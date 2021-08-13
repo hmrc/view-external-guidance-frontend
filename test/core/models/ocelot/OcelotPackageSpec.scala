@@ -16,38 +16,12 @@
 
 package core.models.ocelot
 
-import core.models._
 import base.BaseSpec
+import core.models._
 import org.scalatest.Inspectors.forAll
 
 class OcelotPackageSpec extends BaseSpec {
 
-  "convertDatePlaceHolder" must {
-    "correctly convert a date place holder into a day of week number" in {
-
-    }
-    "correctly convert date place holder into a day name" in {
-
-    }
-    "correctly convert date place holder into day of month number" in { //TODO check this
-
-    }
-    "correctly convert date place holder into a month number" in {
-
-    }
-    "correctly convert date place holder into a month name" in {
-
-    }
-    "correctly convert date place holder into a month start" in {
-
-    }
-    "correctly convert date place holder into a month end" in {
-
-    }
-    "correcly convert date place holder into a four digit year" in {
-
-    }
-  }
 
   "Date conversion" must {
     "recognise a valid date" in {
@@ -82,7 +56,7 @@ class OcelotPackageSpec extends BaseSpec {
 
     "recognise 29th Feb is not valid in a non leap year" in {
       val invalidDates: List[String] = List("29/02/2021", "29/2/2100")
-      forAll (invalidDates) { invalidDate =>
+      forAll(invalidDates) { invalidDate =>
         asDate(invalidDate) match {
           case Some(d) => fail(s"$invalidDate returned $d when expecting None")
           case _ => succeed
@@ -92,7 +66,7 @@ class OcelotPackageSpec extends BaseSpec {
 
     "recognise the 31st is not valid in months that don't have 31 days" in {
       val invalidDates: List[String] = List("31/4/2000", "31/9/2000", "31/6/2000", "31/11/2036")
-      forAll (invalidDates) { invalidDate =>
+      forAll(invalidDates) { invalidDate =>
         asDate(invalidDate) match {
           case Some(d) => fail(s"$invalidDate returned $d when expecting None")
           case _ => succeed
@@ -147,7 +121,7 @@ class OcelotPackageSpec extends BaseSpec {
 
   "Positive Int conversion" must {
     "recognise a valid number" in {
-      List("30", "3  56", "300", "030", Int.MaxValue.toString).foreach{item =>
+      List("30", "3  56", "300", "030", Int.MaxValue.toString).foreach { item =>
         asPositiveInt(item) match {
           case Some(_) => succeed
           case _ => fail(s"Validation of $item failed - expected success")
@@ -157,7 +131,7 @@ class OcelotPackageSpec extends BaseSpec {
 
     "not recognise invalid numbers" in {
       val tooBig: Long = 1L + Int.MaxValue
-      List("A number", "", Int.MinValue.toString, "-2", "-030", "1,234,456", tooBig.toString).foreach{item =>
+      List("A number", "", Int.MinValue.toString, "-2", "-030", "1,234,456", tooBig.toString).foreach { item =>
         asPositiveInt(item) match {
           case Some(_) => fail(s"Validation of $item failed - expected failure")
           case _ => succeed
@@ -168,7 +142,7 @@ class OcelotPackageSpec extends BaseSpec {
 
   "Signed Int conversion" must {
     "recognise a valid number" in {
-      List("30", "3  56", "1,234", "1,234,456", "-300", "030", Int.MaxValue.toString, Int.MinValue.toString).foreach{item =>
+      List("30", "3  56", "1,234", "1,234,456", "-300", "030", Int.MaxValue.toString, Int.MinValue.toString).foreach { item =>
         asAnyInt(item) match {
           case Some(_) => succeed
           case _ => fail(s"Validation of $item failed - expected success")
@@ -179,7 +153,7 @@ class OcelotPackageSpec extends BaseSpec {
     "not recognise invalid numbers" in {
       val tooBig: Long = 1L + Int.MaxValue
       val tooNegative: Long = -1L + Int.MinValue
-      List("A number", "", "1,234456", tooBig.toString, tooNegative.toString).foreach{item =>
+      List("A number", "", "1,234456", tooBig.toString, tooNegative.toString).foreach { item =>
         asAnyInt(item) match {
           case Some(_) => fail(s"Validation of $item failed - expected failure")
           case _ => succeed
@@ -201,11 +175,11 @@ class OcelotPackageSpec extends BaseSpec {
       val tooNegative: Long = -1L + Int.MinValue
 
       List("30, 3  56, A number, 067",
-           "30, -3  56, 067",
-           "30, 3  56, -45, 067",
-           s"30, 3  56, ${tooBig.toString}, 067",
-           s"30, 3  56, ${tooNegative.toString}, 067"
-      ).foreach{item =>
+        "30, -3  56, 067",
+        "30, 3  56, -45, 067",
+        s"30, 3  56, ${tooBig.toString}, 067",
+        s"30, 3  56, ${tooNegative.toString}, 067"
+      ).foreach { item =>
         asListOfPositiveInt(item) match {
           case Some(_) => fail(s"Validation of $item failed - expected failure")
           case _ => succeed
@@ -220,7 +194,7 @@ class OcelotPackageSpec extends BaseSpec {
     }
 
     "Return Some(list) if all elements defined" in {
-      lOfOtoOofL(List(Some(1), Some(2), Some(5), Some(8))) shouldBe Some(List(1,2,5,8))
+      lOfOtoOofL(List(Some(1), Some(2), Some(5), Some(8))) shouldBe Some(List(1, 2, 5, 8))
     }
 
     "Return None if not all elements defined" in {
@@ -271,5 +245,50 @@ class OcelotPackageSpec extends BaseSpec {
       optionMatch shouldBe true
     }
 
+  }
+
+  "convertDatePlaceHolder" must {
+    "correctly match a date place holder" in {
+      val datePlaceHoldertext: String = "[date:4/5/1999:day]"
+
+      val datePlaceHolderMatch: Boolean = isDatePlaceHolder(datePlaceHoldertext)
+
+      datePlaceHolderMatch shouldBe true
+
+    }
+
+    "fail when not a date place holder" in {
+      val datePlaceHoldertext: String = "S0m3-t3xt-[date:4/5/1999:month_start]"
+
+      val datePlaceHolderMatch: Boolean = isDatePlaceHolder(datePlaceHoldertext)
+
+      datePlaceHolderMatch shouldBe false
+
+    }
+
+    "correctly convert a date place holder into a day of week number" in {
+
+    }
+    "correctly convert date place holder into a day name" in {
+
+    }
+    "correctly convert date place holder into day of month number" in {
+
+    }
+    "correctly convert date place holder into a month number" in {
+
+    }
+    "correctly convert date place holder into a month name" in {
+
+    }
+    "correctly convert date place holder into a month start" in {
+
+    }
+    "correctly convert date place holder into a month end" in {
+
+    }
+    "correctly convert date place holder into a four digit year" in {
+
+    }
   }
 }

@@ -30,6 +30,7 @@ package object ocelot {
   val buttonLinkPattern: String = s"\\[(button)(-same|-tab)?:(.+?):(\\d+|${Process.StartStanzaId})\\]"
   val linkPattern: String = s"\\[(button|link)(-same|-tab)?:(.+?):(\\d+|${Process.StartStanzaId}|https?:[a-zA-Z0-9\\/\\.\\-\\?_\\.=&#]+)\\]"
   val timeConstantPattern: String = "^(\\d{1,10})(day|week|month|year)$"
+  val datePlaceHolderPattern: String = "^\\[date:([0-9]{1,2}\\/[0-9]{1,2}\\/[0-9]{4})?:(year|month_num|month_start|month_end|month_name|dow_num|dow_name|day|)\\]$$"
   val csPositiveIntPattern: String = "^\\d{1,10}(?:,\\d{1,10})*$"
   val listPattern: String = "\\[list:([A-Za-z0-9\\s\\-_]+):length\\]"
   val singleLabelOrListPattern: String = s"^$labelPattern|$listPattern|$datePlaceHolderPattern$$"
@@ -48,8 +49,7 @@ package object ocelot {
   val EmbeddedParameterRegex: Regex = """\{(\d)\}""".r
   val ExclusivePlaceholder: String = "[exclusive]"
   val timeConstantRegex: Regex = timeConstantPattern.r
-  val datePlaceHolderPattern: Regex = "^\\[date:([0-9]{1,2}\\/[0-9]{1,2}\\/[0-9]{4})?:(year|month_num|month_start|month_end|month_name|dow_num|dow_name|day|)\\]$$".r
-
+  val datePlaceHolderRegex: Regex = datePlaceHolderPattern.r
   val DateOutputFormat = "d MMMM uuuu"
   val ignoredCurrencyChars: Seq[Char] = Seq(' ','£', ',')
   val dateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("d/M/uuuu", java.util.Locale.UK).withResolverStyle(ResolverStyle.STRICT)
@@ -97,6 +97,7 @@ package object ocelot {
   def fromPattern(pattern: Regex, text: String): (List[String], List[Match]) = (pattern.split(text).toList, pattern.findAllMatchIn(text).toList)
   def isLinkOnlyPhrase(phrase: Phrase): Boolean =phrase.english.matches(pageLinkOnlyPattern)
   def isBoldOnlyPhrase(phrase: Phrase): Boolean =phrase.english.matches(boldOnlyPattern)
+  def isDatePlaceHolder(datePlaceHolder: String): Boolean = datePlaceHolder.matches(datePlaceHolderPattern)
   def stringWithOptionalHint(str: String): (String, Option[String]) = {
     val (txts, matches) = fromPattern(hintRegex, str)
     val hint = matches.headOption.map(m => m.group(1))
