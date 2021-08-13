@@ -96,8 +96,10 @@ class GuidanceService @Inject() (
               Left(InvalidProcessError)
             },
             page => {
-              val pageMapById: Map[String, PageDesc] = ctx.pageMap.map{case (k, pn) => (pn.id, PageDesc(pn, s"${appConfig.baseUrl}/$processCode${k}"))}
-              val (visualStanzas, labels, dataInput) = pageRenderer.renderPage(page, LabelCache(ctx.labels, Map(), ctx.flowStack, ctx.continuationPool))
+              val pageMapById: Map[String, PageDesc] =
+                ctx.pageMap.map{case (k, pn) => (pn.id, PageDesc(pn, s"${appConfig.baseUrl}/$processCode${k}"))}
+              val (visualStanzas, labels, dataInput) =
+                pageRenderer.renderPage(page, LabelCache(ctx.labels, Map(), ctx.flowStack, ctx.continuationPool, ctx.process.timescales))
 
               Right(
                 PageEvaluationContext(
