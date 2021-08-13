@@ -249,48 +249,31 @@ class OcelotPackageSpec extends BaseSpec {
 
   "isDatePlaceHolder" must {
     "correctly match a date place holder" in {
-      val datePlaceHoldertext: String = "[date:4/5/1999:day]"
+      val datePlaceHolder: String = "[date:4/5/1999:day]"
 
-      val datePlaceHolderMatch: Boolean = isDatePlaceHolder(datePlaceHoldertext)
+      val datePlaceHolderMatch: Boolean = isDatePlaceHolder(datePlaceHolder)
 
       datePlaceHolderMatch shouldBe true
 
     }
 
     "fail when not a date place holder" in {
-      val datePlaceHoldertext: String = "S0m3-t3xt-[date:4/5/1999:month_start]"
+      val datePlaceHolder: String = "S0m3-t3xt-[date:4/5/1999:month_start]"
 
-      val datePlaceHolderMatch: Boolean = isDatePlaceHolder(datePlaceHoldertext)
+      val datePlaceHolderMatch: Boolean = isDatePlaceHolder(datePlaceHolder)
 
       datePlaceHolderMatch shouldBe false
 
     }
 
-  "convertDatePlaceHolder" must {
-    "correctly convert a date place holder into a day of week number" in {
+  "datePlaceHolderToYear" must {
+    "correctly convert a date place holder into a year" in {
+      val datePlaceHolder: String = "[date:4/5/1999:year]"
+
+      val datePlaceHolderYear = datePlaceHolderToYear(datePlaceHolder)
+      datePlaceHolderYear shouldBe "1999"
+    }
 
     }
-    "correctly convert date place holder into a day name" in {
-
-    }
-    "correctly convert date place holder into day of month number" in {
-
-    }
-    "correctly convert date place holder into a month number" in {
-
-    }
-    "correctly convert date place holder into a month name" in {
-
-    }
-    "correctly convert date place holder into a month start" in {
-
-    }
-    "correctly convert date place holder into a month end" in {
-
-    }
-    "correctly convert date place holder into a four digit year" in {
-
-    }
-  }
   }
 }

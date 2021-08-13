@@ -20,7 +20,7 @@ import java.time.LocalDate
 import java.time.format.{DateTimeFormatter, ResolverStyle}
 import scala.util.Try
 import scala.util.matching.Regex
-import Regex._
+import scala.util.matching.Regex._
 
 package object ocelot {
   val labelPattern: String = "\\[label:([A-Za-z0-9\\s\\-_]+)(:(currency|currencyPoundsOnly|date|number))?\\]"
@@ -76,12 +76,27 @@ package object ocelot {
   def asCurrencyPounds(value: String): Option[BigDecimal] =
     inputCurrencyPoundsRegex.findFirstIn(value.filterNot(c => c==' ')).map(s => BigDecimal(s.filterNot(ignoredCurrencyChars.contains(_))))
   def asDate(value: String): Option[LocalDate] = Try(LocalDate.parse(value.filterNot(_.equals(' ')), dateFormatter)).map(d => d).toOption
-  def convertDatePlaceHolder(value: LocalDate, operation: String): LocalDate = ???
   def stringFromDate(when: LocalDate): String = when.format(dateFormatter)
   def asPositiveInt(value: String): Option[Int] = matchedInt(value, positiveIntRegex)
   def asAnyInt(value: String): Option[Int] = matchedInt(value, anyIntegerRegex)
   def asListOfPositiveInt(value: String): Option[List[Int]] = listOfPositiveIntRegex.findFirstIn(value.filterNot(_.equals(' ')))
                                                                                     .flatMap(s => lOfOtoOofL(s.split(",").toList.map(asPositiveInt)))
+
+//  def datePlaceHolderOperation(string: String): String = datePlaceHolderRegex.findFirstMatchIn(string.trim).flatMap(m =>
+//  Option(m.group(2))).fold("")(n => n)
+
+  def datePlaceHolderToYear(string: String): String = datePlaceHolderRegex.findFirstMatchIn(string.trim).flatMap(m =>
+    Option(m.group(1))).fold("")(n => n).takeRight(4)
+
+//  def datePlaceHolderToYear(string: String): Option[String] = datePlaceHolderRegex.findFirstMatchIn(string.trim).flatMap{m =>
+//    Option(m.group(1))).fold("")(n =>
+//      Option(m.group(2)).fold(""){unit => unit match {
+//        case "day" =>
+//      }
+//
+//      })
+//  }
+
   def asTimePeriod(value: String): Option[TimePeriod] =
     timeConstantRegex.findFirstMatchIn(value.trim).flatMap{m =>
     Option(m.group(1)).fold[Option[TimePeriod]](None)(n =>
