@@ -247,7 +247,7 @@ class OcelotPackageSpec extends BaseSpec {
 
   }
 
-  "convertDatePlaceHolder" must {
+  "isDatePlaceHolder" must {
     "correctly match a date place holder" in {
       val datePlaceHoldertext: String = "[date:4/5/1999:day]"
 
@@ -266,6 +266,7 @@ class OcelotPackageSpec extends BaseSpec {
 
     }
 
+  "convertDatePlaceHolder" must {
     "correctly convert a date place holder into a day of week number" in {
 
     }
@@ -290,5 +291,6 @@ class OcelotPackageSpec extends BaseSpec {
     "correctly convert date place holder into a four digit year" in {
 
     }
+  }
   }
 }
