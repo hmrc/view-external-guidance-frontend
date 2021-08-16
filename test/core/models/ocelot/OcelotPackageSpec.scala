@@ -292,32 +292,28 @@ class OcelotPackageSpec extends BaseSpec {
       monthStart shouldBe Some("1/5/1999")
     }
     "correctly convert a date place holder into a month end" in {
-      pending
-      val datePlaceHolder: String = "[date:4/5/1999:dow_name]"
+      val datePlaceHolder: String = "[date:4/5/1999:month_end]"
 
       val monthEnd = datePlaceHolderToString(datePlaceHolder)
-      monthEnd shouldBe Some("TUESDAY")
+      monthEnd shouldBe Some("31/5/1999")
     }
     "correctly convert a date place holder into a month name" in {
-      pending
-      val datePlaceHolder: String = "[date:4/5/1999:dow_name]"
+      val datePlaceHolder: String = "[date:4/5/1999:month_name]"
 
       val monthName = datePlaceHolderToString(datePlaceHolder)
-      monthName shouldBe Some("TUESDAY")
+      monthName shouldBe Some("MAY")
     }
     "correctly convert a date place holder into a day of the week number" in {
-      pending
-      val datePlaceHolder: String = "[date:4/5/1999:dow_name]"
+      val datePlaceHolder: String = "[date:4/5/1999:dow_num]"
 
       val dayOfTheWeekNumber = datePlaceHolderToString(datePlaceHolder)
-      dayOfTheWeekNumber shouldBe Some("TUESDAY")
+      dayOfTheWeekNumber shouldBe Some("2")
     }
     "correctly convert a date place holder into a day of the month" in {
-      pending
-      val datePlaceHolder: String = "[date:4/5/1999:dow_name]"
+      val datePlaceHolder: String = "[date:4/5/1999:day]"
 
       val dayOfTheMonth = datePlaceHolderToString(datePlaceHolder)
-      dayOfTheMonth shouldBe Some("TUESDAY")
+      dayOfTheMonth shouldBe Some("4")
     }
 
     }

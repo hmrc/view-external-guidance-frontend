@@ -90,13 +90,15 @@ package object ocelot {
   def datePlaceHolderToString(value: String): Option[String] =
     datePlaceHolderRegex.findFirstMatchIn(value.trim).map { m =>
       Option(m.group(1)).fold("")(_ =>
-        Option(m.group(2)).fold("") { unit =>
-          unit match {
-            case "year" => m.group(1).takeRight(4)
-            case "dow_name" =>  asDate(m.group(1)).get.getDayOfWeek.toString
-            case "month_num" => asDate(m.group(1)).get.getMonthValue.toString
-            case "month_start" => asDate(m.group(1)).get.withDayOfMonth(1).format(dateFormatter)
-          }
+        Option(m.group(2)).fold("") {
+          case "year" => m.group(1).takeRight(4)
+          case "dow_name" => asDate(m.group(1)).get.getDayOfWeek.toString
+          case "month_num" => asDate(m.group(1)).get.getMonthValue.toString
+          case "month_start" => asDate(m.group(1)).get.withDayOfMonth(1).format(dateFormatter)
+          case "month_end" => asDate(m.group(1)).get.withDayOfMonth(asDate(m.group(1)).get.lengthOfMonth()).format(dateFormatter)
+          case "month_name" => asDate(m.group(1)).get.getMonth.toString
+          case "dow_num" => (asDate(m.group(1)).get.getDayOfWeek.getValue).toString
+          case "day" => asDate(m.group(1)).get.getDayOfMonth.toString
         })
     }
 
