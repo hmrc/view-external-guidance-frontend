@@ -247,25 +247,6 @@ class OcelotPackageSpec extends BaseSpec {
 
   }
 
-  "isDatePlaceHolder" must {
-    "correctly match a date place holder" in {
-      val datePlaceHolder: String = "[date:4/5/1999:day]"
-
-      val datePlaceHolderMatch: Boolean = isDatePlaceHolder(datePlaceHolder)
-
-      datePlaceHolderMatch shouldBe true
-
-    }
-
-    "fail when not a date place holder" in {
-      val datePlaceHolder: String = "S0m3-t3xt-[date:4/5/1999:month_start]"
-
-      val datePlaceHolderMatch: Boolean = isDatePlaceHolder(datePlaceHolder)
-
-      datePlaceHolderMatch shouldBe false
-
-    }
-
   "datePlaceHolderToYear" must {
     "correctly convert a date place holder into a year" in {
       val datePlaceHolder: String = "[date:4/5/1999:year]"
@@ -314,8 +295,6 @@ class OcelotPackageSpec extends BaseSpec {
 
       val dayOfTheMonth = datePlaceHolderToString(datePlaceHolder)
       dayOfTheMonth shouldBe Some("4")
-    }
-
     }
   }
 }

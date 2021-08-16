@@ -16,8 +16,6 @@
 
 package core.models
 
-import core.models.ocelot.asDate
-
 import java.time.LocalDate
 import java.time.format.{DateTimeFormatter, ResolverStyle}
 import scala.util.Try
@@ -97,7 +95,7 @@ package object ocelot {
           case "month_start" => asDate(m.group(1)).get.withDayOfMonth(1).format(dateFormatter)
           case "month_end" => asDate(m.group(1)).get.withDayOfMonth(asDate(m.group(1)).get.lengthOfMonth()).format(dateFormatter)
           case "month_name" => asDate(m.group(1)).get.getMonth.toString
-          case "dow_num" => (asDate(m.group(1)).get.getDayOfWeek.getValue).toString
+          case "dow_num" => asDate(m.group(1)).get.getDayOfWeek.getValue.toString
           case "day" => asDate(m.group(1)).get.getDayOfMonth.toString
         })
     }
@@ -120,8 +118,6 @@ package object ocelot {
   def isLinkOnlyPhrase(phrase: Phrase): Boolean = phrase.english.matches(pageLinkOnlyPattern)
 
   def isBoldOnlyPhrase(phrase: Phrase): Boolean = phrase.english.matches(boldOnlyPattern)
-
-  def isDatePlaceHolder(datePlaceHolder: String): Boolean = datePlaceHolder.matches(datePlaceHolderPattern)
 
   def stringWithOptionalHint(str: String): (String, Option[String]) = {
     val (txts, matches) = fromPattern(hintRegex, str)
