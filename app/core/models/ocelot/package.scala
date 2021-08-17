@@ -31,7 +31,7 @@ package object ocelot {
   val linkPattern: String = s"\\[(button|link)(-same|-tab)?:(.+?):(\\d+|${Process.StartStanzaId}|https?:[a-zA-Z0-9\\/\\.\\-\\?_\\.=&#]+)\\]"
   val timeConstantPattern: String = "^(\\d{1,10})(day|week|month|year)$"
   val datePattern: String = "[0-9]{1,2}\\/[0-9]{1,2}\\/[0-9]{4}"
-  val datePlaceHolderPattern: String = s"\\[date:($datePattern)?:(year|month_num|month_start|month_end|month_name|dow_num|dow_name|day|)\\]"
+  val datePlaceHolderPattern: String = s"\\[date:($datePattern|$labelPattern)?:(year|month_num|month_start|month_end|month_name|dow_num|dow_name|day|)\\]"
   val csPositiveIntPattern: String = "^\\d{1,10}(?:,\\d{1,10})*$"
   val listPattern: String = "\\[list:([A-Za-z0-9\\s\\-_]+):length\\]"
   val singleLabelOrListPattern: String = s"^$labelPattern|$listPattern|$datePlaceHolderPattern$$"
@@ -88,7 +88,7 @@ package object ocelot {
   def datePlaceHolderToString(value: String): Option[String] =
     datePlaceHolderRegex.findFirstMatchIn(value.trim).map { m =>
       Option(m.group(1)).fold("")(_ =>
-        Option(m.group(2)).fold("") {
+        Option(m.group(5)).fold("") {
           case "year" => m.group(1).takeRight(4)
           case "dow_name" => asDate(m.group(1)).get.getDayOfWeek.toString
           case "month_num" => asDate(m.group(1)).get.getMonthValue.toString

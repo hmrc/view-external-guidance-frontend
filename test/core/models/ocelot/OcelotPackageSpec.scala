@@ -248,6 +248,21 @@ class OcelotPackageSpec extends BaseSpec {
   }
 
   "datePlaceHolderToYear" must {
+    "correctly return a convert a date placeholder when the value is a label" in {
+      val datePlaceHolder: String = "[date:[label:5/6/1999]:dow_name]"
+
+      val result = datePlaceHolderToString(datePlaceHolder)
+
+      result shouldBe None
+    }
+
+    "correctly return a none when the value is not in the format of a date placeholder" in {
+      val badDatePlaceHolder: String = "[date:451999:y4r]"
+
+      val result = datePlaceHolderToString(badDatePlaceHolder)
+
+      result shouldBe None
+    }
     "correctly convert a date place holder into a year" in {
       val datePlaceHolder: String = "[date:4/5/1999:year]"
 
