@@ -48,7 +48,7 @@ object BulletPointBuilder {
     if (phrases.head.english.contains(Break)) breakSplit(phrases) else standardSplit(phrases)
   }
 
-  private[services]def findLeadingText(phrases: Seq[Phrase], phraseText: Phrase => String): String = {
+  private[services] def findLeadingText(phrases: Seq[Phrase], phraseText: Phrase => String): String = {
     val matched: List[List[TextBuilder.Fragment]] = phrases.headOption.fold[List[List[TextBuilder.Fragment]]](Nil){first =>
       phrases.toList.tail.map(p => partialMatchText(phraseText(first), phraseText(p))._2)
     }

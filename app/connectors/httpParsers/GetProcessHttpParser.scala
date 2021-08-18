@@ -24,7 +24,7 @@ import play.api.http.Status._
 import uk.gov.hmrc.http.HttpReads
 
 object GetProcessHttpParser extends HttpParser {
-  val logger = Logger(getClass)
+  val logger: Logger = Logger(getClass)
 
   implicit val getProcessHttpReads: HttpReads[RequestOutcome[Process]] = {
     case (_, _, response) if response.status == OK =>

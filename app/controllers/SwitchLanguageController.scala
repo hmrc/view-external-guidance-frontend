@@ -27,7 +27,7 @@ import uk.gov.hmrc.play.language.{LanguageController, LanguageUtils}
 class SwitchLanguageController @Inject() (appConfig: AppConfig, languageUtils: LanguageUtils, cc: MessagesControllerComponents)
     extends LanguageController(languageUtils, cc) {
 
-  val logger = Logger(getClass)
+  val logger: Logger = Logger(getClass)
 
   override def languageMap: Map[String, Lang] = appConfig.languageMap
   private val SwitchIndicatorKey = "switching-language"
