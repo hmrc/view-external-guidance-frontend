@@ -65,7 +65,7 @@ class SessionTimeoutPageController @Inject()(appConfig: AppConfig,
               logger.error(s"Error $err occurred retrieving process context for process $processCode when removing session")
               Future.successful(InternalServerError(errorHandler.internalServerErrorTemplateWithProcessCode(Some(processCode))).withNewSession)
           }
-        case x =>
+        case _ =>
           Future.successful(Ok(createYourSessionHasExpiredResponse(messages("session.timeout.header.title"), processCode)).withNewSession)
       }
     }

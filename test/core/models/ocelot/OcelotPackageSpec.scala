@@ -20,7 +20,9 @@ import base.BaseSpec
 import core.models._
 import org.scalatest.Inspectors.forAll
 
-class OcelotPackageSpec extends BaseSpec {
+class OcelotPackageSpec extends BaseSpec with TestTimescaleDefnsDB {
+
+  val labels: Labels = new LabelCacheImpl(Map(), Map(), Nil, Map(), Map(), timescaleMap)
 
 
   "Date conversion" must {
@@ -213,6 +215,28 @@ class OcelotPackageSpec extends BaseSpec {
       isBoldOnlyPhrase(Phrase(Vector("[bold:Blah]", "[bold:Blah]"))) shouldBe true
 
       isBoldOnlyPhrase(Phrase(Vector("Blah", "Blah"))) shouldBe false
+    }
+  }
+
+  "operandValue function" must {
+    "parse date_add placeholder with literal date" in {
+      operandValue("[date_add:22/9/1973:NTCReAwardManAward]")(labels) shouldBe Some("6/10/1973")
+    }
+
+    "parse date_add placeholders with label date" in {
+      val labelsWithMyDate = labels.update("MyDate", "22/9/1973")
+      operandValue("[date_add:MyDate:NTCReAwardManAward]")(labelsWithMyDate) shouldBe Some("6/10/1973")
+    }
+
+    "parse date label reference" in {
+      val labelsWithMyDate = labels.update("MyDate", "22/9/1973")
+      operandValue("[label:MyDate]")(labelsWithMyDate) shouldBe Some("22/9/1973")
+    }
+  }
+
+  "Timescale functions" must {
+    "dateAdd with a valid date and timescale id" in {
+      dateAdd(Some("22/9/1973"), "NTCReAwardManAward", labels) shouldBe Some("6/10/1973")
     }
   }
 
