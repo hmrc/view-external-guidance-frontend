@@ -99,7 +99,6 @@ package object ocelot {
   def labelReference(str: String): Option[String] = plSingleGroupCaptures(labelRefRegex, str).headOption
   def listLength(listName: String, labels: Labels): Option[String] = labels.valueAsList(listName).fold[Option[String]](None){l => Some(l.length.toString)}
   def stringFromDate(when: LocalDate): String = when.format(dateFormatter)
-
   def stripHintPlaceholder(p: Phrase): Phrase = Phrase(hintRegex.replaceAllIn(p.english, ""), hintRegex.replaceAllIn(p.welsh, ""))
   def fromPattern(pattern: Regex, text: String): (List[String], List[Match]) = (pattern.split(text).toList, pattern.findAllMatchIn(text).toList)
   def isLinkOnlyPhrase(phrase: Phrase): Boolean =phrase.english.matches(pageLinkOnlyPattern)
@@ -121,31 +120,33 @@ package object ocelot {
   def asListOfPositiveInt(value: String): Option[List[Int]] = listOfPositiveIntRegex.findFirstIn(value.filterNot(_.equals(' ')))
     .flatMap(s => lOfOtoOofL(s.split(",").toList.map(asPositiveInt)))
 
-  def datePlaceHolderToString(value: String): Option[String] =
-    datePlaceHolderRegex.findFirstMatchIn(value.trim).map { m =>
-      Option(m.group(1)).fold("")(_ =>
-        Option(m.group(4)).fold("") {
-          case "year" => m.group(1).takeRight(4)
-          case "dow_name" => asDate(m.group(1)).get.getDayOfWeek.toString
-          case "month_num" => asDate(m.group(1)).get.getMonthValue.toString
-          case "month_start" => asDate(m.group(1)).get.withDayOfMonth(1).format(dateFormatter)
-          case "month_end" => asDate(m.group(1)).get.withDayOfMonth(asDate(m.group(1)).get.lengthOfMonth()).format(dateFormatter)
-          case "month_name" => asDate(m.group(1)).get.getMonth.toString
-          case "dow_num" => asDate(m.group(1)).get.getDayOfWeek.getValue.toString
-          case "day" => asDate(m.group(1)).get.getDayOfMonth.toString
-        })
+  def dateToString(date: Option[String], applyFunction: String): Option[String] =
+    date.flatMap { someDate =>
+      asDate(someDate).flatMap(dte =>
+        applyFunction match {
+          case "year" => Some(dte.getYear.toString)
+          case "dow_name" => Some(dte.getDayOfWeek.toString)
+          case "month_num" => Some(dte.getMonthValue.toString)
+          case "month_start" => Some(dte.withDayOfMonth(1).format(dateFormatter))
+          case "month_end" => Some(dte.withDayOfMonth(dte.lengthOfMonth()).format(dateFormatter))
+          case "month_name" => Some(dte.getMonth.toString)
+          case "dow_num" => Some(dte.getDayOfWeek.getValue.toString)
+          case "day" => Some(dte.getDayOfMonth.toString)
+          case _ => None
+        }
+      )
     }
 
   def asTimePeriod(value: String): Option[TimePeriod] =
     timeConstantRegex.findFirstMatchIn(value.trim).flatMap{m =>
-    Option(m.group(1)).fold[Option[TimePeriod]](None)(n =>
-      Option(m.group(2)).fold[Option[TimePeriod]](None){
-        case "day" | "days" => Some(TimePeriod(n.toInt, Day))
-        case "week" | "weeks" => Some(TimePeriod(n.toInt, Week))
-        case "month" | "months" => Some(TimePeriod(n.toInt, Month))
-        case "year" | "years" => Some(TimePeriod(n.toInt, Year))
-      }
-    )
+      Option(m.group(1)).fold[Option[TimePeriod]](None)(n =>
+        Option(m.group(2)).fold[Option[TimePeriod]](None){
+          case "day" | "days" => Some(TimePeriod(n.toInt, Day))
+          case "week" | "weeks" => Some(TimePeriod(n.toInt, Week))
+          case "month" | "months" => Some(TimePeriod(n.toInt, Month))
+          case "year" | "years" => Some(TimePeriod(n.toInt, Year))
+        }
+      )
   }
 
   def dateAdd(date: Option[String], tsId: String, labels: Labels): Option[String] =

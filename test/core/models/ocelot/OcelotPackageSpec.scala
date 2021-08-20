@@ -271,69 +271,53 @@ class OcelotPackageSpec extends BaseSpec with TestTimescaleDefnsDB {
 
   }
 
-  "datePlaceHolderToYear" must {
-    "correctly return a convert a date placeholder when the value is a label" in {
-      val datePlaceHolder: String = "[date:[label:5/6/1999]:dow_name]"
-
-      val result = datePlaceHolderToString(datePlaceHolder)
-
-      result shouldBe None
-    }
-
+  "dateToString" must {
+    val date: Option[String] = Some("12/12/2021")
+    val badDate: Option[String] = Some("1/2/-bad-date")
     "correctly return a none when the value is not in the format of a date placeholder" in {
-      val badDatePlaceHolder: String = "[date:451999:y4r]"
-
-      val result = datePlaceHolderToString(badDatePlaceHolder)
+      val result = dateToString(badDate, "dow_name")
 
       result shouldBe None
     }
     "correctly convert a date place holder into a year" in {
-      val datePlaceHolder: String = "[date:4/5/1999:year]"
+      val result = dateToString(date, "year")
 
-      val year = datePlaceHolderToString(datePlaceHolder)
-      year shouldBe Some("1999")
+      result shouldBe Some("2021")
     }
     "correctly convert a date place holder into a day name" in {
-      val datePlaceHolder: String = "[date:4/5/1999:dow_name]"
+      val result = dateToString(date, "dow_name")
 
-      val dayName = datePlaceHolderToString(datePlaceHolder)
-      dayName shouldBe Some("TUESDAY")
+      result shouldBe Some("SUNDAY")
     }
     "correctly convert a date place holder into a month number" in {
-      val datePlaceHolder: String = "[date:4/5/1999:month_num]"
+      val monthNumber = dateToString(date, "month_num")
 
-      val monthNumber = datePlaceHolderToString(datePlaceHolder)
-      monthNumber shouldBe Some("5")
+      monthNumber shouldBe Some("12")
     }
     "correctly convert a date place holder into a month start" in {
-      val datePlaceHolder: String = "[date:4/5/1999:month_start]"
+      val monthStart = dateToString(date, "month_start")
 
-      val monthStart = datePlaceHolderToString(datePlaceHolder)
-      monthStart shouldBe Some("1/5/1999")
+      monthStart shouldBe Some("1/12/2021")
     }
     "correctly convert a date place holder into a month end" in {
-      val datePlaceHolder: String = "[date:4/5/1999:month_end]"
+      val monthEnd = dateToString(date, "month_end")
 
-      val monthEnd = datePlaceHolderToString(datePlaceHolder)
-      monthEnd shouldBe Some("31/5/1999")
+      monthEnd shouldBe Some("31/12/2021")
     }
     "correctly convert a date place holder into a month name" in {
-      val datePlaceHolder: String = "[date:4/5/1999:month_name]"
+      val monthName = dateToString(date, "month_name")
 
-      val monthName = datePlaceHolderToString(datePlaceHolder)
-      monthName shouldBe Some("MAY")
+      monthName shouldBe Some("DECEMBER")
     }
     "correctly convert a date place holder into a day of the week number" in {
-      val datePlaceHolder: String = "[date:4/5/1999:dow_num]"
+      val dayOfTheWeekNumber = dateToString(date, "dow_num")
 
-      val dayOfTheWeekNumber = datePlaceHolderToString(datePlaceHolder)
-      dayOfTheWeekNumber shouldBe Some("2")
+      dayOfTheWeekNumber shouldBe Some("7")
     }
     "correctly convert a date place holder into a day of the month" in {
-      val datePlaceHolder: String = "[date:4/5/1999:day]"
+      val dayOfTheMonth = dateToString(date, "day")
 
-      val dayOfTheMonth = datePlaceHolderToString(datePlaceHolder)
-      dayOfTheMonth shouldBe Some("4")
+      dayOfTheMonth shouldBe Some("12")
     }
   }
 }
