@@ -62,8 +62,6 @@ object TextBuilder {
     val ListNameIdx: Int = 10
     val placeholderPattern: String = s"$LabelPattern|$boldPattern|$linkPattern|$listPattern"
     val plregex: Regex = placeholderPattern.r
-    // def linkText(m: Match): String = m.group(LinkTextIdx)
-    // def linkDest(m: Match): String = m.group(LinkDestIdx)
     def from(text: String):(List[String], List[Match]) = fromPattern(plregex, text)
 
     def placeholdersToItems(matches: List[Match])(implicit ctx: UIContext): List[TextItem] =
