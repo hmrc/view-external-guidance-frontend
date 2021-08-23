@@ -18,7 +18,7 @@ package services
 
 import models._
 import core.models.ocelot.{Link, Phrase, LabelPattern, listPattern, listLength, stringWithOptionalHint, fromPattern}
-import core.models.ocelot.{UiExpansionRegex, LabelOutputFormatGroup, scalarMatch, boldPattern, linkPattern}
+import core.models.ocelot.{UiExpansionRegex, LabelOutputFormatGroup, matchGroup, scalarMatch, boldPattern, linkPattern}
 import models.ui._
 import scala.util.matching.Regex
 import Regex._
@@ -62,36 +62,27 @@ object TextBuilder {
     val ListNameIdx: Int = 10
     val placeholderPattern: String = s"$LabelPattern|$boldPattern|$linkPattern|$listPattern"
     val plregex: Regex = placeholderPattern.r
-    def labelNameOpt(m: Match): Option[String] = Option(m.group(LabelNameIdx))
-    def labelFormatOpt(m: Match): Option[String] = Option(m.group(LabelFormatIdx))
-    def boldTextOpt(m: Match): Option[String] = Option(m.group(BoldTextIdx))
-    def boldLabelNameOpt(m: Match): Option[String] = Option(m.group(BoldLabelNameIdx))
-    def boldLabelFormatOpt(m: Match): Option[String] = Option(m.group(BoldLabelFormatIdx))
-    def buttonOrLink(m: Match): Option[String] = Option(m.group(ButtonOrLinkIdx))
-    def linkTypeOpt(m: Match): Option[String] = Option(m.group(LinkTypeIdx))
-    def linkText(m: Match): String = m.group(LinkTextIdx)
-    def linkTextOpt(m: Match): Option[String] = Option(linkText(m))
-    def linkDest(m: Match): String = m.group(LinkDestIdx)
-    def listNameOpt(m: Match): Option[String] = Option(m.group(ListNameIdx))
     def from(text: String):(List[String], List[Match]) = fromPattern(plregex, text)
 
     def placeholdersToItems(matches: List[Match])(implicit ctx: UIContext): List[TextItem] =
       matches.map { m =>
-        labelNameOpt(m).fold[TextItem]({
-          boldTextOpt(m).fold[TextItem]({
-            listNameOpt(m).fold[TextItem]({
-              val window: Boolean = linkTypeOpt(m).fold(false)(modifier => modifier == "-tab")
-              val dest: String = if (Link.isLinkableStanzaId(linkDest(m))) ctx.pageMapById(linkDest(m)).url else linkDest(m)
-              val asButton: Boolean = buttonOrLink(m).fold(false)(_ == "button")
-              val (lnkText, lnkHint) = stringWithOptionalHint(linkText(m))
+        val capture: Int => Option[String] = matchGroup(m)
+        capture(LabelNameIdx).fold[TextItem]({
+          capture(BoldTextIdx).fold[TextItem]({
+            capture(ListNameIdx).fold[TextItem]({
+              val linkDestination = m.group(LinkDestIdx)
+              val window: Boolean = capture(LinkTypeIdx).fold(false)(modifier => modifier == "-tab")
+              val dest: String = if (Link.isLinkableStanzaId(linkDestination)) ctx.pageMapById(linkDestination).url else linkDestination
+              val asButton: Boolean = capture(ButtonOrLinkIdx).fold(false)(_ == "button")
+              val (lnkText, lnkHint) = stringWithOptionalHint(m.group(LinkTextIdx))
               ui.Link(dest, lnkText, window, asButton, lnkHint)
             }){listName => Words(listLength(listName, ctx.labels).getOrElse("0"))}
           }){txt =>
-            boldLabelNameOpt(m).fold[TextItem](Words(txt, true)){labelName =>
-              LabelRef(labelName, OutputFormat(boldLabelFormatOpt(m)), true)
+            capture(BoldLabelNameIdx).fold[TextItem](Words(txt, true)){labelName =>
+              LabelRef(labelName, OutputFormat(capture(BoldLabelFormatIdx)), true)
             }
           }
-        })(labelName => LabelRef(labelName, OutputFormat(labelFormatOpt(m))))
+        })(labelName => LabelRef(labelName, OutputFormat(capture(LabelFormatIdx))))
       }
   }
 
@@ -104,7 +95,7 @@ object TextBuilder {
     val messages: Messages = ctx.messagesApi.preferred(Seq(lang))
     def labelValue(name: String): Option[String] = ctx.labels.displayValue(name)(lang)
     UiExpansionRegex.replaceAllIn(s, {m =>
-      OutputFormat(Option(m.group(LabelOutputFormatGroup))).asString(scalarMatch(m, ctx.labels, labelValue), messages)
+      OutputFormat(Option(m.group(LabelOutputFormatGroup))).asString(scalarMatch(matchGroup(m), ctx.labels, labelValue), messages)
     })
   }
 
@@ -184,6 +175,5 @@ object TextBuilder {
     case f :: xs => join(xs, f.original :: acc )
   }
 
-  private def placeholderText(m: Match): String = boldTextOpt(m).fold[String](linkTextOpt(m).getOrElse(""))(v => v)
-
+  private def placeholderText(m: Match): String = matchGroup(m)(BoldTextIdx).getOrElse(matchGroup(m)(LinkTextIdx).getOrElse(""))
 }

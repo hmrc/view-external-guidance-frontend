@@ -68,8 +68,9 @@ package object ocelot {
   val pageLinkOnlyPattern: String = s"^${linkToPageOnlyPattern}$$"
   val boldOnlyPattern: String = s"^${boldPattern}$$"
 
+  def matchGroup(m: Match)(grp: Int): Option[String] = Option(m.group(grp))
   def operandValue(str: String)(implicit labels: Labels): Option[String] =
-    operandRegex.findFirstMatchIn(str).fold[Option[String]](Some(str)){scalarMatch(_, labels, labels.value)}
+    operandRegex.findFirstMatchIn(str).fold[Option[String]](Some(str)){m => scalarMatch(matchGroup(m), labels, labels.value)}
   val LabelNameGroup: Int = 1
   val LabelOutputFormatGroup: Int = 2
   val ListLengthLabelNameGroup: Int = 3
@@ -79,12 +80,12 @@ package object ocelot {
   val DatePlaceholderDateLiteralGroup: Int = 7
   val DatePlaceholderLabelNameGroup: Int = 8
   val DatePlaceholderFnGroup: Int = 10
-  def scalarMatch(m: Regex.Match, labels: Labels, lbl: String => Option[String]): Option[String] =
-    Option(m.group(LabelNameGroup)).fold{
-      Option(m.group(ListLengthLabelNameGroup)).fold{
-        Option(m.group(DateAddTimescaleIdGroup)).fold[Option[String]](None){tsId =>
-          Option(m.group(DateAddLabelNameGroup)).fold(dateAdd(
-            Option(m.group(DateAddLiteralGroup)), tsId, labels)){ daLabel =>
+
+  def scalarMatch(capture: Int => Option[String], labels: Labels, lbl: String => Option[String]): Option[String] =
+    capture(LabelNameGroup).fold{
+      capture(ListLengthLabelNameGroup).fold{
+        capture(DateAddTimescaleIdGroup).fold[Option[String]](None){tsId =>
+          capture(DateAddLabelNameGroup).fold(dateAdd(capture(DateAddLiteralGroup), tsId, labels)){daLabel =>
             dateAdd(lbl(daLabel), tsId, labels)
           }
         }
