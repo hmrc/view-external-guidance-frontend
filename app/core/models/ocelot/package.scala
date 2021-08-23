@@ -85,8 +85,7 @@ package object ocelot {
         capture(DateAddTimescaleIdGroup).fold[Option[String]]{
           capture(DatePlaceholderFnGroup).fold[Option[String]](None){fn =>
             capture(DatePlaceholderLabelNameGroup).fold[Option[String]]{
-              capture(DatePlaceholderDateLiteralGroup).fold[Option[String]](None){dte =>
-              datePlaceholder(Some(dte), fn)}
+              capture(DatePlaceholderDateLiteralGroup).fold[Option[String]](None){dte => datePlaceholder(Some(dte), fn)}
             }{label => datePlaceholder(lbl(label), fn)}
           }
         }{tsId => capture(DateAddLabelNameGroup).fold(dateAdd(capture(DateAddLiteralGroup), tsId, labels)){daLabel => dateAdd(lbl(daLabel), tsId, labels)}}
