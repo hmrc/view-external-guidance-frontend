@@ -23,10 +23,8 @@ import scala.util.matching.Regex
 import scala.util.matching.Regex._
 
 package object ocelot {
-
   val TimescaleIdPattern: String = "[A-Za-z][a-zA-Z0-9_-]+"
   val DatePattern: String = "\\d{1,2}\\/\\d{1,2}\\/\\d{4}"
-  val DatePattern2: String = "[0-9]{1,2}\\/[0-9]{1,2}\\/[0-9]{4}"
   val HttpUriPattern: String = "https?:[a-zA-Z0-9\\/\\.\\-\\?_\\.=&#]+"
   val StanzaIdPattern: String = s"\\d+|${Process.StartStanzaId}"
   val TenDigitIntPattern: String = "\\d{1,10}"
@@ -84,11 +82,14 @@ package object ocelot {
   def scalarMatch(capture: Int => Option[String], labels: Labels, lbl: String => Option[String]): Option[String] =
     capture(LabelNameGroup).fold{
       capture(ListLengthLabelNameGroup).fold{
-        capture(DateAddTimescaleIdGroup).fold[Option[String]](None){tsId =>
-          capture(DateAddLabelNameGroup).fold(dateAdd(capture(DateAddLiteralGroup), tsId, labels)){daLabel =>
-            dateAdd(lbl(daLabel), tsId, labels)
+        capture(DateAddTimescaleIdGroup).fold[Option[String]]{
+          capture(DatePlaceholderFnGroup).fold[Option[String]](None){fn =>
+            capture(DatePlaceholderLabelNameGroup).fold[Option[String]]{
+              capture(DatePlaceholderDateLiteralGroup).fold[Option[String]](None){dte =>
+              datePlaceholder(Some(dte), fn)}
+            }{label => datePlaceholder(lbl(label), fn)}
           }
-        }
+        }{tsId => capture(DateAddLabelNameGroup).fold(dateAdd(capture(DateAddLiteralGroup), tsId, labels)){daLabel => dateAdd(lbl(daLabel), tsId, labels)}}
       }{list => listLength(list, labels)}
     }{label => lbl(label)}
 
@@ -121,7 +122,7 @@ package object ocelot {
   def asListOfPositiveInt(value: String): Option[List[Int]] = listOfPositiveIntRegex.findFirstIn(value.filterNot(_.equals(' ')))
     .flatMap(s => lOfOtoOofL(s.split(",").toList.map(asPositiveInt)))
 
-  def dateToString(date: Option[String], applyFunction: String): Option[String] =
+  def datePlaceholder(date: Option[String], applyFunction: String): Option[String] =
     date.flatMap { someDate =>
       asDate(someDate).flatMap(dte =>
         applyFunction match {
