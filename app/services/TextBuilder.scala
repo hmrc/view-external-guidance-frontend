@@ -18,7 +18,7 @@ package services
 
 import models._
 import core.models.ocelot.{Link, Phrase, LabelPattern, listPattern, listLength, stringWithOptionalHint, fromPattern}
-import core.models.ocelot.{labelsListDateAddRegex, LabelOutputFormatGroup, matchGroup, scalarMatch, boldPattern, linkPattern}
+import core.models.ocelot.{UiExpansionRegex, LabelOutputFormatGroup, matchGroup, scalarMatch, boldPattern, linkPattern}
 import models.ui._
 import scala.util.matching.Regex
 import Regex._
@@ -94,7 +94,7 @@ object TextBuilder {
   private def expandLabels(s: String, lang: Lang)(implicit ctx: UIContext): String = {
     val messages: Messages = ctx.messagesApi.preferred(Seq(lang))
     def labelValue(name: String): Option[String] = ctx.labels.displayValue(name)(lang)
-    labelsListDateAddRegex.replaceAllIn(s, {m =>
+    UiExpansionRegex.replaceAllIn(s, {m =>
       OutputFormat(Option(m.group(LabelOutputFormatGroup))).asString(scalarMatch(matchGroup(m), ctx.labels, labelValue), messages)
     })
   }
