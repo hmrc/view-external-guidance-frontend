@@ -40,7 +40,7 @@ package object ocelot {
   val linkPattern: String = s"\\[(button|link)(-same|-tab)?:(.+?):($StanzaIdPattern|$HttpUriPattern)\\]"
   val timeConstantPattern: String = s"^($TenDigitIntPattern)\\s*(days?|weeks?|months?|years?)$$"
   val PositiveIntListPattern: String = s"^$TenDigitIntPattern(?:,$TenDigitIntPattern)*$$"
-  val DatePlaceHolderPattern: String = s"\\[date:($DatePattern|$LabelPattern)?:(year|month_num|month_start|month_end|month_name|dow_num|dow_name|day|)\\]"
+  val DatePlaceHolderPattern: String = s"\\[date:($DatePattern|$LabelPattern)?:(year|month|month_start|month_end|month_name|dow|dow_name|day|)\\]"
   val listPattern: String = s"\\[list:($LabelNamePattern):length\\]"
   val operandPattern: String = s"^$LabelPattern|$listPattern|$DateAddPattern|$DatePlaceHolderPattern$$"
   val operandRegex: Regex = operandPattern.r
@@ -127,11 +127,11 @@ package object ocelot {
         applyFunction match {
           case "year" => Some(dte.getYear.toString)
           case "dow_name" => Some(dte.getDayOfWeek.toString)
-          case "month_num" => Some(dte.getMonthValue.toString)
+          case "month" => Some(dte.getMonthValue.toString)
           case "month_start" => Some(dte.withDayOfMonth(1).format(dateFormatter))
           case "month_end" => Some(dte.withDayOfMonth(dte.lengthOfMonth()).format(dateFormatter))
           case "month_name" => Some(dte.getMonth.toString)
-          case "dow_num" => Some(dte.getDayOfWeek.getValue.toString)
+          case "dow" => Some(dte.getDayOfWeek.getValue.toString)
           case "day" => Some(dte.getDayOfMonth.toString)
           case _ => None
         }
