@@ -40,7 +40,7 @@ package object ocelot {
   val linkPattern: String = s"\\[(button|link)(-same|-tab)?:(.+?):($StanzaIdPattern|$HttpUriPattern)\\]"
   val timeConstantPattern: String = s"^($TenDigitIntPattern)\\s*(days?|weeks?|months?|years?)$$"
   val PositiveIntListPattern: String = s"^$TenDigitIntPattern(?:,$TenDigitIntPattern)*$$"
-  val DatePlaceHolderPattern: String = s"\\[date:($DatePattern|$LabelPattern)?:(year|month|month_start|month_end|month_name|dow|dow_name|day|)\\]"
+  val DatePlaceHolderPattern: String = s"\\[date:($DatePattern|$LabelPattern)?:(year|month|month_start|month_end|month_name|dow|dow_name|day)\\]"
   val listPattern: String = s"\\[list:($LabelNamePattern):length\\]"
   val operandPattern: String = s"^$LabelPattern|$listPattern|$DateAddPattern|$DatePlaceHolderPattern$$"
   val operandRegex: Regex = operandPattern.r
@@ -58,7 +58,7 @@ package object ocelot {
   val EmbeddedParameterRegex: Regex = """\{(\d)\}""".r
   val ExclusivePlaceholder: String = "[exclusive]"
   val timeConstantRegex: Regex = timeConstantPattern.r
-  val datePlaceHolderRegex: Regex = s"^$DatePlaceHolderPattern$$".r
+  val DatePlaceHolderRegex: Regex = s"^$DatePlaceHolderPattern$$".r
   val TimescaleIdUsageRegex: Regex = TimescaleIdUsagePattern.r
   val DateOutputFormat = "d MMMM uuuu"
   val ignoredCurrencyChars: Seq[Char] = Seq(' ', '£', ',')

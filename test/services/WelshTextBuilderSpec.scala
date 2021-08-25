@@ -275,6 +275,13 @@ class WelshTextBuilderSpec extends BaseSpec with WelshLanguage with GuiceOneAppP
       val expectedPhrase = Phrase("""SomeList has length 3""", """Welsh: SomeList has length 3""")
       TextBuilder.expandLabels(phrase) shouldBe expectedPhrase
     }
+
+    "Convert a dateplacholder inside a phrase into a date" in new ExpandTest {
+      val phrase = Phrase("""Some sentence with a date [date:12/12/2021:dow_name]""", """Welsh: Some sentence with a date [date:12/12/2021:dow_name]""")
+      val expectedPhrase = Phrase("""Some sentence with a date SUNDAY""", """Welsh: Some sentence with a date SUNDAY""")
+      TextBuilder.expandLabels(phrase) shouldBe expectedPhrase
+    }
+
   }
 
   "TextBuilder.fromPhraseWithOptionalHint" must {
