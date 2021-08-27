@@ -274,6 +274,7 @@ class OcelotPackageSpec extends BaseSpec with TestTimescaleDefnsDB {
   "datePlaceholder" must {
     val date: Option[String] = Some("12/12/2021")
     val badDate: Option[String] = Some("1/2/-bad-date")
+    implicit val labels: Labels = LabelCache()
 
     "Ignore values not in the format of a date placeholder" in {
       val result = datePlaceholder(badDate, "dow_name")

@@ -31,6 +31,14 @@ month.display.value.10=Hydref
 month.display.value.11=Tachwedd
 month.display.value.12=Rhagfyr
 
+day.display.value.1=Dydd Llun
+day.display.value.2=Dydd Mawrth
+day.display.value.3=Dydd Mercher
+day.display.value.4=Dydd Iau
+day.display.value.5=Dydd Gwener
+day.display.value.6=Dydd Sadwrn
+day.display.value.7=Dydd Sul
+
 exclusive.checkbox.or = neu
 
 error.browser.title.prefix = Gwall:
