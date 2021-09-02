@@ -234,7 +234,8 @@ class WelshTextBuilderSpec extends BaseSpec with WelshLanguage with GuiceOneAppP
       "SomeDate"->ScalarLabel("SomeDate", List("22/9/1973"), List("23/9/1973")),
       "SomeList" -> ListLabel("SomeList", List("x", "y", "z")))
 
-    override implicit val ctx: UIContext = UIContext(LabelCache(labelsMap), lang, urlMap1, messagesApi)
+    val labels: Labels = LabelCache(labelsMap, Map(), Nil, Map(), Map(), message(lang))
+    override implicit val ctx: UIContext = UIContext(labels, lang, urlMap1, messagesApi)
   }
 
   "TextBuilder expandLabels" must {
@@ -278,10 +279,15 @@ class WelshTextBuilderSpec extends BaseSpec with WelshLanguage with GuiceOneAppP
 
     "Convert a dateplacholder inside a phrase into a date" in new ExpandTest {
       val phrase = Phrase("""Some sentence with a date [date:12/12/2021:dow_name]""", """Welsh: Some sentence with a date [date:12/12/2021:dow_name]""")
-      val expectedPhrase = Phrase("""Some sentence with a date SUNDAY""", """Welsh: Some sentence with a date SUNDAY""")
+      val expectedPhrase = Phrase("""Some sentence with a date Dydd Sul""", """Welsh: Some sentence with a date Dydd Sul""")
       TextBuilder.expandLabels(phrase) shouldBe expectedPhrase
     }
 
+    "Convert a dateplacholder inside a phrase into a date label" in new ExpandTest {
+      val phrase = Phrase("""Some sentence with a date [date:[label:SomeDate]:dow_name]""", """Welsh: Some sentence with a date [date:[label:SomeDate]:dow_name]""")
+      val expectedPhrase = Phrase("""Some sentence with a date Dydd Sadwrn""", """Welsh: Some sentence with a date Dydd Sul""")
+      TextBuilder.expandLabels(phrase) shouldBe expectedPhrase
+    }
   }
 
   "TextBuilder.fromPhraseWithOptionalHint" must {

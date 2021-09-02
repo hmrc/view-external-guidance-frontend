@@ -30,6 +30,14 @@ month.display.value.10=October
 month.display.value.11=November
 month.display.value.12=December
 
+day.display.value.1=Monday
+day.display.value.2=Tuesday
+day.display.value.3=Wednesday
+day.display.value.4=Thursday
+day.display.value.5=Friday
+day.display.value.6=Saturday
+day.display.value.7=Sunday
+
 exclusive.checkbox.or = or
 
 error.browser.title.prefix = Error:

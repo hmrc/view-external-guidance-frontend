@@ -95,7 +95,7 @@ object TextBuilder {
     val messages: Messages = ctx.messagesApi.preferred(Seq(lang))
     def labelValue(name: String): Option[String] = ctx.labels.displayValue(name)(lang)
     UiExpansionRegex.replaceAllIn(s, {m =>
-      OutputFormat(Option(m.group(LabelOutputFormatGroup))).asString(scalarMatch(matchGroup(m), ctx.labels, labelValue), messages)
+      OutputFormat(Option(m.group(LabelOutputFormatGroup))).asString(scalarMatch(matchGroup(m), labelValue)(ctx.labels), messages)
     })
   }
 
