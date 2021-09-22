@@ -1020,7 +1020,6 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
   }
 
   "Accessing a page from a passphrase process" should {
-
     trait Test extends MockSessionRepository with MockGuidanceConnector with TestData {
       lazy val fakeRequest = FakeRequest(GET, path).withSession(SessionKeys.sessionId -> processId).withCSRFToken
 
@@ -1050,6 +1049,21 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
       val pageMap = Map("1" -> PageNext("1", List("2", "3")))
       val processContext: ProcessContext =
         ProcessContext(emptyProcess,Map("/start" -> "0"),Map(),Nil,Map(),pageMap,List("1","2"),None)
+    }
+
+    "Redirect to the start of the process when the legal list of legal page ids is empty" in new Test {
+      override val processContext: ProcessContext = ProcessContext(emptyProcess,Map("/start" -> "0"),Map(),Nil,Map(),pageMap,Nil,None)
+
+      MockSessionRepository
+        .getUpdateForGET(processId, Some(s"${processId}$path"), false)
+        .returns(Future.successful(Left(ForbiddenError)))
+      MockSessionRepository
+        .getNoUpdate(processId)
+        .returns(Future.successful(Right(processContext)))
+
+      lazy val result = target.getPage(processId, relativePath, None)(fakeRequest)
+
+      status(result) shouldBe Status.SEE_OTHER
     }
 
     "Return SEE_OTHER from getPage as a result trying to access valid page illegal in the current context" in new Test {
@@ -1092,6 +1106,16 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
       MockSessionRepository
         .getUpdateForPOST(processId, Some(s"${processId}$path"))
         .returns(Future.successful(Left(AuthenticationError)))
+
+      lazy val result = target.submitPage(processId, relativePath)(fakeRequest)
+
+      status(result) shouldBe Status.SEE_OTHER
+    }
+
+    "Redirect to the start of a process when an expectation failed error is returned" in new Test {
+      MockSessionRepository
+        .getUpdateForPOST(processId, Some(s"${processId}$path"))
+        .returns(Future.successful(Left(ExpectationFailedError)))
 
       lazy val result = target.submitPage(processId, relativePath)(fakeRequest)
 
@@ -1711,7 +1735,6 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
       "Submitting an invalid selection" should {
 
         "return a bad request response" in new SequenceInputTest {
-
           MockGuidanceService
             .getPageEvaluationContext(processId, path, previousPageByLink = false, processId, models.POST)
             .returns(Future.successful(Right(pec)))
