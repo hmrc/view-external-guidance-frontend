@@ -138,10 +138,11 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
       Left(DatabaseError)
     }
 
+
   def getUpdateForPOST(key: String, pageUrl: Option[String]): Future[RequestOutcome[ProcessContext]] =
     findAndUpdate(
       Json.obj("_id" -> key),
-      Json.obj(List(toFieldPair("$set", Json.obj(toFieldPair(TtlExpiryFieldName, Json.obj("$date" -> Instant.now().toEpochMilli))))).toArray: _*),
+      Json.obj("$set" -> Json.obj(toFieldPair(TtlExpiryFieldName, Json.obj(toFieldPair("$date", Instant.now().toEpochMilli))))),
       fetchNewObject = false
     ).flatMap { r =>
         r.result[DefaultSessionRepository.SessionProcess]
@@ -177,7 +178,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
   def getUpdateForGET(key: String, pageUrl: Option[String], previousPageByLink: Boolean): Future[RequestOutcome[ProcessContext]] =
     findAndUpdate(
       Json.obj("_id" -> key),
-      Json.obj(List(toFieldPair("$set", Json.obj(toFieldPair(TtlExpiryFieldName, Json.obj("$date" -> Instant.now().toEpochMilli))))).toArray: _*),
+      Json.obj("$set" -> Json.obj(toFieldPair(TtlExpiryFieldName, Json.obj(toFieldPair("$date", Instant.now().toEpochMilli))))),
       fetchNewObject = false
     ).flatMap { r =>
       r.result[DefaultSessionRepository.SessionProcess]
