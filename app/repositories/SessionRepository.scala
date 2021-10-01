@@ -312,7 +312,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
           )
           Left(NotFoundError): RequestOutcome[Unit]
         }(sp => {
-          if (sp.requestId != requestId) logger.error(s"savePageState requestId $requestId differs from session current requestId ${sp.requestId}")
+          if (sp.requestId != requestId) logRequestIdMismatch("savePageState", sp.requestId, requestId)
           Right({})
       })
     }
@@ -350,9 +350,11 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
               toFieldPair(TtlExpiryFieldName, Json.obj(toFieldPair("$date", Instant.now().toEpochMilli))), toFieldPair(LegalPageIdsKey, legalPageIds)) ++
               pageHistory.fold[List[FieldAttr]](Nil)(ph => List(toFieldPair(PageHistoryKey, ph))) ++
               labelUpdates.map(l => toFieldPair(s"${LabelsKey}.${l.name}", l)) ++
+              requestId.toList.map(rId => toFieldPair(RequestId, rId)) ++
               flowStack.fold[List[FieldAttr]](Nil)(stack => List(toFieldPair(FlowStackKey, stack)))).toArray: _*
         )
-      )
+      ),
+      fetchNewObject = false
     ).map { result =>
       result
         .result[DefaultSessionRepository.SessionProcess]
@@ -362,7 +364,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
           )
           Left(NotFoundError): RequestOutcome[Unit]
         }(sp => {
-          if (sp.requestId != requestId) logger.error(s"savePageState requestId $requestId differs from session current requestId ${sp.requestId}")
+          if (sp.requestId != requestId) logRequestIdMismatch("saveUpdates", sp.requestId, requestId)
           Right({})
       })
       }
@@ -370,4 +372,8 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
         logger.error(s"Error $lastError while trying to savePageHistory to session repo with _id=$key")
         Left(DatabaseError)
       }
+
+    private def logRequestIdMismatch(context: String, old: Option[String], current: Option[String]): Unit = {
+      logger.error(s"$context requestId $current differs from session current requestId $old")
+    }
 }
