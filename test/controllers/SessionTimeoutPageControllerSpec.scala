@@ -46,7 +46,7 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
     lazy val processCode = "cup-of-tea"
     lazy val sessionId = "sessionId"
     lazy val invalidProcessCode = "cup-of-coffee"
-
+    lazy val requestId = Some(sessionId)
     lazy val process: Process = validOnePageJson.as[Process]
     lazy val processContext: ProcessContext = ProcessContext(process, Map(), Map(), Nil, Map(), Map(), Nil, None)
 
@@ -71,7 +71,7 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
         SessionKeys.sessionId -> sessionId,
         SessionKeys.lastRequestTimestamp -> now)
 
-      MockGuidanceService.getProcessContext(sessionId).returns(Future.successful(Right(processContext)))
+      MockGuidanceService.getProcessContext(sessionId, None).returns(Future.successful(Right(processContext)))
 
       val result: Future[Result] = target.getPage(processCode)(fakeRequest)
 
@@ -86,7 +86,7 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
         SessionKeys.sessionId -> sessionId,
         SessionKeys.lastRequestTimestamp -> now)
 
-      MockGuidanceService.getProcessContext(sessionId).returns(Future.successful(Left(NotFoundError)))
+      MockGuidanceService.getProcessContext(sessionId, None).returns(Future.successful(Left(NotFoundError)))
 
       val result: Future[Result] = target.getPage(processCode)(fakeRequest)
 
@@ -102,7 +102,7 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
         SessionKeys.sessionId -> sessionId,
         SessionKeys.lastRequestTimestamp -> now)
 
-      MockGuidanceService.getProcessContext(sessionId).returns(Future.successful(Left(DatabaseError)))
+      MockGuidanceService.getProcessContext(sessionId, None).returns(Future.successful(Left(DatabaseError)))
 
       val result: Future[Result] = target.getPage(processCode)(fakeRequest)
 
@@ -117,7 +117,7 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
         SessionKeys.sessionId -> sessionId,
         SessionKeys.lastRequestTimestamp -> now)
 
-      MockGuidanceService.getProcessContext(sessionId).returns(Future.successful(Right(processContext)))
+      MockGuidanceService.getProcessContext(sessionId, None).returns(Future.successful(Right(processContext)))
 
       val result: Future[Result] = target.getPage(invalidProcessCode)(fakeRequest)
 

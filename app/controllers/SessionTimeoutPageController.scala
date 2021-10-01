@@ -50,7 +50,7 @@ class SessionTimeoutPageController @Inject()(appConfig: AppConfig,
       implicit val messages: Messages = mcc.messagesApi.preferred(request)
       hc.sessionId match {
         case Some(id) if !hasSessionExpired(request.session) =>
-          service.getProcessContext(id.value).flatMap {
+          service.getProcessContext(id.value, hc.requestId.map(_.value)).flatMap {
             case Right(processContext) if processCode != processContext.process.meta.processCode =>
               logger.warn(s"Unexpected process code encountered when removing session after timeout warning. " +
                 s"Expected code $processCode; actual code ${processContext.process.meta.processCode}")

@@ -32,6 +32,7 @@ import core.models.ocelot.{LabelCache, Labels, Process}
 import core.models.ocelot.SecuredProcess
 import core.models.errors.ExpectationFailedError
 import core.models.errors.NotFoundError
+import models.ui.{FormPage, StandardPage}
 
 @Singleton
 class GuidanceService @Inject() (
@@ -48,8 +49,8 @@ class GuidanceService @Inject() (
 
   val logger: Logger = Logger(getClass)
 
-  def sessionRestart(processCode: String, sessionId: String)(implicit context: ExecutionContext): Future[RequestOutcome[String]] =
-    sessionRepository.getResetSession(sessionId).map{
+  def sessionRestart(processCode: String, sessionId: String, requestId: Option[String])(implicit context: ExecutionContext): Future[RequestOutcome[String]] =
+    sessionRepository.getResetSession(sessionId, requestId).map{
       case Right(ctx) if processCode == ctx.process.meta.processCode =>
         ctx.pageMap.collectFirst{case (k,v) if v.id == ctx.process.startPageId => k}
           .fold[RequestOutcome[String]]{
@@ -66,14 +67,14 @@ class GuidanceService @Inject() (
         Left(InternalServerError)
     }
 
-  def getProcessContext(sessionId: String): Future[RequestOutcome[ProcessContext]] = sessionRepository.getNoUpdate(sessionId)
+  def getProcessContext(sessionId: String, requestId: Option[String]): Future[RequestOutcome[ProcessContext]] = sessionRepository.getNoUpdate(sessionId)
 
-  def getProcessContext(sessionId: String, processCode: String, url: String, previousPageByLink: Boolean, op: RequestOperation = GET)
+  def getProcessContext(sessionId: String, processCode: String, url: String, previousPageByLink: Boolean, requestId: Option[String], op: RequestOperation = GET)
                        (implicit context: ExecutionContext): Future[RequestOutcome[ProcessContext]] = {
     val pageUrl: Option[String] = if (isAuthenticationUrl(url)) None else Some(s"$processCode$url")
     (op match {
-      case GET => sessionRepository.getUpdateForGET(sessionId, pageUrl, previousPageByLink)
-      case POST => sessionRepository.getUpdateForPOST(sessionId, pageUrl)
+      case GET => sessionRepository.getUpdateForGET(sessionId, pageUrl, previousPageByLink, requestId)
+      case POST => sessionRepository.getUpdateForPOST(sessionId, pageUrl, requestId)
     }).map{ result =>
       (result, pageUrl) match {
         case (Right(ctx), Some(_)) if !ctx.secure => Left(AuthenticationError)
@@ -82,9 +83,9 @@ class GuidanceService @Inject() (
     }
   }
 
-  def getPageEvaluationContext(processCode: String, url: String, previousPageByLink: Boolean, sessionId: String, op: RequestOperation = GET)
+  def getPageEvaluationContext(processCode: String, url: String, previousPageByLink: Boolean, sessionId: String, requestId: Option[String], op: RequestOperation = GET)
                               (implicit context: ExecutionContext, lang: Lang): Future[RequestOutcome[PageEvaluationContext]] =
-    getProcessContext(sessionId, processCode, url, previousPageByLink, op).map {
+    getProcessContext(sessionId, processCode, url, previousPageByLink, requestId, op).map {
       case Right(ctx) if ctx.process.meta.processCode == processCode =>
         ctx.pageMap.get(url).fold[RequestOutcome[PageEvaluationContext]]{
           logger.error(s"Unable to find url $url within cached process ${ctx.process.meta.id} using sessionId $sessionId")
@@ -133,26 +134,34 @@ class GuidanceService @Inject() (
         Left(err)
     }
 
-  def getPageContext(pec: PageEvaluationContext, errStrategy: ErrorStrategy = NoError)(implicit lang: Lang): PageContext = {
+  def getFormPageContext(pec: PageEvaluationContext, errStrategy: ErrorStrategy = NoError)(implicit lang: Lang): PageContext = {
     val (visualStanzas, labels, dataInput) = pageRenderer.renderPage(pec.page, pec.labels)
     val uiPage = uiBuilder.buildPage(pec.page.url, visualStanzas, errStrategy)(UIContext(labels, lang, pec.pageMapById, messagesApi))
     PageContext(pec.copy(dataInput = dataInput), uiPage, labels)
   }
 
-  def getPageContext(processCode: String, url: String, previousPageByLink: Boolean, sessionId: String)
+  def getPageContext(processCode: String, url: String, previousPageByLink: Boolean, sessionId: String, requestId: Option[String])
                     (implicit context: ExecutionContext, lang: Lang): Future[RequestOutcome[PageContext]] =
-    getPageEvaluationContext(processCode, url, previousPageByLink, sessionId).map{
+    getPageEvaluationContext(processCode, url, previousPageByLink, sessionId, requestId).flatMap{
       case Right(ctx) =>
-        Right(PageContext(ctx, uiBuilder.buildPage(ctx.page.url, ctx.visualStanzas)(UIContext(ctx.labels, lang, ctx.pageMapById, messagesApi))))
-      case Left(err) => Left(err)
+        uiBuilder.buildPage(ctx.page.url, ctx.visualStanzas)(UIContext(ctx.labels, lang, ctx.pageMapById, messagesApi)) match {
+          case sp: StandardPage =>
+            savePageState(ctx.sessionId, ctx.labels, requestId).map{
+              case Right(_) => Right(PageContext(ctx, sp))
+              case Left(_) => Left(InternalServerError)
+            }
+          case fp: FormPage => Future.successful(Right(PageContext(ctx, fp)))
+        }
+
+      case Left(err) => Future.successful(Left(err))
     }
 
-  def submitPage(ctx: PageEvaluationContext, url: String, validatedAnswer: String, submittedAnswer: String)
+  def submitPage(ctx: PageEvaluationContext, url: String, validatedAnswer: String, submittedAnswer: String, requestId: Option[String])
                 (implicit context: ExecutionContext): Future[RequestOutcome[(Option[String], Labels)]] = {
     val (optionalNext, labels) = pageRenderer.renderPagePostSubmit(ctx.page, ctx.labels, validatedAnswer)
     optionalNext.fold[Future[RequestOutcome[(Option[String], Labels)]]](Future.successful(Right((None, labels)))){next =>
       logger.debug(s"Next page found at stanzaId: $next")
-      sessionRepository.saveFormPageState(ctx.sessionId, url, submittedAnswer, labels, List(next)).map{
+      sessionRepository.saveFormPageState(ctx.sessionId, url, submittedAnswer, labels, List(next), requestId).map{
         case Left(err) =>
           logger.error(s"Failed to save updated labels, error = $err")
           Left(InternalServerError)
@@ -164,7 +173,7 @@ class GuidanceService @Inject() (
   def validateUserResponse(ctx: PageEvaluationContext, response: String): Option[String] =
     ctx.dataInput.fold[Option[String]](None)(_.validInput(response))
 
-  def savePageState(sessionId: String, labels: Labels): Future[RequestOutcome[Unit]] = sessionRepository.savePageState(sessionId, labels)
+  def savePageState(sessionId: String, labels: Labels, requestId: Option[String]): Future[RequestOutcome[Unit]] = sessionRepository.savePageState(sessionId, labels, requestId)
 
   def retrieveAndCacheScratch(uuid: String, docId: String)
                              (implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[(String,String)]] =

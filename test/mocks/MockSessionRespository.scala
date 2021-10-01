@@ -30,39 +30,39 @@ trait MockSessionRepository extends MockFactory {
 
   object MockSessionRepository {
 
-    def getUpdateForGET(key: String, pageHistoryUrl: Option[String], previousPageByLink: Boolean): CallHandler[Future[RequestOutcome[ProcessContext]]] =
+    def getUpdateForGET(key: String, pageHistoryUrl: Option[String], previousPageByLink: Boolean, requestId: Option[String]): CallHandler[Future[RequestOutcome[ProcessContext]]] =
       (mockSessionRepository
-        .getUpdateForGET(_: String, _: Option[String], _: Boolean))
-        .expects(key, pageHistoryUrl, previousPageByLink)
+        .getUpdateForGET(_: String, _: Option[String], _: Boolean, _: Option[String]))
+        .expects(key, pageHistoryUrl, previousPageByLink, requestId)
 
-    def getUpdateForPOST(key: String, pageHistoryUrl: Option[String]): CallHandler[Future[RequestOutcome[ProcessContext]]] =
+    def getUpdateForPOST(key: String, pageHistoryUrl: Option[String], requestId: Option[String]): CallHandler[Future[RequestOutcome[ProcessContext]]] =
       (mockSessionRepository
-        .getUpdateForPOST(_: String, _: Option[String]))
-        .expects(key, pageHistoryUrl)
+        .getUpdateForPOST(_: String, _: Option[String], _: Option[String]))
+        .expects(key, pageHistoryUrl, requestId)
 
     def set(key: String, process: Process, pageMap: Map[String, PageNext]): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockSessionRepository
         .set(_: String, _: Process, _: Map[String, PageNext]))
         .expects(key, process, pageMap)
 
-    def saveFormPageState(docId: String, url: String, answer: String, labels: Labels, nextLegalPageIds: List[String]): CallHandler[Future[RequestOutcome[Unit]]] =
+    def saveFormPageState(docId: String, url: String, answer: String, labels: Labels, nextLegalPageIds: List[String], requestId: Option[String]): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockSessionRepository
-        .saveFormPageState(_: String, _: String, _: String, _: Labels, _: List[String]))
-        .expects(docId, url, answer, *, nextLegalPageIds)
+        .saveFormPageState(_: String, _: String, _: String, _: Labels, _: List[String], _: Option[String]))
+        .expects(docId, url, answer, *, nextLegalPageIds, requestId)
 
     def getNoUpdate(key: String): CallHandler[Future[RequestOutcome[ProcessContext]]] =
       (mockSessionRepository
         .getNoUpdate(_: String))
         .expects(key)
 
-    def getResetSession(key: String): CallHandler[Future[RequestOutcome[ProcessContext]]] =
+    def getResetSession(key: String, requestId: Option[String]): CallHandler[Future[RequestOutcome[ProcessContext]]] =
       (mockSessionRepository
-        .getResetSession(_: String))
-        .expects(key)
+        .getResetSession(_: String, _: Option[String]))
+        .expects(key, requestId)
 
-    def savePageState(key: String, labels: Labels): CallHandler[Future[RequestOutcome[Unit]]] =
+    def savePageState(key: String, labels: Labels, requestId: Option[String]): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockSessionRepository
-        .savePageState(_: String, _: Labels))
-        .expects(key, *)
+        .savePageState(_: String, _: Labels, _: Option[String]))
+        .expects(key, *, requestId)
   }
 }

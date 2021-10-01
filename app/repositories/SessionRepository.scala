@@ -40,12 +40,12 @@ import reactivemongo.bson.BSONInteger
 
 trait SessionRepository {
   def getNoUpdate(key: String): Future[RequestOutcome[ProcessContext]]
-  def getResetSession(key: String): Future[RequestOutcome[ProcessContext]]
-  def getUpdateForGET(key: String, pageUrl: Option[String], previousPageByLink: Boolean): Future[RequestOutcome[ProcessContext]]
-  def getUpdateForPOST(key: String, pageUrl: Option[String]): Future[RequestOutcome[ProcessContext]]
+  def getResetSession(key: String, requestId: Option[String]): Future[RequestOutcome[ProcessContext]]
+  def getUpdateForGET(key: String, pageUrl: Option[String], previousPageByLink: Boolean, requestId: Option[String]): Future[RequestOutcome[ProcessContext]]
+  def getUpdateForPOST(key: String, pageUrl: Option[String], requestId: Option[String]): Future[RequestOutcome[ProcessContext]]
   def set(key: String, process: Process, pageMap: Map[String, PageNext]): Future[RequestOutcome[Unit]]
-  def saveFormPageState(key: String, url: String, answer: String, labels: Labels, nextLegalPageIs: List[String]): Future[RequestOutcome[Unit]]
-  def savePageState(key: String, labels: Labels): Future[RequestOutcome[Unit]]
+  def saveFormPageState(key: String, url: String, answer: String, labels: Labels, nextLegalPageIs: List[String], requestId: Option[String]): Future[RequestOutcome[Unit]]
+  def savePageState(key: String, labels: Labels, requestId: Option[String]): Future[RequestOutcome[Unit]]
 }
 
 object DefaultSessionRepository {
@@ -60,6 +60,7 @@ object DefaultSessionRepository {
   val PageHistoryKey: String = "pageHistory"
   val LabelsKey: String = "labels"
   val LegalPageIdsKey: String = "legalPageIds"
+  val RequestId: String = "requestId"
 
   final case class SessionProcess(id: String,
                                   processId: String,
@@ -71,15 +72,17 @@ object DefaultSessionRepository {
                                   answers: Map[String, String],
                                   pageHistory: List[PageHistory],
                                   legalPageIds: List[String],
+                                  requestId: Option[String],
                                   lastAccessed: Instant)
 
   object SessionProcess {
     def apply(id: String,
               processId: String,
               process: Process,
+              requestId: Option[String] = None,
               pageMap: Map[String, PageNext] = Map(),
               lastAccessed: Instant = Instant.now()): SessionProcess =
-      SessionProcess(id, processId, process, Map(), Nil, Map(), pageMap, Map(), Nil, Nil, lastAccessed)
+      SessionProcess(id, processId, process, Map(), Nil, Map(), pageMap, Map(), Nil, Nil, requestId, lastAccessed)
 
 
     implicit val dateFormat: Format[Instant] = MongoDateTimeFormats.instantFormats
@@ -139,10 +142,13 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
     }
 
 
-  def getUpdateForPOST(key: String, pageUrl: Option[String]): Future[RequestOutcome[ProcessContext]] =
+  def getUpdateForPOST(key: String, pageUrl: Option[String], requestId: Option[String]): Future[RequestOutcome[ProcessContext]] =
     findAndUpdate(
       Json.obj("_id" -> key),
-      Json.obj("$set" -> Json.obj(toFieldPair(TtlExpiryFieldName, Json.obj(toFieldPair("$date", Instant.now().toEpochMilli))))),
+      Json.obj("$set" ->
+        Json.obj((List(toFieldPair(TtlExpiryFieldName, Json.obj(toFieldPair("$date", Instant.now().toEpochMilli)))) ++
+                       requestId.toList.map(rId => toFieldPair(RequestId, rId))).toArray: _*)
+      ),
       fetchNewObject = false
     ).flatMap { r =>
         r.result[DefaultSessionRepository.SessionProcess]
@@ -175,10 +181,13 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
       Left(DatabaseError)
     }
 
-  def getUpdateForGET(key: String, pageUrl: Option[String], previousPageByLink: Boolean): Future[RequestOutcome[ProcessContext]] =
+  def getUpdateForGET(key: String, pageUrl: Option[String], previousPageByLink: Boolean, requestId: Option[String]): Future[RequestOutcome[ProcessContext]] =
     findAndUpdate(
       Json.obj("_id" -> key),
-      Json.obj("$set" -> Json.obj(toFieldPair(TtlExpiryFieldName, Json.obj(toFieldPair("$date", Instant.now().toEpochMilli))))),
+      Json.obj("$set" ->
+        Json.obj((List(toFieldPair(TtlExpiryFieldName, Json.obj(toFieldPair("$date", Instant.now().toEpochMilli)))) ++
+                       requestId.toList.map(rId => toFieldPair(RequestId, rId))).toArray: _*)
+      ),
       fetchNewObject = false
     ).flatMap { r =>
       r.result[DefaultSessionRepository.SessionProcess]
@@ -209,7 +218,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
                                     sp.pageMap,
                                     legalPageIds,
                                     backLink)
-              saveUpdates(key, historyUpdate, flowStackUpdate, labelUpdates, legalPageIds).map {
+              saveUpdates(key, historyUpdate, flowStackUpdate, labelUpdates, legalPageIds, requestId).map {
                 case Left(err) =>
                   logger.error(s"Unable to update session data, error = $err")
                   Left(err)
@@ -227,19 +236,19 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
       Left(DatabaseError)
     }
 
-  def getResetSession(key: String): Future[RequestOutcome[ProcessContext]] =
+  def getResetSession(key: String, requestId: Option[String]): Future[RequestOutcome[ProcessContext]] =
     findAndUpdate(
       Json.obj("_id" -> key),
       Json.obj(
         "$set" -> Json.obj(
-          List(
+          (List(
             toFieldPair(TtlExpiryFieldName, Json.obj(toFieldPair("$date", Instant.now().toEpochMilli))),
             toFieldPair(LegalPageIdsKey, List[String]()),
             toFieldPair(FlowStackKey, List[FlowStage]()),
             toFieldPair(PageHistoryKey, List[PageHistory]()),
             toFieldPair(ContinuationPoolKey, Map[String, Stanza]()),
             toFieldPair(s"${AnswersKey}./${SecuredProcess.SecuredProcessStartUrl}", ""),
-            toFieldPair(LabelsKey, Map[String, Label]())).toArray: _*
+            toFieldPair(LabelsKey, Map[String, Label]())) ++ requestId.toList.map(rId => toFieldPair(RequestId, rId))).toArray: _*
         )
       ),
       fetchNewObject = true
@@ -255,7 +264,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
         Left(DatabaseError)
       }
 
-  def saveFormPageState(key: String, url: String, answer: String, labels: Labels, nextLegalPageIds: List[String]): Future[RequestOutcome[Unit]] =
+  def saveFormPageState(key: String, url: String, answer: String, labels: Labels, nextLegalPageIds: List[String], requestId: Option[String]): Future[RequestOutcome[Unit]] =
     findAndUpdate(
       Json.obj("_id" -> key),
       Json.obj(
@@ -265,6 +274,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
             toFieldPair(FlowStackKey, labels.flowStack),
             toFieldPair(s"${AnswersKey}.$url", answer),
             toFieldPair(LegalPageIdsKey, nextLegalPageIds)) ++
+            requestId.toList.map(rId => toFieldPair(RequestId, rId)) ++
             labels.poolUpdates.toList.map(l => toFieldPair(s"${ContinuationPoolKey}.${l._1}", l._2)) ++
             labels.updatedLabels.values.map(l => toFieldPair(s"${LabelsKey}.${l.name}", l))).toArray: _*
         )
@@ -284,13 +294,15 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
         Left(DatabaseError)
       }
 
-  def savePageState(key: String, labels: Labels): Future[RequestOutcome[Unit]] =
+  def savePageState(key: String, labels: Labels, requestId: Option[String]): Future[RequestOutcome[Unit]] =
     findAndUpdate(
       Json.obj("_id" -> key),
       Json.obj("$set" -> Json.obj(
         (labels.poolUpdates.toList.map(l => toFieldPair(s"${ContinuationPoolKey}.${l._1}", l._2)) ++
+         requestId.toList.map(rId => toFieldPair(RequestId, rId)) ++
          labels.updatedLabels.values.map(l => toFieldPair(s"${LabelsKey}.${l.name}", l))).toArray :+ toFieldPair(FlowStackKey, labels.flowStack) : _*)
-      )
+      ),
+      fetchNewObject = false
     ).map { result =>
       result
         .result[DefaultSessionRepository.SessionProcess]
@@ -299,7 +311,10 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
             s"Attempt to saveLabels using _id=$key returned no result, lastError ${result.lastError}"
           )
           Left(NotFoundError): RequestOutcome[Unit]
-        }(_ => Right({}))
+        }(sp => {
+          if (sp.requestId != requestId) logger.error(s"savePageState requestId $requestId differs from session current requestId ${sp.requestId}")
+          Right({})
+      })
     }
     .recover { case lastError =>
       logger.error(s"Error $lastError while trying to update labels within session repo with _id=$key")
@@ -310,7 +325,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
     collection
       .update(false)
       .one(Json.obj("_id" -> key),
-           Json.obj("$set" -> DefaultSessionRepository.SessionProcess(key, process.meta.id, process, pageMap, Instant.now)),
+           Json.obj("$set" -> DefaultSessionRepository.SessionProcess(key, process.meta.id, process, None, pageMap, Instant.now)),
            upsert = true)
       .map(_ => Right(()))
       .recover {
@@ -325,7 +340,8 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
                           pageHistory: Option[List[PageHistory]],
                           flowStack: Option[List[FlowStage]],
                           labelUpdates: List[Label],
-                          legalPageIds: List[String]): Future[RequestOutcome[Unit]] =
+                          legalPageIds: List[String],
+                          requestId: Option[String]): Future[RequestOutcome[Unit]] =
     findAndUpdate(
       Json.obj("_id" -> key),
       Json.obj(
@@ -345,7 +361,10 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
             s"Attempt to savePageHistory using _id=$key returned no result, lastError ${result.lastError}"
           )
           Left(NotFoundError): RequestOutcome[Unit]
-        }(_ => Right({}))
+        }(sp => {
+          if (sp.requestId != requestId) logger.error(s"savePageState requestId $requestId differs from session current requestId ${sp.requestId}")
+          Right({})
+      })
       }
       .recover { case lastError =>
         logger.error(s"Error $lastError while trying to savePageHistory to session repo with _id=$key")

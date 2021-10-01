@@ -65,6 +65,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
     val processId = "oct90001"
     val processCode = "CupOfTea"
     val uuid = "683d9aa0-2a0e-4e28-9ac8-65ce453d2730"
+    val requestId = Some(uuid)
     val sessionRepoId = "683d9aa0-2a0e-4e28-9ac8-65ce453d2731"
 
     val instructionStanza = InstructionStanza(3, Seq("3"), None, false)
@@ -113,10 +114,10 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
       val changedLabels = labels.update("LabelName", "New value")
 
       MockSessionRepository
-        .savePageState(sessionRepoId, changedLabels)
+        .savePageState(sessionRepoId, changedLabels, requestId)
         .returns(Future.successful(Right({})))
 
-      private val result = target.savePageState(sessionRepoId, changedLabels)
+      private val result = target.savePageState(sessionRepoId, changedLabels, requestId)
 
       whenReady(result) {
         case Right(pc) => succeed
@@ -171,7 +172,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
       override val processCode = "cup-of-tea"
 
       MockSessionRepository
-        .getUpdateForGET(sessionRepoId, Some(s"$processCode$${page.url}"), previousPageByLink = false)
+        .getUpdateForGET(sessionRepoId, Some(s"$processCode$${page.url}"), previousPageByLink = false, requestId)
         .returns(Future.successful(Right(ProcessContext(process, Map(), Map(), Nil, Map(), Map(page.url -> PageNext("2", Nil)), Nil, None))))
 
       MockPageBuilder
@@ -183,14 +184,14 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
         .returns((page.stanzas.collect{case s: VisualStanza => s}, labels, None))
 
       MockSessionRepository
-        .savePageState(sessionRepoId, labels)
+        .savePageState(sessionRepoId, labels, requestId)
         .returns(Future.successful(Right({})))
 
       MockUIBuilder
         .buildPage(page.url, page.stanzas.collect{case s: VisualStanza => s}, NoError)
         .returns(ui.Page(page.url, Seq()))
 
-      val pageCtx = target.getPageContext(pec, NoError)
+      val pageCtx = target.getFormPageContext(pec, NoError)
 
       pageCtx.page.urlPath shouldBe page.url
     }
@@ -204,7 +205,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
       override val processCode = "cup-of-tea"
 
       MockSessionRepository
-        .getUpdateForGET(sessionRepoId, Some(s"$processCode$lastPageUrl"), previousPageByLink = false)
+        .getUpdateForGET(sessionRepoId, Some(s"$processCode$lastPageUrl"), previousPageByLink = false, requestId)
         .returns(Future.successful(Right(ProcessContext(process, Map(), Map(), Nil, Map(), Map(lastPageUrl -> PageNext("2")), Nil, None))))
 
       MockPageBuilder
@@ -216,14 +217,14 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
         .returns((lastPage.stanzas.collect{case s: VisualStanza => s}, labels, None))
 
       MockSessionRepository
-        .savePageState(sessionRepoId, labels)
+        .savePageState(sessionRepoId, labels, requestId)
         .returns(Future.successful(Right({})))
 
       MockUIBuilder
         .buildPage(lastPageUrl, lastPage.stanzas.collect{case s: VisualStanza => s}, NoError)
         .returns(lastUiPage)
 
-      private val result = target.getPageContext(processCode, lastPageUrl, previousPageByLink = false, sessionRepoId)
+      private val result = target.getPageContext(processCode, lastPageUrl, previousPageByLink = false, sessionRepoId, requestId)
 
       whenReady(result) {
         case Right(pc) => pc.page.urlPath shouldBe lastPageUrl
@@ -240,7 +241,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
       override val processCode = "tell-hmrc"
 
       MockSessionRepository
-        .getUpdateForGET(sessionRepoId, Some(s"$processCode$lastPageUrl"), previousPageByLink = false)
+        .getUpdateForGET(sessionRepoId, Some(s"$processCode$lastPageUrl"), previousPageByLink = false, requestId)
         .returns(Future.successful(Right(ProcessContext(fullProcess, Map(lastPageUrl -> "answer"), Map(), Nil, Map(), Map(lastPageUrl -> PageNext("2")), Nil, None))))
 
       MockPageBuilder
@@ -252,14 +253,14 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
         .returns((lastPage.stanzas.collect{case s: VisualStanza => s}, labels, None))
 
       MockSessionRepository
-        .savePageState(sessionRepoId, labels)
+        .savePageState(sessionRepoId, labels, requestId)
         .returns(Future.successful(Right({})))
 
       MockUIBuilder
         .buildPage(lastPageUrl, lastPage.stanzas.collect{case s: VisualStanza => s}, NoError)
         .returns(lastUiPage)
 
-      private val result = target.getPageContext(processCode, lastPageUrl, previousPageByLink = false, sessionRepoId)
+      private val result = target.getPageContext(processCode, lastPageUrl, previousPageByLink = false, sessionRepoId, requestId)
 
       whenReady(result) { pageCtx =>
         pageCtx match {
@@ -279,14 +280,14 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
       override val processCode = "cup-of-tea"
 
       MockSessionRepository
-        .getUpdateForGET(processId, Some(s"$processCode$url"), previousPageByLink = false)
+        .getUpdateForGET(processId, Some(s"$processCode$url"), previousPageByLink = false, requestId)
         .returns(Future.successful(Right(ProcessContext(process, Map(), Map(), Nil, Map(), Map(), Nil, None))))
 
       MockPageBuilder
         .buildPage("2", process)
         .returns(Right(lastPage))
 
-      private val result = target.getPageContext(processCode, url, previousPageByLink = false, processId)
+      private val result = target.getPageContext(processCode, url, previousPageByLink = false, processId, requestId)
 
       whenReady(result) {
         _ shouldBe Left(NotFoundError)
@@ -378,7 +379,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
         .getNoUpdate(sessionRepoId)
         .returns(Future.successful(Right(expectedProcessContext)))
 
-      private val result = target.getProcessContext(sessionRepoId)
+      private val result = target.getProcessContext(sessionRepoId, requestId)
 
       whenReady(result) { processContext =>
         processContext shouldBe Right(expectedProcessContext)
@@ -391,7 +392,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
         .getNoUpdate(sessionRepoId)
         .returns(Future.successful(Left(NotFoundError)))
 
-      private val result = target.getProcessContext(sessionRepoId)
+      private val result = target.getProcessContext(sessionRepoId, requestId)
 
       whenReady(result) { err =>
         err shouldBe Left(NotFoundError)
@@ -404,7 +405,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
         .getNoUpdate(sessionRepoId)
         .returns(Future.successful(Left(DatabaseError)))
 
-      private val result = target.getProcessContext(sessionRepoId)
+      private val result = target.getProcessContext(sessionRepoId, requestId)
 
       whenReady(result) { err =>
         err shouldBe Left(DatabaseError)
@@ -435,10 +436,10 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
       val expectedProcessContext: ProcessContext = ProcessContext(process, Map(), Map(), Nil, Map(), Map(), Nil, None)
 
       MockSessionRepository
-        .getUpdateForGET(sessionRepoId, None, false)
+        .getUpdateForGET(sessionRepoId, None, false, requestId)
         .returns(Future.successful(Right(expectedProcessContext)))
 
-      private val result = target.getProcessContext(sessionRepoId, process.meta.processCode, s"/${SecuredProcess.SecuredProcessStartUrl}", false)
+      private val result = target.getProcessContext(sessionRepoId, process.meta.processCode, s"/${SecuredProcess.SecuredProcessStartUrl}", false, requestId)
 
       whenReady(result) { err =>
         err shouldBe Right(expectedProcessContext)
@@ -454,10 +455,10 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
         .returns((None, LabelCache()))
 
       MockSessionRepository
-        .saveFormPageState(processId,"/test-page", "yes", labels, Nil)
+        .saveFormPageState(processId,"/test-page", "yes", labels, Nil, requestId)
         .returns(Future.successful(Right({})))
 
-      target.submitPage(pec, "/test-page", "yes", "yes").map{
+      target.submitPage(pec, "/test-page", "yes", "yes", requestId).map{
         case Left(err) => fail
         case Right((nxt, lbls)) if nxt.isEmpty => succeed
         case Right(_) => fail
@@ -470,10 +471,10 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
         .returns((Some("2"), LabelCache()))
 
       MockSessionRepository
-        .saveFormPageState(processId,"/last-page", "yes", labels, List("2"))
+        .saveFormPageState(processId,"/last-page", "yes", labels, List("2"), requestId)
         .returns(Future.successful(Right({})))
 
-      target.submitPage(pec, "/last-page", "yes", "yes").map{
+      target.submitPage(pec, "/last-page", "yes", "yes", requestId).map{
         case Left(err) => fail
         case Right((Some("4"), _)) => succeed
         case Right(_) => fail
@@ -485,10 +486,10 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
   "Calling saveLabels" should {
     "Success when labels saved successfully" in new Test {
       MockSessionRepository
-        .savePageState(processId, labels)
+        .savePageState(processId, labels, requestId)
         .returns(Future.successful(Right({})))
 
-      target.savePageState(processId, LabelCache()).map{
+      target.savePageState(processId, LabelCache(), requestId).map{
         case Right(x) if x == Unit => succeed
         case Left(_) => fail()
       }
@@ -496,10 +497,10 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
 
     "An error when labels not saved successfully" in new Test {
       MockSessionRepository
-        .savePageState(processId, labels)
+        .savePageState(processId, labels, requestId)
         .returns(Future.successful(Left(DatabaseError)))
 
-      target.savePageState(processId, LabelCache()).map{
+      target.savePageState(processId, LabelCache(), requestId).map{
         case Left(err) if err == DatabaseError => succeed
         case _ => fail()
       }

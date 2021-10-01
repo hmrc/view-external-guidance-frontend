@@ -53,7 +53,7 @@ class GuidanceController @Inject() (
   val logger: Logger = Logger(getClass)
 
   def sessionRestart(processCode: String): Action[AnyContent] = sessionIdAction.async { implicit request =>
-    withExistingSession[String](service.sessionRestart(processCode, _)).flatMap {
+    withExistingSession[String](service.sessionRestart(processCode, _, _)).flatMap {
       case Right(url) =>
         logger.info(s"Redirecting to guidance start url $url after session reset")
         Future.successful(Redirect(controllers.routes.GuidanceController.getPage(processCode, url.drop(1), None).url))
@@ -69,15 +69,12 @@ class GuidanceController @Inject() (
   def getPage(processCode: String, path: String, p: Option[String]): Action[AnyContent] = sessionIdAction.async { implicit request =>
     implicit val messages: Messages = mcc.messagesApi.preferred(request)
     implicit val lang: Lang = messages.lang
-    withExistingSession[PageContext](sId =>service.getPageContext(processCode, s"/$path", p.isDefined, sId)).flatMap {
+    withExistingSession[PageContext](service.getPageContext(processCode, s"/$path", p.isDefined, _, _)).flatMap {
       case Right(pageCtx) =>
         logger.info(s"Retrieved page at ${pageCtx.page.urlPath}, start at ${pageCtx.processStartUrl}," +
                     s" answer = ${pageCtx.answer}, backLink = ${pageCtx.backLink}")
         pageCtx.page match {
-          case page: StandardPage => service.savePageState(pageCtx.sessionId, pageCtx.labels).map {
-              case Right(_) => Ok(standardView(page, pageCtx))
-              case Left(_) => InternalServerError(errorHandler.internalServerErrorTemplate)
-            }
+          case page: StandardPage => Future.successful(Ok(standardView(page, pageCtx)))
           case page: FormPage => pageCtx.dataInput match {
             case Some(input) =>
               val inputName: String = formInputName(path)
@@ -95,7 +92,7 @@ class GuidanceController @Inject() (
   def submitPage(processCode: String, path: String): Action[AnyContent] = Action.async { implicit request =>
     implicit val messages: Messages = mcc.messagesApi.preferred(request)
     implicit val lang: Lang = messages.lang
-    withExistingSession[PageEvaluationContext](service.getPageEvaluationContext(processCode, s"/$path", previousPageByLink = false, _, POST)).flatMap {
+    withExistingSession[PageEvaluationContext](service.getPageEvaluationContext(processCode, s"/$path", previousPageByLink = false, _, _, POST)).flatMap {
       case Right(ctx) => ctx.dataInput.fold{
           logger.error( s"Unable to locate input stanza for process ${ctx.processCode} on submission")
           Future.successful(BadRequest(errorHandler.badRequestTemplateWithProcessCode(Some(processCode))))
@@ -103,16 +100,16 @@ class GuidanceController @Inject() (
           val inputName: String = formInputName(path)
           bindFormData(input, inputName) match {
             case Left((formWithErrors: Form[_], errorStrategy: ErrorStrategy)) =>
-                Future.successful(BadRequest(createInputView(service.getPageContext(ctx, errorStrategy), inputName, formWithErrors)))
+                Future.successful(BadRequest(createInputView(service.getFormPageContext(ctx, errorStrategy), inputName, formWithErrors)))
             case Right((form: Form[_], submittedAnswer: SubmittedAnswer)) =>
               service.validateUserResponse(ctx, submittedAnswer.text).fold{
                 // Answer didn't pass page DataInput stanza validation
-                Future.successful(BadRequest(createInputView(service.getPageContext(ctx, ValueTypeError), inputName, form)))
+                Future.successful(BadRequest(createInputView(service.getFormPageContext(ctx, ValueTypeError), inputName, form)))
               }{ answer =>
-                service.submitPage(ctx, s"/$path", answer, submittedAnswer.text).map {
+                service.submitPage(ctx, s"/$path", answer, submittedAnswer.text, hc.requestId.map(_.value)).map {
                   case Right((None, labels)) =>      // No valid next page id indicates page should be re-displayed
                     logger.info(s"Post submit page evaluation indicates guidance detected input error")
-                    BadRequest(createInputView(service.getPageContext(ctx.copy(labels = labels)), inputName, form))
+                    BadRequest(createInputView(service.getFormPageContext(ctx.copy(labels = labels)), inputName, form))
                   case Right((Some(stanzaId), _)) => // Some(stanzaId) here indicates a redirect to the page with id "stanzaId"
                     val url = ctx.pageMapById(stanzaId).url
                     logger.info(s"Post submit page evaluation indicates next page at stanzaId: $stanzaId => $url")
@@ -150,7 +147,7 @@ class GuidanceController @Inject() (
     }
 
   private def logAndTranslateGetPageForbiddenError(processCode: String)(implicit request: Request[_]): Future[Result] =
-    withExistingSession[ProcessContext](service.getProcessContext).map{
+    withExistingSession[ProcessContext](service.getProcessContext(_, _)).map{
       case Right(ctx) => ctx.legalPageIds match {
         case Nil =>
           logger.warn(s"Redirection after ForbiddenError to beginning of process as legalPageIds is empty")

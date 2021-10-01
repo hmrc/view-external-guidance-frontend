@@ -27,12 +27,12 @@ trait SessionFrontendController {
   this: FrontendController =>
   val logger: Logger
 
-  protected def withExistingSession[T](block: String => Future[RequestOutcome[T]])(implicit request: Request[_]): Future[RequestOutcome[T]] =
+  protected def withExistingSession[T](block: (String, Option[String]) => Future[RequestOutcome[T]])(implicit request: Request[_]): Future[RequestOutcome[T]] =
     hc.sessionId.fold {
       logger.warn(s"Session Id missing from request when required")
       Future.successful(Left(ExpectationFailedError): RequestOutcome[T])
     } { sessionId =>
       logger.info(s"Found existing sessionId = $sessionId")
-      block(sessionId.value)
+      block(sessionId.value, hc.requestId.map(_.value))
     }
 }
