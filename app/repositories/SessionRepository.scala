@@ -373,7 +373,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
         Left(DatabaseError)
       }
 
-    private def logRequestIdMismatch(context: String, old: Option[String], current: Option[String]): Unit = {
-      logger.error(s"$context requestId $current differs from session current requestId $old")
+    private def logRequestIdMismatch(context: String, sessionRequestId: Option[String], active: Option[String]): Unit = {
+      logger.error(s"$context active requestId $active differs from stored session requestId $sessionRequestId")
     }
 }
