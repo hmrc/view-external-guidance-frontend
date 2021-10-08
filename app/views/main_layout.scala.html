@@ -93,6 +93,7 @@ content = HtmlContent(s"""${messages("feedback.before")} <a class='govuk-link' h
 
 @headerBlock = {
     @govUkHeader(Header(
+        homepageUrl = Some("https://www.gov.uk/"),
         serviceUrl = startUrl,
         serviceName = Some(processTitle)
     ))
