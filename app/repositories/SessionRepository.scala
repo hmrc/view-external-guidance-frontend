@@ -306,13 +306,13 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
     }
 
   def set(key: String, process: Process, pageMap: Map[String, PageNext]): Future[RequestOutcome[Unit]] =
-    collection
-      .update(false)
-      .one(Json.obj("_id" -> key),
-           Json.obj("$set" -> DefaultSessionRepository.SessionProcess(key, process.meta.id, process, pageMap, Instant.now)),
-           upsert = true)
-      .map(_ => Right(()))
-      .recover {
+    findAndUpdate(
+      Json.obj("_id" -> key),
+      Json.obj("$set" -> DefaultSessionRepository.SessionProcess(key, process.meta.id, process, pageMap, Instant.now)),
+      upsert = true
+    )
+    .map(_ => Right(()))
+    .recover {
         case lastError =>
           logger.error(s"Error $lastError while trying to persist process=${process.meta.id} to session repo using _id=$key")
           Left(DatabaseError)
