@@ -79,6 +79,19 @@ class EnglishTextBuilderSpec extends BaseSpec with GuiceOneAppPerSuite {
       TextBuilder.fromPhraseWithOptionalHint(p)._1.items shouldBe Seq(Words("Sentence containing 1.0 (label reference)"))
     }
 
+    "Convert label reference with default output format placeholders within phrase to Bold LabelRef TextItems" in new Test {
+      val p = Phrase("""Sentence containing [bold:[label:BLAH]] (label reference)""", """Welsh: Sentence containing [bold:[label:BLAH]] (label reference)""")
+      TextBuilder.fromPhrase(p).items shouldBe Seq(Words("Sentence containing ") , Words("1.0", true) ,  Words(" (label reference)"))
+      TextBuilder.fromPhraseWithOptionalHint(p)._1.items shouldBe List(Words("Sentence containing ") , Words("1.0", true) ,  Words(" (label reference)"))
+    }
+
+    "Obtain a length of list value for a given list label" in new Test {
+      val p = Phrase("""The length of the colours list is [list:Colours:length] (label reference)""",
+        """Welsh: The length of the colours list is [list:Colours:length] (label reference)""")
+      TextBuilder.fromPhrase(p).items shouldBe Seq(Words("The length of the colours list is 3 (label reference)"))
+      TextBuilder.fromPhraseWithOptionalHint(p)._1.items shouldBe Seq(Words("The length of the colours list is 3 (label reference)"))
+    }
+
     "Convert label reference with currency output format placeholders within phrase to LabelRef TextItems" in new Test {
       val p = Phrase("""Sentence containing [label:BLAH:currency] (label reference)""",
                      """Welsh: Sentence containing [label:BLAH:currency] (label reference)""")
