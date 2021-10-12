@@ -189,7 +189,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
           Future.successful(Right(ProcessContext(sp.process, sp.answers, sp.labels, sp.flowStack, sp.continuationPool, sp.pageMap, Nil, None)))
         ){url =>
           sp.pageMap.get(url.drop(sp.process.meta.processCode.length)).fold[Future[RequestOutcome[ProcessContext]]]{
-            logger.warn(s"Attempt to move to unknown page $url")
+            logger.warn(s"Attempt to move to unknown page $url in process ${sp.processId}, page count = ${sp.pageMap.size}")
             Future.successful(Left(NotFoundError))
           }{pageNext =>
             logger.debug(s"Incoming Page: ${pageNext.id}, $url, current legalPageIds: ${sp.legalPageIds}")
@@ -306,13 +306,16 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
     }
 
   def set(key: String, process: Process, pageMap: Map[String, PageNext]): Future[RequestOutcome[Unit]] =
-    collection
-      .update(false)
-      .one(Json.obj("_id" -> key),
-           Json.obj("$set" -> DefaultSessionRepository.SessionProcess(key, process.meta.id, process, pageMap, Instant.now)),
-           upsert = true)
-      .map(_ => Right(()))
-      .recover {
+    findAndUpdate(
+      Json.obj("_id" -> key),
+      Json.obj("$set" -> DefaultSessionRepository.SessionProcess(key, process.meta.id, process, pageMap, Instant.now)),
+      upsert = true
+    )
+    .map{_ =>
+      logger.warn(s"Session repo creation complete for ${process.meta.id}, ${process.meta.processCode}, page count ${pageMap.size}")
+      Right(())
+    }
+    .recover {
         case lastError =>
           logger.error(s"Error $lastError while trying to persist process=${process.meta.id} to session repo using _id=$key")
           Left(DatabaseError)
