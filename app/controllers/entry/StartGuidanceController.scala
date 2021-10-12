@@ -27,6 +27,7 @@ import core.models.RequestOutcome
 import play.api.Logger
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import controllers.SessionIdPrefix
 import controllers.actions.SessionIdAction
 
 @Singleton
@@ -79,9 +80,17 @@ class StartGuidanceController @Inject() (
     }
   }
 
+  private def newSessionId(uuid: String): (String, Option[String]) = {
+    val id: String = s"${SessionIdPrefix}${uuid}"
+    (id, Some(id))
+  }
+
   private def existingOrNewSessionId()(implicit request: Request[_]): (String, Option[String]) =
-    hc.sessionId.fold[(String, Option[String])]{
-      val id = s"session-${java.util.UUID.randomUUID.toString}"
-      (id, Some(id))
-    }(sessionId => (sessionId.value, None))
+    hc.sessionId.fold[(String, Option[String])](newSessionId(java.util.UUID.randomUUID.toString)){sessionId =>
+      if (sessionId.value.startsWith(SessionIdPrefix)) (sessionId.value, None)
+      else {
+        logger.warn(s"Existing session id $sessionId, replacing ..")
+        newSessionId(java.util.UUID.randomUUID.toString)
+      }
+    }
 }
