@@ -127,9 +127,28 @@ class GuidanceController @Inject() (
             }
           }
         }
+      case Left(IllegalPageSubmissionError) => logAndTranslateIllegalPageSubmissionError(processCode)
       case Left(err) => Future.successful(logAndTranslateSubmitError(err, processCode, path))
     }
   }
+
+  private def logAndTranslateIllegalPageSubmissionError(processCode: String)(implicit request: Request[_]): Future[Result] =
+    withExistingSession[ProcessContext](service.getProcessContext).map{
+      case Right(ctx) if ctx.process.meta.processCode == processCode =>
+        ctx.currentPageUrl.fold[Result]({
+          logger.warn(s"Illegal page submission, no current url found, redirecting to start of $processCode process")
+          Redirect(s"${appConfig.baseUrl}/$processCode")
+        })(currentUrl => {
+          logger.warn(s"Illegal page submission (possible multi browser tab access to process), resyncing to current session page ${currentUrl}")
+          Redirect(s"${appConfig.baseUrl}/$processCode$currentUrl")
+        })
+      case Right(ctx) =>
+        logger.warn(s"Illegal page submission, process code doesnt match session, redirecting to start of $processCode process")
+        Redirect(s"${appConfig.baseUrl}/$processCode")
+      case Left(err) =>
+        logger.warn(s"Failed ($err) to retrieve current session on ForbiddenError, redirecting after ForbiddenError to beginning of process")
+        Redirect(s"${appConfig.baseUrl}/$processCode")
+    }
 
   private def logAndTranslateSubmitError(err: Error, processCode: String, path: String)(implicit request: Request[_]): Result =
     err match {

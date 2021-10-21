@@ -268,7 +268,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
       val otherProcess: Process = Process(meta, Map(), Vector(), Vector())
       MockSessionRepository
         .getResetSession(processId)
-        .returns(Future.successful(Right(ProcessContext(otherProcess, Map(), Map(), Nil, Map(), Map(), Nil, None))))
+        .returns(Future.successful(Right(ProcessContext(otherProcess, Map(), Map(), Nil, Map(), Map(), Nil, None, None))))
 
       val result = target.sessionRestart(processCode)(fakeRequest)
       status(result) shouldBe Status.SEE_OTHER
@@ -364,7 +364,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
     "return a NOT_FOUND response" in new QuestionSubmissionTest {
       MockSessionRepository
         .getUpdateForPOST(processId, Some(s"tell-hmrc$path"))
-        .returns(Future.successful(Right(ProcessContext(process, Map(), Map(), Nil, Map(), Map(), Nil, None))))
+        .returns(Future.successful(Right(ProcessContext(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None))))
 
       override val fakeRequest = FakeRequest("POST", path).withSession(SessionKeys.sessionId -> processId).withFormUrlEncodedBody().withCSRFToken
       val result = target.submitPage("tell-hmrc", relativePath)(fakeRequest)
@@ -1048,11 +1048,11 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
       val emptyProcess = Process(meta, Map(), Vector(), Vector())
       val pageMap = Map("1" -> PageNext("1", List("2", "3")))
       val processContext: ProcessContext =
-        ProcessContext(emptyProcess,Map("/start" -> "0"),Map(),Nil,Map(),pageMap,List("1","2"),None)
+        ProcessContext(emptyProcess,Map("/start" -> "0"),Map(),Nil,Map(),pageMap,List("1","2"), None,None)
     }
 
     "Redirect to the start of the process when the legal list of legal page ids is empty" in new Test {
-      override val processContext: ProcessContext = ProcessContext(emptyProcess,Map("/start" -> "0"),Map(),Nil,Map(),pageMap,Nil,None)
+      override val processContext: ProcessContext = ProcessContext(emptyProcess,Map("/start" -> "0"),Map(),Nil,Map(),pageMap,Nil, None,None)
 
       MockSessionRepository
         .getUpdateForGET(processId, Some(s"${processId}$path"), false)

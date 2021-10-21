@@ -40,19 +40,19 @@ class ProcessContextSpec extends BaseSpec with GuiceOneAppPerSuite {
   "ProcessContext" must {
     "Report secure for a standard Process" in new Test {
       val pc: ProcessContext =
-        ProcessContext(validOnePageJson.as[Process],Map("/start" -> "0"),Map(),Nil,Map(),Map(),Nil,None)
+        ProcessContext(validOnePageJson.as[Process],Map("/start" -> "0"),Map(),Nil,Map(),Map(),Nil, None,None)
       pc.secure shouldBe true
     }
 
     "Report not secure for a passphrase protected Process with no passphrase stored" in new Test {
       val passPhrasePc: ProcessContext =
-        ProcessContext(securedProcess,Map("/start" -> "0"),Map(),Nil,Map(),Map(),Nil,None)
+        ProcessContext(securedProcess,Map("/start" -> "0"),Map(),Nil,Map(),Map(),Nil, None,None)
       passPhrasePc.secure shouldBe false
     }
 
     "Report secure for a passphrase protected Process with stored passphrase" in new Test {
       val securePassPhrasePc: ProcessContext =
-        ProcessContext(securedProcess,Map("/start" -> "0"),labelsWithPassPhrase,Nil,Map(),Map(),Nil,None)
+        ProcessContext(securedProcess,Map("/start" -> "0"),labelsWithPassPhrase,Nil,Map(),Map(),Nil, None,None)
       securePassPhrasePc.secure shouldBe true
     }
   }
