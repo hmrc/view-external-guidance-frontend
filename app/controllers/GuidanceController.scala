@@ -146,8 +146,8 @@ class GuidanceController @Inject() (
         logger.warn(s"Illegal page submission, process code doesnt match session, redirecting to start of $processCode process")
         Redirect(s"${appConfig.baseUrl}/$processCode")
       case Left(err) =>
-        logger.warn(s"Failed ($err) to retrieve current session on ForbiddenError, redirecting after ForbiddenError to beginning of process")
-        Redirect(s"${appConfig.baseUrl}/$processCode")
+        logger.warn(s"Failed ($err) to retrieve current session on IllegalPageSubmissionError, returning InternalServerError")
+        InternalServerError(errorHandler.internalServerErrorTemplate)
     }
 
   private def logAndTranslateSubmitError(err: Error, processCode: String, path: String)(implicit request: Request[_]): Result =

@@ -372,6 +372,71 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
     }
   }
 
+  "Submitting to page out of sequence" should {
+    "Force redirect to current page" in new QuestionSubmissionTest with MockGuidanceService {
+      val processContext = ProcessContext(process, Map(), Map(), Nil, Map(), Map(), Nil, Some("/current-page-url"), None)
+      MockSessionRepository
+        .getUpdateForPOST(processId, Some(s"tell-hmrc$path"))
+        .returns(Future.successful(Left(IllegalPageSubmissionError)))
+
+      MockSessionRepository
+        .getNoUpdate(processId)
+        .returns(Future.successful(Right(processContext)))
+
+      override val fakeRequest = FakeRequest("POST", path).withSession(SessionKeys.sessionId -> processId).withFormUrlEncodedBody().withCSRFToken
+      val result = target.submitPage("tell-hmrc", relativePath)(fakeRequest)
+      status(result) shouldBe Status.SEE_OTHER
+      redirectLocation(result) shouldBe processContext.currentPageUrl.map(url => s"/guidance/tell-hmrc$url")
+    }
+
+    "Restart process when no current page available" in new QuestionSubmissionTest with MockGuidanceService {
+      val processContext = ProcessContext(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None)
+      MockSessionRepository
+        .getUpdateForPOST(processId, Some(s"tell-hmrc$path"))
+        .returns(Future.successful(Left(IllegalPageSubmissionError)))
+
+      MockSessionRepository
+        .getNoUpdate(processId)
+        .returns(Future.successful(Right(processContext)))
+
+      override val fakeRequest = FakeRequest("POST", path).withSession(SessionKeys.sessionId -> processId).withFormUrlEncodedBody().withCSRFToken
+      val result = target.submitPage("tell-hmrc", relativePath)(fakeRequest)
+      status(result) shouldBe Status.SEE_OTHER
+      redirectLocation(result) shouldBe Some("/guidance/tell-hmrc")
+    }
+
+    "Restart process when process code doesnt match current session" in new QuestionSubmissionTest with MockGuidanceService {
+      val processContext = ProcessContext(process, Map(), Map(), Nil, Map(), Map(), Nil, Some("/current-page-url"), None)
+      MockSessionRepository
+        .getUpdateForPOST(processId, Some(s"blah$path"))
+        .returns(Future.successful(Left(IllegalPageSubmissionError)))
+
+      MockSessionRepository
+        .getNoUpdate(processId)
+        .returns(Future.successful(Right(processContext)))
+
+      override val fakeRequest = FakeRequest("POST", path).withSession(SessionKeys.sessionId -> processId).withFormUrlEncodedBody().withCSRFToken
+      val result = target.submitPage("blah", relativePath)(fakeRequest)
+      status(result) shouldBe Status.SEE_OTHER
+      redirectLocation(result) shouldBe processContext.currentPageUrl.map(url => s"/guidance/blah")
+    }
+
+    "Return Internal server error when a Database error occurs" in new QuestionSubmissionTest with MockGuidanceService {
+      MockSessionRepository
+        .getUpdateForPOST(processId, Some(s"blah$path"))
+        .returns(Future.successful(Left(IllegalPageSubmissionError)))
+
+      MockSessionRepository
+        .getNoUpdate(processId)
+        .returns(Future.successful(Left(DatabaseError)))
+
+      override val fakeRequest = FakeRequest("POST", path).withSession(SessionKeys.sessionId -> processId).withFormUrlEncodedBody().withCSRFToken
+      val result = target.submitPage("blah", relativePath)(fakeRequest)
+      status(result) shouldBe Status.INTERNAL_SERVER_ERROR
+    }
+
+  }
+
   "Submitting an answered Question page form" should {
 
     "return a SeeOther response" in new QuestionTest {
