@@ -134,17 +134,19 @@ class GuidanceController @Inject() (
 
   private def logAndTranslateIllegalPageSubmissionError(processCode: String)(implicit request: Request[_]): Future[Result] =
     withExistingSession[ProcessContext](service.getProcessContext).map{
-      case Right(ctx) if ctx.process.meta.processCode == processCode =>
+      case Right(ctx) =>
         ctx.currentPageUrl.fold[Result]({
           logger.warn(s"Illegal page submission, no current url found, redirecting to start of $processCode process")
-          Redirect(s"${appConfig.baseUrl}/$processCode")
+          Redirect(s"${appConfig.baseUrl}/${ctx.process.meta.processCode}")
         })(currentUrl => {
-          logger.warn(s"Illegal page submission (possible multi browser tab access to process), resyncing to current session page ${currentUrl}")
-          Redirect(s"${appConfig.baseUrl}/$processCode$currentUrl")
+          if (processCode != ctx.process.meta.processCode) {
+            logger.warn(s"Illegal page submission, process code doesnt match session, syncing to current session page ${currentUrl}")
+          }
+          else {
+            logger.warn(s"Illegal page submission (possible multi browser tab access to process), syncing to current session page ${currentUrl}")
+          }
+          Redirect(s"${appConfig.baseUrl}/${ctx.process.meta.processCode}$currentUrl")
         })
-      case Right(ctx) =>
-        logger.warn(s"Illegal page submission, process code doesnt match session, redirecting to start of $processCode process")
-        Redirect(s"${appConfig.baseUrl}/$processCode")
       case Left(err) =>
         logger.warn(s"Failed ($err) to retrieve current session on IllegalPageSubmissionError, returning InternalServerError")
         InternalServerError(errorHandler.internalServerErrorTemplate)

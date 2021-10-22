@@ -405,7 +405,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
       redirectLocation(result) shouldBe Some("/guidance/tell-hmrc")
     }
 
-    "Restart process when process code doesnt match current session" in new QuestionSubmissionTest with MockGuidanceService {
+    "Sync process when process code doesnt match current session" in new QuestionSubmissionTest with MockGuidanceService {
       val processContext = ProcessContext(process, Map(), Map(), Nil, Map(), Map(), Nil, Some("/current-page-url"), None)
       MockSessionRepository
         .getUpdateForPOST(processId, Some(s"blah$path"))
@@ -418,7 +418,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
       override val fakeRequest = FakeRequest("POST", path).withSession(SessionKeys.sessionId -> processId).withFormUrlEncodedBody().withCSRFToken
       val result = target.submitPage("blah", relativePath)(fakeRequest)
       status(result) shouldBe Status.SEE_OTHER
-      redirectLocation(result) shouldBe processContext.currentPageUrl.map(url => s"/guidance/blah")
+      redirectLocation(result) shouldBe processContext.currentPageUrl.map(url => s"/guidance/tell-hmrc$url")
     }
 
     "Return Internal server error when a Database error occurs" in new QuestionSubmissionTest with MockGuidanceService {
