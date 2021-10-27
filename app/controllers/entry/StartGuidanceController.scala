@@ -65,7 +65,7 @@ class StartGuidanceController @Inject() (
       implicit request: Request[_]
   ): Future[Result] = {
     val (sessionId, egNewSessionId) = existingOrNewSessionId()
-    logger.warn(s"Calling Retrieve and cache service for process $id using sessionId = $sessionId, EG = ${egNewSessionId}")
+    logger.warn(s"Calling Retrieve and cache service for process $id using sessionId = $sessionId, EG = ${egNewSessionId}, request id: ${hc.requestId.map(_.value)}")
     retrieveAndCache(id, sessionId).map {
       case Right((url, processCode)) =>
         val target = controllers.routes.GuidanceController.getPage(processCode, url.drop(1), None).url
@@ -80,8 +80,9 @@ class StartGuidanceController @Inject() (
     }
   }
 
-  private def newSessionId(uuid: String): (String, Option[String]) = {
+  private def newSessionId(uuid: String)(implicit request: Request[_]): (String, Option[String]) = {
     val id: String = s"${SessionIdPrefix}${uuid}"
+    logger.warn(s"Creating new session id: $id, request id: ${hc.requestId.map(_.value)}")
     (id, Some(id))
   }
 
