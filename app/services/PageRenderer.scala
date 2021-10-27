@@ -18,11 +18,13 @@ package services
 
 import javax.inject.{Inject, Singleton}
 import scala.annotation.tailrec
+import config.AppConfig
 import core.models.ocelot.stanzas.{PageStanza, EndStanza, VisualStanza, Stanza, Evaluate, DataInput}
 import core.models.ocelot.{Page, Labels, Process}
 
 @Singleton
-class PageRenderer @Inject() () {
+class PageRenderer @Inject() (appConfig: AppConfig) {
+  val PageStanzaLimit: Int = appConfig.pageStanzaLimit
 
   def renderPage(page: Page, labels: Labels): (Seq[VisualStanza], Labels, Option[DataInput]) = {
     implicit val stanzaMap: Map[String, Stanza] = page.keyedStanzas.map(ks => (ks.key, ks.stanza)).toMap ++ labels.continuationPool
