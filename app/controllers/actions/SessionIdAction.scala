@@ -51,7 +51,7 @@ class SessionIdActionImpl @Inject()(val parser: BodyParsers.Default)
     val egNewSessionIdLog = s"$EgNewSessionIdName ${request.session.data.get(EgNewSessionIdName)}"
     val sessionIdLog = s"${request.session.data.get(SessionKeys.sessionId)}"
 
-    logger.warn(s"SessionIdAction sessionId = $sessionIdLog, $egNewSessionIdLog")
+    logger.info(s"SessionIdAction sessionId = $sessionIdLog, $egNewSessionIdLog")
     request.session.data.get(EgNewSessionIdName).fold(block(request)){egNewId =>
       val updatedSession = Session((request.session.data -- List(SessionKeys.sessionId, EgNewSessionIdName)) ++ List(SessionKeys.sessionId -> egNewId))
       val updatedRequest = Request(request.addAttr[Cell[Session]](RequestAttrKey.Session, Cell(updatedSession)), request.body)
