@@ -312,7 +312,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
       upsert = true
     )
     .map{_ =>
-      logger.warn(s"Session repo creation complete for ${process.meta.id}, ${process.meta.processCode}, page count ${pageMap.size}")
+      logger.warn(s"Session repo creation (key $key) complete for ${process.meta.id}, ${process.meta.processCode}, page count ${pageMap.size}")
       Right(())
     }
     .recover {
