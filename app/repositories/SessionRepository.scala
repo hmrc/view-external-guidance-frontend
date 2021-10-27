@@ -71,7 +71,9 @@ object DefaultSessionRepository {
                                   answers: Map[String, String],
                                   pageHistory: List[PageHistory],
                                   legalPageIds: List[String],
-                                  lastAccessed: Instant)
+                                  lastAccessed: Instant) {
+    lazy val pageUrl: Option[String] = pageHistory.reverse.headOption.map(_.url.drop(process.meta.processCode.length))
+  }
 
   object SessionProcess {
     def apply(id: String,
@@ -131,7 +133,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
   def getNoUpdate(key:String): Future[RequestOutcome[ProcessContext]] =
     find("_id" -> key).map {
       case Nil =>  Left(NotFoundError)
-      case r :: _ => Right(ProcessContext(r.process, r.answers, r.labels, r.flowStack, r.continuationPool, r.pageMap, r.legalPageIds, None))
+      case sp :: _ => Right(ProcessContext(sp.process,sp.answers,sp.labels,sp.flowStack,sp.continuationPool,sp.pageMap,sp.legalPageIds,sp.pageUrl,None))
     }.recover {
       case lastError =>
       logger.error(s"Error $lastError occurred in method get(key: String) attempting to retrieve session $key")
@@ -149,25 +151,28 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
           logger.warn(s"Attempt to retrieve cached process from session repo with _id=$key returned no result, lastError ${r.lastError}")
           Future.successful(Left(NotFoundError): RequestOutcome[ProcessContext])
         }{ sp => // SessionProcess returned by findAndUpdate() is intentionally that prior to the update!!
-          Future.successful(Right(
-            ProcessContext(
-              sp.process,
-              sp.answers,
-              sp.labels,
-              sp.flowStack,
-              sp.continuationPool,
-              sp.pageMap,
-              sp.legalPageIds,
-              pageUrl.fold[Option[String]](None){_ =>
-                sp.pageHistory.reverse match {
-                  case _ :: y :: _ => Some(y.url)
-                  case _ => None
+          // If incoming url equals the most recent page history url proceed Else the POST is out of sequence (IllegalPageSubmissionError)
+          if (pageUrl.fold(true)(url => sp.pageHistory.reverse.head.url.equals(url))) {
+            Future.successful(Right(
+              ProcessContext(
+                sp.process,
+                sp.answers,
+                sp.labels,
+                sp.flowStack,
+                sp.continuationPool,
+                sp.pageMap,
+                sp.legalPageIds,
+                sp.pageUrl,
+                pageUrl.fold[Option[String]](None){_ =>
+                  sp.pageHistory.reverse match {
+                    case _ :: y :: _ => Some(y.url)
+                    case _ => None
+                  }
                 }
-              }
-            )
-          )
-        )
-      }
+              )
+            ))
+          } else {Future.successful(Left(IllegalPageSubmissionError))}
+        }
     }
     .recover { case lastError =>
       logger.error(s"Error $lastError while trying to retrieve process from session repo with _id=$key")
@@ -186,7 +191,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
         Future.successful(Left(NotFoundError): RequestOutcome[ProcessContext])
       }{ sp => // SessionProcess returned by findAndUpdate() is intentionally that prior to the update!!
         pageUrl.fold[Future[RequestOutcome[ProcessContext]]](
-          Future.successful(Right(ProcessContext(sp.process, sp.answers, sp.labels, sp.flowStack, sp.continuationPool, sp.pageMap, Nil, None)))
+          Future.successful(Right(ProcessContext(sp.process, sp.answers, sp.labels, sp.flowStack, sp.continuationPool, sp.pageMap, Nil, sp.pageUrl, None)))
         ){url =>
           sp.pageMap.get(url.drop(sp.process.meta.processCode.length)).fold[Future[RequestOutcome[ProcessContext]]]{
             logger.warn(s"Attempt to move to unknown page $url in process ${sp.processId}, page count = ${sp.pageMap.size}")
@@ -199,15 +204,8 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
               val labels: Map[String, Label] = sp.labels ++ labelUpdates.map(l => l.name -> l).toMap
               val legalPageIds = (pageNext.id :: Process.StartStanzaId :: pageNext.linked ++
                                   backLink.fold(List.empty[String])(bl => List(sp.pageMap(bl.drop(sp.process.meta.processCode.length)).id))).distinct
-              val processContext = ProcessContext(
-                                    sp.process,
-                                    sp.answers,
-                                    labels,
-                                    flowStackUpdate.getOrElse(sp.flowStack),
-                                    sp.continuationPool,
-                                    sp.pageMap,
-                                    legalPageIds,
-                                    backLink)
+              val processContext = ProcessContext(sp.process, sp.answers, labels, flowStackUpdate.getOrElse(sp.flowStack),
+                                                  sp.continuationPool, sp.pageMap, legalPageIds, sp.pageUrl, backLink)
               saveUpdates(key, historyUpdate, flowStackUpdate, labelUpdates, legalPageIds).map {
                 case Left(err) =>
                   logger.error(s"Unable to update session data, error = $err")
@@ -247,7 +245,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
          .fold {
           logger.warn(s"Attempt to retrieve cached reset process from session repo with _id=$key returned no result, lastError ${r.lastError}")
           Future.successful(Left(NotFoundError): RequestOutcome[ProcessContext])
-          }(sp => Future.successful(Right(ProcessContext(sp.process, sp.answers, sp.labels, sp.flowStack, sp.continuationPool, sp.pageMap, Nil, None))))
+          }(sp => Future.successful(Right(ProcessContext(sp.process,sp.answers,sp.labels,sp.flowStack,sp.continuationPool,sp.pageMap,Nil,sp.pageUrl,None))))
       }
       .recover { case lastError =>
         logger.error(s"Error $lastError while trying to retrieve reset process from session repo with _id=$key")
