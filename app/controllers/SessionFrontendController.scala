@@ -32,7 +32,7 @@ trait SessionFrontendController {
       logger.warn(s"Session Id missing from request when required")
       Future.successful(Left(ExpectationFailedError): RequestOutcome[T])
     } { sessionId =>
-      logger.info(s"Found existing sessionId = $sessionId")
+      logger.warn(s"WithExisting sessionId: ${sessionId.value}, requestId: ${hc.requestId.map(_.value).getOrElse("")}, URI: ${request.target.uriString}")
       block(sessionId.value)
     }
 }
