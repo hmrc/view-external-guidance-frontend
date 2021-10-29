@@ -1358,6 +1358,50 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
 
   }
 
+  "Calling any valid process URL in a process when session id exists, but no corresponding session" should {
+
+    trait Test extends MockSessionRepository with MockGuidanceConnector with TestData {
+      override lazy val sessionId = s"session-${java.util.UUID.randomUUID().toString}"
+      lazy val fakeRequest = FakeRequest(GET, "/start").withSession(SessionKeys.sessionId -> sessionId).withFormUrlEncodedBody().withCSRFToken
+
+      MockSessionRepository
+        .getUpdateForGET(sessionId, Some("otherProcessCode/start"), previousPageByLink = false)
+        .returns(Future.successful(Left(SessionNotFoundError)))
+
+      val guidanceService = new GuidanceService(
+        MockAppConfig,
+        mockGuidanceConnector,
+        mockSessionRepository,
+        new PageBuilder(new Timescales(new DefaultTodayProvider)),
+        new PageRenderer,
+        new SecuredProcessBuilder(messagesApi),
+        new UIBuilder(),
+        messagesApi)
+
+      lazy val target =
+        new GuidanceController(
+          MockAppConfig,
+          fakeSessionIdAction,
+          errorHandler,
+          view,
+          formView,
+          guidanceService,
+          stubMessagesControllerComponents()
+        )
+      lazy val result = target.getPage("otherProcessCode", "start", None)(fakeRequest)
+    }
+
+    "return a redirect response to beginning of process" in new Test {
+
+      status(result) shouldBe Status.SEE_OTHER
+
+      redirectLocation(result).fold(fail("Should redirect to guidance entry point")){url =>
+        url shouldBe s"/guidance/otherProcessCode"
+      }
+    }
+
+  }
+
   "Calling a non-existing URL path for a page in a process" should {
 
     trait Test extends MockGuidanceService with TestData {

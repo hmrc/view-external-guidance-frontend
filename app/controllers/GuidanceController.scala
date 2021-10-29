@@ -191,6 +191,9 @@ class GuidanceController @Inject() (
       case AuthenticationError =>
         logger.warn(s"Request for PageContext at /$path returned AuthenticationError, redirecting to process passphrase page")
         Redirect(routes.GuidanceController.getPage(processCode, SecuredProcess.SecuredProcessStartUrl, None))
+      case SessionNotFoundError =>
+        logger.warn(s"Request for page at /$path returned SessionNotFound. Redirecting to start of processCode $processCode at ${appConfig.baseUrl}/$processCode")
+        Redirect(s"${appConfig.baseUrl}/$processCode")
       case NotFoundError =>
         logger.warn(s"Request for PageContext at /$path returned NotFound, returning NotFound")
         NotFound(errorHandler.notFoundTemplateWithProcessCode(Some(processCode)))

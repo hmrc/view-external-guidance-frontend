@@ -6,13 +6,13 @@ object AppDependencies {
   val compile = Seq(
     "uk.gov.hmrc" %% "simple-reactivemongo" % "8.0.0-play-27",
     "uk.gov.hmrc" %% "play-language" % "5.1.0-play-27",
-    "uk.gov.hmrc" %% "bootstrap-frontend-play-27" % "5.15.0",
-    "uk.gov.hmrc" %% "play-frontend-hmrc" % "1.18.0-play-27"
+    "uk.gov.hmrc" %% "bootstrap-frontend-play-27" % "5.16.0",
+    "uk.gov.hmrc" %% "play-frontend-hmrc" % "1.22.0-play-27"
   )
 
   val test = Seq(
     "uk.gov.hmrc" %% "reactivemongo-test" % "5.0.0-play-27",
-    "uk.gov.hmrc" %% "bootstrap-frontend-play-27" % "5.15.0" % "test",
+    "uk.gov.hmrc" %% "bootstrap-frontend-play-27" % "5.16.0" % "test",
     "org.scalamock" %% "scalamock" % "5.1.0" % "test",
     "org.scalatest" %% "scalatest" % "3.0.9" % "test",
     "org.jsoup" % "jsoup" % "1.14.1" % "test",
