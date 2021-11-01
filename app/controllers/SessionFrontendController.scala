@@ -28,11 +28,11 @@ trait SessionFrontendController {
   val logger: Logger
 
   protected def withExistingSession[T](block: String => Future[RequestOutcome[T]])(implicit request: Request[_]): Future[RequestOutcome[T]] =
-    hc.sessionId.fold {
-      logger.warn(s"Session Id missing from request when required")
-      Future.successful(Left(ExpectationFailedError): RequestOutcome[T])
+    hc.sessionId.fold[Future[RequestOutcome[T]]] {
+      logger.warn(s"Session Id missing from request when required, requestId: ${hc.requestId.map(_.value).getOrElse("")}, URI: ${request.target.uriString}")
+      Future.successful(Left(ExpectationFailedError))
     } { sessionId =>
-      logger.info(s"Found existing sessionId = $sessionId")
+      logger.info(s"WithExisting sessionId: ${sessionId.value}, requestId: ${hc.requestId.map(_.value).getOrElse("")}, URI: ${request.target.uriString}")
       block(sessionId.value)
     }
 }
