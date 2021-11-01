@@ -147,9 +147,9 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
       fetchNewObject = false
     ).flatMap { r =>
         r.result[DefaultSessionRepository.SessionProcess]
-        .fold {
+        .fold[Future[RequestOutcome[ProcessContext]]] {
           logger.warn(s"Attempt to retrieve cached process from session repo with _id=$key returned no result, lastError ${r.lastError}")
-          Future.successful(Left(NotFoundError): RequestOutcome[ProcessContext])
+          Future.successful(Left(SessionNotFoundError))
         }{ sp => // SessionProcess returned by findAndUpdate() is intentionally that prior to the update!!
           // If incoming url equals the most recent page history url proceed Else the POST is out of sequence (IllegalPageSubmissionError)
           if (pageUrl.fold(true)(url => sp.pageHistory.reverse.head.url.equals(url))) {
@@ -186,9 +186,9 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
       fetchNewObject = false
     ).flatMap { r =>
       r.result[DefaultSessionRepository.SessionProcess]
-      .fold {
+      .fold[Future[RequestOutcome[ProcessContext]]] {
         logger.warn(s"Attempt to retrieve cached process from session repo with _id=$key returned no result, lastError ${r.lastError}")
-        Future.successful(Left(NotFoundError): RequestOutcome[ProcessContext])
+        Future.successful(Left(SessionNotFoundError))
       }{ sp => // SessionProcess returned by findAndUpdate() is intentionally that prior to the update!!
         pageUrl.fold[Future[RequestOutcome[ProcessContext]]](
           Future.successful(Right(ProcessContext(sp.process, sp.answers, sp.labels, sp.flowStack, sp.continuationPool, sp.pageMap, Nil, sp.pageUrl, None)))
@@ -242,9 +242,9 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
       fetchNewObject = true
     ).flatMap { r =>
         r.result[DefaultSessionRepository.SessionProcess]
-         .fold {
+         .fold[Future[RequestOutcome[ProcessContext]]] {
           logger.warn(s"Attempt to retrieve cached reset process from session repo with _id=$key returned no result, lastError ${r.lastError}")
-          Future.successful(Left(NotFoundError): RequestOutcome[ProcessContext])
+          Future.successful(Left(NotFoundError))
           }(sp => Future.successful(Right(ProcessContext(sp.process,sp.answers,sp.labels,sp.flowStack,sp.continuationPool,sp.pageMap,Nil,sp.pageUrl,None))))
       }
       .recover { case lastError =>
