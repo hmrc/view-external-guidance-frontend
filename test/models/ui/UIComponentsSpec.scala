@@ -16,6 +16,7 @@
 
 package models.ui
 
+
 import base.{BaseSpec, TestConstants}
 
 class UIComponentsSpec extends BaseSpec with TestConstants {

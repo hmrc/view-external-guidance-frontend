@@ -16,7 +16,8 @@
 
 package views.components
 
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.data.Form
 import play.api.data.Forms._
@@ -34,7 +35,7 @@ import play.api.data.FormBinding.Implicits._
 
 import scala.collection.JavaConverters._
 
-class ErrorSpec extends WordSpec with Matchers with GuiceOneAppPerSuite with ViewFns {
+class ErrorSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with ViewFns {
 
   trait Test {
 

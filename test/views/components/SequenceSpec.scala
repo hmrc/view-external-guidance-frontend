@@ -16,7 +16,8 @@
 
 package views.components
 
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.data.Form
 import play.api.inject.Injector
@@ -33,7 +34,7 @@ import base.{ViewFns, ViewSpec}
 
 import scala.collection.JavaConverters._
 
-class SequenceSpec extends WordSpec with Matchers with ViewSpec with ViewFns with GuiceOneAppPerSuite {
+class SequenceSpec extends AnyWordSpec with Matchers with ViewSpec with ViewFns with GuiceOneAppPerSuite {
 
   trait Test {
     private def injector: Injector = app.injector

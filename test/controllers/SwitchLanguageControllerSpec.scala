@@ -16,7 +16,8 @@
 
 package controllers
 
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.Status
 import play.api.test.FakeRequest
@@ -29,7 +30,7 @@ import uk.gov.hmrc.play.language.LanguageUtils
 import play.api.http.HeaderNames
 import mocks.MockAppConfig
 
-class SwitchLanguageControllerSpec extends WordSpec with Matchers with GuiceOneAppPerSuite {
+class SwitchLanguageControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite {
   private val fakeRequest = FakeRequest("GET", "/")
   private val env = Environment.simple()
   private val configuration = Configuration.load(env)
