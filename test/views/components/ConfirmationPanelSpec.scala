@@ -27,6 +27,7 @@ import core.models.ocelot.{LabelCache, Labels}
 import views.html.components.confirmation_panel
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import base.{BaseSpec, ViewFns}
+
 import models.PageContext
 
 class ConfirmationPanelSpec extends BaseSpec with ViewFns with GuiceOneAppPerSuite {

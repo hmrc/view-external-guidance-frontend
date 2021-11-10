@@ -17,6 +17,7 @@
 package services
 
 import base.BaseSpec
+
 import mocks.{MockAppConfig, MockGuidanceConnector, MockPageBuilder, MockPageRenderer, MockSessionRepository, MockUIBuilder}
 import core.models.errors.{DatabaseError, NotFoundError}
 import core.models.ocelot.stanzas._

@@ -21,6 +21,7 @@ import core.models.ocelot.stanzas._
 import models.ocelot.stanzas._
 import base.BaseSpec
 
+
 class AggregatorSpec extends BaseSpec {
 
   private trait Test {

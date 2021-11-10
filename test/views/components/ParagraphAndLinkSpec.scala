@@ -16,7 +16,8 @@
 
 package views.components
 
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.inject.Injector
 import play.api.i18n.{Lang, Messages, MessagesApi}
@@ -28,7 +29,7 @@ import org.jsoup.nodes.{Attributes, Document, Element}
 import scala.collection.JavaConverters._
 import core.models.ocelot.{LabelCache, Labels}
 
-class ParagraphAndLinkSpec extends WordSpec with Matchers with base.ViewFns with GuiceOneAppPerSuite {
+class ParagraphAndLinkSpec extends AnyWordSpec with Matchers with base.ViewFns with GuiceOneAppPerSuite {
 
   trait Test {
     implicit val labels: Labels = LabelCache()

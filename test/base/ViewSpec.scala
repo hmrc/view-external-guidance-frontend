@@ -24,10 +24,10 @@ import org.jsoup.select.Elements
 import play.twirl.api.Html
 
 import scala.collection.JavaConverters._
+import org.scalatest.wordspec.AnyWordSpecLike
+import org.scalatest.matchers.should.Matchers
 
-import org.scalatest.{Matchers, WordSpec}
-
-trait ViewSpec extends WordSpec with Matchers {
+trait ViewSpec extends AnyWordSpecLike with Matchers {
 
   def getSingleElementByTag(markUp: Html, htmlTag: String): Element = {
 
