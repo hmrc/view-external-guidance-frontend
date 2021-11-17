@@ -41,8 +41,8 @@ import reactivemongo.bson.BSONInteger
 trait SessionRepository {
   def getNoUpdate(key: String): Future[RequestOutcome[ProcessContext]]
   def getResetSession(key: String): Future[RequestOutcome[ProcessContext]]
-  def getUpdateForGET(key: String, pageUrl: Option[String], previousPageByLink: Boolean): Future[RequestOutcome[ProcessContext]]
-  def getUpdateForPOST(key: String, pageUrl: Option[String]): Future[RequestOutcome[ProcessContext]]
+  def getUpdateForGET(key: String, processCode: String, pageUrl: Option[String], previousPageByLink: Boolean): Future[RequestOutcome[ProcessContext]]
+  def getUpdateForPOST(key: String, processCode: String, pageUrl: Option[String]): Future[RequestOutcome[ProcessContext]]
   def set(key: String, process: Process, pageMap: Map[String, PageNext]): Future[RequestOutcome[Unit]]
   def saveFormPageState(key: String, url: String, answer: String, labels: Labels, nextLegalPageIs: List[String]): Future[RequestOutcome[Unit]]
   def savePageState(key: String, labels: Labels): Future[RequestOutcome[Unit]]
@@ -140,7 +140,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
       Left(DatabaseError)
     }
 
-  def getUpdateForPOST(key: String, pageUrl: Option[String]): Future[RequestOutcome[ProcessContext]] =
+  def getUpdateForPOST(key: String, processCode: String, pageUrl: Option[String]): Future[RequestOutcome[ProcessContext]] =
     findAndUpdate(
       Json.obj("_id" -> key),
       Json.obj(List(toFieldPair("$set", Json.obj(toFieldPair(TtlExpiryFieldName, Json.obj("$date" -> Instant.now().toEpochMilli))))).toArray: _*),
@@ -151,27 +151,32 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
           logger.warn(s"Attempt to retrieve cached process from session repo with _id=$key returned no result, lastError ${r.lastError}")
           Future.successful(Left(SessionNotFoundError))
         }{ sp => // SessionProcess returned by findAndUpdate() is intentionally that prior to the update!!
-          // If incoming url equals the most recent page history url proceed Else the POST is out of sequence (IllegalPageSubmissionError)
-          if (pageUrl.fold(true)(url => sp.pageHistory.reverse.head.url.equals(url))) {
-            Future.successful(Right(
-              ProcessContext(
-                sp.process,
-                sp.answers,
-                sp.labels,
-                sp.flowStack,
-                sp.continuationPool,
-                sp.pageMap,
-                sp.legalPageIds,
-                sp.pageUrl,
-                pageUrl.fold[Option[String]](None){_ =>
-                  sp.pageHistory.reverse match {
-                    case _ :: y :: _ => Some(y.url)
-                    case _ => None
+          if (sp.process.meta.processCode != processCode) {
+            logger.warn(s"Session found relates to processCode ${sp.process.meta.processCode}, rather than requested $processCode")
+            Future.successful(Left(SessionNotFoundError))
+          } else {
+            // If incoming url equals the most recent page history url proceed Else the POST is out of sequence (IllegalPageSubmissionError)
+            if (pageUrl.fold(true)(url => sp.pageHistory.reverse.head.url.equals(url))) {
+              Future.successful(Right(
+                ProcessContext(
+                  sp.process,
+                  sp.answers,
+                  sp.labels,
+                  sp.flowStack,
+                  sp.continuationPool,
+                  sp.pageMap,
+                  sp.legalPageIds,
+                  sp.pageUrl,
+                  pageUrl.fold[Option[String]](None){_ =>
+                    sp.pageHistory.reverse match {
+                      case _ :: y :: _ => Some(y.url)
+                      case _ => None
+                    }
                   }
-                }
-              )
-            ))
-          } else {Future.successful(Left(IllegalPageSubmissionError))}
+                )
+              ))
+            } else {Future.successful(Left(IllegalPageSubmissionError))}
+          }
         }
     }
     .recover { case lastError =>
@@ -179,7 +184,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
       Left(DatabaseError)
     }
 
-  def getUpdateForGET(key: String, pageUrl: Option[String], previousPageByLink: Boolean): Future[RequestOutcome[ProcessContext]] =
+  def getUpdateForGET(key: String, processCode: String, pageUrl: Option[String], previousPageByLink: Boolean): Future[RequestOutcome[ProcessContext]] =
     findAndUpdate(
       Json.obj("_id" -> key),
       Json.obj(List(toFieldPair("$set", Json.obj(toFieldPair(TtlExpiryFieldName, Json.obj("$date" -> Instant.now().toEpochMilli))))).toArray: _*),
@@ -190,31 +195,36 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
         logger.warn(s"Attempt to retrieve cached process from session repo with _id=$key returned no result, lastError ${r.lastError}")
         Future.successful(Left(SessionNotFoundError))
       }{ sp => // SessionProcess returned by findAndUpdate() is intentionally that prior to the update!!
-        pageUrl.fold[Future[RequestOutcome[ProcessContext]]](
-          Future.successful(Right(ProcessContext(sp.process, sp.answers, sp.labels, sp.flowStack, sp.continuationPool, sp.pageMap, Nil, sp.pageUrl, None)))
-        ){url =>
-          sp.pageMap.get(url.drop(sp.process.meta.processCode.length)).fold[Future[RequestOutcome[ProcessContext]]]{
-            logger.warn(s"Attempt to move to unknown page $url in process ${sp.processId}, page count = ${sp.pageMap.size}")
-            Future.successful(Left(NotFoundError))
-          }{pageNext =>
-            logger.debug(s"Incoming Page: ${pageNext.id}, $url, current legalPageIds: ${sp.legalPageIds}")
-            if (sp.legalPageIds.isEmpty || sp.legalPageIds.contains(pageNext.id)){ // Wild card or fixed list of valid page ids
-              val firstPageUrl: String = s"${sp.process.meta.processCode}${sp.process.startUrl.getOrElse("")}"
-              val (backLink, historyUpdate, flowStackUpdate, labelUpdates) = sessionProcessTransition(url, sp, previousPageByLink, firstPageUrl)
-              val labels: Map[String, Label] = sp.labels ++ labelUpdates.map(l => l.name -> l).toMap
-              val legalPageIds = (pageNext.id :: Process.StartStanzaId :: pageNext.linked ++
-                                  backLink.fold(List.empty[String])(bl => List(sp.pageMap(bl.drop(sp.process.meta.processCode.length)).id))).distinct
-              val processContext = ProcessContext(sp.process, sp.answers, labels, flowStackUpdate.getOrElse(sp.flowStack),
-                                                  sp.continuationPool, sp.pageMap, legalPageIds, sp.pageUrl, backLink)
-              saveUpdates(key, historyUpdate, flowStackUpdate, labelUpdates, legalPageIds).map {
-                case Left(err) =>
-                  logger.error(s"Unable to update session data, error = $err")
-                  Left(err)
-                case _ => Right(processContext)
+        if (sp.process.meta.processCode != processCode) {
+          logger.warn(s"Session found relates to processCode ${sp.process.meta.processCode}, rather than requested $processCode")
+          Future.successful(Left(SessionNotFoundError))
+        } else {
+          pageUrl.fold[Future[RequestOutcome[ProcessContext]]](
+            Future.successful(Right(ProcessContext(sp.process, sp.answers, sp.labels, sp.flowStack, sp.continuationPool, sp.pageMap, Nil, sp.pageUrl, None)))
+          ){url =>
+            sp.pageMap.get(url.drop(sp.process.meta.processCode.length)).fold[Future[RequestOutcome[ProcessContext]]]{
+              logger.warn(s"Attempt to move to unknown page $url in process ${sp.processId}, page count = ${sp.pageMap.size}")
+              Future.successful(Left(NotFoundError))
+            }{pageNext =>
+              logger.debug(s"Incoming Page: ${pageNext.id}, $url, current legalPageIds: ${sp.legalPageIds}")
+              if (sp.legalPageIds.isEmpty || sp.legalPageIds.contains(pageNext.id)){ // Wild card or fixed list of valid page ids
+                val firstPageUrl: String = s"${sp.process.meta.processCode}${sp.process.startUrl.getOrElse("")}"
+                val (backLink, historyUpdate, flowStackUpdate, labelUpdates) = sessionProcessTransition(url, sp, previousPageByLink, firstPageUrl)
+                val labels: Map[String, Label] = sp.labels ++ labelUpdates.map(l => l.name -> l).toMap
+                val legalPageIds = (pageNext.id :: Process.StartStanzaId :: pageNext.linked ++
+                                    backLink.fold(List.empty[String])(bl => List(sp.pageMap(bl.drop(sp.process.meta.processCode.length)).id))).distinct
+                val processContext = ProcessContext(sp.process, sp.answers, labels, flowStackUpdate.getOrElse(sp.flowStack),
+                                                    sp.continuationPool, sp.pageMap, legalPageIds, sp.pageUrl, backLink)
+                saveUpdates(key, historyUpdate, flowStackUpdate, labelUpdates, legalPageIds).map {
+                  case Left(err) =>
+                    logger.error(s"Unable to update session data, error = $err")
+                    Left(err)
+                  case _ => Right(processContext)
+                }
+              } else {
+                logger.warn(s"Attempt to move to illegal page $url, LEGALPIDS ${sp.legalPageIds}")
+                Future.successful(Left(ForbiddenError))
               }
-            } else {
-              logger.warn(s"Attempt to move to illegal page $url, LEGALPIDS ${sp.legalPageIds}")
-              Future.successful(Left(ForbiddenError))
             }
           }
         }
