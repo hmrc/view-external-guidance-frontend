@@ -166,8 +166,8 @@ class GuidanceController @Inject() (
         logger.warn(s"ExpectationFailed error on submitPage. Redirecting to start of processCode $processCode at ${appConfig.baseUrl}/$processCode")
         Redirect(s"${appConfig.baseUrl}/$processCode")
       case SessionNotFoundError =>
-        logger.warn(s"Request for page at /$path returned SessionNotFound. returning NotFound")
-        NotFound(errorHandler.notFoundTemplateWithProcessCode(Some(processCode)))
+        logger.warn(s"Request for page at /$path returned SessionNotFound. Redirecting to start of processCode $processCode at ${appConfig.baseUrl}/$processCode")
+        Redirect(s"${appConfig.baseUrl}/$processCode")
       case err =>
         logger.error(s"Request for PageContext at /$path returned $err during form submission, returning InternalServerError")
         InternalServerError(errorHandler.internalServerErrorTemplate)

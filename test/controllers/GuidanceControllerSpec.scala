@@ -417,8 +417,8 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
 
       override val fakeRequest = FakeRequest("POST", path).withSession(SessionKeys.sessionId -> processId).withFormUrlEncodedBody().withCSRFToken
       val result = target.submitPage("blah", relativePath)(fakeRequest)
-      status(result) shouldBe Status.NOT_FOUND
-      //redirectLocation(result) shouldBe processContext.currentPageUrl.map(url => s"/guidance/tell-hmrc$url")
+      status(result) shouldBe Status.SEE_OTHER
+      redirectLocation(result) shouldBe processContext.currentPageUrl.map(url => s"/guidance/blah")
     }
 
     "Return Internal server error when a Database error occurs" in new QuestionSubmissionTest with MockGuidanceService {
