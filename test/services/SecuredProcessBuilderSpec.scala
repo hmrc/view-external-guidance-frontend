@@ -18,6 +18,7 @@ package services
 
 import core.services.{Timescales, DefaultTodayProvider, PageBuilder}
 import base.BaseSpec
+
 import core.models.ocelot._
 import core.models.ocelot.stanzas.Stanza
 import play.api.libs.json._
@@ -39,7 +40,7 @@ class SecuredProcessBuilderSpec extends BaseSpec with ProcessJson with GuiceOneA
   val securedProcessBuilder = new SecuredProcessBuilder(messagesApi)
   val pageBuilder = new PageBuilder(new Timescales(new DefaultTodayProvider))
 
-  "SecuredProcessBuilder" should {
+  "SecuredProcessBuilder" must {
     "create a secured process with an additional passphrase page" in {
       pageBuilder.pages(passphraseProcess, passphraseProcess.startPageId).fold(_ => fail, pages =>
         pages.length shouldBe 1

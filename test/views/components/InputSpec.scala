@@ -23,7 +23,8 @@ import models.ui.{Paragraph, RequiredErrorMsg, SubmittedDateAnswer, Text, TextIn
 import org.jsoup._
 import org.jsoup.nodes.{Document, Element}
 import org.jsoup.select.Elements
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.data.Form
 import play.api.data.Forms.nonEmptyText
@@ -38,7 +39,7 @@ import play.api.data.FormBinding.Implicits._
 import scala.collection.JavaConverters._
 import models.PageContext
 
-class InputSpec extends WordSpec with Matchers with GuiceOneAppPerSuite {
+class InputSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite {
 
   def asDocument(html: Html): Document = Jsoup.parse(html.toString)
 

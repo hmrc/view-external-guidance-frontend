@@ -20,7 +20,6 @@ import base.{ViewFns, ViewSpec}
 import core.models.ocelot.{LabelCache, Labels}
 import models.ui._
 import org.jsoup.nodes.Element
-import org.scalatest.Matchers
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.i18n.{Messages, MessagesApi}
 import play.api.inject.Injector
@@ -30,7 +29,7 @@ import views.html.components.warning_text
 
 import scala.collection.JavaConverters._
 
-class WarningTextSpec extends ViewSpec with ViewFns with GuiceOneAppPerSuite with Matchers {
+class WarningTextSpec extends ViewSpec with ViewFns with GuiceOneAppPerSuite {
 
   private trait Test {
     implicit val labels: Labels = LabelCache()

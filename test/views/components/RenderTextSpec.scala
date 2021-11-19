@@ -17,7 +17,8 @@
 package views.components
 
 import models.PageContext
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.inject.Injector
 import play.api.i18n.{Lang, Messages, MessagesApi}
@@ -32,7 +33,7 @@ import org.jsoup.nodes.{Document, Element}
 import org.jsoup.select.Elements
 import play.api.mvc.AnyContentAsEmpty
 
-class RenderTextSpec extends WordSpec with Matchers with GuiceOneAppPerSuite {
+class RenderTextSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite {
 
   def asDocument(html: Html): Document = Jsoup.parse(html.toString)
 

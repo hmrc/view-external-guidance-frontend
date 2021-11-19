@@ -30,15 +30,15 @@ trait MockSessionRepository extends MockFactory {
 
   object MockSessionRepository {
 
-    def getUpdateForGET(key: String, pageHistoryUrl: Option[String], previousPageByLink: Boolean): CallHandler[Future[RequestOutcome[ProcessContext]]] =
+    def getUpdateForGET(key: String, processCode: String, pageHistoryUrl: Option[String], previousPageByLink: Boolean): CallHandler[Future[RequestOutcome[ProcessContext]]] =
       (mockSessionRepository
-        .getUpdateForGET(_: String, _: Option[String], _: Boolean))
-        .expects(key, pageHistoryUrl, previousPageByLink)
+        .getUpdateForGET(_: String, _: String, _: Option[String], _: Boolean))
+        .expects(key, processCode, pageHistoryUrl, previousPageByLink)
 
-    def getUpdateForPOST(key: String, pageHistoryUrl: Option[String]): CallHandler[Future[RequestOutcome[ProcessContext]]] =
+    def getUpdateForPOST(key: String, processCode: String, pageHistoryUrl: Option[String]): CallHandler[Future[RequestOutcome[ProcessContext]]] =
       (mockSessionRepository
-        .getUpdateForPOST(_: String, _: Option[String]))
-        .expects(key, pageHistoryUrl)
+        .getUpdateForPOST(_: String, _: String, _: Option[String]))
+        .expects(key, processCode, pageHistoryUrl)
 
     def set(key: String, process: Process, pageMap: Map[String, PageNext]): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockSessionRepository

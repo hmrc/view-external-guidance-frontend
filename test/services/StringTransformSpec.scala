@@ -18,6 +18,7 @@ package services
 
 import base.BaseSpec
 
+
 class StringTransformSpec extends BaseSpec {
   val PlainString: String = """Licensed under the Apache License, Version 2.0 (the "License");you may not use this file except in compliance with the License."""
   val ApostropheString: String = """Uses of an apostrophe ', include ownership and the location of missed text as in Geeorge's book and Janet hasn't arrived"""

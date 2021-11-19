@@ -72,8 +72,8 @@ class GuidanceService @Inject() (
                        (implicit context: ExecutionContext): Future[RequestOutcome[ProcessContext]] = {
     val pageUrl: Option[String] = if (isAuthenticationUrl(url)) None else Some(s"$processCode$url")
     (op match {
-      case GET => sessionRepository.getUpdateForGET(sessionId, pageUrl, previousPageByLink)
-      case POST => sessionRepository.getUpdateForPOST(sessionId, pageUrl)
+      case GET => sessionRepository.getUpdateForGET(sessionId, processCode, pageUrl, previousPageByLink)
+      case POST => sessionRepository.getUpdateForPOST(sessionId, processCode, pageUrl)
     }).map{ result =>
       (result, pageUrl) match {
         case (Right(ctx), Some(_)) if !ctx.secure => Left(AuthenticationError)

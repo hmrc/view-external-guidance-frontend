@@ -20,6 +20,7 @@ import play.api.data.Form
 import models.ui.SubmittedDateAnswer
 import base.BaseSpec
 
+
 class SubmittedDateAnswerFormProviderSpec extends BaseSpec {
 
   val formProvider: SubmittedDateAnswerFormProvider = new SubmittedDateAnswerFormProvider()
