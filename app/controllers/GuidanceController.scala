@@ -74,7 +74,7 @@ class GuidanceController @Inject() (
         logger.info(s"Retrieved page at ${pageCtx.page.urlPath}, start at ${pageCtx.processStartUrl}," +
                     s" answer = ${pageCtx.answer}, backLink = ${pageCtx.backLink}")
         pageCtx.page match {
-          case page: StandardPage => service.savePageState(pageCtx.sessionId, pageCtx.labels).map {
+          case page: StandardPage => service.savePageState(pageCtx.sessionId, processCode, pageCtx.labels).map {
               case Right(_) => Ok(standardView(page, pageCtx))
               case Left(_) => InternalServerError(errorHandler.internalServerErrorTemplate)
             }
@@ -133,7 +133,7 @@ class GuidanceController @Inject() (
   }
 
   private def logAndTranslateIllegalPageSubmissionError(processCode: String)(implicit request: Request[_]): Future[Result] =
-    withExistingSession[ProcessContext](service.getProcessContext).map{
+    withExistingSession[ProcessContext](service.getProcessContext(processCode)).map{
       case Right(ctx) =>
         ctx.currentPageUrl.fold[Result]({
           logger.warn(s"Illegal page submission, no current url found, redirecting to start of $processCode process")
@@ -174,7 +174,7 @@ class GuidanceController @Inject() (
     }
 
   private def logAndTranslateGetPageForbiddenError(processCode: String)(implicit request: Request[_]): Future[Result] =
-    withExistingSession[ProcessContext](service.getProcessContext).map{
+    withExistingSession[ProcessContext](service.getProcessContext(processCode)).map{
       case Right(ctx) => ctx.legalPageIds match {
         case Nil =>
           logger.warn(s"Redirection after ForbiddenError to beginning of process as legalPageIds is empty")

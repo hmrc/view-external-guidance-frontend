@@ -42,17 +42,17 @@ class StartGuidanceController @Inject() (
   val logger: Logger = Logger(getClass)
 
   def scratch(uuid: String): Action[AnyContent] = Action.async { implicit request =>
-    logger.info(s"Starting scratch journey")
+    logger.info(s"Starting scratch journey for UUID $uuid")
     retrieveCacheAndRedirectToView(uuid, service.retrieveAndCacheScratch)
   }
 
   def approval(processId: String): Action[AnyContent] = Action.async { implicit request =>
-    logger.info(s"Starting approval direct view journey")
+    logger.info(s"Starting approval direct view journey for processId $processId")
     retrieveCacheAndRedirectToView(processId, service.retrieveAndCacheApproval)
   }
 
   def approvalPage(processId: String, url: String): Action[AnyContent] = Action.async { implicit request =>
-    logger.info(s"Starting approval direct page view journey")
+    logger.info(s"Starting approval direct page view journey for processId $processId")
     retrieveCacheAndRedirectToView(processId, service.retrieveAndCacheApprovalByPageUrl(s"/$url"))
   }
 

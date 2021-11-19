@@ -49,7 +49,7 @@ class GuidanceService @Inject() (
   val logger: Logger = Logger(getClass)
 
   def sessionRestart(processCode: String, sessionId: String)(implicit context: ExecutionContext): Future[RequestOutcome[String]] =
-    sessionRepository.getResetSession(sessionId).map{
+    sessionRepository.getResetSession(sessionId, processCode).map{
       case Right(ctx) if processCode == ctx.process.meta.processCode =>
         ctx.pageMap.collectFirst{case (k,v) if v.id == ctx.process.startPageId => k}
           .fold[RequestOutcome[String]]{
@@ -66,7 +66,7 @@ class GuidanceService @Inject() (
         Left(InternalServerError)
     }
 
-  def getProcessContext(sessionId: String): Future[RequestOutcome[ProcessContext]] = sessionRepository.getNoUpdate(sessionId)
+  def getProcessContext(processCode: String)(sessionId: String): Future[RequestOutcome[ProcessContext]] = sessionRepository.getNoUpdate(sessionId, processCode)
 
   def getProcessContext(sessionId: String, processCode: String, url: String, previousPageByLink: Boolean, op: RequestOperation = GET)
                        (implicit context: ExecutionContext): Future[RequestOutcome[ProcessContext]] = {
@@ -152,7 +152,7 @@ class GuidanceService @Inject() (
     val (optionalNext, labels) = pageRenderer.renderPagePostSubmit(ctx.page, ctx.labels, validatedAnswer)
     optionalNext.fold[Future[RequestOutcome[(Option[String], Labels)]]](Future.successful(Right((None, labels)))){next =>
       logger.debug(s"Next page found at stanzaId: $next")
-      sessionRepository.saveFormPageState(ctx.sessionId, url, submittedAnswer, labels, List(next)).map{
+      sessionRepository.saveFormPageState(ctx.sessionId, ctx.processCode, url, submittedAnswer, labels, List(next)).map{
         case Left(err) =>
           logger.error(s"Failed to save updated labels, error = $err")
           Left(InternalServerError)
@@ -164,7 +164,7 @@ class GuidanceService @Inject() (
   def validateUserResponse(ctx: PageEvaluationContext, response: String): Option[String] =
     ctx.dataInput.fold[Option[String]](None)(_.validInput(response))
 
-  def savePageState(sessionId: String, labels: Labels): Future[RequestOutcome[Unit]] = sessionRepository.savePageState(sessionId, labels)
+  def savePageState(sessionId: String, processCode: String, labels: Labels): Future[RequestOutcome[Unit]] = sessionRepository.savePageState(sessionId, processCode, labels)
 
   def retrieveAndCacheScratch(uuid: String, docId: String)
                              (implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[(String,String)]] =

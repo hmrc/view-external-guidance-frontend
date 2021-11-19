@@ -39,13 +39,13 @@ import reactivemongo.api.indexes.Index
 import reactivemongo.bson.BSONInteger
 
 trait SessionRepository {
-  def getNoUpdate(key: String): Future[RequestOutcome[ProcessContext]]
-  def getResetSession(key: String): Future[RequestOutcome[ProcessContext]]
+  def getNoUpdate(key: String, processCode: String): Future[RequestOutcome[ProcessContext]]
+  def getResetSession(key: String, processCode: String): Future[RequestOutcome[ProcessContext]]
   def getUpdateForGET(key: String, processCode: String, pageUrl: Option[String], previousPageByLink: Boolean): Future[RequestOutcome[ProcessContext]]
   def getUpdateForPOST(key: String, processCode: String, pageUrl: Option[String]): Future[RequestOutcome[ProcessContext]]
   def set(key: String, process: Process, pageMap: Map[String, PageNext]): Future[RequestOutcome[Unit]]
-  def saveFormPageState(key: String, url: String, answer: String, labels: Labels, nextLegalPageIs: List[String]): Future[RequestOutcome[Unit]]
-  def savePageState(key: String, labels: Labels): Future[RequestOutcome[Unit]]
+  def saveFormPageState(key: String, processCode: String, url: String, answer: String, labels: Labels, nextLegalPageIs: List[String]): Future[RequestOutcome[Unit]]
+  def savePageState(key: String, processCode: String, labels: Labels): Future[RequestOutcome[Unit]]
 }
 
 object DefaultSessionRepository {
@@ -130,8 +130,8 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
     )
   }
 
-  def getNoUpdate(key:String): Future[RequestOutcome[ProcessContext]] =
-    find("_id" -> key).map {
+  def getNoUpdate(key:String, processCode: String): Future[RequestOutcome[ProcessContext]] =
+    find("_id" -> s"$key-${processCode}").map {
       case Nil =>  Left(NotFoundError)
       case sp :: _ => Right(ProcessContext(sp.process,sp.answers,sp.labels,sp.flowStack,sp.continuationPool,sp.pageMap,sp.legalPageIds,sp.pageUrl,None))
     }.recover {
@@ -142,13 +142,13 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
 
   def getUpdateForPOST(key: String, processCode: String, pageUrl: Option[String]): Future[RequestOutcome[ProcessContext]] =
     findAndUpdate(
-      Json.obj("_id" -> key),
+      Json.obj("_id" -> s"$key-${processCode}"),
       Json.obj(List(toFieldPair("$set", Json.obj(toFieldPair(TtlExpiryFieldName, Json.obj("$date" -> Instant.now().toEpochMilli))))).toArray: _*),
       fetchNewObject = false
     ).flatMap { r =>
         r.result[DefaultSessionRepository.SessionProcess]
         .fold[Future[RequestOutcome[ProcessContext]]] {
-          logger.warn(s"Attempt to retrieve cached process from session repo with _id=$key returned no result, lastError ${r.lastError}")
+          logger.warn(s"Attempt to retrieve cached process from session repo with _id=$key-${processCode} returned no result, lastError ${r.lastError}")
           Future.successful(Left(SessionNotFoundError))
         }{ sp => // SessionProcess returned by findAndUpdate() is intentionally that prior to the update!!
           if (sp.process.meta.processCode != processCode) {
@@ -180,19 +180,19 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
         }
     }
     .recover { case lastError =>
-      logger.error(s"Error $lastError while trying to retrieve process from session repo with _id=$key")
+      logger.error(s"Error $lastError while trying to retrieve process from session repo with _id=$key-${processCode}")
       Left(DatabaseError)
     }
 
   def getUpdateForGET(key: String, processCode: String, pageUrl: Option[String], previousPageByLink: Boolean): Future[RequestOutcome[ProcessContext]] =
     findAndUpdate(
-      Json.obj("_id" -> key),
+      Json.obj("_id" -> s"$key-${processCode}"),
       Json.obj(List(toFieldPair("$set", Json.obj(toFieldPair(TtlExpiryFieldName, Json.obj("$date" -> Instant.now().toEpochMilli))))).toArray: _*),
       fetchNewObject = false
     ).flatMap { r =>
       r.result[DefaultSessionRepository.SessionProcess]
       .fold[Future[RequestOutcome[ProcessContext]]] {
-        logger.warn(s"Attempt to retrieve cached process from session repo with _id=$key returned no result, lastError ${r.lastError}")
+        logger.warn(s"Attempt to retrieve cached process from session repo with _id=$key-${processCode} returned no result, lastError ${r.lastError}")
         Future.successful(Left(SessionNotFoundError))
       }{ sp => // SessionProcess returned by findAndUpdate() is intentionally that prior to the update!!
         if (sp.process.meta.processCode != processCode) {
@@ -215,7 +215,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
                                     backLink.fold(List.empty[String])(bl => List(sp.pageMap(bl.drop(sp.process.meta.processCode.length)).id))).distinct
                 val processContext = ProcessContext(sp.process, sp.answers, labels, flowStackUpdate.getOrElse(sp.flowStack),
                                                     sp.continuationPool, sp.pageMap, legalPageIds, sp.pageUrl, backLink)
-                saveUpdates(key, historyUpdate, flowStackUpdate, labelUpdates, legalPageIds).map {
+                saveUpdates(key, processCode, historyUpdate, flowStackUpdate, labelUpdates, legalPageIds).map {
                   case Left(err) =>
                     logger.error(s"Unable to update session data, error = $err")
                     Left(err)
@@ -230,13 +230,13 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
         }
       }
     }.recover { case lastError =>
-      logger.error(s"Error $lastError while trying to retrieve process from session repo with _id=$key")
+      logger.error(s"Error $lastError while trying to retrieve process from session repo with _id=$key-${processCode}")
       Left(DatabaseError)
     }
 
-  def getResetSession(key: String): Future[RequestOutcome[ProcessContext]] =
+  def getResetSession(key: String, processCode: String): Future[RequestOutcome[ProcessContext]] =
     findAndUpdate(
-      Json.obj("_id" -> key),
+      Json.obj("_id" -> s"$key-${processCode}"),
       Json.obj(
         "$set" -> Json.obj(
           List(
@@ -253,18 +253,18 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
     ).flatMap { r =>
         r.result[DefaultSessionRepository.SessionProcess]
          .fold[Future[RequestOutcome[ProcessContext]]] {
-          logger.warn(s"Attempt to retrieve cached reset process from session repo with _id=$key returned no result, lastError ${r.lastError}")
+          logger.warn(s"Attempt to retrieve cached reset process from session repo with _id=$key-${processCode} returned no result, lastError ${r.lastError}")
           Future.successful(Left(NotFoundError))
           }(sp => Future.successful(Right(ProcessContext(sp.process,sp.answers,sp.labels,sp.flowStack,sp.continuationPool,sp.pageMap,Nil,sp.pageUrl,None))))
       }
       .recover { case lastError =>
-        logger.error(s"Error $lastError while trying to retrieve reset process from session repo with _id=$key")
+        logger.error(s"Error $lastError while trying to retrieve reset process from session repo with _id=$key-${processCode}")
         Left(DatabaseError)
       }
 
-  def saveFormPageState(key: String, url: String, answer: String, labels: Labels, nextLegalPageIds: List[String]): Future[RequestOutcome[Unit]] =
+  def saveFormPageState(key: String, processCode: String, url: String, answer: String, labels: Labels, nextLegalPageIds: List[String]): Future[RequestOutcome[Unit]] =
     findAndUpdate(
-      Json.obj("_id" -> key),
+      Json.obj("_id" -> s"$key-${processCode}"),
       Json.obj(
         "$set" -> Json.obj(
           (List(
@@ -281,19 +281,19 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
           .result[DefaultSessionRepository.SessionProcess]
           .fold {
             logger.warn(
-              s"Attempt to saveUserAnswerAndLabels using _id=$key returned no result, lastError ${result.lastError}, url: $url, answer: $answer"
+              s"Attempt to saveUserAnswerAndLabels using _id=$key-${processCode} returned no result, lastError ${result.lastError}, url: $url, answer: $answer"
             )
             Left(NotFoundError): RequestOutcome[Unit]
           }(_ => Right({}))
       }
       .recover{ case lastError =>
-        logger.error(s"Error $lastError while trying to update question answers and labels within session repo with _id=$key, url: $url, answer: $answer")
+        logger.error(s"Error $lastError while trying to update question answers and labels within session repo with _id=$key-${processCode}, url: $url, answer: $answer")
         Left(DatabaseError)
       }
 
-  def savePageState(key: String, labels: Labels): Future[RequestOutcome[Unit]] =
+  def savePageState(key: String, processCode: String, labels: Labels): Future[RequestOutcome[Unit]] =
     findAndUpdate(
-      Json.obj("_id" -> key),
+      Json.obj("_id" -> s"$key-${processCode}"),
       Json.obj("$set" -> Json.obj(
         (labels.poolUpdates.toList.map(l => toFieldPair(s"${ContinuationPoolKey}.${l._1}", l._2)) ++
          labels.updatedLabels.values.map(l => toFieldPair(s"${LabelsKey}.${l.name}", l))).toArray :+ toFieldPair(FlowStackKey, labels.flowStack) : _*)
@@ -303,41 +303,42 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
         .result[DefaultSessionRepository.SessionProcess]
         .fold {
           logger.warn(
-            s"Attempt to saveLabels using _id=$key returned no result, lastError ${result.lastError}"
+            s"Attempt to saveLabels using _id=$key-${processCode} returned no result, lastError ${result.lastError}"
           )
           Left(NotFoundError): RequestOutcome[Unit]
         }(_ => Right({}))
     }
     .recover { case lastError =>
-      logger.error(s"Error $lastError while trying to update labels within session repo with _id=$key")
+      logger.error(s"Error $lastError while trying to update labels within session repo with _id=$key-${processCode}")
       Left(DatabaseError)
     }
 
   def set(key: String, process: Process, pageMap: Map[String, PageNext]): Future[RequestOutcome[Unit]] =
     findAndUpdate(
-      Json.obj("_id" -> key),
-      Json.obj("$set" -> DefaultSessionRepository.SessionProcess(key, process.meta.id, process, pageMap, Instant.now)),
+      Json.obj("_id" -> s"$key-${process.meta.processCode}"),
+      Json.obj("$set" -> DefaultSessionRepository.SessionProcess(s"$key-${process.meta.processCode}", process.meta.id, process, pageMap, Instant.now)),
       upsert = true
     )
     .map{_ =>
-      logger.warn(s"Session repo creation (key $key) complete for ${process.meta.id}, ${process.meta.processCode}, page count ${pageMap.size}")
+      logger.warn(s"Session repo creation (key $key-${process.meta.processCode}) complete for ${process.meta.id}, ${process.meta.processCode}, page count ${pageMap.size}")
       Right(())
     }
     .recover {
         case lastError =>
-          logger.error(s"Error $lastError while trying to persist process=${process.meta.id} to session repo using _id=$key")
+          logger.error(s"Error $lastError while trying to persist process=${process.meta.id} to session repo using _id=$key-${process.meta.processCode}")
           Left(DatabaseError)
       }
 
   private def toFieldPair[A](name: String, value: A)(implicit w: Writes[A]): FieldAttr = name -> Json.toJsFieldJsValueWrapper(value)
 
   private def saveUpdates(key: String,
+                          processCode: String,
                           pageHistory: Option[List[PageHistory]],
                           flowStack: Option[List[FlowStage]],
                           labelUpdates: List[Label],
                           legalPageIds: List[String]): Future[RequestOutcome[Unit]] =
     findAndUpdate(
-      Json.obj("_id" -> key),
+      Json.obj("_id" -> s"$key-${processCode}"),
       Json.obj(
         "$set" -> Json.obj(
             (List(
@@ -352,13 +353,13 @@ class DefaultSessionRepository @Inject() (config: AppConfig,
         .result[DefaultSessionRepository.SessionProcess]
         .fold {
           logger.warn(
-            s"Attempt to savePageHistory using _id=$key returned no result, lastError ${result.lastError}"
+            s"Attempt to savePageHistory using _id=$key-${processCode} returned no result, lastError ${result.lastError}"
           )
           Left(NotFoundError): RequestOutcome[Unit]
         }(_ => Right({}))
       }
       .recover { case lastError =>
-        logger.error(s"Error $lastError while trying to savePageHistory to session repo with _id=$key")
+        logger.error(s"Error $lastError while trying to savePageHistory to session repo with _id=$key-${processCode}")
         Left(DatabaseError)
       }
 }
