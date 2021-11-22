@@ -19,7 +19,7 @@ package services
 import base.BaseSpec
 
 import mocks.{MockAppConfig, MockGuidanceConnector, MockPageBuilder, MockPageRenderer, MockSessionRepository, MockUIBuilder}
-import core.models.errors.{DatabaseError, NotFoundError}
+import core.models.errors.{DatabaseError, NotFoundError, NonTerminatingPageError}
 import core.models.ocelot.stanzas._
 import core.models.ocelot.{Page, KeyedStanza, Process, SecuredProcess, ProcessJson, LabelCache, Labels, Phrase}
 import models.ui
@@ -42,8 +42,6 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
     implicit val lang: Lang = Lang("en")
     implicit val headerCarrier: HeaderCarrier = HeaderCarrier()
     implicit val stanzaIdToUrl: Map[String, String] = Map[String, String]()
-
-    println(s"************* HERE MOCK RENDERER $mockPageRenderer")
 
     def pageWithUrl(id: String, url: String) = Page(id, url, Seq(KeyedStanza("1", EndStanza)), Seq())
 
@@ -114,7 +112,6 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
   "Calling saveLabels when there labels to save" should {
 
     "save updated labels" in new Test {
-          println(s"MOCK RENDERER @@ $mockPageRenderer")
       val changedLabels = labels.update("LabelName", "New value")
 
       MockSessionRepository
@@ -200,6 +197,28 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
         case Left(_) => fail
       }
     }
+
+    "return an error when retrieving a non-terminating page" in new Test {
+
+      override val processCode = "cup-of-tea"
+
+      MockSessionRepository
+        .getUpdateForGET(sessionRepoId, processCode, Some(s"$processCode$${page.url}"), previousPageByLink = false)
+        .returns(Future.successful(Right(ProcessContext(process, Map(), Map(), Nil, Map(), Map(page.url -> PageNext("2", Nil)), Nil, None, None))))
+
+      MockPageBuilder
+        .buildPage("2", process)
+        .returns(Right(page))
+
+      MockPageRenderer
+        .renderPage(page, labels)
+        .returns(Left(NonTerminatingPageError))
+
+      target.getPageContext(pec, NoError) match {
+        case Left(err) if err == NonTerminatingPageError => succeed
+        case Right(_) => fail
+      }
+    }
   }
 
 
@@ -237,6 +256,34 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
       }
     }
   }
+
+    "Calling getPageContext when page is non-terminating" should {
+
+    "retrieve a page for the process" in new Test {
+
+      override val processCode = "cup-of-tea"
+
+      MockSessionRepository
+        .getUpdateForGET(sessionRepoId, processCode, Some(s"$processCode$lastPageUrl"), previousPageByLink = false)
+        .returns(Future.successful(Right(ProcessContext(process, Map(), Map(), Nil, Map(), Map(lastPageUrl -> PageNext("2")), Nil, None, None))))
+
+      MockPageBuilder
+        .buildPage("2", process)
+        .returns(Right(lastPage))
+
+      MockPageRenderer
+        .renderPage(lastPage, labels)
+        .returns(Left(NonTerminatingPageError))
+
+      private val result = target.getPageContext(processCode, lastPageUrl, previousPageByLink = false, sessionRepoId)
+
+      whenReady(result) {
+        case Left(err) if err == NonTerminatingPageError => succeed
+        case Right(_) => fail
+      }
+    }
+  }
+
 
   "Calling getPageContext against a previously answered Question page url" should {
 
@@ -467,6 +514,21 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
         case Left(err) => fail
         case Right((Some("4"), _)) => succeed
         case Right(_) => fail
+      }
+    }
+
+    "Return error if page submission evaluation finds a non-terminating page" in new Test {
+      MockPageRenderer
+        .renderPagePostSubmit(page, LabelCache(), "yes")
+        .returns(Left(NonTerminatingPageError))
+
+      MockSessionRepository
+        .saveFormPageState(processId,"/test-page", "yes", labels, Nil)
+        .returns(Future.successful(Right({})))
+
+      target.submitPage(pec, "/test-page", "yes", "yes").map{
+        case Left(err) if err == NonTerminatingPageError => succeed
+        case _ => fail
       }
     }
 

@@ -26,7 +26,6 @@ import core.models.ocelot.{Page, Labels, Process}
 
 @Singleton
 class PageRenderer @Inject() (appConfig: AppConfig) {
-  val PageStanzaLimit: Int = appConfig.pageStanzaLimit // Limit stanzas within page to catch non-terminating loops in guidance
 
   def renderPage(page: Page, labels: Labels): RequestOutcome[(Seq[VisualStanza], Labels, Option[DataInput])] = {
     implicit val stanzaMap: Map[String, Stanza] = page.keyedStanzas.map(ks => (ks.key, ks.stanza)).toMap ++ labels.continuationPool
@@ -44,7 +43,8 @@ class PageRenderer @Inject() (appConfig: AppConfig) {
       if (seen.contains(next)) {Right((None, labels))}   // next indicates any seen id
       else {stanzaMap.get(next) match {
         case None => Right((Some(next), labels))
-        case Some(s) if stanzaCount < PageStanzaLimit => s match {
+        // Limit stanzas within page to catch non-terminating loops in guidance
+        case Some(s) if stanzaCount < appConfig.pageStanzaLimit => s match { // Limit stanzas within page to catch non-terminating loops in guidance
           case _: PageStanza => Right((Some(next), labels))
           case EndStanza => labels.nextFlow match {
               case Some((nxt, updatedLabels)) => evaluatePostInputStanzas(nxt, updatedLabels, seen, stanzaCount+1)
@@ -85,7 +85,7 @@ class PageRenderer @Inject() (appConfig: AppConfig) {
                               (implicit stanzaMap: Map[String, Stanza]): RequestOutcome[(Seq[VisualStanza], Labels, Seq[String], String, Option[DataInput])] =
     stanzaMap.get(stanzaId) match {
       case None => Right((visualStanzas, labels, seen, stanzaId, None))
-      case Some(s) if stanzaCount < PageStanzaLimit  => s match {
+      case Some(s) if stanzaCount < appConfig.pageStanzaLimit  => s match { // Limit stanzas within page to catch non-terminating loops in guidance
         case EndStanza => Right((visualStanzas, labels, seen :+ stanzaId, stanzaId, None))
         case s: VisualStanza with DataInput => Right((visualStanzas :+ s, labels, seen :+ stanzaId, stanzaId, Some(s)))
         case s: Stanza with Evaluate =>

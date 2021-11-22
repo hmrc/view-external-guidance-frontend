@@ -24,9 +24,7 @@ import org.scalamock.handlers.CallHandler
 import org.scalamock.scalatest.MockFactory
 
 trait MockPageRenderer extends MockFactory {
-  println(s"MockPageRenderer BLAH")
   val mockPageRenderer: PageRenderer = mock[PageRenderer]
-  println(s"MockPageRenderer = $mockPageRenderer")
 
   object MockPageRenderer {
 
