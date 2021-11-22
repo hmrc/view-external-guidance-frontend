@@ -22,12 +22,13 @@ import core.models.ocelot.stanzas._
 import core.models.ocelot._
 import play.api.libs.json._
 import play.api.i18n.Lang
+import mocks.MockAppConfig
 
 class PageRendererSpec extends BaseSpec with ProcessJson  {
 
   // Define instance of class used in testing
   val pageBuilder = new PageBuilder(new Timescales(new DefaultTodayProvider))
-  val renderer: PageRenderer = new PageRenderer()
+  val renderer: PageRenderer = new PageRenderer(MockAppConfig)
 
   val meta: Meta = Json.parse(prototypeMetaSection).as[Meta]
 
@@ -85,11 +86,17 @@ class PageRendererSpec extends BaseSpec with ProcessJson  {
 
     val question: core.models.ocelot.stanzas.Question = Question(questionPhrase, answers, answerDestinations, None, false)
 
+    def renderPagePostSubmit(p: Page, l: Labels, a: String): (Option[String], Labels) = renderer.renderPagePostSubmit(p, l, a).fold(_ => fail, res => res)
+    def renderPage(p: Page, l: Labels): (Seq[VisualStanza], Labels, Option[DataInput]) = renderer.renderPage(p, l).fold(_ => fail, res => res)
+
     def testRender(pge: Page, id: String, lbls: Labels): Unit = {
-      val (nxt, newLabels) = renderer.renderPagePostSubmit(pge, LabelCache(), id)
-      nxt.fold(fail){ next =>
-        next shouldBe answerDestinations(id.toInt)
-        newLabels.updatedLabels shouldBe lbls.updatedLabels
+      renderer.renderPagePostSubmit(pge, LabelCache(), id) match {
+        case Right((nxt, newLabels)) =>
+          nxt.fold(fail){ next =>
+            next shouldBe answerDestinations(id.toInt)
+            newLabels.updatedLabels shouldBe lbls.updatedLabels
+          }
+        case Left(_) => fail
       }
     }
 
@@ -108,7 +115,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson  {
                       )
       val page = Page(Process.StartStanzaId, "/test-page", stanzas, Seq("5"))
 
-      val (visualStanzas, labels, dataInput) = renderer.renderPage(page, LabelCache())
+      val (visualStanzas, labels, dataInput) = renderPage(page, LabelCache())
 
       visualStanzas shouldBe List(callout1, callout2, instructionStanza)
 
@@ -130,7 +137,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson  {
                       )
       val page = Page(Process.StartStanzaId, "/test-page", stanzas, Seq("5"))
 
-      val (visualStanzas, labels, dataInput) = renderer.renderPage(page, LabelCache())
+      val (visualStanzas, labels, dataInput) = renderPage(page, LabelCache())
 
       visualStanzas shouldBe List(callout1, callout2, instructionStanza)
 
@@ -150,7 +157,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson  {
                       )
       val page = Page(Process.StartStanzaId, "/test-page", stanzas, answerDestinations)
 
-      val (visualStanzas, labels, dataInput) = renderer.renderPage(page, LabelCache())
+      val (visualStanzas, labels, dataInput) = renderPage(page, LabelCache())
       visualStanzas shouldBe List(instructionStanza, questionStanza)
 
       dataInput shouldBe Some(questionStanza)
@@ -169,7 +176,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson  {
                       )
       val page = Page(Process.StartStanzaId, "/test-page", stanzas, answerDestinations)
 
-      val (visualStanzas, labels, dataInput) = renderer.renderPage(page, LabelCache())
+      val (visualStanzas, labels, dataInput) = renderPage(page, LabelCache())
       visualStanzas shouldBe List(questionStanza)
       dataInput shouldBe Some(questionStanza)
       labels.updatedLabels.keys.toList.length shouldBe 1
@@ -228,7 +235,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson  {
       val page = Page(Process.StartStanzaId, "/test-page", stanzas, answerDestinations)
       val labels = LabelCache()
 
-      val (next, newLabels) = renderer.renderPagePostSubmit(page, labels, "0")
+      val (next, newLabels) = renderPagePostSubmit(page, labels, "0")
       next shouldBe Some("25")
       newLabels.updatedLabels shouldBe Map("X" -> ScalarLabel("X",List("4")))
     }
@@ -249,7 +256,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson  {
       val page = Page(Process.StartStanzaId, "/test-page", stanzas, answerDestinations)
       val labels = LabelCache()
 
-      val (next, newLabels) = renderer.renderPagePostSubmit(page, labels, "0")
+      val (next, newLabels) = renderPagePostSubmit(page, labels, "0")
       next shouldBe Some("25")
 
       newLabels.updatedLabels.get(questionLabel).isEmpty shouldBe false
@@ -273,7 +280,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson  {
       val page = Page(Process.StartStanzaId, "/test-page", stanzas, answerDestinations)
       val labels = LabelCache()
 
-      val (next, newLabels) = renderer.renderPagePostSubmit(page, labels, "0")
+      val (next, newLabels) = renderPagePostSubmit(page, labels, "0")
       next shouldBe None
       newLabels.updatedLabels shouldBe Map("X" -> ScalarLabel("X",List("4")))
     }
@@ -294,7 +301,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson  {
       val page = Page(Process.StartStanzaId, "/test-page", stanzas, answerDestinations)
       val labels = LabelCache()
 
-      val (next, _) = renderer.renderPagePostSubmit(page, labels, "0")
+      val (next, _) = renderPagePostSubmit(page, labels, "0")
 
       next shouldBe None
 
@@ -316,7 +323,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson  {
       val page = Page(Process.StartStanzaId, "/test-page", stanzas, answerDestinations)
       val labels = LabelCache()
 
-      val (next, _) = renderer.renderPagePostSubmit(page, labels, "0")
+      val (next, _) = renderPagePostSubmit(page, labels, "0")
 
       next shouldBe None
 
@@ -338,7 +345,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson  {
       val page = Page(Process.StartStanzaId, "/test-page", stanzas, answerDestinations)
       val labels = LabelCache()
 
-      val (next, _) = renderer.renderPagePostSubmit(page, labels, "12")
+      val (next, _) = renderPagePostSubmit(page, labels, "12")
 
       next shouldBe None
 
@@ -358,7 +365,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson  {
       val page = Page(Process.StartStanzaId, "/test-page", stanzas, answerDestinations)
       val labels = LabelCache()
 
-      val (next, newLabels) = renderer.renderPagePostSubmit(page, labels, "0")
+      val (next, newLabels) = renderPagePostSubmit(page, labels, "0")
       next shouldBe Some("34")
       newLabels.updatedLabels shouldBe Map("X" -> ScalarLabel("X",List("56")))
 
@@ -408,7 +415,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson  {
 
       val labelMap: Map[String, Label] = Map(input1.name -> input1)
 
-      val (visualStanzas, labels, dataInput) = renderer.renderPage(page, LabelCache(labelMap))
+      val (visualStanzas, labels, dataInput) = renderPage(page, LabelCache(labelMap))
 
       visualStanzas shouldBe List(callout, instruction1, instruction2)
 
@@ -473,7 +480,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson  {
 
       val labels = LabelCache()
 
-      val (next, newLabels) = renderer.renderPagePostSubmit(page, labels, answer = "0")
+      val (next, newLabels) = renderPagePostSubmit(page, labels, "0")
 
       next shouldBe Some("7")
 
