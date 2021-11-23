@@ -57,7 +57,7 @@ class PageRenderer @Inject() (appConfig: AppConfig) {
             val (next, updatedLabels) = s.eval(labels)
             evaluatePostInputStanzas(next, updatedLabels, seen, stanzaCount+1)
         }
-      case Some(s) => Left(NonTerminatingPageError)
+        case Some(s) => Left(NonTerminatingPageError)
       }}
 
     implicit val stanzaMap: Map[String, Stanza] = page.keyedStanzas.map(ks => (ks.key, ks.stanza)).toMap ++ labels.continuationPool
@@ -65,13 +65,20 @@ class PageRenderer @Inject() (appConfig: AppConfig) {
       case Right((_, newLabels, seen, nextPageId, optionalInput)) =>
         optionalInput.fold[RequestOutcome[(Option[String], Labels)]](Right((Some(nextPageId), newLabels))){dataInputStanza =>
           dataInputStanza.eval(answer, page, newLabels) match {
+            // case (Some(Process.EndStanzaId), updatedLabels) =>
+            //   // Encountering an EndStanza following input suggests incomplete guidance, i.e. a form page which accepts input and stops
+            //   // Therefore handle as if guidance indicated a Value error and cause current form page to be re-displayed. Logically also
+            //   // an EndStanza indicates there is no Next!
+            //   updatedLabels.nextFlow.fold[RequestOutcome[(Option[String], Labels)]](Right((None, updatedLabels))){nextFlow =>
+            //     evaluatePostInputStanzas(nextFlow._1, updatedLabels, seen)
+            //   }
             case (Some(Process.EndStanzaId), updatedLabels) => updatedLabels.nextFlow match {
                 case Some((next, updatedLabels)) => evaluatePostInputStanzas(next, updatedLabels, seen)
                 // Encountering an EndStanza following input suggests incomplete guidance, i.e. a form page which accepts input and stops
                 // Therefore handle as if guidance indicated a Value error and cause current form page to be re-displayed. Logically also
                 // an EndStanza indicates there is no Next!
                 case None => Right((None, updatedLabels))
-              }
+            }
             case (Some(next), updatedLabels) => evaluatePostInputStanzas(next, updatedLabels, seen)
             case (None, updatedLabels) => Right((None, updatedLabels))
            }
