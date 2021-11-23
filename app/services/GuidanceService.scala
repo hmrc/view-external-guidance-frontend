@@ -104,9 +104,7 @@ class GuidanceService @Inject() (
                                                        ctx.continuationPool,
                                                        ctx.process.timescales,
                                                        messagesApi.preferred(Seq(lang)).apply)) match {
-                case Left(err) =>
-                  logger.error(s"Encountered non terminating page error within page ${page.id} of processCode $processCode")
-                  Left(err)
+                case Left(err) => Left(err)
                 case Right((visualStanzas, labels, dataInput)) =>
                   Right(
                     PageEvaluationContext(
@@ -157,9 +155,7 @@ class GuidanceService @Inject() (
   def submitPage(ctx: PageEvaluationContext, url: String, validatedAnswer: String, submittedAnswer: String)
                 (implicit context: ExecutionContext): Future[RequestOutcome[(Option[String], Labels)]] =
     pageRenderer.renderPagePostSubmit(ctx.page, ctx.labels, validatedAnswer) match {
-      case Left(err) =>
-        logger.error(s"Encountered non terminating page error within page ${ctx.page.id} of processCode ${ctx.processCode}")
-        Future.successful(Left(err))
+      case Left(err) => Future.successful(Left(err))
       case Right((optionalNext, labels)) =>
         optionalNext.fold[Future[RequestOutcome[(Option[String], Labels)]]](Future.successful(Right((None, labels)))){next =>
           logger.debug(s"Next page found at stanzaId: $next")
