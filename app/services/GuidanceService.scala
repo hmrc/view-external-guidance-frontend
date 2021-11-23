@@ -98,30 +98,31 @@ class GuidanceService @Inject() (
             page => {
               val pageMapById: Map[String, PageDesc] =
                 ctx.pageMap.map{case (k, pn) => (pn.id, PageDesc(pn, s"${appConfig.baseUrl}/$processCode${k}"))}
-              val (visualStanzas, labels, dataInput) =
-                pageRenderer.renderPage(page, LabelCache(ctx.labels,
-                                                         Map(),
-                                                         ctx.flowStack,
-                                                         ctx.continuationPool,
-                                                         ctx.process.timescales,
-                                                         messagesApi.preferred(Seq(lang)).apply))
-
-              Right(
-                PageEvaluationContext(
-                  page,
-                  visualStanzas,
-                  dataInput,
-                  sessionId,
-                  pageMapById,
-                  ctx.process.startUrl.map(_ => s"${appConfig.baseUrl}/${processCode}/session-restart"),
-                  ctx.process.title,
-                  ctx.process.meta.id,
-                  processCode,
-                  labels,
-                  ctx.backLink.map(bl => s"${appConfig.baseUrl}/$bl"),
-                  ctx.answers.get(url)
-                )
-              )
+              pageRenderer.renderPage(page, LabelCache(ctx.labels,
+                                                       Map(),
+                                                       ctx.flowStack,
+                                                       ctx.continuationPool,
+                                                       ctx.process.timescales,
+                                                       messagesApi.preferred(Seq(lang)).apply)) match {
+                case Left(err) => Left(err)
+                case Right((visualStanzas, labels, dataInput)) =>
+                  Right(
+                    PageEvaluationContext(
+                      page,
+                      visualStanzas,
+                      dataInput,
+                      sessionId,
+                      pageMapById,
+                      ctx.process.startUrl.map(_ => s"${appConfig.baseUrl}/${processCode}/session-restart"),
+                      ctx.process.title,
+                      ctx.process.meta.id,
+                      processCode,
+                      labels,
+                      ctx.backLink.map(bl => s"${appConfig.baseUrl}/$bl"),
+                      ctx.answers.get(url)
+                    )
+                  )
+              }
             }
           )
         }
@@ -133,11 +134,15 @@ class GuidanceService @Inject() (
         Left(err)
     }
 
-  def getPageContext(pec: PageEvaluationContext, errStrategy: ErrorStrategy = NoError)(implicit lang: Lang): PageContext = {
-    val (visualStanzas, labels, dataInput) = pageRenderer.renderPage(pec.page, pec.labels)
-    val uiPage = uiBuilder.buildPage(pec.page.url, visualStanzas, errStrategy)(UIContext(labels, lang, pec.pageMapById, messagesApi))
-    PageContext(pec.copy(dataInput = dataInput), uiPage, labels)
-  }
+  def getPageContext(pec: PageEvaluationContext, errStrategy: ErrorStrategy = NoError)(implicit lang: Lang): RequestOutcome[PageContext] =
+    pageRenderer.renderPage(pec.page, pec.labels) match {
+      case Left(err) =>
+        logger.error(s"Encountered non terminating page error within page ${pec.page.id} of processCode ${pec.processCode}")
+        Left(err)
+      case Right((visualStanzas, labels, dataInput)) =>
+        val uiPage = uiBuilder.buildPage(pec.page.url, visualStanzas, errStrategy)(UIContext(labels, lang, pec.pageMapById, messagesApi))
+        Right(PageContext(pec.copy(dataInput = dataInput), uiPage, labels))
+    }
 
   def getPageContext(processCode: String, url: String, previousPageByLink: Boolean, sessionId: String)
                     (implicit context: ExecutionContext, lang: Lang): Future[RequestOutcome[PageContext]] =
@@ -148,18 +153,20 @@ class GuidanceService @Inject() (
     }
 
   def submitPage(ctx: PageEvaluationContext, url: String, validatedAnswer: String, submittedAnswer: String)
-                (implicit context: ExecutionContext): Future[RequestOutcome[(Option[String], Labels)]] = {
-    val (optionalNext, labels) = pageRenderer.renderPagePostSubmit(ctx.page, ctx.labels, validatedAnswer)
-    optionalNext.fold[Future[RequestOutcome[(Option[String], Labels)]]](Future.successful(Right((None, labels)))){next =>
-      logger.debug(s"Next page found at stanzaId: $next")
-      sessionRepository.saveFormPageState(ctx.sessionId, url, submittedAnswer, labels, List(next)).map{
-        case Left(err) =>
-          logger.error(s"Failed to save updated labels, error = $err")
-          Left(InternalServerError)
-        case Right(_) => Right((Some(next), labels))
-      }
+                (implicit context: ExecutionContext): Future[RequestOutcome[(Option[String], Labels)]] =
+    pageRenderer.renderPagePostSubmit(ctx.page, ctx.labels, validatedAnswer) match {
+      case Left(err) => Future.successful(Left(err))
+      case Right((optionalNext, labels)) =>
+        optionalNext.fold[Future[RequestOutcome[(Option[String], Labels)]]](Future.successful(Right((None, labels)))){next =>
+          logger.debug(s"Next page found at stanzaId: $next")
+          sessionRepository.saveFormPageState(ctx.sessionId, url, submittedAnswer, labels, List(next)).map{
+            case Left(err) =>
+              logger.error(s"Failed to save updated labels, error = $err")
+              Left(InternalServerError)
+            case Right(_) => Right((Some(next), labels))
+          }
+        }
     }
-  }
 
   def validateUserResponse(ctx: PageEvaluationContext, response: String): Option[String] =
     ctx.dataInput.fold[Option[String]](None)(_.validInput(response))

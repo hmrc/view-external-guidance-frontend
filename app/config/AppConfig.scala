@@ -51,6 +51,7 @@ trait AppConfig {
   val baseUrl: String
   val hostBaseUrl: String
   val adminHostBaseUrl: String
+  val pageStanzaLimit: Int
 }
 
 @Singleton
@@ -88,4 +89,5 @@ class AppConfigImpl @Inject() (val config: Configuration, servicesConfig: Servic
   lazy val baseUrl: String = config.get[String]("urls.baseUrl")
   lazy val hostBaseUrl: String = s"$host$baseUrl"
   lazy val adminHostBaseUrl: String = s"$adminHost$baseUrl"
+  lazy val pageStanzaLimit: Int = config.getOptional[Int]("page-rendering.page-stanza-limit").getOrElse(1000)
 }
