@@ -20,9 +20,9 @@ import core.services._
 import config.AppConfig
 import connectors.GuidanceConnector
 import javax.inject.{Inject, Singleton}
-import models.{ProcessContext, PageDesc, PageNext, PageContext, PageEvaluationContext, RequestOperation, GET, POST}
+import models.{GuidanceSession, PageDesc, PageNext, PageContext, PageEvaluationContext}
 import play.api.Logger
-import core.models.errors.{InternalServerError, InvalidProcessError, AuthenticationError}
+import core.models.errors.{InternalServerError, InvalidProcessError, AuthenticationError, NotFoundError, SessionNotFoundError, ExpectationFailedError}
 import core.models.RequestOutcome
 import uk.gov.hmrc.http.HeaderCarrier
 import play.api.i18n.{Lang, MessagesApi}
@@ -30,8 +30,6 @@ import scala.concurrent.{ExecutionContext, Future}
 import repositories.SessionRepository
 import core.models.ocelot.{LabelCache, Labels, Process}
 import core.models.ocelot.SecuredProcess
-import core.models.errors.ExpectationFailedError
-import core.models.errors.NotFoundError
 
 @Singleton
 class GuidanceService @Inject() (
@@ -49,16 +47,14 @@ class GuidanceService @Inject() (
   val logger: Logger = Logger(getClass)
 
   def sessionRestart(processCode: String, sessionId: String)(implicit context: ExecutionContext): Future[RequestOutcome[String]] =
-    sessionRepository.getResetSession(sessionId).map{
-      case Right(ctx) if processCode == ctx.process.meta.processCode =>
+    sessionRepository.getResetGuidanceSession(sessionId, processCode).map{
+      case Right(ctx) =>
         ctx.pageMap.collectFirst{case (k,v) if v.id == ctx.process.startPageId => k}
           .fold[RequestOutcome[String]]{
             logger.error(s"Process start pageId (${ctx.process.startPageId}) missing from retrieved session map" )
             Left(InternalServerError)
           }(Right(_))
-
-      case Right(_) =>
-        logger.warn(s"Referenced session ( $sessionId ) does not contain a process with processCode $processCode after session reset")
+      case Left(SessionNotFoundError) =>
         Left(ExpectationFailedError)
       case Left(NotFoundError) =>
         Left(ExpectationFailedError)
@@ -66,72 +62,27 @@ class GuidanceService @Inject() (
         Left(InternalServerError)
     }
 
-  def getProcessContext(sessionId: String): Future[RequestOutcome[ProcessContext]] = sessionRepository.getNoUpdate(sessionId)
+  def getCurrentGuidanceSession(sessionId: String): Future[RequestOutcome[GuidanceSession]] = sessionRepository.getGuidanceSessionById(sessionId)
 
-  def getProcessContext(sessionId: String, processCode: String, url: String, previousPageByLink: Boolean, op: RequestOperation = GET)
-                       (implicit context: ExecutionContext): Future[RequestOutcome[ProcessContext]] = {
+  def getSubmitEvaluationContext(processCode: String, url: String, sessionId: String)
+                              (implicit context: ExecutionContext, lang: Lang): Future[RequestOutcome[PageEvaluationContext]] = {
     val pageUrl: Option[String] = if (isAuthenticationUrl(url)) None else Some(s"$processCode$url")
-    (op match {
-      case GET => sessionRepository.getUpdateForGET(sessionId, processCode, pageUrl, previousPageByLink)
-      case POST => sessionRepository.getUpdateForPOST(sessionId, processCode, pageUrl)
-    }).map{ result =>
-      (result, pageUrl) match {
-        case (Right(ctx), Some(_)) if !ctx.secure => Left(AuthenticationError)
-        case _ => result
-      }
+    sessionRepository.getSubmitGuidanceSession(sessionId, processCode, pageUrl).map{
+      case Left(err) => Left(err)
+      case Right(session) if pageUrl.isDefined && !session.secure => Left(AuthenticationError)
+      case Right(session) => buildEvaluationContext(sessionId, processCode, url, session)
     }
   }
 
-  def getPageEvaluationContext(processCode: String, url: String, previousPageByLink: Boolean, sessionId: String, op: RequestOperation = GET)
-                              (implicit context: ExecutionContext, lang: Lang): Future[RequestOutcome[PageEvaluationContext]] =
-    getProcessContext(sessionId, processCode, url, previousPageByLink, op).map {
-      case Right(ctx) if ctx.process.meta.processCode == processCode =>
-        ctx.pageMap.get(url).fold[RequestOutcome[PageEvaluationContext]]{
-          logger.error(s"Unable to find url $url within cached process ${ctx.process.meta.id} using sessionId $sessionId")
-          Left(NotFoundError)
-        }{ pageNext =>
-          pageBuilder.buildPage(pageNext.id, ctx.process).fold(
-            err => {
-              logger.error(s"PageBuilder error $err on process ${ctx.process.meta.id} with sessionId $sessionId")
-              Left(InvalidProcessError)
-            },
-            page => {
-              val pageMapById: Map[String, PageDesc] =
-                ctx.pageMap.map{case (k, pn) => (pn.id, PageDesc(pn, s"${appConfig.baseUrl}/$processCode${k}"))}
-              val (visualStanzas, labels, dataInput) =
-                pageRenderer.renderPage(page, LabelCache(ctx.labels,
-                                                         Map(),
-                                                         ctx.flowStack,
-                                                         ctx.continuationPool,
-                                                         ctx.process.timescales,
-                                                         messagesApi.preferred(Seq(lang)).apply))
-
-              Right(
-                PageEvaluationContext(
-                  page,
-                  visualStanzas,
-                  dataInput,
-                  sessionId,
-                  pageMapById,
-                  ctx.process.startUrl.map(_ => s"${appConfig.baseUrl}/${processCode}/session-restart"),
-                  ctx.process.title,
-                  ctx.process.meta.id,
-                  processCode,
-                  labels,
-                  ctx.backLink.map(bl => s"${appConfig.baseUrl}/$bl"),
-                  ctx.answers.get(url)
-                )
-              )
-            }
-          )
-        }
-      case Right(_) =>
-        logger.warn(s"Referenced session ( $sessionId ) does not contain a process with processCode $processCode")
-        Left(ExpectationFailedError)
-      case Left(err) =>
-        logger.warn(s"Repository returned $err, when attempting retrieve process using id (sessionId) $sessionId")
-        Left(err)
+  private def getPageEvaluationContext(processCode: String, url: String, previousPageByLink: Boolean, sessionId: String)
+                              (implicit context: ExecutionContext, lang: Lang): Future[RequestOutcome[PageEvaluationContext]] = {
+    val pageUrl: Option[String] = if (isAuthenticationUrl(url)) None else Some(s"$processCode$url")
+    sessionRepository.getPageGuidanceSession(sessionId, processCode, pageUrl, previousPageByLink).map{
+      case Left(err) => Left(err)
+      case Right(session) if pageUrl.isDefined && !session.secure => Left(AuthenticationError)
+      case Right(session) => buildEvaluationContext(sessionId, processCode, url, session)
     }
+  }
 
   def getPageContext(pec: PageEvaluationContext, errStrategy: ErrorStrategy = NoError)(implicit lang: Lang): PageContext = {
     val (visualStanzas, labels, dataInput) = pageRenderer.renderPage(pec.page, pec.labels)
@@ -160,6 +111,36 @@ class GuidanceService @Inject() (
       }
     }
   }
+
+  private def buildEvaluationContext(sessionId: String, processCode: String, url: String, session: GuidanceSession)
+                                    (implicit lang: Lang): RequestOutcome[PageEvaluationContext] =
+    session.pageMap.get(url).fold[RequestOutcome[PageEvaluationContext]]{
+      logger.error(s"Unable to find url $url within cached process ${session.process.meta.id} using sessionId $sessionId")
+      Left(NotFoundError)
+    }{ pageNext =>
+      pageBuilder.buildPage(pageNext.id, session.process).fold(
+        err => {
+          logger.error(s"PageBuilder error $err on process ${session.process.meta.id} with sessionId $sessionId")
+          Left(InvalidProcessError)
+        },
+        page => {
+          val pageMapById: Map[String, PageDesc] =
+            session.pageMap.map{case (k, pn) => (pn.id, PageDesc(pn, s"${appConfig.baseUrl}/$processCode${k}"))}
+          val (visualStanzas, labels, dataInput) = pageRenderer.renderPage(page,
+                                                                           LabelCache(session.labels,
+                                                                                      Map(),
+                                                                                      session.flowStack,
+                                                                                      session.continuationPool,
+                                                                                      session.process.timescales,
+                                                                                      messagesApi.preferred(Seq(lang)).apply))
+
+          Right(PageEvaluationContext(page, visualStanzas, dataInput, sessionId, pageMapById,
+                                      session.process.startUrl.map(_ => s"${appConfig.baseUrl}/${processCode}/session-restart"),
+                                      session.process.title, session.process.meta.id, processCode, labels,
+                                      session.backLink.map(bl => s"${appConfig.baseUrl}/$bl"),
+                                      session.answers.get(url)))
+        })
+    }
 
   def validateUserResponse(ctx: PageEvaluationContext, response: String): Option[String] =
     ctx.dataInput.fold[Option[String]](None)(_.validInput(response))

@@ -82,7 +82,7 @@ class StartGuidanceControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
       )
   }
 
-  trait ExistingSessionProcessTest extends MockGuidanceService with TestData {
+  trait ExistingSessionTest extends MockGuidanceService with TestData {
     lazy val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("GET", "/").withSession((SessionKeys.sessionId, s"session-$uuid"))
 
     lazy val target =
@@ -116,7 +116,7 @@ class StartGuidanceControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
 
   "Calling the scratch process endpoint with an existing session id" should {
 
-    trait ScratchTestWithValidUUID extends ExistingSessionProcessTest {
+    trait ScratchTestWithValidUUID extends ExistingSessionTest {
       val repositoryId = "683d9aa0-2a0e-4e28-9ac8-65ce453d2731"
       MockGuidanceService
         .retrieveAndCacheScratch(uuid, repositoryId)

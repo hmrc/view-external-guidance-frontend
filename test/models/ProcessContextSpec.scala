@@ -23,7 +23,7 @@ import play.api.inject.Injector
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import services.SecuredProcessBuilder
 
-class ProcessContextSpec extends BaseSpec with GuiceOneAppPerSuite {
+class GuidanceSessionSpec extends BaseSpec with GuiceOneAppPerSuite {
 
   def injector: Injector = app.injector
   val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
@@ -37,22 +37,22 @@ class ProcessContextSpec extends BaseSpec with GuiceOneAppPerSuite {
                                                                     List(securedProcess.passPhrase.getOrElse(""))))
   }
 
-  "ProcessContext" must {
+  "GuidanceSession" must {
     "Report secure for a standard Process" in new Test {
-      val pc: ProcessContext =
-        ProcessContext(validOnePageJson.as[Process],Map("/start" -> "0"),Map(),Nil,Map(),Map(),Nil, None,None)
+      val pc: GuidanceSession =
+        GuidanceSession(validOnePageJson.as[Process],Map("/start" -> "0"),Map(),Nil,Map(),Map(),Nil, None,None)
       pc.secure shouldBe true
     }
 
     "Report not secure for a passphrase protected Process with no passphrase stored" in new Test {
-      val passPhrasePc: ProcessContext =
-        ProcessContext(securedProcess,Map("/start" -> "0"),Map(),Nil,Map(),Map(),Nil, None,None)
+      val passPhrasePc: GuidanceSession =
+        GuidanceSession(securedProcess,Map("/start" -> "0"),Map(),Nil,Map(),Map(),Nil, None,None)
       passPhrasePc.secure shouldBe false
     }
 
     "Report secure for a passphrase protected Process with stored passphrase" in new Test {
-      val securePassPhrasePc: ProcessContext =
-        ProcessContext(securedProcess,Map("/start" -> "0"),labelsWithPassPhrase,Nil,Map(),Map(),Nil, None,None)
+      val securePassPhrasePc: GuidanceSession =
+        GuidanceSession(securedProcess,Map("/start" -> "0"),labelsWithPassPhrase,Nil,Map(),Map(),Nil, None,None)
       securePassPhrasePc.secure shouldBe true
     }
   }

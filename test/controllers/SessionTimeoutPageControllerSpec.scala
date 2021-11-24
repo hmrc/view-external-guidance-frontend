@@ -27,7 +27,7 @@ import play.api.test.Helpers._
 import config.ErrorHandler
 import core.models.errors._
 import core.models.ocelot.{Process, ProcessJson}
-import models.ProcessContext
+import models.GuidanceSession
 import views.html.{delete_your_answers, session_timeout}
 import play.api.test.Helpers.stubMessagesControllerComponents
 import uk.gov.hmrc.http.SessionKeys
@@ -48,7 +48,7 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
     lazy val invalidProcessCode = "cup-of-coffee"
 
     lazy val process: Process = validOnePageJson.as[Process]
-    lazy val processContext: ProcessContext = ProcessContext(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None)
+    lazy val session: GuidanceSession = GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None)
 
     val timeout: Int = MockAppConfig.timeoutInSeconds * MockAppConfig.toMilliSeconds
 
@@ -71,7 +71,7 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
         SessionKeys.sessionId -> sessionId,
         SessionKeys.lastRequestTimestamp -> now)
 
-      MockGuidanceService.getProcessContext(sessionId).returns(Future.successful(Right(processContext)))
+      MockGuidanceService.getCurrentGuidanceSession(sessionId).returns(Future.successful(Right(session)))
 
       val result: Future[Result] = target.getPage(processCode)(fakeRequest)
 
@@ -86,7 +86,7 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
         SessionKeys.sessionId -> sessionId,
         SessionKeys.lastRequestTimestamp -> now)
 
-      MockGuidanceService.getProcessContext(sessionId).returns(Future.successful(Left(NotFoundError)))
+      MockGuidanceService.getCurrentGuidanceSession(sessionId).returns(Future.successful(Left(NotFoundError)))
 
       val result: Future[Result] = target.getPage(processCode)(fakeRequest)
 
@@ -102,7 +102,7 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
         SessionKeys.sessionId -> sessionId,
         SessionKeys.lastRequestTimestamp -> now)
 
-      MockGuidanceService.getProcessContext(sessionId).returns(Future.successful(Left(DatabaseError)))
+      MockGuidanceService.getCurrentGuidanceSession(sessionId).returns(Future.successful(Left(DatabaseError)))
 
       val result: Future[Result] = target.getPage(processCode)(fakeRequest)
 
@@ -117,7 +117,7 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
         SessionKeys.sessionId -> sessionId,
         SessionKeys.lastRequestTimestamp -> now)
 
-      MockGuidanceService.getProcessContext(sessionId).returns(Future.successful(Right(processContext)))
+      MockGuidanceService.getCurrentGuidanceSession(sessionId).returns(Future.successful(Right(session)))
 
       val result: Future[Result] = target.getPage(invalidProcessCode)(fakeRequest)
 

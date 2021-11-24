@@ -16,12 +16,12 @@
 
 package mocks
 
-import models.{PageEvaluationContext, PageContext, RequestOperation, GET}
+import models.{PageEvaluationContext, PageContext, RequestOperation}
 import core.models.RequestOutcome
 import org.scalamock.handlers.CallHandler
 import org.scalamock.scalatest.MockFactory
 import services.{ErrorStrategy, GuidanceService}
-import models.ProcessContext
+import models.GuidanceSession
 import uk.gov.hmrc.http.HeaderCarrier
 import core.models.ocelot.Labels
 import scala.concurrent.{ExecutionContext, Future}
@@ -53,18 +53,18 @@ trait MockGuidanceService extends MockFactory {
         .retrieveAndCacheApprovalByPageUrl(_: String)(_: String, _: String)(_: HeaderCarrier, _: ExecutionContext))
         .expects(url, processId, *, *, *)
 
-    def getProcessContext(sessionId: String,
-                          processCode: String,
-                          url: String,
-                          previousPageByLink: Boolean,
-                          op: RequestOperation): CallHandler[Future[RequestOutcome[ProcessContext]]] =
-      (mockGuidanceService
-        .getProcessContext(_: String, _: String, _: String, _: Boolean, _: RequestOperation)(_: ExecutionContext))
-        .expects(sessionId, processCode, url, previousPageByLink, op, *)
+    // def getGuidanceSession(sessionId: String,
+    //                        processCode: String,
+    //                        url: String,
+    //                        previousPageByLink: Boolean,
+    //                        op: RequestOperation): CallHandler[Future[RequestOutcome[GuidanceSession]]] =
+    //   (mockGuidanceService
+    //     .getGuidanceSession(_: String, _: String, _: String, _: Boolean, _: RequestOperation)(_: ExecutionContext))
+    //     .expects(sessionId, processCode, url, previousPageByLink, op, *)
 
-    def getProcessContext(sessionId: String): CallHandler[Future[RequestOutcome[ProcessContext]]] =
+    def getCurrentGuidanceSession(sessionId: String): CallHandler[Future[RequestOutcome[GuidanceSession]]] =
       (mockGuidanceService
-        .getProcessContext(_: String))
+        .getCurrentGuidanceSession(_: String))
         .expects(sessionId)
 
     def sessionRestart(processCode: String, sessionId: String): CallHandler[Future[RequestOutcome[String]]] =
@@ -82,15 +82,32 @@ trait MockGuidanceService extends MockFactory {
         .getPageContext(_: String, _: String, _: Boolean, _: String)(_: ExecutionContext, _: Lang))
         .expects(processId, url, previousPageByLink, sessionId, *, *)
 
+    // def getPageEvaluationContext(
+    //                               processId: String,
+    //                               url: String,
+    //                               previousPageByLink: Boolean,
+    //                               sessionId: String,
+    //                               op: RequestOperation = GET): CallHandler[Future[RequestOutcome[PageEvaluationContext]]] =
+    //   (mockGuidanceService
+    //     .getPageEvaluationContext(_: String, _: String, _: Boolean,  _: String, _: RequestOperation)(_: ExecutionContext, _: Lang))
+    //     .expects(processId, url, previousPageByLink, sessionId, op, *, *)
+
+    def getSubmitEvaluationContext(
+                                  processId: String,
+                                  url: String,
+                                  sessionId: String): CallHandler[Future[RequestOutcome[PageEvaluationContext]]] =
+      (mockGuidanceService
+        .getSubmitEvaluationContext(_: String, _: String, _: String)(_: ExecutionContext, _: Lang))
+        .expects(processId, url, sessionId, *, *)
+
     def getPageEvaluationContext(
                                   processId: String,
                                   url: String,
                                   previousPageByLink: Boolean,
-                                  sessionId: String,
-                                  op: RequestOperation = GET): CallHandler[Future[RequestOutcome[PageEvaluationContext]]] =
+                                  sessionId: String): CallHandler[Future[RequestOutcome[PageEvaluationContext]]] =
       (mockGuidanceService
-        .getPageEvaluationContext(_: String, _: String, _: Boolean,  _: String, _: RequestOperation)(_: ExecutionContext, _: Lang))
-        .expects(processId, url, previousPageByLink, sessionId, op, *, *)
+        .getPageEvaluationContext(_: String, _: String, _: Boolean,  _: String)(_: ExecutionContext, _: Lang))
+        .expects(processId, url, previousPageByLink, sessionId, *, *)
 
     def validateUserResponse(pec: PageEvaluationContext, response: String): CallHandler[Option[String]] =
       (mockGuidanceService
