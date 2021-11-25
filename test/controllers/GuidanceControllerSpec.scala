@@ -16,6 +16,7 @@
 
 package controllers
 
+import java.time.Instant
 import akka.stream.Materializer
 import base.{BaseSpec, ViewFns}
 import config.ErrorHandler
@@ -39,7 +40,7 @@ import play.api.data.FormError
 import core.models.errors._
 import core.models.ocelot.LabelCache
 import core.services._
-
+import repositories.{Session, SessionFSM, PageHistory}
 import scala.concurrent.{ExecutionContext, Future}
 import controllers.actions.SessionIdAction
 import play.api.inject.Injector
@@ -204,6 +205,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
       new PageRenderer(MockAppConfig),
       new SecuredProcessBuilder(messagesApi),
       new UIBuilder(),
+      new SessionFSM,
       messagesApi)
 
     val target = new GuidanceController(
@@ -334,7 +336,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
     }
   }
 
-  trait QuestionSubmissionTest extends MockSessionRepository with MockGuidanceConnector with TestBase  with ProcessJson {
+  trait QuestionSubmissionTest extends MockGuidanceService with MockSessionRepository with MockGuidanceConnector with TestBase  with ProcessJson {
     val fakeRequest = FakeRequest("GET", path).withSession(SessionKeys.sessionId -> processId).withFormUrlEncodedBody().withCSRFToken
     val formError = new FormError(relativePath, List("error.required"))
     val guidanceService = new GuidanceService(
@@ -345,6 +347,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
       new PageRenderer(MockAppConfig),
       new SecuredProcessBuilder(messagesApi),
       new UIBuilder(),
+      new SessionFSM,
       messagesApi)
 
     val target = new GuidanceController(
@@ -362,9 +365,22 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
   "Submitting a blank Question page form" should {
 
     "return a NOT_FOUND response" in new QuestionSubmissionTest {
-      MockSessionRepository
-        .getSubmitGuidanceSession(processId, process.meta.processCode, Some(s"tell-hmrc$path"))
+      val url = "/rent/less-than-1000/do-you-receive-any-income"
+      MockGuidanceService
+        .getSubmitGuidanceSession(processId, process.meta.processCode, Some(s"tell-hmrc$url"))
         .returns(Future.successful(Right(GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None))))
+
+      MockSessionRepository
+        .getGuidanceSession(processId, process.meta.processCode)
+        .returns(Future.successful(Right(
+          Session(processId, process.meta.id, process, Map(), Nil, Map(), Map(), Map(), List(PageHistory(s"cup-of-tea/$url",Nil)), Nil, Instant.now)
+        )))
+
+      MockSessionRepository
+        .getGuidanceSessionById(processId)
+        .returns(Future.successful(Right(
+          GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None)
+        )))
 
       override val fakeRequest = FakeRequest("POST", path).withSession(SessionKeys.sessionId -> processId).withFormUrlEncodedBody().withCSRFToken
       val result = target.submitPage("tell-hmrc", relativePath)(fakeRequest)
@@ -375,7 +391,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
   "Submitting to page out of sequence" should {
     "Force redirect to current page" in new QuestionSubmissionTest with MockGuidanceService {
       val session = GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, Some("/current-page-url"), None)
-      MockSessionRepository
+      MockGuidanceService
         .getSubmitGuidanceSession(processId, process.meta.processCode, Some(s"tell-hmrc$path"))
         .returns(Future.successful(Left(IllegalPageSubmissionError)))
 
@@ -391,7 +407,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
 
     "Restart process when no current page available" in new QuestionSubmissionTest with MockGuidanceService {
       val session = GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None)
-      MockSessionRepository
+      MockGuidanceService
         .getSubmitGuidanceSession(processId, process.meta.processCode, Some(s"tell-hmrc$path"))
         .returns(Future.successful(Left(IllegalPageSubmissionError)))
 
@@ -407,7 +423,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
 
     "Sync process when process code doesnt match current session" in new QuestionSubmissionTest with MockGuidanceService {
       val session = GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, Some("/current-page-url"), None)
-      MockSessionRepository
+      MockGuidanceService
         .getSubmitGuidanceSession(processId, "blah", Some(s"blah$path"))
         .returns(Future.successful(Left(SessionNotFoundError)))
 
@@ -422,7 +438,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
     }
 
     "Return Internal server error when a Database error occurs" in new QuestionSubmissionTest with MockGuidanceService {
-      MockSessionRepository
+      MockGuidanceService
         .getSubmitGuidanceSession(processId, "blah", Some(s"blah$path"))
         .returns(Future.successful(Left(IllegalPageSubmissionError)))
 
@@ -1085,7 +1101,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
   }
 
   "Accessing a page from a passphrase process" should {
-    trait Test extends MockSessionRepository with MockGuidanceConnector with TestBase {
+    trait Test extends MockGuidanceService with MockSessionRepository with MockGuidanceConnector with TestBase {
       lazy val fakeRequest = FakeRequest(GET, path).withSession(SessionKeys.sessionId -> processId).withCSRFToken
 
       val guidanceService = new GuidanceService(
@@ -1096,6 +1112,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
         new PageRenderer(MockAppConfig),
         new SecuredProcessBuilder(messagesApi),
         new UIBuilder(),
+        new SessionFSM,
         messagesApi)
 
       lazy val target =
@@ -1119,7 +1136,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
     "Redirect to the start of the process when the legal list of legal page ids is empty" in new Test {
       override val session: GuidanceSession = GuidanceSession(emptyProcess,Map("/start" -> "0"),Map(),Nil,Map(),pageMap,Nil, None,None)
 
-      MockSessionRepository
+      MockGuidanceService
         .getPageGuidanceSession(processId, processId, Some(s"${processId}$path"), false)
         .returns(Future.successful(Left(ForbiddenError)))
       MockSessionRepository
@@ -1132,7 +1149,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
     }
 
     "Return SEE_OTHER from getPage as a result trying to access valid page illegal in the current context" in new Test {
-      MockSessionRepository
+      MockGuidanceService
         .getPageGuidanceSession(processId, processId, Some(s"${processId}$path"), false)
         .returns(Future.successful(Left(ForbiddenError)))
       MockSessionRepository
@@ -1145,7 +1162,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
     }
 
     "Return SEE_OTHER from getPage as a result trying to access valid page illegal in the current context when session not found" in new Test {
-      MockSessionRepository
+      MockGuidanceService
         .getPageGuidanceSession(processId, processId, Some(s"${processId}$path"), false)
         .returns(Future.successful(Left(ForbiddenError)))
       MockSessionRepository
@@ -1158,7 +1175,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
     }
 
     "Return SEE_OTHER from a getPage() as a result of an Authentication error when non authenticated" in new Test {
-      MockSessionRepository
+      MockGuidanceService
         .getPageGuidanceSession(processId, processId, Some(s"${processId}$path"), false)
         .returns(Future.successful(Left(AuthenticationError)))
 
@@ -1168,7 +1185,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
     }
 
     "Return SEE_OTHER from a submit()) as a result of an Authentication error when non authenticated" in new Test {
-      MockSessionRepository
+      MockGuidanceService
         .getSubmitGuidanceSession(processId, processId, Some(s"${processId}$path"))
         .returns(Future.successful(Left(AuthenticationError)))
 
@@ -1178,7 +1195,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
     }
 
     "Redirect to the start of a process when an expectation failed error is returned" in new Test {
-      MockSessionRepository
+      MockGuidanceService
         .getSubmitGuidanceSession(processId, processId, Some(s"${processId}$path"))
         .returns(Future.successful(Left(ExpectationFailedError)))
 
@@ -1360,11 +1377,11 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
 
   "Accessing a valid process URL in a process when session id exists, but either no session exists or belongs to another process" should {
 
-    trait Test extends MockSessionRepository with MockGuidanceConnector with TestBase {
+    trait Test extends MockGuidanceService with MockSessionRepository with MockGuidanceConnector with TestBase {
       override lazy val sessionId = s"session-${java.util.UUID.randomUUID().toString}"
       lazy val fakeRequest = FakeRequest(GET, "/start").withSession(SessionKeys.sessionId -> sessionId).withFormUrlEncodedBody().withCSRFToken
 
-      MockSessionRepository
+      MockGuidanceService
         .getPageGuidanceSession(sessionId, "otherProcessCode", Some("otherProcessCode/start"), previousPageByLink = false)
         .returns(Future.successful(Left(SessionNotFoundError)))
 
@@ -1376,6 +1393,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
         new PageRenderer(MockAppConfig),
         new SecuredProcessBuilder(messagesApi),
         new UIBuilder(),
+        new SessionFSM,
         messagesApi)
 
       lazy val target =

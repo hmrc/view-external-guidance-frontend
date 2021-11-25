@@ -22,13 +22,13 @@ import connectors.GuidanceConnector
 import javax.inject.{Inject, Singleton}
 import models.{GuidanceSession, PageDesc, PageNext, PageContext, PageEvaluationContext}
 import play.api.Logger
-import core.models.errors.{InternalServerError, InvalidProcessError, AuthenticationError, NotFoundError, SessionNotFoundError, ExpectationFailedError}
+import core.models.errors._
 import core.models.RequestOutcome
 import uk.gov.hmrc.http.HeaderCarrier
 import play.api.i18n.{Lang, MessagesApi}
 import scala.concurrent.{ExecutionContext, Future}
-import repositories.SessionRepository
-import core.models.ocelot.{LabelCache, Labels, Process}
+import repositories.{SessionFSM, SessionRepository}
+import core.models.ocelot.{LabelCache, Labels, Process, Label}
 import core.models.ocelot.SecuredProcess
 
 @Singleton
@@ -40,6 +40,7 @@ class GuidanceService @Inject() (
     pageRenderer: PageRenderer,
     spb: SecuredProcessBuilder,
     uiBuilder: UIBuilder,
+    transition: SessionFSM,
     messagesApi: MessagesApi
 ) {
   type Retrieve[A] = String => Future[RequestOutcome[A]]
@@ -67,22 +68,73 @@ class GuidanceService @Inject() (
   def getSubmitEvaluationContext(processCode: String, url: String, sessionId: String)
                               (implicit context: ExecutionContext, lang: Lang): Future[RequestOutcome[PageEvaluationContext]] = {
     val pageUrl: Option[String] = if (isAuthenticationUrl(url)) None else Some(s"$processCode$url")
-    sessionRepository.getSubmitGuidanceSession(sessionId, processCode, pageUrl).map{
+    getSubmitGuidanceSession(sessionId, processCode, pageUrl).map{
       case Left(err) => Left(err)
       case Right(session) if pageUrl.isDefined && !session.secure => Left(AuthenticationError)
       case Right(session) => buildEvaluationContext(sessionId, processCode, url, session)
     }
   }
 
-  private def getPageEvaluationContext(processCode: String, url: String, previousPageByLink: Boolean, sessionId: String)
+  def getPageEvaluationContext(processCode: String, url: String, previousPageByLink: Boolean, sessionId: String)
                               (implicit context: ExecutionContext, lang: Lang): Future[RequestOutcome[PageEvaluationContext]] = {
     val pageUrl: Option[String] = if (isAuthenticationUrl(url)) None else Some(s"$processCode$url")
-    sessionRepository.getPageGuidanceSession(sessionId, processCode, pageUrl, previousPageByLink).map{
+    getPageGuidanceSession(sessionId, processCode, pageUrl, previousPageByLink).map{
       case Left(err) => Left(err)
       case Right(session) if pageUrl.isDefined && !session.secure => Left(AuthenticationError)
       case Right(session) => buildEvaluationContext(sessionId, processCode, url, session)
     }
   }
+
+  def getSubmitGuidanceSession(key: String, processCode: String, pageUrl: Option[String])
+                              (implicit context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] =
+    sessionRepository.getGuidanceSession(key, processCode).map{
+      case Left(err) => Left(err)
+      // If incoming url equals the most recent page history url proceed, otherwise, the POST is out of sequence (IllegalPageSubmissionError)
+      case Right(sp) if pageUrl.fold(true)(url => sp.pageHistory.reverse.headOption.fold(false)(url.equals)) =>
+        val backlink = pageUrl.fold[Option[String]](None){_ =>
+          sp.pageHistory.reverse match {
+            case _ :: y :: _ => Some(y.url)
+            case _ => None
+          }
+        }
+        Right(GuidanceSession(sp.process, sp.answers, sp.labels, sp.flowStack, sp.continuationPool, sp.pageMap, sp.legalPageIds, sp.pageUrl, backlink))
+      case _ => Left(IllegalPageSubmissionError)
+    }
+
+  def getPageGuidanceSession(key: String, processCode: String, pageUrl: Option[String], previousPageByLink: Boolean)
+                            (implicit context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] =
+    sessionRepository.getGuidanceSession(key, processCode).flatMap{
+      case Left(err) => Future.successful(Left(err))
+      case Right(sp) =>
+      pageUrl.fold[Future[RequestOutcome[GuidanceSession]]](
+        Future.successful(Right(GuidanceSession(sp.process, sp.answers, sp.labels, sp.flowStack, sp.continuationPool, sp.pageMap, Nil, sp.pageUrl, None)))
+      ){url =>
+        sp.pageMap.get(url.drop(sp.process.meta.processCode.length)).fold[Future[RequestOutcome[GuidanceSession]]]{
+          logger.warn(s"Attempt to move to unknown page $url in process ${sp.processId}, page count = ${sp.pageMap.size}")
+          Future.successful(Left(NotFoundError))
+        }{pageNext =>
+          logger.debug(s"Incoming Page: ${pageNext.id}, $url, current legalPageIds: ${sp.legalPageIds}")
+          if (sp.legalPageIds.isEmpty || sp.legalPageIds.contains(pageNext.id)){ // Wild card or fixed list of valid page ids
+            val firstPageUrl: String = s"${sp.process.meta.processCode}${sp.process.startUrl.getOrElse("")}"
+            val (backLink, historyUpdate, flowStackUpdate, labelUpdates) = transition(url, sp, previousPageByLink, firstPageUrl)
+            val labels: Map[String, Label] = sp.labels ++ labelUpdates.map(l => l.name -> l).toMap
+            val legalPageIds = (pageNext.id :: Process.StartStanzaId :: pageNext.linked ++
+                                backLink.fold(List.empty[String])(bl => List(sp.pageMap(bl.drop(sp.process.meta.processCode.length)).id))).distinct
+            val session = GuidanceSession(sp.process, sp.answers, labels, flowStackUpdate.getOrElse(sp.flowStack),
+                                                sp.continuationPool, sp.pageMap, legalPageIds, sp.pageUrl, backLink)
+            sessionRepository.saveUpdates(key, historyUpdate, flowStackUpdate, labelUpdates, legalPageIds).map {
+              case Left(err) =>
+                logger.error(s"Unable to update session data, error = $err")
+                Left(err)
+              case _ => Right(session)
+            }
+          } else {
+            logger.warn(s"Attempt to move to illegal page $url, LEGALPIDS ${sp.legalPageIds}")
+            Future.successful(Left(ForbiddenError))
+          }
+        }
+      }
+    }
 
   def getPageContext(pec: PageEvaluationContext, errStrategy: ErrorStrategy = NoError)(implicit lang: Lang): RequestOutcome[PageContext] =
     pageRenderer.renderPage(pec.page, pec.labels) match {

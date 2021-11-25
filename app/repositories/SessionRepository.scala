@@ -66,16 +66,20 @@ object Session {
 
 trait SessionRepository {
   def getGuidanceSessionById(key: String): Future[RequestOutcome[GuidanceSession]]
-  def getSubmitGuidanceSession(key: String, processCode: String, pageUrl: Option[String]): Future[RequestOutcome[GuidanceSession]]
-  def getPageGuidanceSession(key: String, processCode: String, pageUrl: Option[String], previousPageByLink: Boolean): Future[RequestOutcome[GuidanceSession]]
+  def getGuidanceSession(key: String, processCode: String): Future[RequestOutcome[Session]]
   def getResetGuidanceSession(key: String, processCode: String): Future[RequestOutcome[GuidanceSession]]
   def set(key: String, process: Process, pageMap: Map[String, PageNext]): Future[RequestOutcome[Unit]]
   def saveFormPageState(key: String, url: String, answer: String, labels: Labels, nextLegalPageIs: List[String]): Future[RequestOutcome[Unit]]
   def savePageState(key: String, labels: Labels): Future[RequestOutcome[Unit]]
+  def saveUpdates(key: String,
+                  pageHistory: Option[List[PageHistory]],
+                  flowStack: Option[List[FlowStage]],
+                  labelUpdates: List[Label],
+                  legalPageIds: List[String]): Future[RequestOutcome[Unit]]
 }
 
 @Singleton
-class DefaultSessionRepository @Inject() (config: AppConfig, component: ReactiveMongoComponent, transition: SessionFSM)(implicit ec: ExecutionContext)
+class DefaultSessionRepository @Inject() (config: AppConfig, component: ReactiveMongoComponent)(implicit ec: ExecutionContext)
   extends ReactiveRepository[Session, BSONObjectID](
     collectionName = "view-external-guidance-session",
     mongo = component.mongoConnector.db,
@@ -129,7 +133,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: Reactive
       Left(DatabaseError)
     }
 
-  private def getGuidanceSession(key: String, processCode: String): Future[RequestOutcome[Session]] =
+  def getGuidanceSession(key: String, processCode: String): Future[RequestOutcome[Session]] =
     findAndUpdate(
       Json.obj("_id" -> key),
       Json.obj(List(toFieldPair("$set", Json.obj(toFieldPair(TtlExpiryFieldName, Json.obj("$date" -> Instant.now().toEpochMilli))))).toArray: _*),
@@ -149,55 +153,6 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: Reactive
     }.recover { case lastError =>
       logger.error(s"Error $lastError while trying to retrieve process from session repo with _id=$key")
       Left(DatabaseError)
-    }
-
-  def getSubmitGuidanceSession(key: String, processCode: String, pageUrl: Option[String]): Future[RequestOutcome[GuidanceSession]] =
-    getGuidanceSession(key, processCode).map{
-      case Left(err) => Left(err)
-      case Right(sp) if pageUrl.fold(true)(url => sp.pageHistory.reverse.head.url.equals(url)) =>
-        // If incoming url equals the most recent page history url proceed Else the POST is out of sequence (IllegalPageSubmissionError)
-        val backlink = pageUrl.fold[Option[String]](None){_ =>
-          sp.pageHistory.reverse match {
-            case _ :: y :: _ => Some(y.url)
-            case _ => None
-          }
-        }
-        Right(GuidanceSession(sp.process, sp.answers, sp.labels, sp.flowStack, sp.continuationPool, sp.pageMap, sp.legalPageIds, sp.pageUrl, backlink))
-      case _ => Left(IllegalPageSubmissionError)
-    }
-
-  def getPageGuidanceSession(key: String, processCode: String, pageUrl: Option[String], previousPageByLink: Boolean): Future[RequestOutcome[GuidanceSession]] =
-    getGuidanceSession(key, processCode).flatMap{
-      case Left(err) => Future.successful(Left(err))
-      case Right(sp) =>
-      pageUrl.fold[Future[RequestOutcome[GuidanceSession]]](
-        Future.successful(Right(GuidanceSession(sp.process, sp.answers, sp.labels, sp.flowStack, sp.continuationPool, sp.pageMap, Nil, sp.pageUrl, None)))
-      ){url =>
-        sp.pageMap.get(url.drop(sp.process.meta.processCode.length)).fold[Future[RequestOutcome[GuidanceSession]]]{
-          logger.warn(s"Attempt to move to unknown page $url in process ${sp.processId}, page count = ${sp.pageMap.size}")
-          Future.successful(Left(NotFoundError))
-        }{pageNext =>
-          logger.debug(s"Incoming Page: ${pageNext.id}, $url, current legalPageIds: ${sp.legalPageIds}")
-          if (sp.legalPageIds.isEmpty || sp.legalPageIds.contains(pageNext.id)){ // Wild card or fixed list of valid page ids
-            val firstPageUrl: String = s"${sp.process.meta.processCode}${sp.process.startUrl.getOrElse("")}"
-            val (backLink, historyUpdate, flowStackUpdate, labelUpdates) = transition(url, sp, previousPageByLink, firstPageUrl)
-            val labels: Map[String, Label] = sp.labels ++ labelUpdates.map(l => l.name -> l).toMap
-            val legalPageIds = (pageNext.id :: Process.StartStanzaId :: pageNext.linked ++
-                                backLink.fold(List.empty[String])(bl => List(sp.pageMap(bl.drop(sp.process.meta.processCode.length)).id))).distinct
-            val session = GuidanceSession(sp.process, sp.answers, labels, flowStackUpdate.getOrElse(sp.flowStack),
-                                                sp.continuationPool, sp.pageMap, legalPageIds, sp.pageUrl, backLink)
-            saveUpdates(key, historyUpdate, flowStackUpdate, labelUpdates, legalPageIds).map {
-              case Left(err) =>
-                logger.error(s"Unable to update session data, error = $err")
-                Left(err)
-              case _ => Right(session)
-            }
-          } else {
-            logger.warn(s"Attempt to move to illegal page $url, LEGALPIDS ${sp.legalPageIds}")
-            Future.successful(Left(ForbiddenError))
-          }
-        }
-      }
     }
 
   def getResetGuidanceSession(key: String, processCode: String): Future[RequestOutcome[GuidanceSession]] =
@@ -297,11 +252,11 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: Reactive
 
   private def toFieldPair[A](name: String, value: A)(implicit w: Writes[A]): FieldAttr = name -> Json.toJsFieldJsValueWrapper(value)
 
-  private def saveUpdates(key: String,
-                          pageHistory: Option[List[PageHistory]],
-                          flowStack: Option[List[FlowStage]],
-                          labelUpdates: List[Label],
-                          legalPageIds: List[String]): Future[RequestOutcome[Unit]] =
+  def saveUpdates(key: String,
+                  pageHistory: Option[List[PageHistory]],
+                  flowStack: Option[List[FlowStage]],
+                  labelUpdates: List[Label],
+                  legalPageIds: List[String]): Future[RequestOutcome[Unit]] =
     findAndUpdate(
       Json.obj("_id" -> key),
       Json.obj(
