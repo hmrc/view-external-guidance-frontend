@@ -58,6 +58,12 @@ class GuidanceController @Inject() (
       case Right(url) =>
         logger.info(s"Redirecting to guidance start url $url after session reset")
         Future.successful(Redirect(controllers.routes.GuidanceController.getPage(processCode, url.drop(1), None).url))
+      case Left(SessionNotFoundError) =>
+        logger.warn(s"SessionNotFoundError error on sessionRestart. Redirecting to start of processCode $processCode at ${appConfig.baseUrl}/$processCode")
+        Future.successful(Redirect(s"${appConfig.baseUrl}/$processCode"))
+      case Left(NotFoundError) =>
+        logger.warn(s"NotFoundError error on sessionRestart. Redirecting to start of processCode $processCode at ${appConfig.baseUrl}/$processCode")
+        Future.successful(Redirect(s"${appConfig.baseUrl}/$processCode"))
       case Left(ExpectationFailedError) =>
         logger.warn(s"ExpectationFailed error on sessionRestart. Redirecting to start of processCode $processCode at ${appConfig.baseUrl}/$processCode")
         Future.successful(Redirect(s"${appConfig.baseUrl}/$processCode"))
