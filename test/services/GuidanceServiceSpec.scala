@@ -19,7 +19,7 @@ package services
 import base.BaseSpec
 
 import mocks.{MockAppConfig, MockGuidanceConnector, MockPageBuilder, MockPageRenderer, MockSessionRepository, MockUIBuilder}
-import core.models.errors.{DatabaseError, NotFoundError}
+import core.models.errors.{DatabaseError, NotFoundError, NonTerminatingPageError}
 import core.models.ocelot.stanzas._
 import core.models.ocelot.{Page, KeyedStanza, Process, SecuredProcess, ProcessJson, LabelCache, Labels, Phrase}
 import models.ui
@@ -38,7 +38,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
   def injector: Injector = app.injector
   val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
 
-  private trait Test extends MockGuidanceConnector with MockSessionRepository with MockPageBuilder with MockPageRenderer with MockUIBuilder with ProcessJson {
+  trait Test extends MockGuidanceConnector with MockSessionRepository with MockPageBuilder with MockPageRenderer with MockUIBuilder with ProcessJson {
     implicit val lang: Lang = Lang("en")
     implicit val headerCarrier: HeaderCarrier = HeaderCarrier()
     implicit val stanzaIdToUrl: Map[String, String] = Map[String, String]()
@@ -78,7 +78,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
 
     val standardPage = Page("start", "/test-page", stanzas.dropRight(1), Seq("4","5"))
 
-    val (vStanzas: Seq[VisualStanza], labels: Labels, di: Option[DataInput]) = new PageRenderer().renderPage(page, LabelCache())
+    val (vStanzas: Seq[VisualStanza], labels: Labels, di: Option[DataInput]) = renderPage(page, LabelCache())
     val pec = PageEvaluationContext(
                 page,
                 vStanzas,
@@ -105,12 +105,13 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
       new SecuredProcessBuilder(messagesApi),
       mockUIBuilder,
       messagesApi)
+
+    def renderPage(p: Page, l: Labels): (Seq[VisualStanza], Labels, Option[DataInput]) = new PageRenderer(MockAppConfig).renderPage(p, l).fold(_ => fail, res => res)
   }
 
   "Calling saveLabels when there labels to save" should {
 
     "save updated labels" in new Test {
-
       val changedLabels = labels.update("LabelName", "New value")
 
       MockSessionRepository
@@ -131,7 +132,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
 
       MockPageRenderer
         .renderPage(pec.page, pec.labels)
-        .returns((pec.visualStanzas, pec.labels, pec.dataInput))
+        .returns(Right((pec.visualStanzas, pec.labels, pec.dataInput)))
 
       target.validateUserResponse(pec, "0") match {
         case Some("0") => succeed
@@ -143,7 +144,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
 
       MockPageRenderer
         .renderPage(pec.page, pec.labels)
-        .returns(new PageRenderer().renderPage(pec.page, pec.labels))
+        .returns(Right(renderPage(pec.page, pec.labels)))
 
       target.validateUserResponse(pec, "hello") match {
         case None => succeed
@@ -155,7 +156,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
 
       MockPageRenderer
         .renderPage(standardPagePec.page, standardPagePec.labels)
-        .returns(new PageRenderer().renderPage(standardPagePec.page, standardPagePec.labels))
+        .returns(Right(renderPage(standardPagePec.page, standardPagePec.labels)))
 
       target.validateUserResponse(standardPagePec, "hello") match {
         case None => succeed
@@ -181,7 +182,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
 
       MockPageRenderer
         .renderPage(page, labels)
-        .returns((page.stanzas.collect{case s: VisualStanza => s}, labels, None))
+        .returns(Right((page.stanzas.collect{case s: VisualStanza => s}, labels, None)))
 
       MockSessionRepository
         .savePageState(sessionRepoId, labels)
@@ -191,9 +192,32 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
         .buildPage(page.url, page.stanzas.collect{case s: VisualStanza => s}, NoError)
         .returns(ui.Page(page.url, Seq()))
 
-      val pageCtx = target.getPageContext(pec, NoError)
+      target.getPageContext(pec, NoError) match {
+        case Right(pageCtx) => pageCtx.page.urlPath shouldBe page.url
+        case Left(_) => fail
+      }
+    }
 
-      pageCtx.page.urlPath shouldBe page.url
+    "return an error when retrieving a non-terminating page" in new Test {
+
+      override val processCode = "cup-of-tea"
+
+      MockSessionRepository
+        .getUpdateForGET(sessionRepoId, processCode, Some(s"$processCode$${page.url}"), previousPageByLink = false)
+        .returns(Future.successful(Right(ProcessContext(process, Map(), Map(), Nil, Map(), Map(page.url -> PageNext("2", Nil)), Nil, None, None))))
+
+      MockPageBuilder
+        .buildPage("2", process)
+        .returns(Right(page))
+
+      MockPageRenderer
+        .renderPage(page, labels)
+        .returns(Left(NonTerminatingPageError))
+
+      target.getPageContext(pec, NoError) match {
+        case Left(err) if err == NonTerminatingPageError => succeed
+        case Right(_) => fail
+      }
     }
   }
 
@@ -214,7 +238,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
 
       MockPageRenderer
         .renderPage(lastPage, labels)
-        .returns((lastPage.stanzas.collect{case s: VisualStanza => s}, labels, None))
+        .returns(Right((lastPage.stanzas.collect{case s: VisualStanza => s}, labels, None)))
 
       MockSessionRepository
         .savePageState(sessionRepoId, labels)
@@ -233,6 +257,34 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
     }
   }
 
+    "Calling getPageContext when page is non-terminating" should {
+
+    "retrieve a page for the process" in new Test {
+
+      override val processCode = "cup-of-tea"
+
+      MockSessionRepository
+        .getUpdateForGET(sessionRepoId, processCode, Some(s"$processCode$lastPageUrl"), previousPageByLink = false)
+        .returns(Future.successful(Right(ProcessContext(process, Map(), Map(), Nil, Map(), Map(lastPageUrl -> PageNext("2")), Nil, None, None))))
+
+      MockPageBuilder
+        .buildPage("2", process)
+        .returns(Right(lastPage))
+
+      MockPageRenderer
+        .renderPage(lastPage, labels)
+        .returns(Left(NonTerminatingPageError))
+
+      private val result = target.getPageContext(processCode, lastPageUrl, previousPageByLink = false, sessionRepoId)
+
+      whenReady(result) {
+        case Left(err) if err == NonTerminatingPageError => succeed
+        case Right(_) => fail
+      }
+    }
+  }
+
+
   "Calling getPageContext against a previously answered Question page url" should {
 
     "retrieve a PageContext which includes the relevant answer" in new Test {
@@ -250,7 +302,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
 
       MockPageRenderer
         .renderPage(lastPage, labels)
-        .returns((lastPage.stanzas.collect{case s: VisualStanza => s}, labels, None))
+        .returns(Right((lastPage.stanzas.collect{case s: VisualStanza => s}, labels, None)))
 
       MockSessionRepository
         .savePageState(sessionRepoId, labels)
@@ -442,7 +494,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
     "Return None if page submission evaluation determines no valid next page" in new Test {
       MockPageRenderer
         .renderPagePostSubmit(page, LabelCache(), "yes")
-        .returns((None, LabelCache()))
+        .returns(Right((None, LabelCache())))
 
       MockSessionRepository
         .saveFormPageState(processId,"/test-page", "yes", labels, Nil)
@@ -458,7 +510,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
     "Return the id of the page to follow" in new Test {
       MockPageRenderer
         .renderPagePostSubmit(page, LabelCache(), "yes")
-        .returns((Some("2"), LabelCache()))
+        .returns(Right((Some("2"), LabelCache())))
 
       MockSessionRepository
         .saveFormPageState(processId,"/last-page", "yes", labels, List("2"))
@@ -468,6 +520,21 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
         case Left(err) => fail
         case Right((Some("4"), _)) => succeed
         case Right(_) => fail
+      }
+    }
+
+    "Return error if page submission evaluation finds a non-terminating page" in new Test {
+      MockPageRenderer
+        .renderPagePostSubmit(page, LabelCache(), "yes")
+        .returns(Left(NonTerminatingPageError))
+
+      MockSessionRepository
+        .saveFormPageState(processId,"/test-page", "yes", labels, Nil)
+        .returns(Future.successful(Right({})))
+
+      target.submitPage(pec, "/test-page", "yes", "yes").map{
+        case Left(err) if err == NonTerminatingPageError => succeed
+        case _ => fail
       }
     }
 

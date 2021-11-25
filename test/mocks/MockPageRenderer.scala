@@ -16,6 +16,7 @@
 
 package mocks
 
+import core.models.RequestOutcome
 import core.models.ocelot.stanzas.{DataInput, VisualStanza}
 import core.models.ocelot.{Page, Labels}
 import services.PageRenderer
@@ -23,17 +24,16 @@ import org.scalamock.handlers.CallHandler
 import org.scalamock.scalatest.MockFactory
 
 trait MockPageRenderer extends MockFactory {
-
   val mockPageRenderer: PageRenderer = mock[PageRenderer]
 
   object MockPageRenderer {
 
-    def renderPage(page: Page, labels: Labels): CallHandler[(Seq[VisualStanza], Labels, Option[DataInput])] =
+    def renderPage(page: Page, labels: Labels): CallHandler[RequestOutcome[(Seq[VisualStanza], Labels, Option[DataInput])]] =
       (mockPageRenderer
         .renderPage(_: Page, _: Labels))
         .expects(page, *)
 
-    def renderPagePostSubmit(page: Page, labels: Labels, answer: String): CallHandler[(Option[String], Labels)] =
+    def renderPagePostSubmit(page: Page, labels: Labels, answer: String): CallHandler[RequestOutcome[(Option[String], Labels)]] =
       (mockPageRenderer
         .renderPagePostSubmit(_: Page, _: Labels, _: String))
         .expects(page, *, answer)

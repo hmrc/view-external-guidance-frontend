@@ -72,7 +72,7 @@ trait MockGuidanceService extends MockFactory {
         .sessionRestart(_: String, _: String)(_: ExecutionContext))
         .expects(processCode, sessionId, *)
 
-    def getPageContext(pec: PageEvaluationContext, errStrategy: ErrorStrategy): CallHandler[PageContext] =
+    def getPageContext(pec: PageEvaluationContext, errStrategy: ErrorStrategy): CallHandler[RequestOutcome[PageContext]] =
       (mockGuidanceService
         .getPageContext(_: PageEvaluationContext, _: ErrorStrategy)(_: Lang))
         .expects(pec, errStrategy, *)
