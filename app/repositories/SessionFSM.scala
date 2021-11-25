@@ -19,9 +19,7 @@ package repositories
 import scala.annotation.tailrec
 import javax.inject.{Inject, Singleton}
 import core.models.ocelot.{Flow, Continuation, LabelValue, FlowStage}
-//import DefaultSessionRepository._
 import core.models.ocelot.{Label, ScalarLabel}
-
 
 @Singleton
 class SessionFSM @Inject() () {
