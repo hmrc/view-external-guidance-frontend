@@ -20,7 +20,7 @@ import config.ErrorHandler
 import javax.inject.{Inject, Singleton}
 import play.api.i18n.I18nSupport
 import play.api.mvc._
-import services.GuidanceService
+import services.RetrieveAndCacheService
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 import core.models.errors._
 import core.models.RequestOutcome
@@ -33,7 +33,7 @@ import controllers.actions.SessionIdAction
 @Singleton
 class StartGuidanceController @Inject() (
     errorHandler: ErrorHandler,
-    service: GuidanceService,
+    service: RetrieveAndCacheService,
     sessionIdAction: SessionIdAction,
     mcc: MessagesControllerComponents
 ) extends FrontendController(mcc)

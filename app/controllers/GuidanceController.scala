@@ -27,11 +27,11 @@ import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 import core.models.RequestOutcome
 import core.models.errors._
 import core.models.ocelot.SecuredProcess
-import models.{PageContext, PageEvaluationContext, POST}
+import models.{PageContext, PageEvaluationContext}
 import models.ui.{FormPage, StandardPage, SubmittedAnswer}
 import views.html.{form_page, standard_page}
 import play.api.Logger
-import models.ProcessContext
+import models.GuidanceSession
 import scala.concurrent.ExecutionContext.Implicits.global
 import controllers.actions.SessionIdAction
 import play.twirl.api.Html
@@ -58,11 +58,17 @@ class GuidanceController @Inject() (
       case Right(url) =>
         logger.info(s"Redirecting to guidance start url $url after session reset")
         Future.successful(Redirect(controllers.routes.GuidanceController.getPage(processCode, url.drop(1), None).url))
+      case Left(SessionNotFoundError) =>
+        logger.warn(s"SessionNotFoundError error on sessionRestart. Redirecting to start of processCode $processCode at ${appConfig.baseUrl}/$processCode")
+        Future.successful(Redirect(s"${appConfig.baseUrl}/$processCode"))
+      case Left(NotFoundError) =>
+        logger.warn(s"NotFoundError error on sessionRestart. Redirecting to start of processCode $processCode at ${appConfig.baseUrl}/$processCode")
+        Future.successful(Redirect(s"${appConfig.baseUrl}/$processCode"))
       case Left(ExpectationFailedError) =>
         logger.warn(s"ExpectationFailed error on sessionRestart. Redirecting to start of processCode $processCode at ${appConfig.baseUrl}/$processCode")
         Future.successful(Redirect(s"${appConfig.baseUrl}/$processCode"))
       case Left(err) =>
-        logger.error(s"Request for Reset ProcessContext returned $err, returning InternalServerError")
+        logger.error(s"Request for Reset GuidanceSession returned $err, returning InternalServerError")
         Future.successful(InternalServerError(errorHandler.internalServerErrorTemplate))
     }
   }
@@ -96,7 +102,8 @@ class GuidanceController @Inject() (
   def submitPage(processCode: String, path: String): Action[AnyContent] = Action.async { implicit request =>
     implicit val messages: Messages = mcc.messagesApi.preferred(request)
     implicit val lang: Lang = messages.lang
-    withExistingSession[PageEvaluationContext](service.getPageEvaluationContext(processCode, s"/$path", false, _, POST)).flatMap {
+
+    withExistingSession[PageEvaluationContext](service.getSubmitEvaluationContext(processCode, s"/$path", _)).flatMap {
       case Right(ctx) => ctx.dataInput.fold{
           logger.error( s"Unable to locate input stanza for process ${ctx.processCode} on submission")
           Future.successful(BadRequest(errorHandler.badRequestTemplateWithProcessCode(Some(processCode))))
@@ -106,7 +113,7 @@ class GuidanceController @Inject() (
             case Left((formWithErrors: Form[_], errorStrategy: ErrorStrategy)) =>
                 Future.successful(BadRequest(createErrorView(service.getPageContext(ctx, errorStrategy), inputName, formWithErrors)))
             case Right((form: Form[_], submittedAnswer: SubmittedAnswer)) =>
-              service.validateUserResponse(ctx, submittedAnswer.text).fold{
+              ctx.dataInput.fold[Option[String]](None)(_.validInput(submittedAnswer.text)).fold{
                 // Answer didn't pass page DataInput stanza validation
                 Future.successful(BadRequest(createErrorView(service.getPageContext(ctx, ValueTypeError), inputName, form)))
               }{ answer =>
@@ -130,19 +137,19 @@ class GuidanceController @Inject() (
   }
 
   private def logAndTranslateIllegalPageSubmissionError(processCode: String)(implicit request: Request[_]): Future[Result] =
-    withExistingSession[ProcessContext](service.getProcessContext).map{
-      case Right(ctx) =>
-        ctx.currentPageUrl.fold[Result]({
+    withExistingSession[GuidanceSession](service.getCurrentGuidanceSession).map{
+      case Right(session) =>
+        session.currentPageUrl.fold[Result]({
           logger.warn(s"Illegal page submission, no current url found, redirecting to start of $processCode process")
-          Redirect(s"${appConfig.baseUrl}/${ctx.process.meta.processCode}")
+          Redirect(s"${appConfig.baseUrl}/${session.process.meta.processCode}")
         })(currentUrl => {
-          if (processCode != ctx.process.meta.processCode) {
+          if (processCode != session.process.meta.processCode) {
             logger.warn(s"Illegal page submission, process code doesnt match session, syncing to current session page ${currentUrl}")
           }
           else {
             logger.warn(s"Illegal page submission (possible multi browser tab access to process), syncing to current session page ${currentUrl}")
           }
-          Redirect(s"${appConfig.baseUrl}/${ctx.process.meta.processCode}$currentUrl")
+          Redirect(s"${appConfig.baseUrl}/${session.process.meta.processCode}$currentUrl")
         })
       case Left(err) =>
         logger.warn(s"Failed ($err) to retrieve current session on IllegalPageSubmissionError, returning InternalServerError")
@@ -174,13 +181,13 @@ class GuidanceController @Inject() (
     }
 
   private def logAndTranslateGetPageForbiddenError(processCode: String)(implicit request: Request[_]): Future[Result] =
-    withExistingSession[ProcessContext](service.getProcessContext).map{
-      case Right(ctx) => ctx.legalPageIds match {
+    withExistingSession[GuidanceSession](service.getCurrentGuidanceSession).map{
+      case Right(session) => session.legalPageIds match {
         case Nil =>
           logger.warn(s"Redirection after ForbiddenError to beginning of process as legalPageIds is empty")
           Redirect(s"${appConfig.baseUrl}/$processCode")
         case x :: _ => // Current page always the head of the legalPageIds
-          val idToUrlMap: Map[String, String] = ctx.pageMap.map{case (k, v) => (v.id, k)}
+          val idToUrlMap: Map[String, String] = session.pageMap.map{case (k, v) => (v.id, k)}
           logger.warn(s"Redirection after ForbiddenError to previous page at ${idToUrlMap(x)}")
           Redirect(s"${appConfig.baseUrl}/${processCode}${idToUrlMap(x)}")
       }

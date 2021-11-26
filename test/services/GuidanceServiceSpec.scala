@@ -27,11 +27,13 @@ import models.{PageDesc, PageNext, PageEvaluationContext}
 import uk.gov.hmrc.http.HeaderCarrier
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import models.{ProcessContext, PageContext}
+import models.{GuidanceSession, PageContext}
 import play.api.i18n.Lang
 import play.api.i18n.MessagesApi
 import play.api.inject.Injector
+import repositories.{Session, SessionFSM, PageHistory}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import java.time.Instant
 
 class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
 
@@ -98,12 +100,12 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
 
     lazy val target = new GuidanceService(
       MockAppConfig,
-      mockGuidanceConnector,
       mockSessionRepository,
       mockPageBuilder,
       mockPageRenderer,
       new SecuredProcessBuilder(messagesApi),
       mockUIBuilder,
+      new SessionFSM,
       messagesApi)
 
     def renderPage(p: Page, l: Labels): (Seq[VisualStanza], Labels, Option[DataInput]) = new PageRenderer(MockAppConfig).renderPage(p, l).fold(_ => fail, res => res)
@@ -127,45 +129,6 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
     }
   }
 
-  "Calling validateUserResponse" should {
-    "Use page DataInput stanza to validate valid response" in new Test {
-
-      MockPageRenderer
-        .renderPage(pec.page, pec.labels)
-        .returns(Right((pec.visualStanzas, pec.labels, pec.dataInput)))
-
-      target.validateUserResponse(pec, "0") match {
-        case Some("0") => succeed
-        case _ => fail
-      }
-    }
-
-    "Use page DataInput stanza to validate invalid response" in new Test {
-
-      MockPageRenderer
-        .renderPage(pec.page, pec.labels)
-        .returns(Right(renderPage(pec.page, pec.labels)))
-
-      target.validateUserResponse(pec, "hello") match {
-        case None => succeed
-        case _ => fail
-      }
-    }
-
-    "return None of used on a page with no DataInput stanza" in new Test {
-
-      MockPageRenderer
-        .renderPage(standardPagePec.page, standardPagePec.labels)
-        .returns(Right(renderPage(standardPagePec.page, standardPagePec.labels)))
-
-      target.validateUserResponse(standardPagePec, "hello") match {
-        case None => succeed
-        case _ => fail
-      }
-    }
-
-  }
-
   "Calling getPageContext with a PageEvaluationContext and ErrorStrategy" should {
 
     "retrieve a page for the process" in new Test {
@@ -173,8 +136,10 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
       override val processCode = "cup-of-tea"
 
       MockSessionRepository
-        .getUpdateForGET(sessionRepoId, processCode, Some(s"$processCode$${page.url}"), previousPageByLink = false)
-        .returns(Future.successful(Right(ProcessContext(process, Map(), Map(), Nil, Map(), Map(page.url -> PageNext("2", Nil)), Nil, None, None))))
+        .getGuidanceSession(sessionRepoId, processCode)
+        .returns(Future.successful(Right(
+          Session(sessionRepoId, process.meta.id, process, Map(), Nil, Map(), Map(page.url -> PageNext("2", Nil)), Map(), Nil, Nil, Instant.now)
+        )))
 
       MockPageBuilder
         .buildPage("2", process)
@@ -203,8 +168,10 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
       override val processCode = "cup-of-tea"
 
       MockSessionRepository
-        .getUpdateForGET(sessionRepoId, processCode, Some(s"$processCode$${page.url}"), previousPageByLink = false)
-        .returns(Future.successful(Right(ProcessContext(process, Map(), Map(), Nil, Map(), Map(page.url -> PageNext("2", Nil)), Nil, None, None))))
+        .getGuidanceSession(sessionRepoId, processCode)
+        .returns(Future.successful(Right(
+          Session(sessionRepoId, process.meta.id, process, Map(), Nil, Map(), Map(page.url -> PageNext("2", Nil)), Map(), Nil, Nil, Instant.now)
+        )))
 
       MockPageBuilder
         .buildPage("2", process)
@@ -229,8 +196,10 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
       override val processCode = "cup-of-tea"
 
       MockSessionRepository
-        .getUpdateForGET(sessionRepoId, processCode, Some(s"$processCode$lastPageUrl"), previousPageByLink = false)
-        .returns(Future.successful(Right(ProcessContext(process, Map(), Map(), Nil, Map(), Map(lastPageUrl -> PageNext("2")), Nil, None, None))))
+        .getGuidanceSession(sessionRepoId, processCode)
+        .returns(Future.successful(Right(
+          Session(sessionRepoId, process.meta.id, process, Map(), Nil, Map(), Map(lastPageUrl -> PageNext("2", Nil)), Map(), Nil, Nil, Instant.now)
+        )))
 
       MockPageBuilder
         .buildPage("2", process)
@@ -248,6 +217,10 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
         .buildPage(lastPageUrl, lastPage.stanzas.collect{case s: VisualStanza => s}, NoError)
         .returns(lastUiPage)
 
+      MockSessionRepository
+        .saveUpdates(sessionRepoId, Some(List(PageHistory("cup-of-tea/last-page",Nil))), None, Nil, List("2", "start"))
+        .returns(Future.successful(Right(())))
+
       private val result = target.getPageContext(processCode, lastPageUrl, previousPageByLink = false, sessionRepoId)
 
       whenReady(result) {
@@ -263,9 +236,15 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
 
       override val processCode = "cup-of-tea"
 
+       MockSessionRepository
+        .getGuidanceSession(sessionRepoId, processCode)
+        .returns(Future.successful(Right(
+          Session(sessionRepoId, process.meta.id, process, Map(), Nil, Map(), Map(lastPageUrl -> PageNext("2", Nil)), Map(), Nil, Nil, Instant.now)
+        )))
+
       MockSessionRepository
-        .getUpdateForGET(sessionRepoId, processCode, Some(s"$processCode$lastPageUrl"), previousPageByLink = false)
-        .returns(Future.successful(Right(ProcessContext(process, Map(), Map(), Nil, Map(), Map(lastPageUrl -> PageNext("2")), Nil, None, None))))
+        .saveUpdates(sessionRepoId, Some(List(PageHistory("cup-of-tea/last-page",Nil))), None, Nil, List("2", "start"))
+        .returns(Future.successful(Right(())))
 
       MockPageBuilder
         .buildPage("2", process)
@@ -293,8 +272,14 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
       override val processCode = "tell-hmrc"
 
       MockSessionRepository
-        .getUpdateForGET(sessionRepoId, processCode, Some(s"$processCode$lastPageUrl"), previousPageByLink = false)
-        .returns(Future.successful(Right(ProcessContext(fullProcess, Map(lastPageUrl -> "answer"), Map(), Nil, Map(), Map(lastPageUrl -> PageNext("2")), Nil, None, None))))
+        .getGuidanceSession(sessionRepoId, processCode)
+        .returns(Future.successful(Right(
+          Session(sessionRepoId, fullProcess.meta.id, fullProcess, Map(), Nil, Map(), Map(lastPageUrl -> PageNext("2")), Map(lastPageUrl -> "answer"), Nil, Nil, Instant.now)
+        )))
+
+      MockSessionRepository
+        .saveUpdates(sessionRepoId, Some(List(PageHistory("tell-hmrc/last-page",Nil))), None, Nil, List("2", "start"))
+        .returns(Future.successful(Right(())))
 
       MockPageBuilder
         .buildPage("2", fullProcess)
@@ -332,8 +317,10 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
       override val processCode = "cup-of-tea"
 
       MockSessionRepository
-        .getUpdateForGET(processId, processCode, Some(s"$processCode$url"), previousPageByLink = false)
-        .returns(Future.successful(Right(ProcessContext(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None))))
+        .getGuidanceSession(processId, processCode)
+        .returns(Future.successful(Right(
+          Session(sessionRepoId, process.meta.id, process, Map(), Nil, Map(), Map(), Map(), Nil, Nil, Instant.now)
+        )))
 
       MockPageBuilder
         .buildPage("2", process)
@@ -347,104 +334,30 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
     }
   }
 
-  "Calling retrieveAndCacheScratch" should {
-
-    "retrieve the url of the start page for the scratch process" in new Test {
-
-      MockGuidanceConnector
-        .scratchProcess(uuid)
-        .returns(Future.successful(Right(process)))
-
-      val processWithUpdatedId = process.copy(meta = process.meta.copy( id = uuid))
-
-      MockSessionRepository
-        .set(uuid, processWithUpdatedId, Map("/first-page" -> PageNext("start"), "/page-1" -> PageNext("1"), "/last-page" -> PageNext("2")))
-        .returns(Future.successful(Right(())))
-
-      MockPageBuilder
-        .pages(processWithUpdatedId)
-        .returns(Right(pages))
-
-      private val result = target.retrieveAndCacheScratch(uuid, uuid)
-
-      whenReady(result) { url =>
-        url shouldBe Right((firstPageUrl,"cup-of-tea"))
-      }
-    }
-  }
-
-  "Calling retrieveAndCachePublished" should {
-
-    "retrieve the url of the start page for the nominated published process" in new Test {
-
-      MockGuidanceConnector
-        .publishedProcess(processId)
-        .returns(Future.successful(Right(processWithProcessCode)))
-
-      MockSessionRepository
-        .set(sessionRepoId, processWithProcessCode,Map("/first-page" -> PageNext("start"), "/page-1" -> PageNext("1"), "/last-page" -> PageNext("2")))
-        .returns(Future.successful(Right(())))
-
-      MockPageBuilder
-        .pages(processWithProcessCode)
-        .returns(Right(pages))
-
-      private val result = target.retrieveAndCachePublished(processId, sessionRepoId)
-
-      whenReady(result) { url =>
-        url shouldBe Right((firstPageUrl, processCode))
-      }
-    }
-  }
-
-  "Calling retrieveAndCacheApproval" should {
-
-    "retrieve the url of the start page for the nominated published process" in new Test {
-
-      MockGuidanceConnector
-        .approvalProcess(processId)
-        .returns(Future.successful(Right(processWithProcessCode)))
-
-      MockSessionRepository
-        .set(sessionRepoId, processWithProcessCode, Map("/first-page" -> PageNext("start"), "/page-1" -> PageNext("1"), "/last-page" -> PageNext("2")))
-        .returns(Future.successful(Right(())))
-
-      MockPageBuilder
-        .pages(processWithProcessCode)
-        .returns(Right(pages))
-
-      private val result = target.retrieveAndCacheApproval(processId, sessionRepoId)
-
-      whenReady(result) { url =>
-        url shouldBe Right((firstPageUrl, processCode))
-      }
-    }
-  }
-
-  "Calling getProcessContext(key: String)" should {
+  "Calling getGuidanceSession(key: String)" should {
 
     "successfully retrieve a process context when the session data contains a single process" in new Test {
 
-      val expectedProcessContext: ProcessContext = ProcessContext(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None)
+      val expectedGuidanceSession: GuidanceSession = GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None)
 
       MockSessionRepository
-        .getNoUpdate(sessionRepoId)
-        .returns(Future.successful(Right(expectedProcessContext)))
+        .getGuidanceSessionById(sessionRepoId)
+        .returns(Future.successful(Right(expectedGuidanceSession)))
 
-      private val result = target.getProcessContext(sessionRepoId)
+      private val result = target.getCurrentGuidanceSession(sessionRepoId)
 
-      whenReady(result) { processContext =>
-        processContext shouldBe Right(expectedProcessContext)
+      whenReady(result) { session =>
+        session shouldBe Right(expectedGuidanceSession)
       }
     }
 
     "return a not found error if the session data does not exist" in new Test {
 
       MockSessionRepository
-        .getNoUpdate(sessionRepoId)
+        .getGuidanceSessionById(sessionRepoId)
         .returns(Future.successful(Left(NotFoundError)))
 
-      private val result = target.getProcessContext(sessionRepoId)
+      private val result = target.getCurrentGuidanceSession(sessionRepoId)
 
       whenReady(result) { err =>
         err shouldBe Left(NotFoundError)
@@ -454,10 +367,10 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
     "return a database error if an error occurs retrieving the session data" in new Test {
 
       MockSessionRepository
-        .getNoUpdate(sessionRepoId)
+        .getGuidanceSessionById(sessionRepoId)
         .returns(Future.successful(Left(DatabaseError)))
 
-      private val result = target.getProcessContext(sessionRepoId)
+      private val result = target.getCurrentGuidanceSession(sessionRepoId)
 
       whenReady(result) { err =>
         err shouldBe Left(DatabaseError)
@@ -466,22 +379,28 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
     }
   }
 
-  "Calling getProcessContext full" should {
+  "Calling getPageGuidanceSession" should {
 
     "When passed a url to the passphrase page should send no pageHistory url to the repository" in new Test {
-      val expectedProcessContext: ProcessContext = ProcessContext(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None)
+      val expectedSession: Session = Session(sessionRepoId, process.meta.id, process, Map(), Nil, Map(), Map(), Map(), Nil, Nil, Instant.now)
 
       MockSessionRepository
-        .getUpdateForGET(sessionRepoId, process.meta.processCode, None, false)
-        .returns(Future.successful(Right(expectedProcessContext)))
+        .getGuidanceSession(sessionRepoId, process.meta.processCode)
+        .returns(Future.successful(Right(expectedSession)))
 
-      private val result = target.getProcessContext(sessionRepoId, process.meta.processCode, s"/${SecuredProcess.SecuredProcessStartUrl}", false)
-
-      whenReady(result) { err =>
-        err shouldBe Right(expectedProcessContext)
-      }
-
+      target.getPageEvaluationContext(process.meta.processCode, s"/${SecuredProcess.SecuredProcessStartUrl}", false, sessionRepoId)
     }
+
+    "When passed a url to a standard page should send pageHistory url to the repository" in new Test {
+      val expectedSession: Session = Session(sessionRepoId, process.meta.id, process, Map(), Nil, Map(), Map(), Map(), Nil, Nil, Instant.now)
+
+      MockSessionRepository
+        .getGuidanceSession(sessionRepoId, process.meta.processCode)
+        .returns(Future.successful(Right(expectedSession)))
+
+      target.getPageEvaluationContext(process.meta.processCode, s"/start", false, sessionRepoId)
+    }
+
   }
 
   "Calling submitPage" should {

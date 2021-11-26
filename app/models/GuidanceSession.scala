@@ -20,15 +20,15 @@ import core.models.ocelot.stanzas.Stanza
 import core.models.ocelot.{FlowStage, SecuredProcess, Process, Label}
 import play.api.libs.json.{Json, OFormat}
 
-case class ProcessContext(process: Process,
-                          answers: Map[String, String],
-                          labels: Map[String, Label],
-                          flowStack: List[FlowStage],
-                          continuationPool: Map[String, Stanza],
-                          pageMap: Map[String, PageNext],
-                          legalPageIds: List[String],
-                          currentPageUrl: Option[String],
-                          backLink: Option[String]) {
+case class GuidanceSession(process: Process,
+                           answers: Map[String, String],
+                           labels: Map[String, Label],
+                           flowStack: List[FlowStage],
+                           continuationPool: Map[String, Stanza],
+                           pageMap: Map[String, PageNext],
+                           legalPageIds: List[String],
+                           currentPageUrl: Option[String],
+                           backLink: Option[String]) {
   val secure: Boolean = process.flow.get(SecuredProcess.PassPhrasePageId).fold(true){_ =>
     labels.get(SecuredProcess.PassPhraseResponseLabelName).fold(false)(lbl => lbl.english.headOption == process.passPhrase)
   }

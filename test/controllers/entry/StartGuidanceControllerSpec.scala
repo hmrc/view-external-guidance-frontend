@@ -17,7 +17,7 @@
 package controllers.entry
 
 import base.BaseSpec
-import mocks.MockGuidanceService
+import mocks.MockRetrieveAndCacheService
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.Status
 import play.api.mvc._
@@ -70,25 +70,25 @@ class StartGuidanceControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
   }
 
 
-  trait ProcessTest extends MockGuidanceService with TestData {
+  trait ProcessTest extends MockRetrieveAndCacheService with TestData {
     lazy val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("GET", "/")
 
     lazy val target =
       new StartGuidanceController(
         errorHandler,
-        mockGuidanceService,
+        mockRetrieveAndCacheService,
         fakeSessionIdAction,
         stubMessagesControllerComponents()
       )
   }
 
-  trait ExistingSessionProcessTest extends MockGuidanceService with TestData {
+  trait ExistingSessionTest extends MockRetrieveAndCacheService with TestData {
     lazy val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("GET", "/").withSession((SessionKeys.sessionId, s"session-$uuid"))
 
     lazy val target =
       new StartGuidanceController(
         errorHandler,
-        mockGuidanceService,
+        mockRetrieveAndCacheService,
         fakeSessionIdAction,
         stubMessagesControllerComponents()
       )
@@ -98,7 +98,7 @@ class StartGuidanceControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
 
     trait ScratchTestWithValidUUID extends ProcessTest {
       val repositoryId = "683d9aa0-2a0e-4e28-9ac8-65ce453d2731"
-      MockGuidanceService
+      MockRetrieveAndCacheService
         .retrieveAndCacheScratch(uuid, repositoryId)
         .returns(Future.successful(Right((expectedUrl,uuid))))
       lazy val result = target.scratch(uuid)(fakeRequest)
@@ -116,9 +116,9 @@ class StartGuidanceControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
 
   "Calling the scratch process endpoint with an existing session id" should {
 
-    trait ScratchTestWithValidUUID extends ExistingSessionProcessTest {
+    trait ScratchTestWithValidUUID extends ExistingSessionTest {
       val repositoryId = "683d9aa0-2a0e-4e28-9ac8-65ce453d2731"
-      MockGuidanceService
+      MockRetrieveAndCacheService
         .retrieveAndCacheScratch(uuid, repositoryId)
         .returns(Future.successful(Right((expectedUrl,uuid))))
       lazy val result = target.scratch(uuid)(fakeRequest)
@@ -137,7 +137,7 @@ class StartGuidanceControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
   "Calling the scratch process endpoint with an invalid UUID" should {
 
     "return a NOT_FOUND error" in new ProcessTest {
-      MockGuidanceService
+      MockRetrieveAndCacheService
         .retrieveAndCacheScratch(uuid, uuid)
         .returns(Future.successful(Left(NotFoundError)))
       val result = target.scratch(uuid)(fakeRequest)
@@ -149,7 +149,7 @@ class StartGuidanceControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
   "Calling the scratch process endpoint and a database error occurs" should {
 
     "return an INTERNAL_SERVER_ERROR error" in new ProcessTest {
-      MockGuidanceService
+      MockRetrieveAndCacheService
         .retrieveAndCacheScratch(uuid, uuid)
         .returns(Future.successful(Left(DatabaseError)))
 
@@ -162,7 +162,7 @@ class StartGuidanceControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
   "Calling the published endpoint with a valid process ID" should {
 
     "redirect the caller to another page" in new ProcessTest {
-      MockGuidanceService
+      MockRetrieveAndCacheService
         .retrieveAndCachePublished(processId, processId)
         .returns(Future.successful(Right((expectedUrl,processId))))
 
@@ -171,7 +171,7 @@ class StartGuidanceControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
     }
 
     "redirect the caller to the start page of the process" in new ProcessTest {
-      MockGuidanceService
+      MockRetrieveAndCacheService
         .retrieveAndCachePublished(processId, processId)
         .returns(Future.successful(Right((expectedUrl,processId))))
       val result = target.published(processId)(fakeRequest)
@@ -184,7 +184,7 @@ class StartGuidanceControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
 
     "return a NOT_FOUND error" in new ProcessTest {
       val unknownProcessId = "ext90077"
-      MockGuidanceService
+      MockRetrieveAndCacheService
         .retrieveAndCachePublished(unknownProcessId, unknownProcessId)
         .returns(Future.successful(Left(NotFoundError)))
       val result = target.published(unknownProcessId)(fakeRequest)
@@ -196,7 +196,7 @@ class StartGuidanceControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
   "Calling the approval endpoint with a valid process ID" should {
 
     "redirect the caller to another page" in new ProcessTest {
-      MockGuidanceService
+      MockRetrieveAndCacheService
         .retrieveAndCacheApproval(processId, processId)
         .returns(Future.successful(Right((expectedUrl, processId))))
 
@@ -205,7 +205,7 @@ class StartGuidanceControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
     }
 
     "redirect the caller to the start page of the process" in new ProcessTest {
-      MockGuidanceService
+      MockRetrieveAndCacheService
         .retrieveAndCacheApproval(processId, processId)
         .returns(Future.successful(Right((expectedUrl,processId))))
       val result = target.approval(processId)(fakeRequest)
@@ -217,7 +217,7 @@ class StartGuidanceControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
 
     "return a NOT_FOUND error" in new ProcessTest {
       val unknownProcessId = "ext90077"
-      MockGuidanceService
+      MockRetrieveAndCacheService
         .retrieveAndCacheApproval(unknownProcessId, unknownProcessId)
         .returns(Future.successful(Left(NotFoundError)))
       val result = target.approval(unknownProcessId)(fakeRequest)
@@ -231,7 +231,7 @@ class StartGuidanceControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
     val url = "blah"
 
     "redirect the caller to another page" in new ProcessTest {
-      MockGuidanceService
+      MockRetrieveAndCacheService
         .retrieveAndCacheApprovalByPageUrl(s"/$url")(processId, processId)
         .returns(Future.successful(Right((s"/$url", processId))))
 
@@ -240,7 +240,7 @@ class StartGuidanceControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
     }
 
     "redirect the caller to the start page of the process" in new ProcessTest {
-      MockGuidanceService
+      MockRetrieveAndCacheService
         .retrieveAndCacheApprovalByPageUrl(s"/$url")(processId, processId)
         .returns(Future.successful(Right((s"/$url", processId))))
       val result = target.approvalPage(processId, url)(fakeRequest)
@@ -255,7 +255,7 @@ class StartGuidanceControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
 
     "return a NOT_FOUND error" in new ProcessTest {
       val unknownProcessId = "ext90077"
-      MockGuidanceService
+      MockRetrieveAndCacheService
         .retrieveAndCacheApprovalByPageUrl(s"/$url")(unknownProcessId, unknownProcessId)
         .returns(Future.successful(Left(NotFoundError)))
       val result = target.approvalPage(unknownProcessId, url)(fakeRequest)

@@ -19,16 +19,14 @@ package repositories
 import scala.annotation.tailrec
 import javax.inject.{Inject, Singleton}
 import core.models.ocelot.{Flow, Continuation, LabelValue, FlowStage}
-import DefaultSessionRepository._
 import core.models.ocelot.{Label, ScalarLabel}
 
-
 @Singleton
-class SessionProcessFSM @Inject() () {
+class SessionFSM @Inject() () {
   type BackLinkAndStateUpdate = (Option[String], Option[List[PageHistory]], Option[List[FlowStage]], List[Label])
   // Input
   // url: incoming url
-  // priorSp: prior SessionProcess corresponding to the previous url processed.
+  // priorSp: prior Session corresponding to the previous url processed.
   //
   // forceForward: true indicates that a url similar to head of prior history (looks like a BACK) should be treated as a forward movement
   // sentinelUrl: generally url of the first page, arrival here will always clear down the page history
@@ -40,7 +38,7 @@ class SessionProcessFSM @Inject() () {
   // optional page history update
   // optional flowStack update
   // Flow Labels update (Nil unless flowstack active in from or to page)
-  def apply(url: String, priorSp: SessionProcess, forceForward: Boolean, sentinelUrl: String): BackLinkAndStateUpdate =
+  def apply(url: String, priorSp: Session, forceForward: Boolean, sentinelUrl: String): BackLinkAndStateUpdate =
     priorSp.pageHistory.reverse match {
       // Initial page
       case Nil => (None, Some(List(PageHistory(url, Nil))), None, Nil)
