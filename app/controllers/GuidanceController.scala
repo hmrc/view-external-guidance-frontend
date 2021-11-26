@@ -76,6 +76,7 @@ class GuidanceController @Inject() (
   def getPage(processCode: String, path: String, p: Option[String]): Action[AnyContent] = sessionIdAction.async { implicit request =>
     implicit val messages: Messages = mcc.messagesApi.preferred(request)
     implicit val lang: Lang = messages.lang
+    logger.warn(s"GP: sessionId: ${hc.sessionId.map(_.value)}, requestId: ${hc.requestId.map(_.value).getOrElse("")}, URI: ${request.target.uriString}")
     withExistingSession[PageContext](sId =>service.getPageContext(processCode, s"/$path", p.isDefined, sId)).flatMap {
       case Right(pageCtx) =>
         logger.info(s"Retrieved page at ${pageCtx.page.urlPath}, start at ${pageCtx.processStartUrl}," +
@@ -102,7 +103,7 @@ class GuidanceController @Inject() (
   def submitPage(processCode: String, path: String): Action[AnyContent] = Action.async { implicit request =>
     implicit val messages: Messages = mcc.messagesApi.preferred(request)
     implicit val lang: Lang = messages.lang
-
+    logger.warn(s"SP: sessionId: ${hc.sessionId.map(_.value)}, requestId: ${hc.requestId.map(_.value).getOrElse("")}, URI: ${request.target.uriString}")
     withExistingSession[PageEvaluationContext](service.getSubmitEvaluationContext(processCode, s"/$path", _)).flatMap {
       case Right(ctx) => ctx.dataInput.fold{
           logger.error( s"Unable to locate input stanza for process ${ctx.processCode} on submission")

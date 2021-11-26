@@ -48,6 +48,7 @@ final case class Session(id: String,
                          answers: Map[String, String],
                          pageHistory: List[PageHistory],
                          legalPageIds: List[String],
+                         requestId: Option[String],
                          lastAccessed: Instant) {
   lazy val pageUrl: Option[String] = pageHistory.reverse.headOption.map(_.url.drop(process.meta.processCode.length))
 }
@@ -58,7 +59,7 @@ object Session {
             process: Process,
             pageMap: Map[String, PageNext] = Map(),
             lastAccessed: Instant = Instant.now()): Session =
-    Session(id, processId, process, Map(), Nil, Map(), pageMap, Map(), Nil, Nil, lastAccessed)
+    Session(id, processId, process, Map(), Nil, Map(), pageMap, Map(), Nil, Nil, None, lastAccessed)
 
   implicit val dateFormat: Format[Instant] = MongoDateTimeFormats.instantFormats
   implicit lazy val format: Format[Session] = ReactiveMongoFormats.mongoEntity { Json.format[Session] }
@@ -66,16 +67,13 @@ object Session {
 
 trait SessionRepository {
   def getGuidanceSessionById(key: String): Future[RequestOutcome[GuidanceSession]]
-  def getGuidanceSession(key: String, processCode: String): Future[RequestOutcome[Session]]
-  def getResetGuidanceSession(key: String, processCode: String): Future[RequestOutcome[GuidanceSession]]
+  def getGuidanceSession(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[Session]]
+  def getResetGuidanceSession(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[GuidanceSession]]
   def set(key: String, process: Process, pageMap: Map[String, PageNext]): Future[RequestOutcome[Unit]]
-  def saveFormPageState(key: String, url: String, answer: String, labels: Labels, nextLegalPageIs: List[String]): Future[RequestOutcome[Unit]]
-  def savePageState(key: String, labels: Labels): Future[RequestOutcome[Unit]]
-  def saveUpdates(key: String,
-                  pageHistory: Option[List[PageHistory]],
-                  flowStack: Option[List[FlowStage]],
-                  labelUpdates: List[Label],
-                  legalPageIds: List[String]): Future[RequestOutcome[Unit]]
+  def saveFormPageState(key: String, url: String, answer: String, labels: Labels, nextLegalPageIs: List[String], requestId: Option[String]): Future[RequestOutcome[Unit]]
+  def savePageState(key: String, labels: Labels, requestId: Option[String]): Future[RequestOutcome[Unit]]
+  def saveUpdates(key: String, pageHistory: Option[List[PageHistory]], flowStack: Option[List[FlowStage]],
+                  labelUpdates: List[Label], legalPageIds: List[String], requestId: Option[String]): Future[RequestOutcome[Unit]]
 }
 
 @Singleton
@@ -94,6 +92,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: Reactive
   val PageHistoryKey: String = "pageHistory"
   val LabelsKey: String = "labels"
   val LegalPageIdsKey: String = "legalPageIds"
+  val RequestId: String = "requestId"
   private type FieldAttr = (String, Json.JsValueWrapper)
 
   override def ensureIndexes(implicit ec: ExecutionContext): Future[Seq[Boolean]] =
@@ -133,10 +132,12 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: Reactive
       Left(DatabaseError)
     }
 
-  def getGuidanceSession(key: String, processCode: String): Future[RequestOutcome[Session]] =
+  def getGuidanceSession(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[Session]] =
     findAndUpdate(
       Json.obj("_id" -> key),
-      Json.obj(List(toFieldPair("$set", Json.obj(toFieldPair(TtlExpiryFieldName, Json.obj("$date" -> Instant.now().toEpochMilli))))).toArray: _*),
+      Json.obj("$set" -> Json.obj((List(toFieldPair(TtlExpiryFieldName, Json.obj(toFieldPair("$date", Instant.now().toEpochMilli)))) ++
+                                        requestId.toList.map(rId => toFieldPair(RequestId, rId))).toArray: _*)),
+      //Json.obj(List(toFieldPair("$set", Json.obj(toFieldPair(TtlExpiryFieldName, Json.obj("$date" -> Instant.now().toEpochMilli))))).toArray: _*),
       fetchNewObject = false // Session returned by findAndUpdate() is intentionally that prior to the update!!
     ).map { r =>
       r.result[Session]
@@ -155,19 +156,19 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: Reactive
       Left(DatabaseError)
     }
 
-  def getResetGuidanceSession(key: String, processCode: String): Future[RequestOutcome[GuidanceSession]] =
+  def getResetGuidanceSession(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[GuidanceSession]] =
     findAndUpdate(
       Json.obj("_id" -> key),
       Json.obj(
         "$set" -> Json.obj(
-          List(
+          (List(
             toFieldPair(TtlExpiryFieldName, Json.obj(toFieldPair("$date", Instant.now().toEpochMilli))),
             toFieldPair(LegalPageIdsKey, List[String]()),
             toFieldPair(FlowStackKey, List[FlowStage]()),
             toFieldPair(PageHistoryKey, List[PageHistory]()),
             toFieldPair(ContinuationPoolKey, Map[String, Stanza]()),
             toFieldPair(s"${AnswersKey}./${SecuredProcess.SecuredProcessStartUrl}", ""),
-            toFieldPair(LabelsKey, Map[String, Label]())).toArray: _*
+            toFieldPair(LabelsKey, Map[String, Label]())) ++ requestId.toList.map(rId => toFieldPair(RequestId, rId))).toArray: _*
         )
       ),
       fetchNewObject = true
@@ -183,7 +184,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: Reactive
       Left(DatabaseError)
     }
 
-  def saveFormPageState(key: String, url: String, answer: String, labels: Labels, nextLegalPageIds: List[String]): Future[RequestOutcome[Unit]] =
+  def saveFormPageState(key: String, url: String, answer: String, labels: Labels, nextLegalPageIds: List[String], requestId: Option[String]): Future[RequestOutcome[Unit]] =
     findAndUpdate(
       Json.obj("_id" -> key),
       Json.obj(
@@ -193,43 +194,41 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: Reactive
             toFieldPair(FlowStackKey, labels.flowStack),
             toFieldPair(s"${AnswersKey}.$url", answer),
             toFieldPair(LegalPageIdsKey, nextLegalPageIds)) ++
+            requestId.toList.map(rId => toFieldPair(RequestId, rId)) ++
             labels.poolUpdates.toList.map(l => toFieldPair(s"${ContinuationPoolKey}.${l._1}", l._2)) ++
             labels.updatedLabels.values.map(l => toFieldPair(s"${LabelsKey}.${l.name}", l))).toArray: _*
         )
       )
     ).map { result =>
-        result
-          .result[Session]
-          .fold {
-            logger.warn(
-              s"Attempt to saveUserAnswerAndLabels using _id=$key returned no result, lastError ${result.lastError}, url: $url, answer: $answer"
-            )
-            Left(NotFoundError): RequestOutcome[Unit]
-          }(_ => Right({}))
+      result.result[Session].fold{
+        logger.warn(s"Attempt to saveUserAnswerAndLabels using _id=$key returned no result, lastError ${result.lastError}, url: $url, answer: $answer")
+        Left(NotFoundError): RequestOutcome[Unit]
+      }{sp =>
+        if (requestId != sp.requestId) logger.error(s"TRANSACTION FAULT: saveFormPageState requestId: ${requestId}, current id: ${sp.requestId}")
+        Right({})
       }
-      .recover{ case lastError =>
-        logger.error(s"Error $lastError while trying to update question answers and labels within session repo with _id=$key, url: $url, answer: $answer")
-        Left(DatabaseError)
-      }
+    }.recover{ case lastError =>
+      logger.error(s"Error $lastError while trying to update question answers and labels within session repo with _id=$key, url: $url, answer: $answer")
+      Left(DatabaseError)
+    }
 
-  def savePageState(key: String, labels: Labels): Future[RequestOutcome[Unit]] =
+  def savePageState(key: String, labels: Labels, requestId: Option[String]): Future[RequestOutcome[Unit]] =
     findAndUpdate(
       Json.obj("_id" -> key),
       Json.obj("$set" -> Json.obj(
         (labels.poolUpdates.toList.map(l => toFieldPair(s"${ContinuationPoolKey}.${l._1}", l._2)) ++
+         requestId.toList.map(rId => toFieldPair(RequestId, rId)) ++
          labels.updatedLabels.values.map(l => toFieldPair(s"${LabelsKey}.${l.name}", l))).toArray :+ toFieldPair(FlowStackKey, labels.flowStack) : _*)
       )
     ).map { result =>
-      result
-        .result[Session]
-        .fold {
-          logger.warn(
-            s"Attempt to saveLabels using _id=$key returned no result, lastError ${result.lastError}"
-          )
-          Left(NotFoundError): RequestOutcome[Unit]
-        }(_ => Right({}))
-    }
-    .recover { case lastError =>
+      result.result[Session].fold {
+        logger.warn(s"Attempt to saveLabels using _id=$key returned no result, lastError ${result.lastError}")
+        Left(NotFoundError): RequestOutcome[Unit]
+      }{sp =>
+        if (requestId != sp.requestId) logger.error(s"TRANSACTION FAULT: savePageState requestId: ${requestId}, current id: ${sp.requestId}")
+        Right({})
+      }
+    }.recover { case lastError =>
       logger.error(s"Error $lastError while trying to update labels within session repo with _id=$key")
       Left(DatabaseError)
     }
@@ -245,18 +244,17 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: Reactive
       Right(())
     }
     .recover {
-        case lastError =>
-          logger.error(s"Error $lastError while trying to persist process=${process.meta.id} to session repo using _id=$key")
-          Left(DatabaseError)
-      }
-
-  private def toFieldPair[A](name: String, value: A)(implicit w: Writes[A]): FieldAttr = name -> Json.toJsFieldJsValueWrapper(value)
+      case lastError =>
+        logger.error(s"Error $lastError while trying to persist process=${process.meta.id} to session repo using _id=$key")
+        Left(DatabaseError)
+    }
 
   def saveUpdates(key: String,
                   pageHistory: Option[List[PageHistory]],
                   flowStack: Option[List[FlowStage]],
                   labelUpdates: List[Label],
-                  legalPageIds: List[String]): Future[RequestOutcome[Unit]] =
+                  legalPageIds: List[String],
+                  requestId: Option[String]): Future[RequestOutcome[Unit]] =
     findAndUpdate(
       Json.obj("_id" -> key),
       Json.obj(
@@ -265,21 +263,24 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: Reactive
               toFieldPair(TtlExpiryFieldName, Json.obj(toFieldPair("$date", Instant.now().toEpochMilli))), toFieldPair(LegalPageIdsKey, legalPageIds)) ++
               pageHistory.fold[List[FieldAttr]](Nil)(ph => List(toFieldPair(PageHistoryKey, ph))) ++
               labelUpdates.map(l => toFieldPair(s"${LabelsKey}.${l.name}", l)) ++
+              requestId.toList.map(rId => toFieldPair(RequestId, rId)) ++
               flowStack.fold[List[FieldAttr]](Nil)(stack => List(toFieldPair(FlowStackKey, stack)))).toArray: _*
         )
-      )
+      ),
+      fetchNewObject = false
     ).map { result =>
-      result
-        .result[Session]
-        .fold {
-          logger.warn(
-            s"Attempt to savePageHistory using _id=$key returned no result, lastError ${result.lastError}"
-          )
-          Left(NotFoundError): RequestOutcome[Unit]
-        }(_ => Right({}))
-      }
-      .recover { case lastError =>
-        logger.error(s"Error $lastError while trying to savePageHistory to session repo with _id=$key")
-        Left(DatabaseError)
-      }
+      result.result[Session].fold {
+        logger.warn(s"Attempt to savePageHistory using _id=$key returned no result, lastError ${result.lastError}")
+        Left(NotFoundError): RequestOutcome[Unit]
+      }(sp => {
+        if (requestId != sp.requestId) logger.error(s"TRANSACTION FAULT: SaveUpdates requestId: ${requestId}, current id: ${sp.requestId}")
+        Right({})
+      })
+    }.recover { case lastError =>
+      logger.error(s"Error $lastError while trying to savePageHistory to session repo with _id=$key")
+      Left(DatabaseError)
+    }
+
+  private def toFieldPair[A](name: String, value: A)(implicit w: Writes[A]): FieldAttr = name -> Json.toJsFieldJsValueWrapper(value)
+
 }
