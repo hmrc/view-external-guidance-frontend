@@ -71,7 +71,6 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
 
     lazy val ans1 = Answer(Text("ANS1"), Some(Text("")))
     lazy val ans2 = Answer(Text("ANS2"), Some(Text("")))
-
     lazy val expectedPage: ui.Page = FormPage(
       path,
       ui.Question(Text("QUESTION"), None, Seq(Paragraph(Text("QUESTION"))), Seq(ans1, ans2))
@@ -278,6 +277,23 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
       MockSessionRepository
         .getResetGuidanceSession(processId, processCode, requestId)
         .returns(Future.successful(Left(SessionNotFoundError)))
+
+      val result = target.sessionRestart(processCode)(fakeRequest)
+      status(result) shouldBe Status.SEE_OTHER
+
+      redirectLocation(result) shouldBe Some(s"/guidance/$processCode")
+    }
+
+    "Return SEE_OTHER when non sessionId found" in new RestartTest {
+      override val fakeRequest = FakeRequest("GET", path)
+                          .withSession(SessionKeys.sessionId -> processId)
+                          .withHeaders(HeaderNames.xRequestId -> requestId.get)
+                          .withFormUrlEncodedBody()
+                          .withCSRFToken
+
+      MockSessionRepository
+        .getResetGuidanceSession(processId, processCode, requestId)
+        .returns(Future.successful(Left(ExpectationFailedError)))
 
       val result = target.sessionRestart(processCode)(fakeRequest)
       status(result) shouldBe Status.SEE_OTHER
@@ -675,6 +691,20 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
         .withSession(SessionKeys.sessionId -> processId)
         .withFormUrlEncodedBody()
         .withCSRFToken
+      val result = target.submitPage(processId, relativePath)(fakeRequest)
+      status(result) shouldBe Status.INTERNAL_SERVER_ERROR
+    }
+
+    "return a INTERNAL_SERVER_ERROR response if encountering non-terminating page when submitting to page" in new QuestionTest {
+      MockGuidanceService
+        .getSubmitEvaluationContext(processId, path, processId)
+        .returns(Future.successful(Left(NonTerminatingPageError)))
+
+      override val fakeRequest = FakeRequest("POST", path)
+        .withSession(SessionKeys.sessionId -> processId)
+        .withFormUrlEncodedBody()
+        .withCSRFToken
+
       val result = target.submitPage(processId, relativePath)(fakeRequest)
       status(result) shouldBe Status.INTERNAL_SERVER_ERROR
     }
@@ -1135,8 +1165,24 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
         GuidanceSession(emptyProcess,Map("/start" -> "0"),Map(),Nil,Map(),pageMap,List("1","2"), None,None)
     }
 
-    "Return SEE_OTHER from getPage as a result trying to access valid page illegal in the current context" in new Test {
+    "Return SEE_OTHER from getPage as a result trying to access valid page illegal in the current context, redirect to start" in new Test {
       override val session: GuidanceSession = GuidanceSession(emptyProcess,Map("/start" -> "0"),Map(),Nil,Map(),pageMap,Nil, None,None)
+
+      MockGuidanceService
+        .getPageContext(processCode, path, false, processId)
+        .returns(Future.successful(Left(ForbiddenError)))
+
+      MockGuidanceService
+        .getCurrentGuidanceSession(processId)
+        .returns(Future.successful(Right(session)))
+
+      lazy val result = target.getPage(processCode, relativePath, None)(fakeRequest)
+
+      status(result) shouldBe Status.SEE_OTHER
+    }
+
+    "Return SEE_OTHER from getPage as a result trying to access valid page illegal in the current context, redirect to current page" in new Test {
+      override val session: GuidanceSession = GuidanceSession(emptyProcess,Map("/start" -> "0"),Map(),Nil,Map(),pageMap,List("1"), None,None)
 
       MockGuidanceService
         .getPageContext(processCode, path, false, processId)
@@ -1222,6 +1268,42 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
 
     "return a success response" in new Test {
       status(result) shouldBe Status.OK
+    }
+
+    "be a HTML response" in new Test {
+      contentType(result) shouldBe Some("text/html")
+    }
+
+  }
+
+  "Calling a valid URL path for a non-terminating page in a process" should {
+
+    trait Test extends MockGuidanceService with TestBase {
+      lazy val fakeRequest = FakeRequest(GET, path).withSession(SessionKeys.sessionId -> processId).withCSRFToken
+
+      MockGuidanceService
+        .getPageContext(processId, path, previousPageByLink = false, processId)
+        .returns(Future.successful(Left(NonTerminatingPageError)))
+
+      // MockGuidanceService
+      //   .savePageState(sessionId, LabelCache())
+      //   .returns(Future.successful(Right({})))
+
+      lazy val target =
+        new GuidanceController(
+          MockAppConfig,
+          fakeSessionIdAction,
+          errorHandler,
+          view,
+          formView,
+          mockGuidanceService,
+          stubMessagesControllerComponents()
+        )
+      lazy val result = target.getPage(processId, relativePath, None)(fakeRequest)
+    }
+
+    "return a success response" in new Test {
+      status(result) shouldBe Status.INTERNAL_SERVER_ERROR
     }
 
     "be a HTML response" in new Test {
