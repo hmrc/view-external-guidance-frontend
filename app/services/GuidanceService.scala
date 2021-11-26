@@ -18,13 +18,11 @@ package services
 
 import core.services._
 import config.AppConfig
-import connectors.GuidanceConnector
 import javax.inject.{Inject, Singleton}
-import models.{GuidanceSession, PageDesc, PageNext, PageContext, PageEvaluationContext}
+import models.{GuidanceSession, PageDesc, PageContext, PageEvaluationContext}
 import play.api.Logger
 import core.models.errors._
 import core.models.RequestOutcome
-import uk.gov.hmrc.http.HeaderCarrier
 import play.api.i18n.{Lang, MessagesApi}
 import scala.concurrent.{ExecutionContext, Future}
 import repositories.{SessionFSM, SessionRepository}
@@ -34,7 +32,6 @@ import core.models.ocelot.SecuredProcess
 @Singleton
 class GuidanceService @Inject() (
     appConfig: AppConfig,
-    connector: GuidanceConnector,
     sessionRepository: SessionRepository,
     pageBuilder: PageBuilder,
     pageRenderer: PageRenderer,
@@ -43,8 +40,6 @@ class GuidanceService @Inject() (
     transition: SessionFSM,
     messagesApi: MessagesApi
 ) {
-  type Retrieve[A] = String => Future[RequestOutcome[A]]
-
   val logger: Logger = Logger(getClass)
 
   def sessionRestart(processCode: String, sessionId: String)(implicit context: ExecutionContext): Future[RequestOutcome[String]] =
@@ -192,68 +187,7 @@ class GuidanceService @Inject() (
         })
     }
 
-  def validateUserResponse(ctx: PageEvaluationContext, response: String): Option[String] =
-    ctx.dataInput.fold[Option[String]](None)(_.validInput(response))
-
   def savePageState(sessionId: String, labels: Labels): Future[RequestOutcome[Unit]] = sessionRepository.savePageState(sessionId, labels)
-
-  def retrieveAndCacheScratch(uuid: String, docId: String)
-                             (implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[(String,String)]] =
-    retrieveAndCache(uuid, docId, map(connector.scratchProcess)(p => spb.secureIfRequired(p.copy(meta = p.meta.copy(id = uuid)))))
-
-  def retrieveAndCachePublished(processCode: String, docId: String)
-                               (implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[(String,String)]] =
-    retrieveAndCache(processCode, docId, map(connector.publishedProcess)(spb.secureIfRequired))
-
-  def retrieveAndCacheApproval(processId: String, docId: String)
-                              (implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[(String,String)]] =
-    retrieveAndCache(processId, docId, map(connector.approvalProcess)(spb.secureIfRequired))
-
-  def retrieveAndCacheApprovalByPageUrl(url: String)(processId: String, docId: String)
-                              (implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[(String,String)]] =
-    retrieveAndCache(processId, docId, connector.approvalProcess).map{
-      case Right((_, processCode)) => Right((url, processCode))
-      case err @ Left(_) => err
-    }
-
-  private def retrieveAndCache(processIdentifier: String, docId: String, retrieveProcessById: Retrieve[Process])(
-    implicit context: ExecutionContext
-  ): Future[RequestOutcome[(String,String)]] =
-    retrieveProcessById(processIdentifier).flatMap {
-      case Left(err) =>
-        logger.warn(s"Unable to find process using identifier $processIdentifier, received $err")
-        Future.successful(Left(err))
-      case Right(process) =>
-        logger.warn(s"Loaded process ${process.meta.id}, containing ${process.flow.keys.toList.length} stanzas, ${process.phrases.length} phrases")
-        pageBuilder.pages(process, process.startPageId).fold(err => {
-          logger.warn(s"Failed to parse process with error $err")
-          Future.successful(Left(InvalidProcessError))
-        },
-        pages => {
-          if (logger.isDebugEnabled) {
-            val urlMap: Map[String, String] = pages.map(p => (p.id, p.url)).toMap
-            logger.debug(s"Process id: $processIdentifier, processCode: ${process.meta.processCode}, title: ${process.meta.title}")
-            logger.debug(s"PAGE MAP:")
-            pages.foreach{pge =>
-              logger.debug(s"PAGE: ${pge.id}, ${pge.url}")
-              pge.next.foreach(id => logger.debug(s"\tnxt:=> $id, ${urlMap(id)}"))
-              pge.linked.foreach(id => logger.debug(s"\tlnk:=> $id, ${urlMap(id)}"))
-            }
-          }
-          sessionRepository.set(docId, process, pages.map(p => p.url -> PageNext(p.id, p.next.toList, p.linked.toList)).toMap).map {
-            case Right(_) => Right((pages.head.url, process.meta.processCode))
-            case Left(err) =>
-              logger.error(s"Failed to store new parsed process in session repository, $err")
-              Left(err)
-          }
-        })
-    }
-
   private def isAuthenticationUrl(url: String): Boolean = url.drop(1).equals(SecuredProcess.SecuredProcessStartUrl)
 
-  private def map[A, B](f: Retrieve[A])(g: A => B)(implicit ec: ExecutionContext): Retrieve[B] =
-    id => f(id).map{
-      case Right(result) => Right(g(result))
-      case Left(err) => Left(err)
-    }
 }

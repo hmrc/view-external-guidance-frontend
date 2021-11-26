@@ -113,7 +113,7 @@ class GuidanceController @Inject() (
             case Left((formWithErrors: Form[_], errorStrategy: ErrorStrategy)) =>
                 Future.successful(BadRequest(createErrorView(service.getPageContext(ctx, errorStrategy), inputName, formWithErrors)))
             case Right((form: Form[_], submittedAnswer: SubmittedAnswer)) =>
-              service.validateUserResponse(ctx, submittedAnswer.text).fold{
+              ctx.dataInput.fold[Option[String]](None)(_.validInput(submittedAnswer.text)).fold{
                 // Answer didn't pass page DataInput stanza validation
                 Future.successful(BadRequest(createErrorView(service.getPageContext(ctx, ValueTypeError), inputName, form)))
               }{ answer =>

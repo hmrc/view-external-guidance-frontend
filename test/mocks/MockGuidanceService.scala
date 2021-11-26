@@ -22,7 +22,6 @@ import org.scalamock.handlers.CallHandler
 import org.scalamock.scalatest.MockFactory
 import services.{ErrorStrategy, GuidanceService}
 import models.GuidanceSession
-import uk.gov.hmrc.http.HeaderCarrier
 import core.models.ocelot.Labels
 import scala.concurrent.{ExecutionContext, Future}
 import play.api.i18n.Lang
@@ -32,26 +31,6 @@ trait MockGuidanceService extends MockFactory {
   val mockGuidanceService: GuidanceService = mock[GuidanceService]
 
   object MockGuidanceService {
-
-    def retrieveAndCacheScratch(uuid: String, sessionRepoId: String): CallHandler[Future[RequestOutcome[(String,String)]]] =
-      (mockGuidanceService
-        .retrieveAndCacheScratch(_: String, _: String)(_: HeaderCarrier, _: ExecutionContext))
-        .expects(uuid, *, *, *)
-
-    def retrieveAndCachePublished(processId: String, sessionRepoId: String): CallHandler[Future[RequestOutcome[(String,String)]]] =
-      (mockGuidanceService
-        .retrieveAndCachePublished(_: String, _: String)(_: HeaderCarrier, _: ExecutionContext))
-        .expects(processId, *, *, *)
-
-    def retrieveAndCacheApproval(processId: String, sessionRepoId: String): CallHandler[Future[RequestOutcome[(String, String)]]] =
-      (mockGuidanceService
-        .retrieveAndCacheApproval(_: String, _: String)(_: HeaderCarrier, _: ExecutionContext))
-        .expects(processId, *, *, *)
-
-    def retrieveAndCacheApprovalByPageUrl(url: String)(processId: String, sessionRepoId: String): CallHandler[Future[RequestOutcome[(String, String)]]] =
-      (mockGuidanceService
-        .retrieveAndCacheApprovalByPageUrl(_: String)(_: String, _: String)(_: HeaderCarrier, _: ExecutionContext))
-        .expects(url, processId, *, *, *)
 
     def getCurrentGuidanceSession(sessionId: String): CallHandler[Future[RequestOutcome[GuidanceSession]]] =
       (mockGuidanceService
@@ -99,11 +78,6 @@ trait MockGuidanceService extends MockFactory {
       (mockGuidanceService
         .getPageEvaluationContext(_: String, _: String, _: Boolean,  _: String)(_: ExecutionContext, _: Lang))
         .expects(processId, url, previousPageByLink, sessionId, *, *)
-
-    def validateUserResponse(pec: PageEvaluationContext, response: String): CallHandler[Option[String]] =
-      (mockGuidanceService
-        .validateUserResponse(_: PageEvaluationContext, _: String))
-        .expects(pec, response)
 
     def submitPage(
                     ctx: PageEvaluationContext,
