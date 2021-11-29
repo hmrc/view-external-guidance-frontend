@@ -200,9 +200,9 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: Reactive
         )
       )
     ).map { result =>
-      result.result[Session].fold{
+      result.result[Session].fold[RequestOutcome[Unit]]{
         logger.warn(s"Attempt to saveUserAnswerAndLabels using _id=$key returned no result, lastError ${result.lastError}, url: $url, answer: $answer")
-        Left(NotFoundError): RequestOutcome[Unit]
+        Left(NotFoundError)
       }{sp =>
         if (requestId != sp.requestId) logger.error(s"TRANSACTION FAULT: saveFormPageState requestId: ${requestId}, current id: ${sp.requestId}")
         Right({})
@@ -221,9 +221,9 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: Reactive
          labels.updatedLabels.values.map(l => toFieldPair(s"${LabelsKey}.${l.name}", l))).toArray :+ toFieldPair(FlowStackKey, labels.flowStack) : _*)
       )
     ).map { result =>
-      result.result[Session].fold {
+      result.result[Session].fold[RequestOutcome[Unit]]{
         logger.warn(s"Attempt to saveLabels using _id=$key returned no result, lastError ${result.lastError}")
-        Left(NotFoundError): RequestOutcome[Unit]
+        Left(NotFoundError)
       }{sp =>
         if (requestId != sp.requestId) logger.error(s"TRANSACTION FAULT: savePageState requestId: ${requestId}, current id: ${sp.requestId}")
         Right({})
@@ -269,9 +269,9 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: Reactive
       ),
       fetchNewObject = false
     ).map { result =>
-      result.result[Session].fold {
+      result.result[Session].fold[RequestOutcome[Unit]]{
         logger.warn(s"Attempt to savePageHistory using _id=$key returned no result, lastError ${result.lastError}")
-        Left(NotFoundError): RequestOutcome[Unit]
+        Left(NotFoundError)
       }(sp => {
         if (requestId != sp.requestId) logger.error(s"TRANSACTION FAULT: SaveUpdates requestId: ${requestId}, current id: ${sp.requestId}")
         Right({})

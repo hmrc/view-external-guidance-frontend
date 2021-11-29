@@ -1285,10 +1285,6 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
         .getPageContext(processId, path, previousPageByLink = false, processId)
         .returns(Future.successful(Left(NonTerminatingPageError)))
 
-      // MockGuidanceService
-      //   .savePageState(sessionId, LabelCache())
-      //   .returns(Future.successful(Right({})))
-
       lazy val target =
         new GuidanceController(
           MockAppConfig,
