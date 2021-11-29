@@ -76,19 +76,24 @@ class GuidanceController @Inject() (
   def getPage(processCode: String, path: String, p: Option[String]): Action[AnyContent] = sessionIdAction.async { implicit request =>
     implicit val messages: Messages = mcc.messagesApi.preferred(request)
     implicit val lang: Lang = messages.lang
-    logger.warn(s"GP: sessionId: ${hc.sessionId.map(_.value)}, requestId: ${hc.requestId.map(_.value).getOrElse("")}, URI: ${request.target.uriString}")
+    val sId: Option[String] = hc.sessionId.map(_.value)
+    val rId: Option[String] = hc.requestId.map(_.value)
+    val uri: String = request.target.uriString
+    logger.warn(s"GP: sessionId: ${sId}, requestId: ${rId}, URI: ${uri}")
     withExistingSession[PageContext](sId =>service.getPageContext(processCode, s"/$path", p.isDefined, sId)).flatMap {
       case Right(pageCtx) =>
-        logger.info(s"Retrieved page at ${pageCtx.page.urlPath}, start at ${pageCtx.processStartUrl}," +
-                    s" answer = ${pageCtx.answer}, backLink = ${pageCtx.backLink}")
+        logger.info(s"Retrieved page: ${pageCtx.page.urlPath}, start: ${pageCtx.processStartUrl}, answer: ${pageCtx.answer}, backLink: ${pageCtx.backLink}")
         pageCtx.page match {
           case page: StandardPage => service.savePageState(pageCtx.sessionId, pageCtx.labels).map {
-              case Right(_) => Ok(standardView(page, pageCtx))
-              case Left(_) => InternalServerError(errorHandler.internalServerErrorTemplate)
-            }
+            case Right(_) =>
+              logger.warn(s"GSP=>V: sessionId: ${sId}, requestId: ${rId}, URI: ${uri}")
+              Ok(standardView(page, pageCtx))
+            case Left(_) => InternalServerError(errorHandler.internalServerErrorTemplate)
+          }
           case page: FormPage => pageCtx.dataInput match {
             case Some(input) =>
               val inputName: String = formInputName(path)
+              logger.warn(s"GFP=>V: sessionId: ${sId}, requestId: ${rId}, URI: ${uri}")
               Future.successful(Ok(formView(page, pageCtx, inputName, populatedForm(input, inputName, pageCtx.answer))))
             case _ =>
               logger.error(s"Unable to locate input stanza for process ${pageCtx.processCode} on page load")
@@ -103,7 +108,10 @@ class GuidanceController @Inject() (
   def submitPage(processCode: String, path: String): Action[AnyContent] = Action.async { implicit request =>
     implicit val messages: Messages = mcc.messagesApi.preferred(request)
     implicit val lang: Lang = messages.lang
-    logger.warn(s"SP: sessionId: ${hc.sessionId.map(_.value)}, requestId: ${hc.requestId.map(_.value).getOrElse("")}, URI: ${request.target.uriString}")
+    val sId: Option[String] = hc.sessionId.map(_.value)
+    val rId: Option[String] = hc.requestId.map(_.value)
+    val uri: String = request.target.uriString
+    logger.info(s"SP: sessionId: ${sId}, requestId: ${rId}, URI: ${uri}")
     withExistingSession[PageEvaluationContext](service.getSubmitEvaluationContext(processCode, s"/$path", _)).flatMap {
       case Right(ctx) => ctx.dataInput.fold{
           logger.error( s"Unable to locate input stanza for process ${ctx.processCode} on submission")
@@ -125,7 +133,8 @@ class GuidanceController @Inject() (
                   case Right((Some(stanzaId), _)) => // Some(stanzaId) here indicates a redirect to the page with id "stanzaId"
                     val url = ctx.pageMapById(stanzaId).url
                     val pageUrl = url.drop(appConfig.baseUrl.length + processCode.length + 2)
-                    logger.info(s"Post submit page evaluation indicates next page at stanzaId: $stanzaId => $url")
+                    logger.info(s"SP=>V: sessionId: ${sId}, requestId: ${rId}, URI: ${uri}")
+                    logger.info(s"Post submit page next: $stanzaId => $url")
                     Redirect(routes.GuidanceController.getPage(processCode, pageUrl, previousPageQueryString(url, ctx.backLink)))
                   case Left(err) => logAndTranslateSubmitError(err, processCode, path)
                 }
