@@ -137,7 +137,6 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: Reactive
       Json.obj("_id" -> key),
       Json.obj("$set" -> Json.obj((List(toFieldPair(TtlExpiryFieldName, Json.obj(toFieldPair("$date", Instant.now().toEpochMilli)))) ++
                                         requestId.toList.map(rId => toFieldPair(RequestId, rId))).toArray: _*)),
-      //Json.obj(List(toFieldPair("$set", Json.obj(toFieldPair(TtlExpiryFieldName, Json.obj("$date" -> Instant.now().toEpochMilli))))).toArray: _*),
       fetchNewObject = false // Session returned by findAndUpdate() is intentionally that prior to the update!!
     ).map { r =>
       r.result[Session]
