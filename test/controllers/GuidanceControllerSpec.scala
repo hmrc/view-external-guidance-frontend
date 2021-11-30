@@ -47,6 +47,7 @@ import play.api.inject.Injector
 import views.html._
 import services._
 import mocks.MockPageRenderer
+import uk.gov.hmrc.http.{RequestId, HeaderCarrier, HeaderNames}
 
 class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSuite {
 
@@ -54,8 +55,11 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
 
     def injector: Injector = app.injector
     val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
-    implicit val mat: Materializer = injector.instanceOf[Materializer]
 
+    val requestIdValue: String = "71dcc4a3-9d19-47f5-ad97-74bb6c2a15c4"
+    implicit val mat: Materializer = injector.instanceOf[Materializer]
+    implicit val headerCarrier: HeaderCarrier = HeaderCarrier(requestId = Some(RequestId(requestIdValue)))
+    val requestId: Option[String] = Some(requestIdValue)
     val ansIndexZero = "0"
     lazy val uuid = "683d9aa0-2a0e-4e28-9ac8-65ce453d2730"
     lazy val sessionId = "session-2882605c-8e96-494a-a497-98ae90f52539"
@@ -67,7 +71,6 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
 
     lazy val ans1 = Answer(Text("ANS1"), Some(Text("")))
     lazy val ans2 = Answer(Text("ANS2"), Some(Text("")))
-
     lazy val expectedPage: ui.Page = FormPage(
       path,
       ui.Question(Text("QUESTION"), None, Seq(Paragraph(Text("QUESTION"))), Seq(ans1, ans2))
@@ -194,7 +197,11 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
   }
 
   trait RestartTest extends MockSessionRepository with MockGuidanceConnector with TestBase {
-    val fakeRequest = FakeRequest("GET", path).withSession(SessionKeys.sessionId -> processId).withFormUrlEncodedBody().withCSRFToken
+    val fakeRequest = FakeRequest("GET", path)
+                        .withSession(SessionKeys.sessionId -> processId)
+                        .withHeaders(HeaderNames.xRequestId -> requestId.get)
+                        .withFormUrlEncodedBody()
+                        .withCSRFToken
 
     val formError = new FormError(relativePath, List("error.required"))
     val guidanceService = new GuidanceService(
@@ -257,7 +264,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
 
     "Return SEE_OTHER after no session" in new RestartTest {
       MockSessionRepository
-        .getResetGuidanceSession(processId, processCode)
+        .getResetGuidanceSession(processId, processCode, requestId)
         .returns(Future.successful(Left(NotFoundError)))
 
       val result = target.sessionRestart(processCode)(fakeRequest)
@@ -268,8 +275,25 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
 
     "Return SEE_OTHER after wrong session found" in new RestartTest {
       MockSessionRepository
-        .getResetGuidanceSession(processId, processCode)
+        .getResetGuidanceSession(processId, processCode, requestId)
         .returns(Future.successful(Left(SessionNotFoundError)))
+
+      val result = target.sessionRestart(processCode)(fakeRequest)
+      status(result) shouldBe Status.SEE_OTHER
+
+      redirectLocation(result) shouldBe Some(s"/guidance/$processCode")
+    }
+
+    "Return SEE_OTHER when non sessionId found" in new RestartTest {
+      override val fakeRequest = FakeRequest("GET", path)
+                          .withSession(SessionKeys.sessionId -> processId)
+                          .withHeaders(HeaderNames.xRequestId -> requestId.get)
+                          .withFormUrlEncodedBody()
+                          .withCSRFToken
+
+      MockSessionRepository
+        .getResetGuidanceSession(processId, processCode, requestId)
+        .returns(Future.successful(Left(ExpectationFailedError)))
 
       val result = target.sessionRestart(processCode)(fakeRequest)
       status(result) shouldBe Status.SEE_OTHER
@@ -369,9 +393,9 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
         .returns(Future.successful(Right(GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None))))
 
       MockSessionRepository
-        .getGuidanceSession(processId, process.meta.processCode)
+        .getGuidanceSession(processId, process.meta.processCode, requestId)
         .returns(Future.successful(Right(
-          Session(processId, process.meta.id, process, Map(), Nil, Map(), Map(), Map(), List(PageHistory(s"tell-hmrc$url",Nil)), Nil, Instant.now)
+          Session(processId, process.meta.id, process, Map(), Nil, Map(), Map(), Map(), List(PageHistory(s"tell-hmrc$url",Nil)), Nil, None, Instant.now)
         )))
 
       MockSessionRepository
@@ -380,7 +404,11 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
           GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None)
         )))
 
-      override val fakeRequest = FakeRequest("POST", path).withSession(SessionKeys.sessionId -> processId).withFormUrlEncodedBody().withCSRFToken
+      override val fakeRequest = FakeRequest("POST", path)
+                                    .withSession(SessionKeys.sessionId -> processId)
+                                    .withHeaders(HeaderNames.xRequestId -> requestId.get)
+                                    .withFormUrlEncodedBody()
+                                    .withCSRFToken
       val result = target.submitPage("tell-hmrc", url.drop(1))(fakeRequest)
       status(result) shouldBe Status.NOT_FOUND
     }
@@ -397,18 +425,22 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
         .returns(Future.successful(Left(IllegalPageSubmissionError)))
 
       MockSessionRepository
-        .getGuidanceSession(processId, process.meta.processCode)
+        .getGuidanceSession(processId, process.meta.processCode, requestId)
         .returns(Future.successful(Right(
           Session(processId, process.meta.id, process, Map(), Nil, Map(),
                   Map(url -> PageNext("36", Nil, Nil), outOfSequence -> PageNext("80", Nil, Nil)), Map(),
-                  List(PageHistory(s"tell-hmrc$url",Nil)), Nil, Instant.now)
+                  List(PageHistory(s"tell-hmrc$url",Nil)), Nil, None, Instant.now)
         )))
 
       MockSessionRepository
         .getGuidanceSessionById(processId)
         .returns(Future.successful(Right(session)))
 
-      override val fakeRequest = FakeRequest("POST", outOfSequence).withSession(SessionKeys.sessionId -> processId).withFormUrlEncodedBody().withCSRFToken
+      override val fakeRequest = FakeRequest("POST", outOfSequence)
+                                  .withSession(SessionKeys.sessionId -> processId)
+                                  .withHeaders(HeaderNames.xRequestId -> requestId.get)
+                                  .withFormUrlEncodedBody()
+                                  .withCSRFToken
       val result = target.submitPage("tell-hmrc", outOfSequence.drop(1))(fakeRequest)
       status(result) shouldBe Status.SEE_OTHER
       redirectLocation(result) shouldBe session.currentPageUrl.map(url => s"/guidance/tell-hmrc$url")
@@ -421,18 +453,22 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
         .returns(Future.successful(Left(IllegalPageSubmissionError)))
 
       MockSessionRepository
-        .getGuidanceSession(processId, process.meta.processCode)
+        .getGuidanceSession(processId, process.meta.processCode, requestId)
         .returns(Future.successful(Right(
           Session(processId, process.meta.id, process, Map(), Nil, Map(),
                   Map(url -> PageNext("36", Nil, Nil)), Map(),
-                  List(PageHistory(s"tell-hmrc$url",Nil)), Nil, Instant.now)
+                  List(PageHistory(s"tell-hmrc$url",Nil)), Nil, None, Instant.now)
         )))
 
       MockSessionRepository
         .getGuidanceSessionById(processId)
         .returns(Future.successful(Right(session)))
 
-      override val fakeRequest = FakeRequest("POST", "some-other-url").withSession(SessionKeys.sessionId -> processId).withFormUrlEncodedBody().withCSRFToken
+      override val fakeRequest = FakeRequest("POST", "some-other-url")
+                                  .withSession(SessionKeys.sessionId -> processId)
+                                  .withHeaders(HeaderNames.xRequestId -> requestId.get)
+                                  .withFormUrlEncodedBody()
+                                  .withCSRFToken
       val result = target.submitPage("tell-hmrc", "some-other-url")(fakeRequest)
       status(result) shouldBe Status.SEE_OTHER
       redirectLocation(result) shouldBe Some("/guidance/tell-hmrc")
@@ -445,14 +481,18 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
         .returns(Future.successful(Left(SessionNotFoundError)))
 
       MockSessionRepository
-        .getGuidanceSession(processId, "blah")
+        .getGuidanceSession(processId, "blah", requestId)
         .returns(Future.successful(Left(SessionNotFoundError)))
 
       MockSessionRepository
         .getGuidanceSessionById(processId)
         .returns(Future.successful(Right(session)))
 
-      override val fakeRequest = FakeRequest("POST", path).withSession(SessionKeys.sessionId -> processId).withFormUrlEncodedBody().withCSRFToken
+      override val fakeRequest = FakeRequest("POST", path)
+                                  .withSession(SessionKeys.sessionId -> processId)
+                                  .withHeaders(HeaderNames.xRequestId -> requestId.get)
+                                  .withFormUrlEncodedBody()
+                                  .withCSRFToken
       val result = target.submitPage("blah", relativePath)(fakeRequest)
       status(result) shouldBe Status.SEE_OTHER
       redirectLocation(result) shouldBe session.currentPageUrl.map(url => s"/guidance/blah")
@@ -464,14 +504,18 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
         .returns(Future.successful(Left(IllegalPageSubmissionError)))
 
       MockSessionRepository
-        .getGuidanceSession(processId, "blah")
+        .getGuidanceSession(processId, "blah", requestId)
         .returns(Future.successful(Left(DatabaseError)))
 
       MockSessionRepository
         .getGuidanceSessionById(processId)
         .returns(Future.successful(Left(DatabaseError)))
 
-      override val fakeRequest = FakeRequest("POST", path).withSession(SessionKeys.sessionId -> processId).withFormUrlEncodedBody().withCSRFToken
+      override val fakeRequest = FakeRequest("POST", path)
+                                  .withSession(SessionKeys.sessionId -> processId)
+                                  .withHeaders(HeaderNames.xRequestId -> requestId.get)
+                                  .withFormUrlEncodedBody()
+                                  .withCSRFToken
       val result = target.submitPage("blah", relativePath)(fakeRequest)
       status(result) shouldBe Status.INTERNAL_SERVER_ERROR
     }
@@ -494,9 +538,9 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
         .returns(Future.successful(Right((Some("4"), LabelCache()))))
 
       override val fakeRequest = FakeRequest("POST", path)
-        .withSession(SessionKeys.sessionId -> processId)
-        .withFormUrlEncodedBody(relativePath -> "0")
-        .withCSRFToken
+                                  .withSession(SessionKeys.sessionId -> processId)
+                                  .withFormUrlEncodedBody(relativePath -> "0")
+                                  .withCSRFToken
       val result = target.submitPage(processId, relativePath)(fakeRequest)
       status(result) shouldBe Status.SEE_OTHER
     }
@@ -647,6 +691,20 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
         .withSession(SessionKeys.sessionId -> processId)
         .withFormUrlEncodedBody()
         .withCSRFToken
+      val result = target.submitPage(processId, relativePath)(fakeRequest)
+      status(result) shouldBe Status.INTERNAL_SERVER_ERROR
+    }
+
+    "return a INTERNAL_SERVER_ERROR response if encountering non-terminating page when submitting to page" in new QuestionTest {
+      MockGuidanceService
+        .getSubmitEvaluationContext(processId, path, processId)
+        .returns(Future.successful(Left(NonTerminatingPageError)))
+
+      override val fakeRequest = FakeRequest("POST", path)
+        .withSession(SessionKeys.sessionId -> processId)
+        .withFormUrlEncodedBody()
+        .withCSRFToken
+
       val result = target.submitPage(processId, relativePath)(fakeRequest)
       status(result) shouldBe Status.INTERNAL_SERVER_ERROR
     }
@@ -1107,8 +1165,24 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
         GuidanceSession(emptyProcess,Map("/start" -> "0"),Map(),Nil,Map(),pageMap,List("1","2"), None,None)
     }
 
-    "Return SEE_OTHER from getPage as a result trying to access valid page illegal in the current context" in new Test {
+    "Return SEE_OTHER from getPage as a result trying to access valid page illegal in the current context, redirect to start" in new Test {
       override val session: GuidanceSession = GuidanceSession(emptyProcess,Map("/start" -> "0"),Map(),Nil,Map(),pageMap,Nil, None,None)
+
+      MockGuidanceService
+        .getPageContext(processCode, path, false, processId)
+        .returns(Future.successful(Left(ForbiddenError)))
+
+      MockGuidanceService
+        .getCurrentGuidanceSession(processId)
+        .returns(Future.successful(Right(session)))
+
+      lazy val result = target.getPage(processCode, relativePath, None)(fakeRequest)
+
+      status(result) shouldBe Status.SEE_OTHER
+    }
+
+    "Return SEE_OTHER from getPage as a result trying to access valid page illegal in the current context, redirect to current page" in new Test {
+      override val session: GuidanceSession = GuidanceSession(emptyProcess,Map("/start" -> "0"),Map(),Nil,Map(),pageMap,List("1"), None,None)
 
       MockGuidanceService
         .getPageContext(processCode, path, false, processId)
@@ -1194,6 +1268,38 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
 
     "return a success response" in new Test {
       status(result) shouldBe Status.OK
+    }
+
+    "be a HTML response" in new Test {
+      contentType(result) shouldBe Some("text/html")
+    }
+
+  }
+
+  "Calling a valid URL path for a non-terminating page in a process" should {
+
+    trait Test extends MockGuidanceService with TestBase {
+      lazy val fakeRequest = FakeRequest(GET, path).withSession(SessionKeys.sessionId -> processId).withCSRFToken
+
+      MockGuidanceService
+        .getPageContext(processId, path, previousPageByLink = false, processId)
+        .returns(Future.successful(Left(NonTerminatingPageError)))
+
+      lazy val target =
+        new GuidanceController(
+          MockAppConfig,
+          fakeSessionIdAction,
+          errorHandler,
+          view,
+          formView,
+          mockGuidanceService,
+          stubMessagesControllerComponents()
+        )
+      lazy val result = target.getPage(processId, relativePath, None)(fakeRequest)
+    }
+
+    "return a success response" in new Test {
+      status(result) shouldBe Status.INTERNAL_SERVER_ERROR
     }
 
     "be a HTML response" in new Test {
