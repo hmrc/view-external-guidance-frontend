@@ -33,10 +33,10 @@ trait MockGuidanceService extends MockFactory {
 
   object MockGuidanceService {
 
-    def getCurrentGuidanceSession(sessionId: String): CallHandler[Future[RequestOutcome[GuidanceSession]]] =
+    def getCurrentGuidanceSession(processCode: Option[String])(sessionId: String): CallHandler[Future[RequestOutcome[GuidanceSession]]] =
       (mockGuidanceService
-        .getCurrentGuidanceSession(_: String))
-        .expects(sessionId)
+        .getCurrentGuidanceSession(_: Option[String])(_: String)(_: ExecutionContext))
+        .expects(processCode, sessionId, *)
 
     def getPageGuidanceSession(key: String, processCode: String, pageHistoryUrl: Option[String], previousPageByLink: Boolean): CallHandler[Future[RequestOutcome[GuidanceSession]]] =
       (mockGuidanceService

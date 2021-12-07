@@ -134,7 +134,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: Reactive
 
   def getGuidanceSession(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[Session]] =
     findAndUpdate(
-      Json.obj("_id" -> key),
+      Json.obj("_id" -> key, "process.meta.processCode" -> processCode),
       Json.obj("$set" -> Json.obj((List(toFieldPair(TtlExpiryFieldName, Json.obj(toFieldPair("$date", Instant.now().toEpochMilli)))) ++
                                         requestId.toList.map(rId => toFieldPair(RequestId, rId))).toArray: _*)),
       fetchNewObject = false // Session returned by findAndUpdate() is intentionally that prior to the update!!
@@ -143,13 +143,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: Reactive
       .fold[RequestOutcome[Session]] {
         logger.warn(s"Attempt to retrieve cached process from session repo with _id=$key returned no result, lastError ${r.lastError}")
         Left(SessionNotFoundError)
-      }{ sp =>
-        if (sp.process.meta.processCode == processCode) { Right(sp) }
-        else {
-          logger.warn(s"Session found relates to processCode ${sp.process.meta.processCode}, rather than requested $processCode")
-          Left(SessionNotFoundError)
-        }
-      }
+      }(sp => Right(sp))
     }.recover { case lastError =>
       logger.error(s"Error $lastError while trying to retrieve process from session repo with _id=$key")
       Left(DatabaseError)
@@ -157,7 +151,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: Reactive
 
   def getResetGuidanceSession(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[GuidanceSession]] =
     findAndUpdate(
-      Json.obj("_id" -> key),
+      Json.obj("_id" -> key, "process.meta.processCode" -> processCode),
       Json.obj(
         "$set" -> Json.obj(
           (List(
@@ -171,13 +165,11 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: Reactive
         )
       ),
       fetchNewObject = true
-    ).map { r => r.result[Session].fold[RequestOutcome[GuidanceSession]] {
+    ).map { r =>
+      r.result[Session].fold[RequestOutcome[GuidanceSession]] {
       logger.warn(s"Attempt to retrieve cached reset process from session repo with _id=$key returned no result, lastError ${r.lastError}")
-      Left(NotFoundError)
-      }{sp =>
-        if (sp.process.meta.processCode != processCode) Left(SessionNotFoundError)
-        else Right(GuidanceSession(sp.process,sp.answers,sp.labels,sp.flowStack,sp.continuationPool,sp.pageMap,Nil,sp.pageUrl,None))
-      }
+      Left(SessionNotFoundError)
+      }(sp => Right(GuidanceSession(sp.process,sp.answers,sp.labels,sp.flowStack,sp.continuationPool,sp.pageMap,Nil,sp.pageUrl,None)) )
     }.recover { case lastError =>
       logger.error(s"Error $lastError while trying to retrieve reset process from session repo with _id=$key")
       Left(DatabaseError)
@@ -193,7 +185,6 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: Reactive
             toFieldPair(FlowStackKey, labels.flowStack),
             toFieldPair(s"${AnswersKey}.$url", answer),
             toFieldPair(LegalPageIdsKey, nextLegalPageIds)) ++
-            requestId.toList.map(rId => toFieldPair(RequestId, rId)) ++
             labels.poolUpdates.toList.map(l => toFieldPair(s"${ContinuationPoolKey}.${l._1}", l._2)) ++
             labels.updatedLabels.values.map(l => toFieldPair(s"${LabelsKey}.${l.name}", l))).toArray: _*
         )
@@ -203,8 +194,11 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: Reactive
         logger.warn(s"Attempt to saveUserAnswerAndLabels using _id=$key returned no result, lastError ${result.lastError}, url: $url, answer: $answer")
         Left(NotFoundError)
       }{sp =>
-        if (requestId != sp.requestId) logger.error(s"TRANSACTION FAULT: saveFormPageState requestId: ${requestId}, current id: ${sp.requestId}")
-        Right({})
+        if (requestId.equals(sp.requestId)) { Right({}) }
+        else {
+          logger.error(s"TRANSACTION FAULT: saveFormPageState requestId: ${requestId}, current id: ${sp.requestId}")
+          Left(TransactionFaultError)
+        }
       }
     }.recover{ case lastError =>
       logger.error(s"Error $lastError while trying to update question answers and labels within session repo with _id=$key, url: $url, answer: $answer")
@@ -216,7 +210,6 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: Reactive
       Json.obj("_id" -> key),
       Json.obj("$set" -> Json.obj(
         (labels.poolUpdates.toList.map(l => toFieldPair(s"${ContinuationPoolKey}.${l._1}", l._2)) ++
-         requestId.toList.map(rId => toFieldPair(RequestId, rId)) ++
          labels.updatedLabels.values.map(l => toFieldPair(s"${LabelsKey}.${l.name}", l))).toArray :+ toFieldPair(FlowStackKey, labels.flowStack) : _*)
       )
     ).map { result =>
@@ -224,8 +217,11 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: Reactive
         logger.warn(s"Attempt to saveLabels using _id=$key returned no result, lastError ${result.lastError}")
         Left(NotFoundError)
       }{sp =>
-        if (requestId != sp.requestId) logger.error(s"TRANSACTION FAULT: savePageState requestId: ${requestId}, current id: ${sp.requestId}")
-        Right({})
+        if (requestId.equals(sp.requestId)) { Right({}) }
+        else {
+          logger.error(s"TRANSACTION FAULT: savePageState requestId: ${requestId}, current id: ${sp.requestId}")
+          Left(TransactionFaultError)
+        }
       }
     }.recover { case lastError =>
       logger.error(s"Error $lastError while trying to update labels within session repo with _id=$key")
@@ -262,24 +258,24 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: Reactive
               toFieldPair(TtlExpiryFieldName, Json.obj(toFieldPair("$date", Instant.now().toEpochMilli))), toFieldPair(LegalPageIdsKey, legalPageIds)) ++
               pageHistory.fold[List[FieldAttr]](Nil)(ph => List(toFieldPair(PageHistoryKey, ph))) ++
               labelUpdates.map(l => toFieldPair(s"${LabelsKey}.${l.name}", l)) ++
-              requestId.toList.map(rId => toFieldPair(RequestId, rId)) ++
               flowStack.fold[List[FieldAttr]](Nil)(stack => List(toFieldPair(FlowStackKey, stack)))).toArray: _*
         )
-      ),
-      fetchNewObject = false
+      )
     ).map { result =>
       result.result[Session].fold[RequestOutcome[Unit]]{
         logger.warn(s"Attempt to savePageHistory using _id=$key returned no result, lastError ${result.lastError}")
         Left(NotFoundError)
-      }(sp => {
-        if (requestId != sp.requestId) logger.error(s"TRANSACTION FAULT: SaveUpdates requestId: ${requestId}, current id: ${sp.requestId}")
-        Right({})
-      })
+      }{sp =>
+        if (requestId.equals(sp.requestId)) { Right({}) }
+        else {
+          logger.error(s"TRANSACTION FAULT: SaveUpdates requestId: ${requestId}, current id: ${sp.requestId}")
+          Left(TransactionFaultError)
+        }
+      }
     }.recover { case lastError =>
       logger.error(s"Error $lastError while trying to savePageHistory to session repo with _id=$key")
       Left(DatabaseError)
     }
 
   private def toFieldPair[A](name: String, value: A)(implicit w: Writes[A]): FieldAttr = name -> Json.toJsFieldJsValueWrapper(value)
-
 }
