@@ -203,7 +203,11 @@ class GuidanceController @Inject() (
       case Right(session) => session.currentPageUrl.fold[Result]({
           logger.warn(s"$cause, no current url found, redirecting to start of $processCode process")
           redirectToGuidanceStart(session.process.meta.processCode)
-        })(currentUrl => Redirect(s"${appConfig.baseUrl}/${session.process.meta.processCode}$currentUrl"))
+        })(currentUrl => {
+          val currentPage: String = s"${appConfig.baseUrl}/${session.process.meta.processCode}$currentUrl"
+          logger.warn(s"Recovering after $cause, Redirecting to current page $currentPage")
+          Redirect(currentPage)
+        })
       case Left(err) =>
         logger.warn(s"Failed ($err) to retrieve current session, redirecting after $cause to beginning of process")
         redirectToGuidanceStart(processCode)
