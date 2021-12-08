@@ -122,6 +122,22 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: Reactive
     )
   }
 
+  def set(key: String, process: Process, pageMap: Map[String, PageNext]): Future[RequestOutcome[Unit]] =
+    findAndUpdate(
+      Json.obj("_id" -> key),
+      Json.obj("$set" -> Session(key, process.meta.id, process, pageMap, Instant.now)),
+      upsert = true
+    )
+    .map{_ =>
+      logger.warn(s"Session repo creation (key $key) complete for ${process.meta.id}, ${process.meta.processCode}, page count ${pageMap.size}")
+      Right(())
+    }
+    .recover {
+      case lastError =>
+        logger.error(s"Error $lastError while trying to persist process=${process.meta.id} to session repo using _id=$key")
+        Left(DatabaseError)
+    }
+
   def getGuidanceSessionById(key:String): Future[RequestOutcome[GuidanceSession]] =
     find("_id" -> key).map {
       case Nil =>  Left(NotFoundError)
@@ -177,7 +193,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: Reactive
 
   def saveFormPageState(key: String, url: String, answer: String, labels: Labels, nextLegalPageIds: List[String], requestId: Option[String]): Future[RequestOutcome[Unit]] =
     findAndUpdate(
-      Json.obj("_id" -> key),
+      Json.obj("_id" -> key, RequestId -> requestId),
       Json.obj(
         "$set" -> Json.obj(
           (List(
@@ -191,15 +207,9 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: Reactive
       )
     ).map { result =>
       result.result[Session].fold[RequestOutcome[Unit]]{
-        logger.warn(s"Attempt to saveUserAnswerAndLabels using _id=$key returned no result, lastError ${result.lastError}, url: $url, answer: $answer")
-        Left(NotFoundError)
-      }{sp =>
-        if (requestId.equals(sp.requestId)) { Right({}) }
-        else {
-          logger.error(s"TRANSACTION FAULT: saveFormPageState requestId: ${requestId}, current id: ${sp.requestId}")
-          Left(TransactionFaultError)
-        }
-      }
+        logger.error(s"TRANSACTION FAULT: saveFormPageState _id=$key, url: $url, answer: $answer, requestId: ${requestId}, lastError ${result.lastError}")
+        Left(TransactionFaultError)
+      }(sp => Right({}))
     }.recover{ case lastError =>
       logger.error(s"Error $lastError while trying to update question answers and labels within session repo with _id=$key, url: $url, answer: $answer")
       Left(DatabaseError)
@@ -207,41 +217,19 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: Reactive
 
   def savePageState(key: String, labels: Labels, requestId: Option[String]): Future[RequestOutcome[Unit]] =
     findAndUpdate(
-      Json.obj("_id" -> key),
+      Json.obj("_id" -> key, RequestId -> requestId),
       Json.obj("$set" -> Json.obj(
         (labels.poolUpdates.toList.map(l => toFieldPair(s"${ContinuationPoolKey}.${l._1}", l._2)) ++
          labels.updatedLabels.values.map(l => toFieldPair(s"${LabelsKey}.${l.name}", l))).toArray :+ toFieldPair(FlowStackKey, labels.flowStack) : _*)
       )
     ).map { result =>
       result.result[Session].fold[RequestOutcome[Unit]]{
-        logger.warn(s"Attempt to saveLabels using _id=$key returned no result, lastError ${result.lastError}")
-        Left(NotFoundError)
-      }{sp =>
-        if (requestId.equals(sp.requestId)) { Right({}) }
-        else {
-          logger.error(s"TRANSACTION FAULT: savePageState requestId: ${requestId}, current id: ${sp.requestId}")
-          Left(TransactionFaultError)
-        }
-      }
+        logger.error(s"TRANSACTION FAULT: saveLabels _id=$key, requestId: ${requestId}, lastError ${result.lastError}")
+        Left(TransactionFaultError)
+      }(sp => Right({}))
     }.recover { case lastError =>
       logger.error(s"Error $lastError while trying to update labels within session repo with _id=$key")
       Left(DatabaseError)
-    }
-
-  def set(key: String, process: Process, pageMap: Map[String, PageNext]): Future[RequestOutcome[Unit]] =
-    findAndUpdate(
-      Json.obj("_id" -> key),
-      Json.obj("$set" -> Session(key, process.meta.id, process, pageMap, Instant.now)),
-      upsert = true
-    )
-    .map{_ =>
-      logger.warn(s"Session repo creation (key $key) complete for ${process.meta.id}, ${process.meta.processCode}, page count ${pageMap.size}")
-      Right(())
-    }
-    .recover {
-      case lastError =>
-        logger.error(s"Error $lastError while trying to persist process=${process.meta.id} to session repo using _id=$key")
-        Left(DatabaseError)
     }
 
   def saveUpdates(key: String,
@@ -251,7 +239,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: Reactive
                   legalPageIds: List[String],
                   requestId: Option[String]): Future[RequestOutcome[Unit]] =
     findAndUpdate(
-      Json.obj("_id" -> key),
+      Json.obj("_id" -> key, RequestId -> requestId),
       Json.obj(
         "$set" -> Json.obj(
             (List(
@@ -263,15 +251,9 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: Reactive
       )
     ).map { result =>
       result.result[Session].fold[RequestOutcome[Unit]]{
-        logger.warn(s"Attempt to savePageHistory using _id=$key returned no result, lastError ${result.lastError}")
-        Left(NotFoundError)
-      }{sp =>
-        if (requestId.equals(sp.requestId)) { Right({}) }
-        else {
-          logger.error(s"TRANSACTION FAULT: SaveUpdates requestId: ${requestId}, current id: ${sp.requestId}")
-          Left(TransactionFaultError)
-        }
-      }
+        logger.error(s"TRANSACTION FAULT: saveUpdates _id=$key, requestId: ${requestId}, lastError ${result.lastError}")
+        Left(TransactionFaultError)
+      }(sp => Right({}))
     }.recover { case lastError =>
       logger.error(s"Error $lastError while trying to savePageHistory to session repo with _id=$key")
       Left(DatabaseError)
