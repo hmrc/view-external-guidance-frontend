@@ -336,7 +336,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
     }
   }
 
-  "Calling getGuidanceSession(key: String)" should {
+  "Calling getGuidanceSessionById" should {
 
     "successfully retrieve a process context when the session data contains a single process" in new Test {
 
@@ -346,7 +346,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
         .getGuidanceSessionById(sessionRepoId)
         .returns(Future.successful(Right(expectedGuidanceSession)))
 
-      private val result = target.getCurrentGuidanceSession(sessionRepoId)
+      private val result = target.getCurrentGuidanceSession(None)(sessionRepoId)
 
       whenReady(result) { session =>
         session shouldBe Right(expectedGuidanceSession)
@@ -359,7 +359,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
         .getGuidanceSessionById(sessionRepoId)
         .returns(Future.successful(Left(NotFoundError)))
 
-      private val result = target.getCurrentGuidanceSession(sessionRepoId)
+      private val result = target.getCurrentGuidanceSession(None)(sessionRepoId)
 
       whenReady(result) { err =>
         err shouldBe Left(NotFoundError)
@@ -372,7 +372,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
         .getGuidanceSessionById(sessionRepoId)
         .returns(Future.successful(Left(DatabaseError)))
 
-      private val result = target.getCurrentGuidanceSession(sessionRepoId)
+      private val result = target.getCurrentGuidanceSession(None)(sessionRepoId)
 
       whenReady(result) { err =>
         err shouldBe Left(DatabaseError)

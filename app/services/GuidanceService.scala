@@ -54,17 +54,32 @@ class GuidanceService @Inject() (
       case Left(err) => Left(err)
     }
 
-  def getCurrentGuidanceSession(sessionId: String): Future[RequestOutcome[GuidanceSession]] = sessionRepository.getGuidanceSessionById(sessionId)
-
-  def getSubmitEvaluationContext(processCode: String, url: String, sessionId: String)
-                                (implicit hc: HeaderCarrier, context: ExecutionContext, lang: Lang): Future[RequestOutcome[PageEvaluationContext]] = {
-    val pageUrl: Option[String] = if (isAuthenticationUrl(url)) None else Some(s"$processCode$url")
-    getSubmitGuidanceSession(sessionId, processCode, pageUrl).map{
-      case Left(err) => Left(err)
-      case Right(session) if pageUrl.isDefined && !session.secure => Left(AuthenticationError)
-      case Right(session) => buildEvaluationContext(sessionId, processCode, url, session)
+  def getPageContext(pec: PageEvaluationContext, errStrategy: ErrorStrategy = NoError)(implicit lang: Lang): RequestOutcome[PageContext] =
+    pageRenderer.renderPage(pec.page, pec.labels) match {
+      case Left(err) =>
+        logger.error(s"Encountered non terminating page error within page ${pec.page.id} of processCode ${pec.processCode}")
+        Left(err)
+      case Right((visualStanzas, labels, dataInput)) =>
+        val uiPage = uiBuilder.buildPage(pec.page.url, visualStanzas, errStrategy)(UIContext(labels, lang, pec.pageMapById, messagesApi))
+        Right(PageContext(pec.copy(dataInput = dataInput), uiPage, labels))
     }
-  }
+
+  def getPageContext(processCode: String, url: String, previousPageByLink: Boolean, sessionId: String)
+                    (implicit hc: HeaderCarrier, context: ExecutionContext, lang: Lang): Future[RequestOutcome[PageContext]] =
+    getPageEvaluationContext(processCode, url, previousPageByLink, sessionId).map{
+      case Right(ctx) =>
+        Right(PageContext(ctx, uiBuilder.buildPage(ctx.page.url, ctx.visualStanzas)(UIContext(ctx.labels, lang, ctx.pageMapById, messagesApi))))
+      case Left(err) => Left(err)
+    }
+
+  def getCurrentGuidanceSession(processCode: Option[String])(sessionId: String)(implicit context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] =
+    sessionRepository.getGuidanceSessionById(sessionId).map{
+      case Right(session) if processCode.fold(true)(pc => session.process.meta.processCode == pc) => Right(session)
+      case Right(session) =>
+        logger.warn(s"getCurrentGuidanceSession: Process code $processCode doesnt match session, current session code ${session.process.meta.processCode}")
+        Right(session)
+      case err @ Left(_) => err
+    }
 
   def getPageEvaluationContext(processCode: String, url: String, previousPageByLink: Boolean, sessionId: String)
                               (implicit hc: HeaderCarrier, context: ExecutionContext, lang: Lang): Future[RequestOutcome[PageEvaluationContext]] = {
@@ -75,22 +90,6 @@ class GuidanceService @Inject() (
       case Right(session) => buildEvaluationContext(sessionId, processCode, url, session)
     }
   }
-
-  def getSubmitGuidanceSession(key: String, processCode: String, pageUrl: Option[String])
-                              (implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] =
-    sessionRepository.getGuidanceSession(key, processCode, hc.requestId.map(_.value)).map{
-      case Left(err) => Left(err)
-      // If incoming url equals the most recent page history url proceed, otherwise, the POST is out of sequence (IllegalPageSubmissionError)
-      case Right(sp) if pageUrl.fold(true)(url => sp.pageHistory.reverse.headOption.fold(false)(ph => url.equals(ph.url))) =>
-        val backlink = pageUrl.fold[Option[String]](None){_ =>
-          sp.pageHistory.reverse match {
-            case _ :: y :: _ => Some(y.url)
-            case _ => None
-          }
-        }
-        Right(GuidanceSession(sp.process, sp.answers, sp.labels, sp.flowStack, sp.continuationPool, sp.pageMap, sp.legalPageIds, sp.pageUrl, backlink))
-      case Right(sp) => Left(IllegalPageSubmissionError)
-    }
 
   def getPageGuidanceSession(key: String, processCode: String, pageUrl: Option[String], previousPageByLink: Boolean)
                             (implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] =
@@ -114,6 +113,9 @@ class GuidanceService @Inject() (
             val session = GuidanceSession(sp.process, sp.answers, labels, flowStackUpdate.getOrElse(sp.flowStack),
                                           sp.continuationPool, sp.pageMap, legalPageIds, sp.pageUrl, backLink)
             sessionRepository.saveUpdates(key, historyUpdate, flowStackUpdate, labelUpdates, legalPageIds, hc.requestId.map(_.value)).map {
+              case Left(NotFoundError) =>
+                logger.error(s"TRANSACTION FAULT: saveUpdates _id=$key, requestId: ${hc.requestId.map(_.value)}")
+                Left(TransactionFaultError)
               case Left(err) =>
                 logger.error(s"Unable to update session data, error = $err")
                 Left(err)
@@ -127,22 +129,30 @@ class GuidanceService @Inject() (
       }
     }
 
-  def getPageContext(pec: PageEvaluationContext, errStrategy: ErrorStrategy = NoError)(implicit lang: Lang): RequestOutcome[PageContext] =
-    pageRenderer.renderPage(pec.page, pec.labels) match {
-      case Left(err) =>
-        logger.error(s"Encountered non terminating page error within page ${pec.page.id} of processCode ${pec.processCode}")
-        Left(err)
-      case Right((visualStanzas, labels, dataInput)) =>
-        val uiPage = uiBuilder.buildPage(pec.page.url, visualStanzas, errStrategy)(UIContext(labels, lang, pec.pageMapById, messagesApi))
-        Right(PageContext(pec.copy(dataInput = dataInput), uiPage, labels))
-    }
-
-  def getPageContext(processCode: String, url: String, previousPageByLink: Boolean, sessionId: String)
-                    (implicit hc: HeaderCarrier, context: ExecutionContext, lang: Lang): Future[RequestOutcome[PageContext]] =
-    getPageEvaluationContext(processCode, url, previousPageByLink, sessionId).map{
-      case Right(ctx) =>
-        Right(PageContext(ctx, uiBuilder.buildPage(ctx.page.url, ctx.visualStanzas)(UIContext(ctx.labels, lang, ctx.pageMapById, messagesApi))))
+  def getSubmitEvaluationContext(processCode: String, url: String, sessionId: String)
+                                (implicit hc: HeaderCarrier, context: ExecutionContext, lang: Lang): Future[RequestOutcome[PageEvaluationContext]] = {
+    val pageUrl: Option[String] = if (isAuthenticationUrl(url)) None else Some(s"$processCode$url")
+    getSubmitGuidanceSession(sessionId, processCode, pageUrl).map{
       case Left(err) => Left(err)
+      case Right(session) if pageUrl.isDefined && !session.secure => Left(AuthenticationError)
+      case Right(session) => buildEvaluationContext(sessionId, processCode, url, session)
+    }
+  }
+
+  def getSubmitGuidanceSession(key: String, processCode: String, pageUrl: Option[String])
+                              (implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] =
+    sessionRepository.getGuidanceSession(key, processCode, hc.requestId.map(_.value)).map{
+      case Left(err) => Left(err)
+      // If incoming url equals the most recent page history url proceed, otherwise, the POST is out of sequence (IllegalPageSubmissionError)
+      case Right(sp) if pageUrl.fold(true)(url => sp.pageHistory.reverse.headOption.fold(false)(ph => url.equals(ph.url))) =>
+        val backlink = pageUrl.fold[Option[String]](None){_ =>
+          sp.pageHistory.reverse match {
+            case _ :: y :: _ => Some(y.url)
+            case _ => None
+          }
+        }
+        Right(GuidanceSession(sp.process, sp.answers, sp.labels, sp.flowStack, sp.continuationPool, sp.pageMap, sp.legalPageIds, sp.pageUrl, backlink))
+      case Right(sp) => Left(IllegalPageSubmissionError)
     }
 
   def submitPage(ctx: PageEvaluationContext, url: String, validatedAnswer: String, submittedAnswer: String)
@@ -153,12 +163,23 @@ class GuidanceService @Inject() (
         optionalNext.fold[Future[RequestOutcome[(Option[String], Labels)]]](Future.successful(Right((None, labels)))){next =>
           logger.debug(s"Next page found at stanzaId: $next")
           sessionRepository.saveFormPageState(ctx.sessionId, url, submittedAnswer, labels, List(next), hc.requestId.map(_.value)).map{
+            case Left(NotFoundError) =>
+              logger.error(s"TRANSACTION FAULT: saveFormPageState _id=${ctx.sessionId}, url: $url, answer: $validatedAnswer, requestId: ${hc.requestId.map(_.value)}")
+              Left(TransactionFaultError)
             case Left(err) =>
               logger.error(s"Failed to save updated labels, error = $err")
               Left(InternalServerError)
             case Right(_) => Right((Some(next), labels))
           }
         }
+    }
+
+  def savePageState(sessionId: String, labels: Labels)(implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[Unit]] =
+    sessionRepository.savePageState(sessionId, labels, hc.requestId.map(_.value)).map{
+      case Left(NotFoundError) =>
+        logger.error(s"TRANSACTION FAULT: saveLabels _id=$sessionId, requestId: ${hc.requestId.map(_.value)}")
+        Left(TransactionFaultError)
+      case result => result
     }
 
   private def buildEvaluationContext(sessionId: String, processCode: String, url: String, gs: GuidanceSession)
@@ -187,9 +208,6 @@ class GuidanceService @Inject() (
           }
         })
     }
-
-  def savePageState(sessionId: String, labels: Labels)(implicit hc: HeaderCarrier): Future[RequestOutcome[Unit]] =
-    sessionRepository.savePageState(sessionId, labels, hc.requestId.map(_.value))
 
   private def isAuthenticationUrl(url: String): Boolean = url.drop(1).equals(SecuredProcess.SecuredProcessStartUrl)
 

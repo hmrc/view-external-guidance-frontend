@@ -33,10 +33,10 @@ trait MockGuidanceService extends MockFactory {
 
   object MockGuidanceService {
 
-    def getCurrentGuidanceSession(sessionId: String): CallHandler[Future[RequestOutcome[GuidanceSession]]] =
+    def getCurrentGuidanceSession(processCode: Option[String])(sessionId: String): CallHandler[Future[RequestOutcome[GuidanceSession]]] =
       (mockGuidanceService
-        .getCurrentGuidanceSession(_: String))
-        .expects(sessionId)
+        .getCurrentGuidanceSession(_: Option[String])(_: String)(_: ExecutionContext))
+        .expects(processCode, sessionId, *)
 
     def getPageGuidanceSession(key: String, processCode: String, pageHistoryUrl: Option[String], previousPageByLink: Boolean): CallHandler[Future[RequestOutcome[GuidanceSession]]] =
       (mockGuidanceService
@@ -91,7 +91,7 @@ trait MockGuidanceService extends MockFactory {
 
     def savePageState(docId: String, labels: Labels): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockGuidanceService
-        .savePageState(_: String, _: Labels)(_: HeaderCarrier))
-        .expects(docId, *, *)
+        .savePageState(_: String, _: Labels)(_: HeaderCarrier, _: ExecutionContext))
+        .expects(docId, *, *, *)
   }
 }

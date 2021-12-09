@@ -196,9 +196,9 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
               )
   }
 
-  trait RestartTest extends MockSessionRepository with MockGuidanceConnector with TestBase {
+  trait TestWithRealGuidanceService extends MockSessionRepository with MockGuidanceConnector with TestBase {
     val fakeRequest = FakeRequest("GET", path)
-                        .withSession(SessionKeys.sessionId -> processId)
+                        .withSession(SessionKeys.sessionId -> sessionId)
                         .withHeaders(HeaderNames.xRequestId -> requestId.get)
                         .withFormUrlEncodedBody()
                         .withCSRFToken
@@ -262,9 +262,9 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
       status(result) shouldBe Status.INTERNAL_SERVER_ERROR
     }
 
-    "Return SEE_OTHER after no session" in new RestartTest {
+    "Return SEE_OTHER after no session" in new TestWithRealGuidanceService {
       MockSessionRepository
-        .getResetGuidanceSession(processId, processCode, requestId)
+        .getResetGuidanceSession(sessionId, processCode, requestId)
         .returns(Future.successful(Left(NotFoundError)))
 
       val result = target.sessionRestart(processCode)(fakeRequest)
@@ -273,9 +273,9 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
       redirectLocation(result) shouldBe Some(s"/guidance/$processCode")
     }
 
-    "Return SEE_OTHER after wrong session found" in new RestartTest {
+    "Return SEE_OTHER after wrong session found" in new TestWithRealGuidanceService {
       MockSessionRepository
-        .getResetGuidanceSession(processId, processCode, requestId)
+        .getResetGuidanceSession(sessionId, processCode, requestId)
         .returns(Future.successful(Left(SessionNotFoundError)))
 
       val result = target.sessionRestart(processCode)(fakeRequest)
@@ -284,7 +284,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
       redirectLocation(result) shouldBe Some(s"/guidance/$processCode")
     }
 
-    "Return SEE_OTHER when non sessionId found" in new RestartTest {
+    "Return SEE_OTHER when non sessionId found" in new TestWithRealGuidanceService {
       override val fakeRequest = FakeRequest("GET", path)
                           .withSession(SessionKeys.sessionId -> processId)
                           .withHeaders(HeaderNames.xRequestId -> requestId.get)
@@ -1173,7 +1173,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
         .returns(Future.successful(Left(ForbiddenError)))
 
       MockGuidanceService
-        .getCurrentGuidanceSession(processId)
+        .getCurrentGuidanceSession(Some(processCode))(processId)
         .returns(Future.successful(Right(session)))
 
       lazy val result = target.getPage(processCode, relativePath, None)(fakeRequest)
@@ -1189,7 +1189,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
         .returns(Future.successful(Left(ForbiddenError)))
 
       MockGuidanceService
-        .getCurrentGuidanceSession(processId)
+        .getCurrentGuidanceSession(Some(processCode))(processId)
         .returns(Future.successful(Right(session)))
 
       lazy val result = target.getPage(processCode, relativePath, None)(fakeRequest)
@@ -1203,7 +1203,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
         .returns(Future.successful(Left(ForbiddenError)))
 
       MockGuidanceService
-        .getCurrentGuidanceSession(processId)
+        .getCurrentGuidanceSession(Some(processCode))(processId)
         .returns(Future.successful(Left(NotFoundError)))
 
       lazy val result = target.getPage(processCode, relativePath, None)(fakeRequest)
@@ -1437,6 +1437,58 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
 
       redirectLocation(result).fold(fail("Should redirect to guidance entry point")){url =>
         url shouldBe s"/guidance/otherProcessCode"
+      }
+    }
+
+  }
+
+  "Calling getPage and encountering a transaction fault irrespective of request processCode" should {
+
+    "Redirect to the currrent page of current session when processCode is common" in new TestWithRealGuidanceService with ProcessJson {
+
+      val process = prototypeJson.as[Process]
+
+      MockSessionRepository
+        .getGuidanceSession(sessionId, process.meta.processCode, requestId)
+        .returns(Future.successful(Left(TransactionFaultError)))
+
+      MockSessionRepository
+        .getGuidanceSessionById(sessionId)
+        .returns(Future.successful(Right(
+          GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, Some(path), None)
+        )))
+
+
+      lazy val result = target.getPage(process.meta.processCode, path.drop(1), None)(fakeRequest)
+
+      status(result) shouldBe Status.SEE_OTHER
+
+      redirectLocation(result).fold(fail("Should redirect to guidance entry point")){url =>
+        url shouldBe s"/guidance/${process.meta.processCode}$path"
+      }
+    }
+
+    "Redirect to the start of current session when no pageUrl in session" in new TestWithRealGuidanceService with ProcessJson {
+
+      val process = prototypeJson.as[Process]
+
+      MockSessionRepository
+        .getGuidanceSession(sessionId, processCode, requestId)
+        .returns(Future.successful(Left(TransactionFaultError)))
+
+      MockSessionRepository
+        .getGuidanceSessionById(sessionId)
+        .returns(Future.successful(Right(
+          GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None)
+        )))
+
+
+      lazy val result = target.getPage(processCode, path.drop(1), None)(fakeRequest)
+
+      status(result) shouldBe Status.SEE_OTHER
+
+      redirectLocation(result).fold(fail("Should redirect to guidance entry point")){url =>
+        url shouldBe s"/guidance/${process.meta.processCode}"
       }
     }
 
