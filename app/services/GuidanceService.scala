@@ -113,6 +113,9 @@ class GuidanceService @Inject() (
             val session = GuidanceSession(sp.process, sp.answers, labels, flowStackUpdate.getOrElse(sp.flowStack),
                                           sp.continuationPool, sp.pageMap, legalPageIds, sp.pageUrl, backLink)
             sessionRepository.saveUpdates(key, historyUpdate, flowStackUpdate, labelUpdates, legalPageIds, hc.requestId.map(_.value)).map {
+              case Left(NotFoundError) =>
+                logger.error(s"TRANSACTION FAULT: saveUpdates _id=$key, requestId: ${hc.requestId.map(_.value)}")
+                Left(TransactionFaultError)
               case Left(err) =>
                 logger.error(s"Unable to update session data, error = $err")
                 Left(err)
@@ -160,6 +163,9 @@ class GuidanceService @Inject() (
         optionalNext.fold[Future[RequestOutcome[(Option[String], Labels)]]](Future.successful(Right((None, labels)))){next =>
           logger.debug(s"Next page found at stanzaId: $next")
           sessionRepository.saveFormPageState(ctx.sessionId, url, submittedAnswer, labels, List(next), hc.requestId.map(_.value)).map{
+            case Left(NotFoundError) =>
+              logger.error(s"TRANSACTION FAULT: saveFormPageState _id=${ctx.sessionId}, url: $url, answer: $validatedAnswer, requestId: ${hc.requestId.map(_.value)}")
+              Left(TransactionFaultError)
             case Left(err) =>
               logger.error(s"Failed to save updated labels, error = $err")
               Left(InternalServerError)
@@ -168,8 +174,13 @@ class GuidanceService @Inject() (
         }
     }
 
-  def savePageState(sessionId: String, labels: Labels)(implicit hc: HeaderCarrier): Future[RequestOutcome[Unit]] =
-    sessionRepository.savePageState(sessionId, labels, hc.requestId.map(_.value))
+  def savePageState(sessionId: String, labels: Labels)(implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[Unit]] =
+    sessionRepository.savePageState(sessionId, labels, hc.requestId.map(_.value)).map{
+      case Left(NotFoundError) =>
+        logger.error(s"TRANSACTION FAULT: saveLabels _id=$sessionId, requestId: ${hc.requestId.map(_.value)}")
+        Left(TransactionFaultError)
+      case result => result
+    }
 
   private def buildEvaluationContext(sessionId: String, processCode: String, url: String, gs: GuidanceSession)
                                     (implicit lang: Lang): RequestOutcome[PageEvaluationContext] =

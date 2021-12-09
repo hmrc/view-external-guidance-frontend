@@ -91,7 +91,7 @@ trait MockGuidanceService extends MockFactory {
 
     def savePageState(docId: String, labels: Labels): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockGuidanceService
-        .savePageState(_: String, _: Labels)(_: HeaderCarrier))
-        .expects(docId, *, *)
+        .savePageState(_: String, _: Labels)(_: HeaderCarrier, _: ExecutionContext))
+        .expects(docId, *, *, *)
   }
 }

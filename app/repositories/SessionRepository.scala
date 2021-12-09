@@ -205,12 +205,8 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: Reactive
             labels.updatedLabels.values.map(l => toFieldPair(s"${LabelsKey}.${l.name}", l))).toArray: _*
         )
       )
-    ).map { result =>
-      result.result[Session].fold[RequestOutcome[Unit]]{
-        logger.error(s"TRANSACTION FAULT: saveFormPageState _id=$key, url: $url, answer: $answer, requestId: ${requestId}, lastError ${result.lastError}")
-        Left(TransactionFaultError)
-      }(sp => Right({}))
-    }.recover{ case lastError =>
+    ).map(result =>result.result[Session].fold[RequestOutcome[Unit]](Left(NotFoundError))(sp => Right({})))
+     .recover{ case lastError =>
       logger.error(s"Error $lastError while trying to update question answers and labels within session repo with _id=$key, url: $url, answer: $answer")
       Left(DatabaseError)
     }
@@ -222,12 +218,8 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: Reactive
         (labels.poolUpdates.toList.map(l => toFieldPair(s"${ContinuationPoolKey}.${l._1}", l._2)) ++
          labels.updatedLabels.values.map(l => toFieldPair(s"${LabelsKey}.${l.name}", l))).toArray :+ toFieldPair(FlowStackKey, labels.flowStack) : _*)
       )
-    ).map { result =>
-      result.result[Session].fold[RequestOutcome[Unit]]{
-        logger.error(s"TRANSACTION FAULT: saveLabels _id=$key, requestId: ${requestId}, lastError ${result.lastError}")
-        Left(TransactionFaultError)
-      }(sp => Right({}))
-    }.recover { case lastError =>
+    ).map (result => result.result[Session].fold[RequestOutcome[Unit]](Left(NotFoundError))(sp => Right({})))
+     .recover { case lastError =>
       logger.error(s"Error $lastError while trying to update labels within session repo with _id=$key")
       Left(DatabaseError)
     }
@@ -249,12 +241,8 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: Reactive
               flowStack.fold[List[FieldAttr]](Nil)(stack => List(toFieldPair(FlowStackKey, stack)))).toArray: _*
         )
       )
-    ).map { result =>
-      result.result[Session].fold[RequestOutcome[Unit]]{
-        logger.error(s"TRANSACTION FAULT: saveUpdates _id=$key, requestId: ${requestId}, lastError ${result.lastError}")
-        Left(TransactionFaultError)
-      }(sp => Right({}))
-    }.recover { case lastError =>
+    ).map { result => result.result[Session].fold[RequestOutcome[Unit]](Left(NotFoundError))(sp => Right({}))}
+     .recover { case lastError =>
       logger.error(s"Error $lastError while trying to savePageHistory to session repo with _id=$key")
       Left(DatabaseError)
     }
