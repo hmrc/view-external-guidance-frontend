@@ -16,7 +16,7 @@
 
 package core.models.ocelot.stanzas
 
-import core.models.ocelot.{labelReferences, Phrase}
+import core.models.ocelot.{labelReferences, pageLinkIds, Phrase}
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
 import play.api.libs.json._
@@ -77,5 +77,7 @@ case class ImportantCallout(text: Phrase, override val next: Seq[String], stack:
 case class YourCallCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout
 case class NumberedListItemCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout
 case class NumberedCircleListItemCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout
-case class NoteCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout
+case class NoteCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout {
+  override val links: List[String] = pageLinkIds(text.english)
+}
 
