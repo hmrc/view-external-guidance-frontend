@@ -159,7 +159,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
         .buildPage(page.url, page.stanzas.collect{case s: VisualStanza => s}, NoError)
         .returns(ui.Page(page.url, Seq()))
 
-      target.getPageContext(pec, NoError) match {
+      target.getSubmitPageContext(pec, NoError) match {
         case Right(pageCtx) => pageCtx.page.urlPath shouldBe page.url
         case Left(_) => fail
       }
@@ -183,7 +183,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
         .renderPage(page, labels)
         .returns(Left(NonTerminatingPageError))
 
-      target.getPageContext(pec, NoError) match {
+      target.getSubmitPageContext(pec, NoError) match {
         case Left(err) if err == NonTerminatingPageError => succeed
         case Right(_) => fail
       }

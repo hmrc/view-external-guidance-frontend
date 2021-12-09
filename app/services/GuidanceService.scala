@@ -54,7 +54,7 @@ class GuidanceService @Inject() (
       case Left(err) => Left(err)
     }
 
-  def getPageContext(pec: PageEvaluationContext, errStrategy: ErrorStrategy = NoError)(implicit lang: Lang): RequestOutcome[PageContext] =
+  def getSubmitPageContext(pec: PageEvaluationContext, errStrategy: ErrorStrategy = NoError)(implicit lang: Lang): RequestOutcome[PageContext] =
     pageRenderer.renderPage(pec.page, pec.labels) match {
       case Left(err) =>
         logger.error(s"Encountered non terminating page error within page ${pec.page.id} of processCode ${pec.processCode}")

@@ -53,9 +53,9 @@ trait MockGuidanceService extends MockFactory {
         .sessionRestart(_: String, _: String)(_: HeaderCarrier, _: ExecutionContext))
         .expects(processCode, sessionId, *, *)
 
-    def getPageContext(pec: PageEvaluationContext, errStrategy: ErrorStrategy): CallHandler[RequestOutcome[PageContext]] =
+    def getSubmitPageContext(pec: PageEvaluationContext, errStrategy: ErrorStrategy): CallHandler[RequestOutcome[PageContext]] =
       (mockGuidanceService
-        .getPageContext(_: PageEvaluationContext, _: ErrorStrategy)(_: Lang))
+        .getSubmitPageContext(_: PageEvaluationContext, _: ErrorStrategy)(_: Lang))
         .expects(pec, errStrategy, *)
 
     def getPageContext(processId: String, url: String, previousPageByLink: Boolean, sessionId: String): CallHandler[Future[RequestOutcome[PageContext]]] =
