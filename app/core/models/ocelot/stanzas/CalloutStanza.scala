@@ -24,6 +24,7 @@ import play.api.libs.json._
 sealed trait Callout extends VisualStanza with Populated {
   val text: Phrase
   override val labelRefs: List[String] = labelReferences(text.english)
+  override val links: List[String] = pageLinkIds(text.english)
 }
 
 sealed trait Heading
@@ -77,7 +78,5 @@ case class ImportantCallout(text: Phrase, override val next: Seq[String], stack:
 case class YourCallCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout
 case class NumberedListItemCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout
 case class NumberedCircleListItemCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout
-case class NoteCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout {
-  override val links: List[String] = pageLinkIds(text.english)
-}
+case class NoteCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout
 
