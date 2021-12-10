@@ -72,12 +72,9 @@ class GuidanceService @Inject() (
       case Left(err) => Left(err)
     }
 
-  def getCurrentGuidanceSession(processCode: Option[String])(sessionId: String)(implicit context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] =
-    sessionRepository.getGuidanceSessionById(sessionId).map{
-      case Right(session) if processCode.fold(true)(pc => session.process.meta.processCode == pc) => Right(session)
-      case Right(session) =>
-        logger.warn(s"getCurrentGuidanceSession: Process code $processCode doesnt match session, current session code ${session.process.meta.processCode}")
-        Right(session)
+  def getCurrentGuidanceSession(processCode: String)(sessionId: String)(implicit context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] =
+    sessionRepository.getGuidanceSessionById(sessionId, processCode).map{
+      case Right(session) => Right(session)
       case err @ Left(_) => err
     }
 

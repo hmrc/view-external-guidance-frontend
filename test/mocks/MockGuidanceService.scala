@@ -33,9 +33,9 @@ trait MockGuidanceService extends MockFactory {
 
   object MockGuidanceService {
 
-    def getCurrentGuidanceSession(processCode: Option[String])(sessionId: String): CallHandler[Future[RequestOutcome[GuidanceSession]]] =
+    def getCurrentGuidanceSession(processCode: String)(sessionId: String): CallHandler[Future[RequestOutcome[GuidanceSession]]] =
       (mockGuidanceService
-        .getCurrentGuidanceSession(_: Option[String])(_: String)(_: ExecutionContext))
+        .getCurrentGuidanceSession(_: String)(_: String)(_: ExecutionContext))
         .expects(processCode, sessionId, *)
 
     def getPageGuidanceSession(key: String, processCode: String, pageHistoryUrl: Option[String], previousPageByLink: Boolean): CallHandler[Future[RequestOutcome[GuidanceSession]]] =

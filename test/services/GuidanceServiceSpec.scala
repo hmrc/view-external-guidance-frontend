@@ -343,10 +343,10 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
       val expectedGuidanceSession: GuidanceSession = GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None)
 
       MockSessionRepository
-        .getGuidanceSessionById(sessionRepoId)
+        .getGuidanceSessionById(sessionRepoId, process.meta.processCode)
         .returns(Future.successful(Right(expectedGuidanceSession)))
 
-      private val result = target.getCurrentGuidanceSession(None)(sessionRepoId)
+      private val result = target.getCurrentGuidanceSession(process.meta.processCode)(sessionRepoId)
 
       whenReady(result) { session =>
         session shouldBe Right(expectedGuidanceSession)
@@ -356,10 +356,10 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
     "return a not found error if the session data does not exist" in new Test {
 
       MockSessionRepository
-        .getGuidanceSessionById(sessionRepoId)
+        .getGuidanceSessionById(sessionRepoId, process.meta.processCode)
         .returns(Future.successful(Left(NotFoundError)))
 
-      private val result = target.getCurrentGuidanceSession(None)(sessionRepoId)
+      private val result = target.getCurrentGuidanceSession(process.meta.processCode)(sessionRepoId)
 
       whenReady(result) { err =>
         err shouldBe Left(NotFoundError)
@@ -369,10 +369,10 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
     "return a database error if an error occurs retrieving the session data" in new Test {
 
       MockSessionRepository
-        .getGuidanceSessionById(sessionRepoId)
+        .getGuidanceSessionById(sessionRepoId, process.meta.processCode)
         .returns(Future.successful(Left(DatabaseError)))
 
-      private val result = target.getCurrentGuidanceSession(None)(sessionRepoId)
+      private val result = target.getCurrentGuidanceSession(process.meta.processCode)(sessionRepoId)
 
       whenReady(result) { err =>
         err shouldBe Left(DatabaseError)

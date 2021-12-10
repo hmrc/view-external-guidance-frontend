@@ -66,7 +66,7 @@ object Session {
 }
 
 trait SessionRepository {
-  def getGuidanceSessionById(key: String): Future[RequestOutcome[GuidanceSession]]
+  def getGuidanceSessionById(key: String, processCode: String): Future[RequestOutcome[GuidanceSession]]
   def getGuidanceSession(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[Session]]
   def getResetGuidanceSession(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[GuidanceSession]]
   def set(key: String, process: Process, pageMap: Map[String, PageNext]): Future[RequestOutcome[Unit]]
@@ -138,8 +138,8 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: Reactive
         Left(DatabaseError)
     }
 
-  def getGuidanceSessionById(key:String): Future[RequestOutcome[GuidanceSession]] =
-    find("_id" -> key).map {
+  def getGuidanceSessionById(key:String, processCode: String): Future[RequestOutcome[GuidanceSession]] =
+    find("_id" -> key, "process.meta.processCode" -> processCode).map {
       case Nil =>  Left(NotFoundError)
       case sp :: _ => Right(GuidanceSession(sp.process,sp.answers,sp.labels,sp.flowStack,sp.continuationPool,sp.pageMap,sp.legalPageIds,sp.pageUrl,None))
     }.recover {

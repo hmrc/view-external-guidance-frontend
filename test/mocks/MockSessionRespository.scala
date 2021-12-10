@@ -40,10 +40,10 @@ trait MockSessionRepository extends MockFactory {
         .saveFormPageState(_: String, _: String, _: String, _: Labels, _: List[String], _: Option[String]))
         .expects(docId, url, answer, *, nextLegalPageIds, requestId)
 
-    def getGuidanceSessionById(key: String): CallHandler[Future[RequestOutcome[GuidanceSession]]] =
+    def getGuidanceSessionById(key: String, processCode: String): CallHandler[Future[RequestOutcome[GuidanceSession]]] =
       (mockSessionRepository
-        .getGuidanceSessionById(_: String))
-        .expects(key)
+        .getGuidanceSessionById(_: String, _: String))
+        .expects(key, processCode)
 
     def getGuidanceSession(key: String, processCode: String, requestId: Option[String]): CallHandler[Future[RequestOutcome[Session]]] =
       (mockSessionRepository

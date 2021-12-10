@@ -199,7 +199,7 @@ class GuidanceController @Inject() (
     }
 
   private def redirectToActiveSessionFallbackRestart(processCode: String, cause: String)(implicit request: Request[_]): Future[Result] =
-    withExistingSession[GuidanceSession](service.getCurrentGuidanceSession(Some(processCode))).map{
+    withExistingSession[GuidanceSession](service.getCurrentGuidanceSession(processCode)).map{
       case Right(session) => session.currentPageUrl.fold[Result]({
           logger.warn(s"$cause, no current url found, redirecting to start of $processCode process")
           redirectToGuidanceStart(session.process.meta.processCode)
