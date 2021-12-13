@@ -86,7 +86,7 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
         SessionKeys.sessionId -> sessionId,
         SessionKeys.lastRequestTimestamp -> now)
 
-      MockGuidanceService.getCurrentGuidanceSession(processCode)(sessionId).returns(Future.successful(Left(NotFoundError)))
+      MockGuidanceService.getCurrentGuidanceSession(processCode)(sessionId).returns(Future.successful(Left(SessionNotFoundError)))
 
       val result: Future[Result] = target.getPage(processCode)(fakeRequest)
 
