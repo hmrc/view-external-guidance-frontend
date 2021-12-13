@@ -28,7 +28,7 @@ import core.models.MongoDateTimeFormats
 import core.models.RequestOutcome
 import models.{PageNext, GuidanceSession}
 import play.modules.reactivemongo.ReactiveMongoComponent
-import reactivemongo.bson.{BSONDocument, BSONObjectID}
+import reactivemongo.bson.BSONDocument
 import reactivemongo.play.json.ImplicitBSONHandlers.JsObjectDocumentWriter
 import java.time.Instant
 import uk.gov.hmrc.mongo.ReactiveRepository
@@ -147,7 +147,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: Reactive
 
   def getGuidanceSessionById(key:String, processCode: String): Future[RequestOutcome[GuidanceSession]] =
     find("_id" -> SessionKey(key, processCode)).map {
-      case Nil =>  Left(NotFoundError)
+      case Nil =>  Left(SessionNotFoundError)
       case sp :: _ => Right(GuidanceSession(sp.process,sp.answers,sp.labels,sp.flowStack,sp.continuationPool,sp.pageMap,sp.legalPageIds,sp.pageUrl,None))
     }.recover {
       case lastError =>

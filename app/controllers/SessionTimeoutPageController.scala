@@ -21,7 +21,7 @@ import java.time.Instant
 import play.twirl.api.Html
 import config.{AppConfig, ErrorHandler}
 import javax.inject.{Inject, Singleton}
-import core.models.errors.NotFoundError
+import core.models.errors.SessionNotFoundError
 import play.api.Logger
 import play.api.i18n.{I18nSupport, Messages}
 import play.api.mvc._
@@ -58,7 +58,7 @@ class SessionTimeoutPageController @Inject()(appConfig: AppConfig,
               Future.successful(Ok(createDeleteYourAnswersResponse(messages("session.timeout.header.title"), processCode)).withNewSession)
             case Right(session) =>
               Future.successful(Ok(createDeleteYourAnswersResponse(session.process.title.value(messages.lang), processCode)).withNewSession)
-            case Left(NotFoundError) =>
+            case Left(SessionNotFoundError) =>
               logger.warn(s"Session Timeout ($id) - retrieving processCode $processCode returned NotFound, displaying deleted your answers to user")
               Future.successful(Ok(createDeleteYourAnswersResponse(messages("session.timeout.header.title"), processCode)).withNewSession)
             case Left(err) =>
