@@ -86,7 +86,7 @@ class GuidanceController @Inject() (
       case Right(pageCtx) =>
         logger.info(s"Retrieved page: ${pageCtx.page.urlPath}, start: ${pageCtx.processStartUrl}, answer: ${pageCtx.answer}, backLink: ${pageCtx.backLink}")
         pageCtx.page match {
-          case page: StandardPage => service.savePageState(pageCtx.sessionId, pageCtx.labels).map {
+          case page: StandardPage => service.savePageState(pageCtx.sessionId, processCode, pageCtx.labels).map {
             case Right(_) =>
               logger.warn(s"GSP=>V: sessionId: ${sId}, requestId: ${rId}, URI: ${uri}")
               Ok(standardView(page, pageCtx))
