@@ -33,9 +33,9 @@ trait MockGuidanceService extends MockFactory {
 
   object MockGuidanceService {
 
-    def getCurrentGuidanceSession(processCode: Option[String])(sessionId: String): CallHandler[Future[RequestOutcome[GuidanceSession]]] =
+    def getCurrentGuidanceSession(processCode: String)(sessionId: String): CallHandler[Future[RequestOutcome[GuidanceSession]]] =
       (mockGuidanceService
-        .getCurrentGuidanceSession(_: Option[String])(_: String)(_: ExecutionContext))
+        .getCurrentGuidanceSession(_: String)(_: String)(_: ExecutionContext))
         .expects(processCode, sessionId, *)
 
     def getPageGuidanceSession(key: String, processCode: String, pageHistoryUrl: Option[String], previousPageByLink: Boolean): CallHandler[Future[RequestOutcome[GuidanceSession]]] =
@@ -53,9 +53,9 @@ trait MockGuidanceService extends MockFactory {
         .sessionRestart(_: String, _: String)(_: HeaderCarrier, _: ExecutionContext))
         .expects(processCode, sessionId, *, *)
 
-    def getPageContext(pec: PageEvaluationContext, errStrategy: ErrorStrategy): CallHandler[RequestOutcome[PageContext]] =
+    def getSubmitPageContext(pec: PageEvaluationContext, errStrategy: ErrorStrategy): CallHandler[RequestOutcome[PageContext]] =
       (mockGuidanceService
-        .getPageContext(_: PageEvaluationContext, _: ErrorStrategy)(_: Lang))
+        .getSubmitPageContext(_: PageEvaluationContext, _: ErrorStrategy)(_: Lang))
         .expects(pec, errStrategy, *)
 
     def getPageContext(processId: String, url: String, previousPageByLink: Boolean, sessionId: String): CallHandler[Future[RequestOutcome[PageContext]]] =
@@ -89,9 +89,9 @@ trait MockGuidanceService extends MockFactory {
         .submitPage(_: PageEvaluationContext, _: String, _: String, _: String)(_: HeaderCarrier, _: ExecutionContext))
         .expects(ctx, url, validatedAnswer, submittedAnswer, *, *)
 
-    def savePageState(docId: String, labels: Labels): CallHandler[Future[RequestOutcome[Unit]]] =
+    def savePageState(docId: String, processCode: String, labels: Labels): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockGuidanceService
-        .savePageState(_: String, _: Labels)(_: HeaderCarrier, _: ExecutionContext))
-        .expects(docId, *, *, *)
+        .savePageState(_: String, _: String, _: Labels)(_: HeaderCarrier, _: ExecutionContext))
+        .expects(docId, processCode, *, *, *)
   }
 }

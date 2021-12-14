@@ -28,7 +28,7 @@ import core.models.MongoDateTimeFormats
 import core.models.RequestOutcome
 import models.{PageNext, GuidanceSession}
 import play.modules.reactivemongo.ReactiveMongoComponent
-import reactivemongo.bson.{BSONDocument, BSONObjectID}
+import reactivemongo.bson.BSONDocument
 import reactivemongo.play.json.ImplicitBSONHandlers.JsObjectDocumentWriter
 import java.time.Instant
 import uk.gov.hmrc.mongo.ReactiveRepository
@@ -38,7 +38,13 @@ import reactivemongo.api.indexes.IndexType
 import reactivemongo.api.indexes.Index
 import reactivemongo.bson.BSONInteger
 
-final case class Session(id: String,
+case class SessionKey(id: String, processCode: String)
+
+object SessionKey {
+  implicit lazy val format: Format[SessionKey] = Json.format[SessionKey]
+}
+
+final case class Session(id: SessionKey,
                          processId: String,
                          process: Process,
                          labels: Map[String, Label],
@@ -54,34 +60,35 @@ final case class Session(id: String,
 }
 
 object Session {
-  def apply(id: String,
+  def apply(key: SessionKey,
             processId: String,
             process: Process,
             pageMap: Map[String, PageNext] = Map(),
             lastAccessed: Instant = Instant.now()): Session =
-    Session(id, processId, process, Map(), Nil, Map(), pageMap, Map(), Nil, Nil, None, lastAccessed)
+    Session(key, processId, process, Map(), Nil, Map(), pageMap, Map(), Nil, Nil, None, lastAccessed)
 
   implicit val dateFormat: Format[Instant] = MongoDateTimeFormats.instantFormats
   implicit lazy val format: Format[Session] = ReactiveMongoFormats.mongoEntity { Json.format[Session] }
 }
 
 trait SessionRepository {
-  def getGuidanceSessionById(key: String): Future[RequestOutcome[GuidanceSession]]
+  def getGuidanceSessionById(key: String, processCode: String): Future[RequestOutcome[GuidanceSession]]
   def getGuidanceSession(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[Session]]
   def getResetGuidanceSession(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[GuidanceSession]]
   def set(key: String, process: Process, pageMap: Map[String, PageNext]): Future[RequestOutcome[Unit]]
-  def saveFormPageState(key: String, url: String, answer: String, labels: Labels, nextLegalPageIs: List[String], requestId: Option[String]): Future[RequestOutcome[Unit]]
-  def savePageState(key: String, labels: Labels, requestId: Option[String]): Future[RequestOutcome[Unit]]
-  def saveUpdates(key: String, pageHistory: Option[List[PageHistory]], flowStack: Option[List[FlowStage]],
+  def saveFormPageState(key: String, processCode: String, url: String, answer: String, labels: Labels, nextLegalPageIs: List[String], requestId: Option[String]): Future[RequestOutcome[Unit]]
+  def savePageState(key: String, processCode: String, labels: Labels, requestId: Option[String]): Future[RequestOutcome[Unit]]
+  def saveUpdates(key: String, processCode: String, pageHistory: Option[List[PageHistory]], flowStack: Option[List[FlowStage]],
                   labelUpdates: List[Label], legalPageIds: List[String], requestId: Option[String]): Future[RequestOutcome[Unit]]
 }
 
 @Singleton
 class DefaultSessionRepository @Inject() (config: AppConfig, component: ReactiveMongoComponent)(implicit ec: ExecutionContext)
-  extends ReactiveRepository[Session, BSONObjectID](
+  extends ReactiveRepository[Session, SessionKey](
     collectionName = "view-external-guidance-session",
     mongo = component.mongoConnector.db,
-    domainFormat = Session.format) with SessionRepository {
+    domainFormat = Session.format,
+    idFormat = SessionKey.format) with SessionRepository {
 
   val LastAccessedIndexName = "lastAccessedIndex"
   val ExpiryAfterOptionName = "expireAfterSeconds"
@@ -124,8 +131,8 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: Reactive
 
   def set(key: String, process: Process, pageMap: Map[String, PageNext]): Future[RequestOutcome[Unit]] =
     findAndUpdate(
-      Json.obj("_id" -> key),
-      Json.obj("$set" -> Session(key, process.meta.id, process, pageMap, Instant.now)),
+      Json.obj("_id" -> SessionKey(key, process.meta.processCode)),
+      Json.obj("$set" -> Session(SessionKey(key, process.meta.processCode), process.meta.id, process, pageMap, Instant.now)),
       upsert = true
     )
     .map{_ =>
@@ -138,9 +145,9 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: Reactive
         Left(DatabaseError)
     }
 
-  def getGuidanceSessionById(key:String): Future[RequestOutcome[GuidanceSession]] =
-    find("_id" -> key).map {
-      case Nil =>  Left(NotFoundError)
+  def getGuidanceSessionById(key:String, processCode: String): Future[RequestOutcome[GuidanceSession]] =
+    find("_id" -> SessionKey(key, processCode)).map {
+      case Nil =>  Left(SessionNotFoundError)
       case sp :: _ => Right(GuidanceSession(sp.process,sp.answers,sp.labels,sp.flowStack,sp.continuationPool,sp.pageMap,sp.legalPageIds,sp.pageUrl,None))
     }.recover {
       case lastError =>
@@ -150,7 +157,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: Reactive
 
   def getGuidanceSession(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[Session]] =
     findAndUpdate(
-      Json.obj("_id" -> key, "process.meta.processCode" -> processCode),
+      Json.obj("_id" -> SessionKey(key, processCode)),
       Json.obj("$set" -> Json.obj((List(toFieldPair(TtlExpiryFieldName, Json.obj(toFieldPair("$date", Instant.now().toEpochMilli)))) ++
                                         requestId.toList.map(rId => toFieldPair(RequestId, rId))).toArray: _*)),
       fetchNewObject = false // Session returned by findAndUpdate() is intentionally that prior to the update!!
@@ -167,7 +174,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: Reactive
 
   def getResetGuidanceSession(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[GuidanceSession]] =
     findAndUpdate(
-      Json.obj("_id" -> key, "process.meta.processCode" -> processCode),
+      Json.obj("_id" -> SessionKey(key, processCode)),
       Json.obj(
         "$set" -> Json.obj(
           (List(
@@ -191,9 +198,9 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: Reactive
       Left(DatabaseError)
     }
 
-  def saveFormPageState(key: String, url: String, answer: String, labels: Labels, nextLegalPageIds: List[String], requestId: Option[String]): Future[RequestOutcome[Unit]] =
+  def saveFormPageState(key: String, processCode: String, url: String, answer: String, labels: Labels, nextLegalPageIds: List[String], requestId: Option[String]): Future[RequestOutcome[Unit]] =
     findAndUpdate(
-      Json.obj("_id" -> key, RequestId -> requestId),
+      Json.obj("_id" -> SessionKey(key, processCode)),
       Json.obj(
         "$set" -> Json.obj(
           (List(
@@ -211,9 +218,9 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: Reactive
       Left(DatabaseError)
     }
 
-  def savePageState(key: String, labels: Labels, requestId: Option[String]): Future[RequestOutcome[Unit]] =
+  def savePageState(key: String, processCode: String, labels: Labels, requestId: Option[String]): Future[RequestOutcome[Unit]] =
     findAndUpdate(
-      Json.obj("_id" -> key, RequestId -> requestId),
+      Json.obj("_id" -> SessionKey(key, processCode)),
       Json.obj("$set" -> Json.obj(
         (labels.poolUpdates.toList.map(l => toFieldPair(s"${ContinuationPoolKey}.${l._1}", l._2)) ++
          labels.updatedLabels.values.map(l => toFieldPair(s"${LabelsKey}.${l.name}", l))).toArray :+ toFieldPair(FlowStackKey, labels.flowStack) : _*)
@@ -225,13 +232,14 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: Reactive
     }
 
   def saveUpdates(key: String,
+                  processCode: String,
                   pageHistory: Option[List[PageHistory]],
                   flowStack: Option[List[FlowStage]],
                   labelUpdates: List[Label],
                   legalPageIds: List[String],
                   requestId: Option[String]): Future[RequestOutcome[Unit]] =
     findAndUpdate(
-      Json.obj("_id" -> key, RequestId -> requestId),
+      Json.obj("_id" -> SessionKey(key, processCode)),
       Json.obj(
         "$set" -> Json.obj(
             (List(

@@ -71,7 +71,7 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
         SessionKeys.sessionId -> sessionId,
         SessionKeys.lastRequestTimestamp -> now)
 
-      MockGuidanceService.getCurrentGuidanceSession(None)(sessionId).returns(Future.successful(Right(session)))
+      MockGuidanceService.getCurrentGuidanceSession(processCode)(sessionId).returns(Future.successful(Right(session)))
 
       val result: Future[Result] = target.getPage(processCode)(fakeRequest)
 
@@ -86,7 +86,7 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
         SessionKeys.sessionId -> sessionId,
         SessionKeys.lastRequestTimestamp -> now)
 
-      MockGuidanceService.getCurrentGuidanceSession(None)(sessionId).returns(Future.successful(Left(NotFoundError)))
+      MockGuidanceService.getCurrentGuidanceSession(processCode)(sessionId).returns(Future.successful(Left(SessionNotFoundError)))
 
       val result: Future[Result] = target.getPage(processCode)(fakeRequest)
 
@@ -102,7 +102,7 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
         SessionKeys.sessionId -> sessionId,
         SessionKeys.lastRequestTimestamp -> now)
 
-      MockGuidanceService.getCurrentGuidanceSession(None)(sessionId).returns(Future.successful(Left(DatabaseError)))
+      MockGuidanceService.getCurrentGuidanceSession(processCode)(sessionId).returns(Future.successful(Left(DatabaseError)))
 
       val result: Future[Result] = target.getPage(processCode)(fakeRequest)
 
@@ -117,7 +117,7 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
         SessionKeys.sessionId -> sessionId,
         SessionKeys.lastRequestTimestamp -> now)
 
-      MockGuidanceService.getCurrentGuidanceSession(None)(sessionId).returns(Future.successful(Right(session)))
+      MockGuidanceService.getCurrentGuidanceSession(invalidProcessCode)(sessionId).returns(Future.successful(Right(session)))
 
       val result: Future[Result] = target.getPage(invalidProcessCode)(fakeRequest)
 

@@ -54,7 +54,7 @@ class GuidanceService @Inject() (
       case Left(err) => Left(err)
     }
 
-  def getPageContext(pec: PageEvaluationContext, errStrategy: ErrorStrategy = NoError)(implicit lang: Lang): RequestOutcome[PageContext] =
+  def getSubmitPageContext(pec: PageEvaluationContext, errStrategy: ErrorStrategy = NoError)(implicit lang: Lang): RequestOutcome[PageContext] =
     pageRenderer.renderPage(pec.page, pec.labels) match {
       case Left(err) =>
         logger.error(s"Encountered non terminating page error within page ${pec.page.id} of processCode ${pec.processCode}")
@@ -72,12 +72,9 @@ class GuidanceService @Inject() (
       case Left(err) => Left(err)
     }
 
-  def getCurrentGuidanceSession(processCode: Option[String])(sessionId: String)(implicit context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] =
-    sessionRepository.getGuidanceSessionById(sessionId).map{
-      case Right(session) if processCode.fold(true)(pc => session.process.meta.processCode == pc) => Right(session)
-      case Right(session) =>
-        logger.warn(s"getCurrentGuidanceSession: Process code $processCode doesnt match session, current session code ${session.process.meta.processCode}")
-        Right(session)
+  def getCurrentGuidanceSession(processCode: String)(sessionId: String)(implicit context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] =
+    sessionRepository.getGuidanceSessionById(sessionId, processCode).map{
+      case Right(session) => Right(session)
       case err @ Left(_) => err
     }
 
@@ -112,7 +109,7 @@ class GuidanceService @Inject() (
                                 backLink.fold(List.empty[String])(bl => List(sp.pageMap(bl.drop(sp.process.meta.processCode.length)).id))).distinct
             val session = GuidanceSession(sp.process, sp.answers, labels, flowStackUpdate.getOrElse(sp.flowStack),
                                           sp.continuationPool, sp.pageMap, legalPageIds, sp.pageUrl, backLink)
-            sessionRepository.saveUpdates(key, historyUpdate, flowStackUpdate, labelUpdates, legalPageIds, hc.requestId.map(_.value)).map {
+            sessionRepository.saveUpdates(key, processCode, historyUpdate, flowStackUpdate, labelUpdates, legalPageIds, hc.requestId.map(_.value)).map {
               case Left(NotFoundError) =>
                 logger.error(s"TRANSACTION FAULT: saveUpdates _id=$key, requestId: ${hc.requestId.map(_.value)}")
                 Left(TransactionFaultError)
@@ -162,7 +159,7 @@ class GuidanceService @Inject() (
       case Right((optionalNext, labels)) =>
         optionalNext.fold[Future[RequestOutcome[(Option[String], Labels)]]](Future.successful(Right((None, labels)))){next =>
           logger.debug(s"Next page found at stanzaId: $next")
-          sessionRepository.saveFormPageState(ctx.sessionId, url, submittedAnswer, labels, List(next), hc.requestId.map(_.value)).map{
+          sessionRepository.saveFormPageState(ctx.sessionId, ctx.processCode, url, submittedAnswer, labels, List(next), hc.requestId.map(_.value)).map{
             case Left(NotFoundError) =>
               logger.error(s"TRANSACTION FAULT: saveFormPageState _id=${ctx.sessionId}, url: $url, answer: $validatedAnswer, requestId: ${hc.requestId.map(_.value)}")
               Left(TransactionFaultError)
@@ -174,8 +171,8 @@ class GuidanceService @Inject() (
         }
     }
 
-  def savePageState(sessionId: String, labels: Labels)(implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[Unit]] =
-    sessionRepository.savePageState(sessionId, labels, hc.requestId.map(_.value)).map{
+  def savePageState(sessionId: String, processCode: String, labels: Labels)(implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[Unit]] =
+    sessionRepository.savePageState(sessionId, processCode, labels, hc.requestId.map(_.value)).map{
       case Left(NotFoundError) =>
         logger.error(s"TRANSACTION FAULT: saveLabels _id=$sessionId, requestId: ${hc.requestId.map(_.value)}")
         Left(TransactionFaultError)

@@ -80,12 +80,13 @@ class GuidanceController @Inject() (
     val rId: Option[String] = hc.requestId.map(_.value)
     val uri: String = request.target.uriString
     logger.warn(s"GP: sessionId: ${sId}, requestId: ${rId}, URI: ${uri}")
+
     withExistingSession[PageContext](sId =>service.getPageContext(processCode, s"/$path", p.isDefined, sId)).flatMap {
       case Left(err) => logAndTranslateGetPageError(err, processCode, path)
       case Right(pageCtx) =>
         logger.info(s"Retrieved page: ${pageCtx.page.urlPath}, start: ${pageCtx.processStartUrl}, answer: ${pageCtx.answer}, backLink: ${pageCtx.backLink}")
         pageCtx.page match {
-          case page: StandardPage => service.savePageState(pageCtx.sessionId, pageCtx.labels).map {
+          case page: StandardPage => service.savePageState(pageCtx.sessionId, processCode, pageCtx.labels).map {
             case Right(_) =>
               logger.warn(s"GSP=>V: sessionId: ${sId}, requestId: ${rId}, URI: ${uri}")
               Ok(standardView(page, pageCtx))
@@ -146,21 +147,20 @@ class GuidanceController @Inject() (
           val inputName: String = formInputName(path)
           bindFormData(input, inputName) match {
             case Left((formWithErrors: Form[_], errorStrategy: ErrorStrategy)) =>
-                Future.successful(BadRequest(createErrorView(service.getPageContext(ctx, errorStrategy), inputName, formWithErrors)))
+                Future.successful(BadRequest(createErrorView(service.getSubmitPageContext(ctx, errorStrategy), inputName, formWithErrors)))
             case Right((form: Form[_], submittedAnswer: SubmittedAnswer)) =>
               ctx.dataInput.fold[Option[String]](None)(_.validInput(submittedAnswer.text)).fold{
                 // Answer didn't pass page DataInput stanza validation
-                Future.successful(BadRequest(createErrorView(service.getPageContext(ctx, ValueTypeError), inputName, form)))
+                Future.successful(BadRequest(createErrorView(service.getSubmitPageContext(ctx, ValueTypeError), inputName, form)))
               }{ answer =>
                 service.submitPage(ctx, s"/$path", answer, submittedAnswer.text).flatMap {
                   case Right((None, labels)) =>      // No valid next page id indicates page should be re-displayed
                     logger.info(s"Post submit page evaluation indicates guidance detected input error")
-                    Future.successful(BadRequest(createErrorView(service.getPageContext(ctx.copy(labels = labels)), inputName, form)))
+                    Future.successful(BadRequest(createErrorView(service.getSubmitPageContext(ctx.copy(labels = labels)), inputName, form)))
                   case Right((Some(stanzaId), _)) => // Some(stanzaId) here indicates a redirect to the page with id "stanzaId"
                     val url = ctx.pageMapById(stanzaId).url
                     val pageUrl = url.drop(appConfig.baseUrl.length + processCode.length + 2)
-                    logger.info(s"SF=>V: sessionId: ${sId}, requestId: ${rId}, URI: ${uri}")
-                    logger.info(s"Post submit page next: $stanzaId => $url")
+                    logger.info(s"SF=>V: sessionId: ${sId}, requestId: ${rId}, URI: ${uri}, page next: $stanzaId => $url")
                     Future.successful(Redirect(routes.GuidanceController.getPage(processCode, pageUrl, previousPageQueryString(url, ctx.backLink))))
                   case Left(err) => logAndTranslateSubmitError(err, processCode, path)
                 }
@@ -199,7 +199,7 @@ class GuidanceController @Inject() (
     }
 
   private def redirectToActiveSessionFallbackRestart(processCode: String, cause: String)(implicit request: Request[_]): Future[Result] =
-    withExistingSession[GuidanceSession](service.getCurrentGuidanceSession(Some(processCode))).map{
+    withExistingSession[GuidanceSession](service.getCurrentGuidanceSession(processCode)).map{
       case Right(session) => session.currentPageUrl.fold[Result]({
           logger.warn(s"$cause, no current url found, redirecting to start of $processCode process")
           redirectToGuidanceStart(session.process.meta.processCode)
