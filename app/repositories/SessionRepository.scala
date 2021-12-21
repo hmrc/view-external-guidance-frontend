@@ -20,23 +20,24 @@ package repositories
 
 import config.AppConfig
 import com.google.inject.{Inject, Singleton}
-import play.api.libs.json.{Format, Json, Writes}
+import play.api.libs.json.{Format, Json}
 import core.models.ocelot._
 import core.models.ocelot.stanzas.Stanza
 import core.models.errors._
-import core.models.MongoDateTimeFormats
 import core.models.RequestOutcome
 import models.{PageNext, GuidanceSession}
-import play.modules.reactivemongo.ReactiveMongoComponent
-import reactivemongo.bson.BSONDocument
-import reactivemongo.play.json.ImplicitBSONHandlers.JsObjectDocumentWriter
-import java.time.Instant
-import uk.gov.hmrc.mongo.ReactiveRepository
-import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
+import java.util.concurrent.TimeUnit
+import play.api.Logger
+import java.time.{Instant}
+import org.mongodb.scala._
+import org.mongodb.scala.bson.conversions.Bson
+import org.mongodb.scala.model.Filters._
+import org.mongodb.scala.model.Sorts._
+import org.mongodb.scala.model.Updates.combine
+import org.mongodb.scala.model._
+import uk.gov.hmrc.mongo._
+import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 import scala.concurrent.{ExecutionContext, Future}
-import reactivemongo.api.indexes.IndexType
-import reactivemongo.api.indexes.Index
-import reactivemongo.bson.BSONInteger
 
 case class SessionKey(id: String, processCode: String)
 
@@ -44,7 +45,7 @@ object SessionKey {
   implicit lazy val format: Format[SessionKey] = Json.format[SessionKey]
 }
 
-final case class Session(id: SessionKey,
+final case class Session(_id: SessionKey,
                          processId: String,
                          process: Process,
                          labels: Map[String, Label],
@@ -67,11 +68,23 @@ object Session {
             lastAccessed: Instant = Instant.now()): Session =
     Session(key, processId, process, Map(), Nil, Map(), pageMap, Map(), Nil, Nil, None, lastAccessed)
 
-  implicit val dateFormat: Format[Instant] = MongoDateTimeFormats.instantFormats
-  implicit lazy val format: Format[Session] = ReactiveMongoFormats.mongoEntity { Json.format[Session] }
+  implicit lazy val format: Format[Session] = Json.format[Session]
 }
 
-trait SessionRepository {
+trait SessionRepositoryConstants {
+  val FlowStackKey: String = "flowStack"
+  val ContinuationPoolKey: String = "continuationPool"
+  val AnswersKey: String = "answers"
+  val PageHistoryKey: String = "pageHistory"
+  val LabelsKey: String = "labels"
+  val LegalPageIdsKey: String = "legalPageIds"
+  val RequestId: String = "requestId"
+  val LastAccessedIndexName = "lastAccessedIndex"
+  val ExpiryAfterOptionName = "expireAfterSeconds"
+  val TtlExpiryFieldName = "lastAccessed"
+}
+
+trait SessionRepository extends SessionRepositoryConstants {
   def getGuidanceSessionById(key: String, processCode: String): Future[RequestOutcome[GuidanceSession]]
   def getGuidanceSession(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[Session]]
   def getResetGuidanceSession(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[GuidanceSession]]
@@ -82,59 +95,58 @@ trait SessionRepository {
                   labelUpdates: List[Label], legalPageIds: List[String], requestId: Option[String]): Future[RequestOutcome[Unit]]
 }
 
+object DefaultSessionRepository extends SessionRepositoryConstants
+
 @Singleton
-class DefaultSessionRepository @Inject() (config: AppConfig, component: ReactiveMongoComponent)(implicit ec: ExecutionContext)
-  extends ReactiveRepository[Session, SessionKey](
+class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoComponent)(implicit ec: ExecutionContext)
+  extends PlayMongoRepository[Session](
     collectionName = "view-external-guidance-session",
-    mongo = component.mongoConnector.db,
+    mongoComponent = component,
     domainFormat = Session.format,
-    idFormat = SessionKey.format) with SessionRepository {
+    indexes = Seq(IndexModel(ascending(DefaultSessionRepository.TtlExpiryFieldName),
+                             IndexOptions()
+                              .name(DefaultSessionRepository.LastAccessedIndexName)
+                              .unique(false)
+                              .expireAfter(config.timeoutInSeconds, TimeUnit.SECONDS))),
+    extraCodecs = Seq(Codecs.playFormatCodec(SessionKey.format)),
+    replaceIndexes = false
+  ) with SessionRepository {
+  val logger: Logger = Logger(getClass)
+  // override def ensureIndexes(implicit ec: ExecutionContext): Future[Seq[Boolean]] =
+  //   // If current configuration includes an update to the expiry period of the TTL index, drop the current index to allow its re-creation
+  //   collection.indexesManager.list().flatMap { indexes =>
+  //     indexes
+  //       .filter(idx =>
+  //         idx.name.contains(LastAccessedIndexName) &&
+  //         idx.options.getAs[BSONInteger](ExpiryAfterOptionName).fold(false)(_.as[Int] != config.timeoutInSeconds)
+  //       )
+  //       .map { _ =>
+  //         logger.warn(s"Dropping $LastAccessedIndexName ready for re-creation, due to configured timeout change")
+  //         collection.indexesManager.drop(LastAccessedIndexName).map(ret => logger.info(s"Drop of $LastAccessedIndexName index returned $ret"))
+  //       }
 
-  val LastAccessedIndexName = "lastAccessedIndex"
-  val ExpiryAfterOptionName = "expireAfterSeconds"
-  val TtlExpiryFieldName = "lastAccessed"
-  val FlowStackKey: String = "flowStack"
-  val ContinuationPoolKey: String = "continuationPool"
-  val AnswersKey: String = "answers"
-  val PageHistoryKey: String = "pageHistory"
-  val LabelsKey: String = "labels"
-  val LegalPageIdsKey: String = "legalPageIds"
-  val RequestId: String = "requestId"
-  private type FieldAttr = (String, Json.JsValueWrapper)
+  //     super.ensureIndexes
+  //   }
 
-  override def ensureIndexes(implicit ec: ExecutionContext): Future[Seq[Boolean]] =
-    // If current configuration includes an update to the expiry period of the TTL index, drop the current index to allow its re-creation
-    collection.indexesManager.list().flatMap { indexes =>
-      indexes
-        .filter(idx =>
-          idx.name.contains(LastAccessedIndexName) &&
-          idx.options.getAs[BSONInteger](ExpiryAfterOptionName).fold(false)(_.as[Int] != config.timeoutInSeconds)
-        )
-        .map { _ =>
-          logger.warn(s"Dropping $LastAccessedIndexName ready for re-creation, due to configured timeout change")
-          collection.indexesManager.drop(LastAccessedIndexName).map(ret => logger.info(s"Drop of $LastAccessedIndexName index returned $ret"))
-        }
-
-      super.ensureIndexes
-    }
-
-  override def indexes: Seq[Index] = {
-    logger.info(s"SessionRepository TTL set to ${config.timeoutInSeconds} seconds")
-    Seq(
-      Index(
-        Seq(TtlExpiryFieldName -> IndexType.Ascending),
-        name = Some(LastAccessedIndexName),
-        options = BSONDocument(ExpiryAfterOptionName -> config.timeoutInSeconds)
-      )
-    )
-  }
+  // override def indexes: Seq[Index] = {
+  //   logger.info(s"SessionRepository TTL set to ${config.timeoutInSeconds} seconds")
+    // Seq(IndexModel(IndexOptions().name("TtlExpiryFieldName")
+    //                             .unique(false)
+    //                             .background(true)
+    //                             .sparse(true)
+    //                             .expireAfter(config.timeoutInSeconds, TimeUnit.SECONDS)))
+      // Index(
+      //   Seq(TtlExpiryFieldName -> IndexType.Ascending),
+      //   name = Some(LastAccessedIndexName),
+      //   options = BSONDocument(ExpiryAfterOptionName -> config.timeoutInSeconds)
+      // )
+  // }
 
   def set(key: String, process: Process, pageMap: Map[String, PageNext]): Future[RequestOutcome[Unit]] =
-    findAndUpdate(
-      Json.obj("_id" -> SessionKey(key, process.meta.processCode)),
-      Json.obj("$set" -> Session(SessionKey(key, process.meta.processCode), process.meta.id, process, pageMap, Instant.now)),
-      upsert = true
-    )
+    collection.findOneAndReplace(equal("_id", Codecs.toBson(SessionKey(key, process.meta.processCode))),
+                                 Session(SessionKey(key, process.meta.processCode), process.meta.id, process, pageMap, Instant.now),
+                                 FindOneAndReplaceOptions().upsert(true))
+    .toFuture()
     .map{_ =>
       logger.warn(s"Session repo creation (key $key) complete for ${process.meta.id}, ${process.meta.processCode}, page count ${pageMap.size}")
       Right(())
@@ -146,87 +158,107 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: Reactive
     }
 
   def getGuidanceSessionById(key:String, processCode: String): Future[RequestOutcome[GuidanceSession]] =
-    find("_id" -> SessionKey(key, processCode)).map {
+    collection.find(equal("_id", Codecs.toBson(SessionKey(key, processCode))))
+    .toFuture()
+    .map{
       case Nil =>  Left(SessionNotFoundError)
       case sp :: _ => Right(GuidanceSession(sp.process,sp.answers,sp.labels,sp.flowStack,sp.continuationPool,sp.pageMap,sp.legalPageIds,sp.pageUrl,None))
-    }.recover {
+    }
+    .recover {
       case lastError =>
       logger.error(s"Error $lastError occurred in method get(key: String) attempting to retrieve session $key")
       Left(DatabaseError)
     }
 
   def getGuidanceSession(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[Session]] =
-    findAndUpdate(
-      Json.obj("_id" -> SessionKey(key, processCode)),
-      Json.obj("$set" -> Json.obj((List(toFieldPair(TtlExpiryFieldName, Json.obj(toFieldPair("$date", Instant.now().toEpochMilli)))) ++
-                                        requestId.toList.map(rId => toFieldPair(RequestId, rId))).toArray: _*)),
-      fetchNewObject = false // Session returned by findAndUpdate() is intentionally that prior to the update!!
-    ).map { r =>
-      r.result[Session]
-      .fold[RequestOutcome[Session]] {
-        logger.warn(s"Attempt to retrieve cached process from session repo with _id=$key returned no result, lastError ${r.lastError}")
+    collection.findOneAndUpdate(
+      equal("_id", Codecs.toBson(SessionKey(key, processCode))),
+      requestId.fold(Updates.set(TtlExpiryFieldName, Codecs.toBson(Instant.now()))){rId =>
+        combine(
+          Updates.set(TtlExpiryFieldName, Codecs.toBson(Instant.now())),
+          Updates.set(RequestId, rId)
+        )
+      }
+    )
+    .toFutureOption()
+    .map{
+      case None =>
+        logger.warn(s"Attempt to retrieve cached process from session repo with _id=$key returned no result")
         Left(SessionNotFoundError)
-      }(sp => Right(sp))
+      case Some(session) =>
+        Right(session)
     }.recover { case lastError =>
       logger.error(s"Error $lastError while trying to retrieve process from session repo with _id=$key")
       Left(DatabaseError)
     }
 
   def getResetGuidanceSession(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[GuidanceSession]] =
-    findAndUpdate(
-      Json.obj("_id" -> SessionKey(key, processCode)),
-      Json.obj(
-        "$set" -> Json.obj(
-          (List(
-            toFieldPair(TtlExpiryFieldName, Json.obj(toFieldPair("$date", Instant.now().toEpochMilli))),
-            toFieldPair(LegalPageIdsKey, List[String]()),
-            toFieldPair(FlowStackKey, List[FlowStage]()),
-            toFieldPair(PageHistoryKey, List[PageHistory]()),
-            toFieldPair(ContinuationPoolKey, Map[String, Stanza]()),
-            toFieldPair(s"${AnswersKey}./${SecuredProcess.SecuredProcessStartUrl}", ""),
-            toFieldPair(LabelsKey, Map[String, Label]())) ++ requestId.toList.map(rId => toFieldPair(RequestId, rId))).toArray: _*
-        )
-      ),
-      fetchNewObject = true
-    ).map { r =>
-      r.result[Session].fold[RequestOutcome[GuidanceSession]] {
-      logger.warn(s"Attempt to retrieve cached reset process from session repo with _id=$key returned no result, lastError ${r.lastError}")
-      Left(SessionNotFoundError)
-      }(sp => Right(GuidanceSession(sp.process,sp.answers,sp.labels,sp.flowStack,sp.continuationPool,sp.pageMap,Nil,sp.pageUrl,None)) )
+    collection.findOneAndUpdate(
+      equal("_id", Codecs.toBson(SessionKey(key, processCode))),
+      combine((List(
+        Updates.set(TtlExpiryFieldName, Codecs.toBson(Instant.now())),
+        Updates.set(LegalPageIdsKey, List[String]()),
+        Updates.set(FlowStackKey, List[FlowStage]()),
+        Updates.set(PageHistoryKey, List[PageHistory]()),
+        Updates.set(ContinuationPoolKey, Map[String, Stanza]()),
+        Updates.set(s"${AnswersKey}./${SecuredProcess.SecuredProcessStartUrl}", ""),
+        Updates.set(LabelsKey, Map[String, Label]())) ++ requestId.toList.map(rId => Updates.set(RequestId, rId))).toArray: _*)
+    )
+    .toFutureOption()
+    .map{
+      case None =>
+        logger.warn(s"Attempt to retrieve cached process from session repo with _id=$key returned no result")
+        Left(SessionNotFoundError)
+      case Some(sp) =>
+        Right(GuidanceSession(sp.process,sp.answers,sp.labels,sp.flowStack,sp.continuationPool,sp.pageMap,Nil,sp.pageUrl,None))
     }.recover { case lastError =>
       logger.error(s"Error $lastError while trying to retrieve reset process from session repo with _id=$key")
       Left(DatabaseError)
     }
 
-  def saveFormPageState(key: String, processCode: String, url: String, answer: String, labels: Labels, nextLegalPageIds: List[String], requestId: Option[String]): Future[RequestOutcome[Unit]] =
-    findAndUpdate(
-      Json.obj("_id" -> SessionKey(key, processCode)),
-      Json.obj(
-        "$set" -> Json.obj(
-          (List(
-            toFieldPair(TtlExpiryFieldName, Json.obj(toFieldPair("$date", Instant.now().toEpochMilli))),
-            toFieldPair(FlowStackKey, labels.flowStack),
-            toFieldPair(s"${AnswersKey}.$url", answer),
-            toFieldPair(LegalPageIdsKey, nextLegalPageIds)) ++
-            labels.poolUpdates.toList.map(l => toFieldPair(s"${ContinuationPoolKey}.${l._1}", l._2)) ++
-            labels.updatedLabels.values.map(l => toFieldPair(s"${LabelsKey}.${l.name}", l))).toArray: _*
-        )
+  def saveFormPageState(key: String,
+                        processCode: String,
+                        url: String,
+                        answer: String,
+                        labels: Labels,
+                        nextLegalPageIds: List[String],
+                        requestId: Option[String]): Future[RequestOutcome[Unit]] =
+    collection.findOneAndUpdate(
+      equal("_id", Codecs.toBson(SessionKey(key, processCode))),
+      combine((List(
+        Updates.set(TtlExpiryFieldName, Codecs.toBson(Instant.now())),
+        Updates.set(FlowStackKey, Codecs.toBson(labels.flowStack)),
+        Updates.set(s"${AnswersKey}.$url", answer),
+        Updates.set(LegalPageIdsKey, Codecs.toBson(nextLegalPageIds))) ++
+        labels.poolUpdates.toList.map(l => Updates.set(s"${ContinuationPoolKey}.${l._1}", Codecs.toBson(l._2))) ++
+        labels.updatedLabels.values.map(l => Updates.set(s"${LabelsKey}.${l.name}", Codecs.toBson(l)))).toArray: _*
       )
-    ).map(result =>result.result[Session].fold[RequestOutcome[Unit]](Left(NotFoundError))(sp => Right({})))
-     .recover{ case lastError =>
+    )
+    .toFutureOption()
+    .map{
+      case None => Left(NotFoundError)
+      case _ =>Right({})
+    }
+    .recover{ case lastError =>
       logger.error(s"Error $lastError while trying to update question answers and labels within session repo with _id=$key, url: $url, answer: $answer")
       Left(DatabaseError)
     }
 
   def savePageState(key: String, processCode: String, labels: Labels, requestId: Option[String]): Future[RequestOutcome[Unit]] =
-    findAndUpdate(
-      Json.obj("_id" -> SessionKey(key, processCode)),
-      Json.obj("$set" -> Json.obj(
-        (labels.poolUpdates.toList.map(l => toFieldPair(s"${ContinuationPoolKey}.${l._1}", l._2)) ++
-         labels.updatedLabels.values.map(l => toFieldPair(s"${LabelsKey}.${l.name}", l))).toArray :+ toFieldPair(FlowStackKey, labels.flowStack) : _*)
+    collection.findOneAndUpdate(
+      equal("_id", Codecs.toBson(SessionKey(key, processCode))),
+      combine((
+        (labels.poolUpdates.toList.map(l => Updates.set(s"${ContinuationPoolKey}.${l._1}", Codecs.toBson(l._2))) ++
+         labels.updatedLabels.values.map(l => Updates.set(s"${LabelsKey}.${l.name}", Codecs.toBson(l)))).toArray :+
+         Updates.set(FlowStackKey, Codecs.toBson(labels.flowStack)) : _*)
       )
-    ).map (result => result.result[Session].fold[RequestOutcome[Unit]](Left(NotFoundError))(sp => Right({})))
-     .recover { case lastError =>
+    )
+    .toFutureOption()
+    .map{
+      case None => Left(NotFoundError)
+      case _ =>Right({})
+    }
+    .recover { case lastError =>
       logger.error(s"Error $lastError while trying to update labels within session repo with _id=$key")
       Left(DatabaseError)
     }
@@ -238,22 +270,22 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: Reactive
                   labelUpdates: List[Label],
                   legalPageIds: List[String],
                   requestId: Option[String]): Future[RequestOutcome[Unit]] =
-    findAndUpdate(
-      Json.obj("_id" -> SessionKey(key, processCode)),
-      Json.obj(
-        "$set" -> Json.obj(
-            (List(
-              toFieldPair(TtlExpiryFieldName, Json.obj(toFieldPair("$date", Instant.now().toEpochMilli))), toFieldPair(LegalPageIdsKey, legalPageIds)) ++
-              pageHistory.fold[List[FieldAttr]](Nil)(ph => List(toFieldPair(PageHistoryKey, ph))) ++
-              labelUpdates.map(l => toFieldPair(s"${LabelsKey}.${l.name}", l)) ++
-              flowStack.fold[List[FieldAttr]](Nil)(stack => List(toFieldPair(FlowStackKey, stack)))).toArray: _*
-        )
+    collection.findOneAndUpdate(
+      equal("_id", Codecs.toBson(SessionKey(key, processCode))),
+      combine((List(
+        Updates.set(TtlExpiryFieldName, Codecs.toBson(Instant.now())), Updates.set(LegalPageIdsKey, Codecs.toBson(legalPageIds))) ++
+        pageHistory.fold[List[Bson]](Nil)(ph => List(Updates.set(PageHistoryKey, Codecs.toBson(ph)))) ++
+        labelUpdates.map(l => Updates.set(s"${LabelsKey}.${l.name}", Codecs.toBson(l))) ++
+        flowStack.fold[List[Bson]](Nil)(stack => List(Updates.set(FlowStackKey, Codecs.toBson(stack))))).toArray: _*
       )
-    ).map { result => result.result[Session].fold[RequestOutcome[Unit]](Left(NotFoundError))(sp => Right({}))}
-     .recover { case lastError =>
+    )
+    .toFutureOption()
+    .map{
+      case None => Left(NotFoundError)
+      case _ =>Right({})
+    }
+    .recover { case lastError =>
       logger.error(s"Error $lastError while trying to savePageHistory to session repo with _id=$key")
       Left(DatabaseError)
     }
-
-  private def toFieldPair[A](name: String, value: A)(implicit w: Writes[A]): FieldAttr = name -> Json.toJsFieldJsValueWrapper(value)
 }
