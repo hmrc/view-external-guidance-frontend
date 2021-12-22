@@ -101,6 +101,7 @@ class GuidanceService @Inject() (
           Future.successful(Left(NotFoundError))
         }{pageNext =>
           logger.debug(s"Incoming Page: ${pageNext.id}, $url, current legalPageIds: ${sp.legalPageIds}")
+          val requestId: Option[String] = hc.requestId.map(_.value)
           if (sp.legalPageIds.isEmpty || sp.legalPageIds.contains(pageNext.id)){ // Wild card or fixed list of valid page ids
             val firstPageUrl: String = s"${sp.process.meta.processCode}${sp.process.startUrl.getOrElse("")}"
             val (backLink, historyUpdate, flowStackUpdate, labelUpdates) = transition(url, sp, previousPageByLink, firstPageUrl)
@@ -109,9 +110,9 @@ class GuidanceService @Inject() (
                                 backLink.fold(List.empty[String])(bl => List(sp.pageMap(bl.drop(sp.process.meta.processCode.length)).id))).distinct
             val session = GuidanceSession(sp.process, sp.answers, labels, flowStackUpdate.getOrElse(sp.flowStack),
                                           sp.continuationPool, sp.pageMap, legalPageIds, sp.pageUrl, backLink)
-            sessionRepository.saveUpdates(key, processCode, historyUpdate, flowStackUpdate, labelUpdates, legalPageIds, hc.requestId.map(_.value)).map {
+            sessionRepository.updateSessionAtPageStart(key, processCode, historyUpdate, flowStackUpdate, labelUpdates, legalPageIds, requestId).map {
               case Left(NotFoundError) =>
-                logger.error(s"TRANSACTION FAULT: saveUpdates _id=$key, requestId: ${hc.requestId.map(_.value)}")
+                logger.error(s"TRANSACTION FAULT: saveUpdates _id=$key, requestId: $requestId")
                 Left(TransactionFaultError)
               case Left(err) =>
                 logger.error(s"Unable to update session data, error = $err")
@@ -157,11 +158,12 @@ class GuidanceService @Inject() (
     pageRenderer.renderPagePostSubmit(ctx.page, ctx.labels, validatedAnswer) match {
       case Left(err) => Future.successful(Left(err))
       case Right((optionalNext, labels)) =>
+        val requestId: Option[String] = hc.requestId.map(_.value)
         optionalNext.fold[Future[RequestOutcome[(Option[String], Labels)]]](Future.successful(Right((None, labels)))){next =>
           logger.debug(s"Next page found at stanzaId: $next")
-          sessionRepository.saveFormPageState(ctx.sessionId, ctx.processCode, url, submittedAnswer, labels, List(next), hc.requestId.map(_.value)).map{
+          sessionRepository.updateSessionAfterFormSubmission(ctx.sessionId, ctx.processCode, url, submittedAnswer, labels, List(next), requestId).map{
             case Left(NotFoundError) =>
-              logger.error(s"TRANSACTION FAULT: saveFormPageState _id=${ctx.sessionId}, url: $url, answer: $validatedAnswer, requestId: ${hc.requestId.map(_.value)}")
+              logger.error(s"TRANSACTION FAULT: saveFormPageState _id=${ctx.sessionId}, url: $url, answer: $validatedAnswer, requestId: ${requestId}")
               Left(TransactionFaultError)
             case Left(err) =>
               logger.error(s"Failed to save updated labels, error = $err")
@@ -171,8 +173,9 @@ class GuidanceService @Inject() (
         }
     }
 
-  def savePageState(sessionId: String, processCode: String, labels: Labels)(implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[Unit]] =
-    sessionRepository.savePageState(sessionId, processCode, labels, hc.requestId.map(_.value)).map{
+  def savePageState(sessionId: String, processCode: String, labels: Labels)
+                   (implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[Unit]] =
+    sessionRepository.updateSessionAfterStdPage(sessionId, processCode, labels, hc.requestId.map(_.value)).map{
       case Left(NotFoundError) =>
         logger.error(s"TRANSACTION FAULT: saveLabels _id=$sessionId, requestId: ${hc.requestId.map(_.value)}")
         Left(TransactionFaultError)
@@ -191,8 +194,10 @@ class GuidanceService @Inject() (
           Left(InvalidProcessError)
         },
         page => {
-          val pageMapById: Map[String, PageDesc] = gs.pageMap.map{case (k, pn) => (pn.id, PageDesc(pn, s"${appConfig.baseUrl}/$processCode${k}"))}
-          val labelCache: Labels = LabelCache(gs.labels, Map(), gs.flowStack, gs.continuationPool, gs.process.timescales, messagesApi.preferred(Seq(lang)).apply)
+          val pageMapById: Map[String, PageDesc] =
+            gs.pageMap.map{case (k, pn) => (pn.id, PageDesc(pn, s"${appConfig.baseUrl}/$processCode${k}"))}
+          val labelCache: Labels =
+            LabelCache(gs.labels, Map(), gs.flowStack, gs.continuationPool, gs.process.timescales, messagesApi.preferred(Seq(lang)).apply)
           pageRenderer.renderPage(page, labelCache) match {
             case Left(err) => Left(err)
             case Right((visualStanzas, labels, dataInput)) =>

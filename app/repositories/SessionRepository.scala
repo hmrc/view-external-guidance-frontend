@@ -38,6 +38,7 @@ import org.mongodb.scala.model._
 import uk.gov.hmrc.mongo._
 import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 import scala.concurrent.{ExecutionContext, Future}
+import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats.Implicits._
 
 case class SessionKey(id: String, processCode: String)
 
@@ -89,10 +90,11 @@ trait SessionRepository extends SessionRepositoryConstants {
   def getGuidanceSession(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[Session]]
   def getResetGuidanceSession(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[GuidanceSession]]
   def set(key: String, process: Process, pageMap: Map[String, PageNext]): Future[RequestOutcome[Unit]]
-  def saveFormPageState(key: String, processCode: String, url: String, answer: String, labels: Labels, nextLegalPageIs: List[String], requestId: Option[String]): Future[RequestOutcome[Unit]]
-  def savePageState(key: String, processCode: String, labels: Labels, requestId: Option[String]): Future[RequestOutcome[Unit]]
-  def saveUpdates(key: String, processCode: String, pageHistory: Option[List[PageHistory]], flowStack: Option[List[FlowStage]],
-                  labelUpdates: List[Label], legalPageIds: List[String], requestId: Option[String]): Future[RequestOutcome[Unit]]
+  def updateSessionAfterFormSubmission(key: String, processCode: String, url: String, answer: String, labels: Labels, nextLegalPageIds: List[String],
+                                       requestId: Option[String]): Future[RequestOutcome[Unit]]
+  def updateSessionAfterStdPage(key: String, processCode: String, labels: Labels, requestId: Option[String]): Future[RequestOutcome[Unit]]
+  def updateSessionAtPageStart(key: String, processCode: String, pageHistory: Option[List[PageHistory]], flowStack: Option[List[FlowStage]],
+                                   labelUpdates: List[Label], legalPageIds: List[String], requestId: Option[String]): Future[RequestOutcome[Unit]]
 }
 
 object DefaultSessionRepository extends SessionRepositoryConstants
@@ -109,41 +111,12 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
                               .unique(false)
                               .expireAfter(config.timeoutInSeconds, TimeUnit.SECONDS))),
     extraCodecs = Seq(Codecs.playFormatCodec(SessionKey.format)),
-    replaceIndexes = false
+    replaceIndexes = true // Ensure an updated timeout from config is used
   ) with SessionRepository {
   val logger: Logger = Logger(getClass)
-  // override def ensureIndexes(implicit ec: ExecutionContext): Future[Seq[Boolean]] =
-  //   // If current configuration includes an update to the expiry period of the TTL index, drop the current index to allow its re-creation
-  //   collection.indexesManager.list().flatMap { indexes =>
-  //     indexes
-  //       .filter(idx =>
-  //         idx.name.contains(LastAccessedIndexName) &&
-  //         idx.options.getAs[BSONInteger](ExpiryAfterOptionName).fold(false)(_.as[Int] != config.timeoutInSeconds)
-  //       )
-  //       .map { _ =>
-  //         logger.warn(s"Dropping $LastAccessedIndexName ready for re-creation, due to configured timeout change")
-  //         collection.indexesManager.drop(LastAccessedIndexName).map(ret => logger.info(s"Drop of $LastAccessedIndexName index returned $ret"))
-  //       }
-
-  //     super.ensureIndexes
-  //   }
-
-  // override def indexes: Seq[Index] = {
-  //   logger.info(s"SessionRepository TTL set to ${config.timeoutInSeconds} seconds")
-    // Seq(IndexModel(IndexOptions().name("TtlExpiryFieldName")
-    //                             .unique(false)
-    //                             .background(true)
-    //                             .sparse(true)
-    //                             .expireAfter(config.timeoutInSeconds, TimeUnit.SECONDS)))
-      // Index(
-      //   Seq(TtlExpiryFieldName -> IndexType.Ascending),
-      //   name = Some(LastAccessedIndexName),
-      //   options = BSONDocument(ExpiryAfterOptionName -> config.timeoutInSeconds)
-      // )
-  // }
 
   def set(key: String, process: Process, pageMap: Map[String, PageNext]): Future[RequestOutcome[Unit]] =
-    collection.findOneAndReplace(equal("_id", Codecs.toBson(SessionKey(key, process.meta.processCode))),
+    collection.findOneAndReplace(equal("_id", SessionKey(key, process.meta.processCode)),
                                  Session(SessionKey(key, process.meta.processCode), process.meta.id, process, pageMap, Instant.now),
                                  FindOneAndReplaceOptions().upsert(true))
     .toFuture()
@@ -158,7 +131,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
     }
 
   def getGuidanceSessionById(key:String, processCode: String): Future[RequestOutcome[GuidanceSession]] =
-    collection.find(equal("_id", Codecs.toBson(SessionKey(key, processCode))))
+    collection.find(equal("_id", SessionKey(key, processCode)))
     .toFuture()
     .map{
       case Nil =>  Left(SessionNotFoundError)
@@ -172,10 +145,10 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
 
   def getGuidanceSession(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[Session]] =
     collection.findOneAndUpdate(
-      equal("_id", Codecs.toBson(SessionKey(key, processCode))),
-      requestId.fold(Updates.set(TtlExpiryFieldName, Codecs.toBson(Instant.now()))){rId =>
+      equal("_id", SessionKey(key, processCode)),
+      requestId.fold(Updates.set(TtlExpiryFieldName, Instant.now())){rId =>
         combine(
-          Updates.set(TtlExpiryFieldName, Codecs.toBson(Instant.now())),
+          Updates.set(TtlExpiryFieldName, Instant.now()),
           Updates.set(RequestId, rId)
         )
       }
@@ -194,9 +167,9 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
 
   def getResetGuidanceSession(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[GuidanceSession]] =
     collection.findOneAndUpdate(
-      equal("_id", Codecs.toBson(SessionKey(key, processCode))),
+      equal("_id", SessionKey(key, processCode)),
       combine((List(
-        Updates.set(TtlExpiryFieldName, Codecs.toBson(Instant.now())),
+        Updates.set(TtlExpiryFieldName, Instant.now()),
         Updates.set(LegalPageIdsKey, List[String]()),
         Updates.set(FlowStackKey, List[FlowStage]()),
         Updates.set(PageHistoryKey, List[PageHistory]()),
@@ -216,19 +189,19 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
       Left(DatabaseError)
     }
 
-  def saveFormPageState(key: String,
-                        processCode: String,
-                        url: String,
-                        answer: String,
-                        labels: Labels,
-                        nextLegalPageIds: List[String],
-                        requestId: Option[String]): Future[RequestOutcome[Unit]] =
+  def updateSessionAfterFormSubmission(key: String,
+                                       processCode: String,
+                                       url: String,
+                                       answer: String,
+                                       labels: Labels,
+                                       nextLegalPageIds: List[String],
+                                       requestId: Option[String]): Future[RequestOutcome[Unit]] =
     collection.findOneAndUpdate(
-      equal("_id", Codecs.toBson(SessionKey(key, processCode))),
+      equal("_id", SessionKey(key, processCode)),
       combine((List(
-        Updates.set(TtlExpiryFieldName, Codecs.toBson(Instant.now())),
+        Updates.set(TtlExpiryFieldName, Instant.now()),
         Updates.set(FlowStackKey, Codecs.toBson(labels.flowStack)),
-        Updates.set(s"${AnswersKey}.$url", answer),
+        Updates.set(s"${AnswersKey}.$url", Codecs.toBson(answer)),
         Updates.set(LegalPageIdsKey, Codecs.toBson(nextLegalPageIds))) ++
         labels.poolUpdates.toList.map(l => Updates.set(s"${ContinuationPoolKey}.${l._1}", Codecs.toBson(l._2))) ++
         labels.updatedLabels.values.map(l => Updates.set(s"${LabelsKey}.${l.name}", Codecs.toBson(l)))).toArray: _*
@@ -244,9 +217,9 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
       Left(DatabaseError)
     }
 
-  def savePageState(key: String, processCode: String, labels: Labels, requestId: Option[String]): Future[RequestOutcome[Unit]] =
+  def updateSessionAfterStdPage(key: String, processCode: String, labels: Labels, requestId: Option[String]): Future[RequestOutcome[Unit]] =
     collection.findOneAndUpdate(
-      equal("_id", Codecs.toBson(SessionKey(key, processCode))),
+      equal("_id", SessionKey(key, processCode)),
       combine((
         (labels.poolUpdates.toList.map(l => Updates.set(s"${ContinuationPoolKey}.${l._1}", Codecs.toBson(l._2))) ++
          labels.updatedLabels.values.map(l => Updates.set(s"${LabelsKey}.${l.name}", Codecs.toBson(l)))).toArray :+
@@ -263,17 +236,17 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
       Left(DatabaseError)
     }
 
-  def saveUpdates(key: String,
-                  processCode: String,
-                  pageHistory: Option[List[PageHistory]],
-                  flowStack: Option[List[FlowStage]],
-                  labelUpdates: List[Label],
-                  legalPageIds: List[String],
-                  requestId: Option[String]): Future[RequestOutcome[Unit]] =
+  def updateSessionAtPageStart(key: String,
+                               processCode: String,
+                               pageHistory: Option[List[PageHistory]],
+                               flowStack: Option[List[FlowStage]],
+                               labelUpdates: List[Label],
+                               legalPageIds: List[String],
+                               requestId: Option[String]): Future[RequestOutcome[Unit]] =
     collection.findOneAndUpdate(
-      equal("_id", Codecs.toBson(SessionKey(key, processCode))),
+      equal("_id", SessionKey(key, processCode)),
       combine((List(
-        Updates.set(TtlExpiryFieldName, Codecs.toBson(Instant.now())), Updates.set(LegalPageIdsKey, Codecs.toBson(legalPageIds))) ++
+        Updates.set(TtlExpiryFieldName, Instant.now()), Updates.set(LegalPageIdsKey, Codecs.toBson(legalPageIds))) ++
         pageHistory.fold[List[Bson]](Nil)(ph => List(Updates.set(PageHistoryKey, Codecs.toBson(ph)))) ++
         labelUpdates.map(l => Updates.set(s"${LabelsKey}.${l.name}", Codecs.toBson(l))) ++
         flowStack.fold[List[Bson]](Nil)(stack => List(Updates.set(FlowStackKey, Codecs.toBson(stack))))).toArray: _*

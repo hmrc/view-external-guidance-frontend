@@ -35,9 +35,9 @@ trait MockSessionRepository extends MockFactory {
         .set(_: String, _: Process, _: Map[String, PageNext]))
         .expects(key, process, pageMap)
 
-    def saveFormPageState(docId: String, processCode: String, url: String, answer: String, labels: Labels, nextLegalPageIds: List[String], requestId: Option[String]): CallHandler[Future[RequestOutcome[Unit]]] =
+    def updateSessionAfterFormSubmission(docId: String, processCode: String, url: String, answer: String, labels: Labels, nextLegalPageIds: List[String], requestId: Option[String]): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockSessionRepository
-        .saveFormPageState(_: String, _: String, _: String, _: String, _: Labels, _: List[String], _: Option[String]))
+        .updateSessionAfterFormSubmission(_: String, _: String, _: String, _: String, _: Labels, _: List[String], _: Option[String]))
         .expects(docId, processCode, url, answer, *, nextLegalPageIds, requestId)
 
     def getGuidanceSessionById(key: String, processCode: String): CallHandler[Future[RequestOutcome[GuidanceSession]]] =
@@ -55,20 +55,20 @@ trait MockSessionRepository extends MockFactory {
         .getResetGuidanceSession(_: String, _: String, _: Option[String]))
         .expects(key, processCode, requestId)
 
-    def savePageState(key: String, processCode: String, labels: Labels, requestId: Option[String]): CallHandler[Future[RequestOutcome[Unit]]] =
+    def updateSessionAfterStdPage(key: String, processCode: String, labels: Labels, requestId: Option[String]): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockSessionRepository
-        .savePageState(_: String, _: String, _: Labels, _: Option[String]))
+        .updateSessionAfterStdPage(_: String, _: String, _: Labels, _: Option[String]))
         .expects(key, processCode, *, requestId)
 
-    def saveUpdates(key: String,
-                    processCode: String,
-                    pageHistory: Option[List[PageHistory]],
-                    flowStack: Option[List[FlowStage]],
-                    labelUpdates: List[Label],
-                    legalPageIds: List[String],
-                    requestId: Option[String]): CallHandler[Future[RequestOutcome[Unit]]] =
+    def updateSessionAtPageStart(key: String,
+                                 processCode: String,
+                                 pageHistory: Option[List[PageHistory]],
+                                 flowStack: Option[List[FlowStage]],
+                                 labelUpdates: List[Label],
+                                 legalPageIds: List[String],
+                                 requestId: Option[String]): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockSessionRepository
-        .saveUpdates(_: String, _: String, _: Option[List[PageHistory]], _: Option[List[FlowStage]], _: List[Label], _: List[String], _: Option[String]))
+        .updateSessionAtPageStart(_: String, _: String, _: Option[List[PageHistory]], _: Option[List[FlowStage]], _: List[Label], _: List[String], _: Option[String]))
         .expects(key, processCode, pageHistory, flowStack, labelUpdates, legalPageIds, requestId)
   }
 }
