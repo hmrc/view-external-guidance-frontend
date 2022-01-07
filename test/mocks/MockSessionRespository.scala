@@ -30,37 +30,37 @@ trait MockSessionRepository extends MockFactory {
 
   object MockSessionRepository {
 
-    def set(key: String, process: Process, pageMap: Map[String, PageNext]): CallHandler[Future[RequestOutcome[Unit]]] =
+    def create(key: String, process: Process, pageMap: Map[String, PageNext]): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockSessionRepository
-        .set(_: String, _: Process, _: Map[String, PageNext]))
+        .create(_: String, _: Process, _: Map[String, PageNext]))
         .expects(key, process, pageMap)
 
-    def updateSessionAfterFormSubmission(docId: String, processCode: String, url: String, answer: String, labels: Labels, nextLegalPageIds: List[String], requestId: Option[String]): CallHandler[Future[RequestOutcome[Unit]]] =
+    def updateAfterFormSubmission(docId: String, processCode: String, url: String, answer: String, labels: Labels, nextLegalPageIds: List[String], requestId: Option[String]): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockSessionRepository
-        .updateSessionAfterFormSubmission(_: String, _: String, _: String, _: String, _: Labels, _: List[String], _: Option[String]))
+        .updateAfterFormSubmission(_: String, _: String, _: String, _: String, _: Labels, _: List[String], _: Option[String]))
         .expects(docId, processCode, url, answer, *, nextLegalPageIds, requestId)
 
-    def getGuidanceSessionById(key: String, processCode: String): CallHandler[Future[RequestOutcome[GuidanceSession]]] =
+    def getById(key: String, processCode: String): CallHandler[Future[RequestOutcome[GuidanceSession]]] =
       (mockSessionRepository
-        .getGuidanceSessionById(_: String, _: String))
+        .getById(_: String, _: String))
         .expects(key, processCode)
 
-    def getGuidanceSession(key: String, processCode: String, requestId: Option[String]): CallHandler[Future[RequestOutcome[Session]]] =
+    def get(key: String, processCode: String, requestId: Option[String]): CallHandler[Future[RequestOutcome[Session]]] =
       (mockSessionRepository
-        .getGuidanceSession(_: String, _: String, _: Option[String]))
+        .get(_: String, _: String, _: Option[String]))
         .expects(key, processCode, requestId)
 
-    def getResetGuidanceSession(key: String, processCode: String, requestId: Option[String]): CallHandler[Future[RequestOutcome[GuidanceSession]]] =
+    def reset(key: String, processCode: String, requestId: Option[String]): CallHandler[Future[RequestOutcome[GuidanceSession]]] =
       (mockSessionRepository
-        .getResetGuidanceSession(_: String, _: String, _: Option[String]))
+        .reset(_: String, _: String, _: Option[String]))
         .expects(key, processCode, requestId)
 
-    def updateSessionAfterStdPage(key: String, processCode: String, labels: Labels, requestId: Option[String]): CallHandler[Future[RequestOutcome[Unit]]] =
+    def updateAfterStandardPage(key: String, processCode: String, labels: Labels, requestId: Option[String]): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockSessionRepository
-        .updateSessionAfterStdPage(_: String, _: String, _: Labels, _: Option[String]))
+        .updateAfterStandardPage(_: String, _: String, _: Labels, _: Option[String]))
         .expects(key, processCode, *, requestId)
 
-    def updateSessionAtPageStart(key: String,
+    def updateForNewPage(key: String,
                                  processCode: String,
                                  pageHistory: Option[List[PageHistory]],
                                  flowStack: Option[List[FlowStage]],
@@ -68,7 +68,7 @@ trait MockSessionRepository extends MockFactory {
                                  legalPageIds: List[String],
                                  requestId: Option[String]): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockSessionRepository
-        .updateSessionAtPageStart(_: String, _: String, _: Option[List[PageHistory]], _: Option[List[FlowStage]], _: List[Label], _: List[String], _: Option[String]))
+        .updateForNewPage(_: String, _: String, _: Option[List[PageHistory]], _: Option[List[FlowStage]], _: List[Label], _: List[String], _: Option[String]))
         .expects(key, processCode, pageHistory, flowStack, labelUpdates, legalPageIds, requestId)
   }
 }

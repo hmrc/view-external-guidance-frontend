@@ -86,15 +86,15 @@ trait SessionRepositoryConstants {
 }
 
 trait SessionRepository extends SessionRepositoryConstants {
-  def getGuidanceSessionById(key: String, processCode: String): Future[RequestOutcome[GuidanceSession]]
-  def getGuidanceSession(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[Session]]
-  def getResetGuidanceSession(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[GuidanceSession]]
-  def set(key: String, process: Process, pageMap: Map[String, PageNext]): Future[RequestOutcome[Unit]]
-  def updateSessionAfterFormSubmission(key: String, processCode: String, url: String, answer: String, labels: Labels, nextLegalPageIds: List[String],
-                                       requestId: Option[String]): Future[RequestOutcome[Unit]]
-  def updateSessionAfterStdPage(key: String, processCode: String, labels: Labels, requestId: Option[String]): Future[RequestOutcome[Unit]]
-  def updateSessionAtPageStart(key: String, processCode: String, pageHistory: Option[List[PageHistory]], flowStack: Option[List[FlowStage]],
-                                   labelUpdates: List[Label], legalPageIds: List[String], requestId: Option[String]): Future[RequestOutcome[Unit]]
+  def create(key: String, process: Process, pageMap: Map[String, PageNext]): Future[RequestOutcome[Unit]]
+  def getById(key: String, processCode: String): Future[RequestOutcome[GuidanceSession]]
+  def get(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[Session]]
+  def reset(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[GuidanceSession]]
+  def updateForNewPage(key: String, processCode: String, pageHistory: Option[List[PageHistory]], flowStack: Option[List[FlowStage]],
+                       labelUpdates: List[Label], legalPageIds: List[String], requestId: Option[String]): Future[RequestOutcome[Unit]]
+  def updateAfterStandardPage(key: String, processCode: String, labels: Labels, requestId: Option[String]): Future[RequestOutcome[Unit]]
+  def updateAfterFormSubmission(key: String, processCode: String, url: String, answer: String, labels: Labels, nextLegalPageIds: List[String],
+                                requestId: Option[String]): Future[RequestOutcome[Unit]]
 }
 
 object DefaultSessionRepository extends SessionRepositoryConstants
@@ -115,12 +115,13 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
   ) with SessionRepository {
   val logger: Logger = Logger(getClass)
 
-  def set(key: String, process: Process, pageMap: Map[String, PageNext]): Future[RequestOutcome[Unit]] =
+  def create(key: String, process: Process, pageMap: Map[String, PageNext]): Future[RequestOutcome[Unit]] =
     collection.findOneAndReplace(equal("_id", SessionKey(key, process.meta.processCode)),
                                  Session(SessionKey(key, process.meta.processCode), process.meta.id, process, pageMap, Instant.now),
                                  FindOneAndReplaceOptions().upsert(true))
-    .toFuture()
-    .map{_ =>
+    .toFutureOption
+    .map{
+      case _ =>
       logger.warn(s"Session repo creation (key $key) complete for ${process.meta.id}, ${process.meta.processCode}, page count ${pageMap.size}")
       Right(())
     }
@@ -130,20 +131,21 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
         Left(DatabaseError)
     }
 
-  def getGuidanceSessionById(key:String, processCode: String): Future[RequestOutcome[GuidanceSession]] =
-    collection.find(equal("_id", SessionKey(key, processCode)))
-    .toFuture()
-    .map{
-      case Nil =>  Left(SessionNotFoundError)
-      case sp :: _ => Right(GuidanceSession(sp.process,sp.answers,sp.labels,sp.flowStack,sp.continuationPool,sp.pageMap,sp.legalPageIds,sp.pageUrl,None))
-    }
-    .recover {
-      case lastError =>
-      logger.error(s"Error $lastError occurred in method get(key: String) attempting to retrieve session $key")
-      Left(DatabaseError)
-    }
+  def getById(key:String, processCode: String): Future[RequestOutcome[GuidanceSession]] =
+    collection
+      .find(equal("_id", SessionKey(key, processCode)))
+      .headOption()
+      .map{
+        case None =>  Left(SessionNotFoundError)
+        case Some(sp) => Right(GuidanceSession(sp.process,sp.answers,sp.labels,sp.flowStack,sp.continuationPool,sp.pageMap,sp.legalPageIds,sp.pageUrl,None))
+      }
+      .recover {
+        case lastError =>
+        logger.error(s"Error $lastError occurred in method get(key: String) attempting to retrieve session $key")
+        Left(DatabaseError)
+      }
 
-  def getGuidanceSession(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[Session]] =
+  def get(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[Session]] =
     collection.findOneAndUpdate(
       equal("_id", SessionKey(key, processCode)),
       requestId.fold(Updates.set(TtlExpiryFieldName, Instant.now())){rId =>
@@ -165,7 +167,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
       Left(DatabaseError)
     }
 
-  def getResetGuidanceSession(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[GuidanceSession]] =
+  def reset(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[GuidanceSession]] =
     collection.findOneAndUpdate(
       equal("_id", SessionKey(key, processCode)),
       combine((List(
@@ -189,13 +191,13 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
       Left(DatabaseError)
     }
 
-  def updateSessionAfterFormSubmission(key: String,
-                                       processCode: String,
-                                       url: String,
-                                       answer: String,
-                                       labels: Labels,
-                                       nextLegalPageIds: List[String],
-                                       requestId: Option[String]): Future[RequestOutcome[Unit]] =
+  def updateAfterFormSubmission( key: String,
+                                 processCode: String,
+                                 url: String,
+                                 answer: String,
+                                 labels: Labels,
+                                 nextLegalPageIds: List[String],
+                                 requestId: Option[String]): Future[RequestOutcome[Unit]] =
     collection.findOneAndUpdate(
       equal("_id", SessionKey(key, processCode)),
       combine((List(
@@ -217,7 +219,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
       Left(DatabaseError)
     }
 
-  def updateSessionAfterStdPage(key: String, processCode: String, labels: Labels, requestId: Option[String]): Future[RequestOutcome[Unit]] =
+  def updateAfterStandardPage(key: String, processCode: String, labels: Labels, requestId: Option[String]): Future[RequestOutcome[Unit]] =
     collection.findOneAndUpdate(
       equal("_id", SessionKey(key, processCode)),
       combine((
@@ -236,13 +238,13 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
       Left(DatabaseError)
     }
 
-  def updateSessionAtPageStart(key: String,
-                               processCode: String,
-                               pageHistory: Option[List[PageHistory]],
-                               flowStack: Option[List[FlowStage]],
-                               labelUpdates: List[Label],
-                               legalPageIds: List[String],
-                               requestId: Option[String]): Future[RequestOutcome[Unit]] =
+  def updateForNewPage(key: String,
+                       processCode: String,
+                       pageHistory: Option[List[PageHistory]],
+                       flowStack: Option[List[FlowStage]],
+                       labelUpdates: List[Label],
+                       legalPageIds: List[String],
+                       requestId: Option[String]): Future[RequestOutcome[Unit]] =
     collection.findOneAndUpdate(
       equal("_id", SessionKey(key, processCode)),
       combine((List(
