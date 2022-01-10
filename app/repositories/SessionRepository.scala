@@ -199,7 +199,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
                                  nextLegalPageIds: List[String],
                                  requestId: Option[String]): Future[RequestOutcome[Unit]] =
     collection.findOneAndUpdate(
-      equal("_id", SessionKey(key, processCode)),
+      requestId.fold(equal("_id", SessionKey(key, processCode)))(rId => and(equal("_id", SessionKey(key, processCode)), equal(RequestId, rId))),
       combine((List(
         Updates.set(TtlExpiryFieldName, Instant.now()),
         Updates.set(FlowStackKey, Codecs.toBson(labels.flowStack)),
@@ -221,7 +221,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
 
   def updateAfterStandardPage(key: String, processCode: String, labels: Labels, requestId: Option[String]): Future[RequestOutcome[Unit]] =
     collection.findOneAndUpdate(
-      equal("_id", SessionKey(key, processCode)),
+      requestId.fold(equal("_id", SessionKey(key, processCode)))(rId => and(equal("_id", SessionKey(key, processCode)), equal(RequestId, rId))),
       combine((
         (labels.poolUpdates.toList.map(l => Updates.set(s"${ContinuationPoolKey}.${l._1}", Codecs.toBson(l._2))) ++
          labels.updatedLabels.values.map(l => Updates.set(s"${LabelsKey}.${l.name}", Codecs.toBson(l)))).toArray :+
@@ -246,7 +246,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
                        legalPageIds: List[String],
                        requestId: Option[String]): Future[RequestOutcome[Unit]] =
     collection.findOneAndUpdate(
-      equal("_id", SessionKey(key, processCode)),
+      requestId.fold(equal("_id", SessionKey(key, processCode)))(rId => and(equal("_id", SessionKey(key, processCode)), equal(RequestId, rId))),
       combine((List(
         Updates.set(TtlExpiryFieldName, Instant.now()), Updates.set(LegalPageIdsKey, Codecs.toBson(legalPageIds))) ++
         pageHistory.fold[List[Bson]](Nil)(ph => List(Updates.set(PageHistoryKey, Codecs.toBson(ph)))) ++
