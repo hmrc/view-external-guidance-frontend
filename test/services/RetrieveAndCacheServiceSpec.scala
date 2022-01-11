@@ -80,7 +80,7 @@ class RetrieveAndCacheServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
       val processWithUpdatedId = process.copy(meta = process.meta.copy( id = uuid))
 
       MockSessionRepository
-        .set(uuid, processWithUpdatedId, Map("/first-page" -> PageNext("start"), "/page-1" -> PageNext("1"), "/last-page" -> PageNext("2")))
+        .create(uuid, processWithUpdatedId, Map("/first-page" -> PageNext("start"), "/page-1" -> PageNext("1"), "/last-page" -> PageNext("2")))
         .returns(Future.successful(Right(())))
 
       MockPageBuilder
@@ -104,7 +104,7 @@ class RetrieveAndCacheServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
         .returns(Future.successful(Right(processWithProcessCode)))
 
       MockSessionRepository
-        .set(sessionRepoId, processWithProcessCode,Map("/first-page" -> PageNext("start"), "/page-1" -> PageNext("1"), "/last-page" -> PageNext("2")))
+        .create(sessionRepoId, processWithProcessCode,Map("/first-page" -> PageNext("start"), "/page-1" -> PageNext("1"), "/last-page" -> PageNext("2")))
         .returns(Future.successful(Right(())))
 
       MockPageBuilder
@@ -128,7 +128,7 @@ class RetrieveAndCacheServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
         .returns(Future.successful(Right(processWithProcessCode)))
 
       MockSessionRepository
-        .set(sessionRepoId, processWithProcessCode, Map("/first-page" -> PageNext("start"), "/page-1" -> PageNext("1"), "/last-page" -> PageNext("2")))
+        .create(sessionRepoId, processWithProcessCode, Map("/first-page" -> PageNext("start"), "/page-1" -> PageNext("1"), "/last-page" -> PageNext("2")))
         .returns(Future.successful(Right(())))
 
       MockPageBuilder

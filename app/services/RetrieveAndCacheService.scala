@@ -82,7 +82,7 @@ class RetrieveAndCacheService @Inject() (
               pge.linked.foreach(id => logger.debug(s"\tlnk:=> $id, ${urlMap(id)}"))
             }
           }
-          sessionRepository.set(docId, process, pages.map(p => p.url -> PageNext(p.id, p.next.toList, p.linked.toList)).toMap).map {
+          sessionRepository.create(docId, process, pages.map(p => p.url -> PageNext(p.id, p.next.toList, p.linked.toList)).toMap).map{
             case Right(_) => Right((pages.head.url, process.meta.processCode))
             case Left(err) =>
               logger.error(s"Failed to store new parsed process in session repository, $err")

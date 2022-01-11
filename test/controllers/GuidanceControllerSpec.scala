@@ -264,7 +264,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
 
     "Return SEE_OTHER after no session" in new TestWithRealGuidanceService {
       MockSessionRepository
-        .getResetGuidanceSession(sessionId, processCode, requestId)
+        .reset(sessionId, processCode, requestId)
         .returns(Future.successful(Left(NotFoundError)))
 
       val result = target.sessionRestart(processCode)(fakeRequest)
@@ -275,7 +275,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
 
     "Return SEE_OTHER after wrong session found" in new TestWithRealGuidanceService {
       MockSessionRepository
-        .getResetGuidanceSession(sessionId, processCode, requestId)
+        .reset(sessionId, processCode, requestId)
         .returns(Future.successful(Left(SessionNotFoundError)))
 
       val result = target.sessionRestart(processCode)(fakeRequest)
@@ -292,7 +292,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
                           .withCSRFToken
 
       MockSessionRepository
-        .getResetGuidanceSession(processId, processCode, requestId)
+        .reset(processId, processCode, requestId)
         .returns(Future.successful(Left(ExpectationFailedError)))
 
       val result = target.sessionRestart(processCode)(fakeRequest)
@@ -393,13 +393,13 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
         .returns(Future.successful(Right(GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None))))
 
       MockSessionRepository
-        .getGuidanceSession(processId, process.meta.processCode, requestId)
+        .get(processId, process.meta.processCode, requestId)
         .returns(Future.successful(Right(
           Session(SessionKey(processId, process.meta.processCode), process.meta.id, process, Map(), Nil, Map(), Map(), Map(), List(PageHistory(s"tell-hmrc$url",Nil)), Nil, None, Instant.now)
         )))
 
       MockSessionRepository
-        .getGuidanceSessionById(processId, process.meta.processCode)
+        .getById(processId, process.meta.processCode)
         .returns(Future.successful(Right(
           GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None)
         )))
@@ -425,7 +425,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
         .returns(Future.successful(Left(IllegalPageSubmissionError)))
 
       MockSessionRepository
-        .getGuidanceSession(processId, process.meta.processCode, requestId)
+        .get(processId, process.meta.processCode, requestId)
         .returns(Future.successful(Right(
           Session(SessionKey(processId, process.meta.processCode), process.meta.id, process, Map(), Nil, Map(),
                   Map(url -> PageNext("36", Nil, Nil), outOfSequence -> PageNext("80", Nil, Nil)), Map(),
@@ -433,7 +433,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
         )))
 
       MockSessionRepository
-        .getGuidanceSessionById(processId, process.meta.processCode)
+        .getById(processId, process.meta.processCode)
         .returns(Future.successful(Right(session)))
 
       override val fakeRequest = FakeRequest("POST", outOfSequence)
@@ -453,7 +453,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
         .returns(Future.successful(Left(IllegalPageSubmissionError)))
 
       MockSessionRepository
-        .getGuidanceSession(processId, process.meta.processCode, requestId)
+        .get(processId, process.meta.processCode, requestId)
         .returns(Future.successful(Right(
           Session(SessionKey(processId, process.meta.processCode), process.meta.id, process, Map(), Nil, Map(),
                   Map(url -> PageNext("36", Nil, Nil)), Map(),
@@ -461,7 +461,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
         )))
 
       MockSessionRepository
-        .getGuidanceSessionById(processId, process.meta.processCode)
+        .getById(processId, process.meta.processCode)
         .returns(Future.successful(Right(session)))
 
       override val fakeRequest = FakeRequest("POST", "some-other-url")
@@ -481,11 +481,11 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
         .returns(Future.successful(Left(SessionNotFoundError)))
 
       MockSessionRepository
-        .getGuidanceSession(processId, "blah", requestId)
+        .get(processId, "blah", requestId)
         .returns(Future.successful(Left(SessionNotFoundError)))
 
       MockSessionRepository
-        .getGuidanceSessionById(processId, process.meta.processCode)
+        .getById(processId, process.meta.processCode)
         .returns(Future.successful(Right(session)))
 
       override val fakeRequest = FakeRequest("POST", path)
@@ -504,11 +504,11 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
         .returns(Future.successful(Left(IllegalPageSubmissionError)))
 
       MockSessionRepository
-        .getGuidanceSession(processId, "blah", requestId)
+        .get(processId, "blah", requestId)
         .returns(Future.successful(Left(DatabaseError)))
 
       MockSessionRepository
-        .getGuidanceSessionById(processId, process.meta.processCode)
+        .getById(processId, process.meta.processCode)
         .returns(Future.successful(Left(DatabaseError)))
 
       override val fakeRequest = FakeRequest("POST", path)
@@ -1449,11 +1449,11 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
       val process = prototypeJson.as[Process]
 
       MockSessionRepository
-        .getGuidanceSession(sessionId, process.meta.processCode, requestId)
+        .get(sessionId, process.meta.processCode, requestId)
         .returns(Future.successful(Left(TransactionFaultError)))
 
       MockSessionRepository
-        .getGuidanceSessionById(sessionId, process.meta.processCode)
+        .getById(sessionId, process.meta.processCode)
         .returns(Future.successful(Right(
           GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, Some(path), None)
         )))
@@ -1473,11 +1473,11 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
       val process = prototypeJson.as[Process]
 
       MockSessionRepository
-        .getGuidanceSession(sessionId, processCode, requestId)
+        .get(sessionId, processCode, requestId)
         .returns(Future.successful(Left(TransactionFaultError)))
 
       MockSessionRepository
-        .getGuidanceSessionById(sessionId, processCode)
+        .getById(sessionId, processCode)
         .returns(Future.successful(Right(
           GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None)
         )))
