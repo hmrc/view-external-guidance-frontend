@@ -71,7 +71,7 @@ class SessionFSMSpec extends BaseSpec {
 
   "SessionFSM with no flowStack" must {
     "Return no backlink or updates for any url with no page history, forceForward false (Nil)" in new NoFlowStackTest {
-      verify(fsm("/start", Session(SessionKey("id", process.meta.processCode), "processId", process), false, "/start"),
+      verify(fsm("/start", Session(SessionKey("id", process.meta.processCode), "processId", process, Nil), false, "/start"),
              None,
              Some(List(PageHistory("/start", Nil))),
              None,
@@ -79,7 +79,7 @@ class SessionFSMSpec extends BaseSpec {
     }
 
     "Return no backlink or updates for any url with no page history, forceForward true (Nil)" in new NoFlowStackTest {
-      verify(fsm("/start", Session(SessionKey("id", process.meta.processCode), "processId", process), true, "/start"),
+      verify(fsm("/start", Session(SessionKey("id", process.meta.processCode), "processId", process, Nil), true, "/start"),
              None,
              Some(List(PageHistory("/start", Nil))),
              None,
@@ -214,7 +214,7 @@ class SessionFSMSpec extends BaseSpec {
 
   "SessionFSM with flowStack" must {
     "Return no backlink or updates for any url with no page history, forceForward false (Nil)" in new FlowStackTest {
-      verify(fsm("/start", Session(SessionKey("id", process.meta.processCode), "processId", process), false, "/start"),
+      verify(fsm("/start", Session(SessionKey("id", process.meta.processCode), "processId", process, Nil), false, "/start"),
              None,
              Some(List(PageHistory("/start", Nil))),
              None,
@@ -222,7 +222,7 @@ class SessionFSMSpec extends BaseSpec {
     }
 
     "Return no backlink or updates for any url with no page history, forceForward true (Nil)" in new FlowStackTest {
-      verify(fsm("/start", Session(SessionKey("id", process.meta.processCode), "processId", process), true, "/start"),
+      verify(fsm("/start", Session(SessionKey("id", process.meta.processCode), "processId", process, Nil), true, "/start"),
              None,
              Some(List(PageHistory("/start", Nil))),
              None,

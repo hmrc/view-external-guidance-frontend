@@ -53,12 +53,9 @@ class RetrieveAndCacheService @Inject() (
 
   def retrieveAndCacheApprovalByPageUrl(url: String)(processId: String, docId: String)
                               (implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[(String,String)]] =
-    retrieveAndCache(processId, docId, connector.approvalProcess).map{
-      case Right((_, processCode)) => Right((url, processCode))
-      case err @ Left(_) => err
-    }
+    retrieveAndCache(processId, docId, connector.approvalProcess, Some(url))
 
-  private def retrieveAndCache(processIdentifier: String, docId: String, retrieveProcessById: Retrieve[Process])(
+  private def retrieveAndCache(processIdentifier: String, docId: String, retrieveProcessById: Retrieve[Process], url: Option[String] = None)(
     implicit context: ExecutionContext
   ): Future[RequestOutcome[(String,String)]] =
     retrieveProcessById(processIdentifier).flatMap {
@@ -82,8 +79,11 @@ class RetrieveAndCacheService @Inject() (
               pge.linked.foreach(id => logger.debug(s"\tlnk:=> $id, ${urlMap(id)}"))
             }
           }
-          sessionRepository.create(docId, process, pages.map(p => p.url -> PageNext(p.id, p.next.toList, p.linked.toList)).toMap).map{
-            case Right(_) => Right((pages.head.url, process.meta.processCode))
+          val pageMap: Map[String, PageNext] = pages.map(p => p.url -> PageNext(p.id, p.next.toList, p.linked.toList)).toMap
+          val startPageUrl: String = url.getOrElse(pages.head.url)
+          val startPageId: Option[String] = pageMap.get(startPageUrl).map(_.id)
+          sessionRepository.create(docId, process, pageMap, startPageId.toList).map{
+            case Right(_) => Right((startPageUrl, process.meta.processCode))
             case Left(err) =>
               logger.error(s"Failed to store new parsed process in session repository, $err")
               Left(err)
