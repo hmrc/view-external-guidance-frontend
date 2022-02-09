@@ -50,4 +50,5 @@ object MockAppConfig extends AppConfig {
   val hostBaseUrl: String = s"${host}${baseUrl}"
   val adminHostBaseUrl: String = s"${adminHost}${baseUrl}"
   val pageStanzaLimit: Int = 1000
+  val optimizelyProjectId: Option[String] = None
 }
