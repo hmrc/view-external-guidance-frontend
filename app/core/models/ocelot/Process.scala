@@ -27,6 +27,7 @@ object SecuredProcess {
   val PassPhrasePageId = "passphrasepage"
   val PassPhraseLabelName = "_GuidancePassPhrase"
   val PassPhraseResponseLabelName = "_GuidancePassPhraseResponse"
+  val PhaseBannerPhase = "_BetaPhaseBanner"
 }
 
 case class Process(meta: Meta, flow: Map[String, Stanza], phrases: Vector[Phrase], links: Vector[Link], timescales: Map[String, Int] = Map()) {
@@ -41,6 +42,10 @@ case class Process(meta: Meta, flow: Map[String, Stanza], phrases: Vector[Phrase
   lazy val valueStanzaPassPhrase: Option[String] = flow.values
       .collect{case vs: ValueStanza => vs.values}.flatten
       .collectFirst{case Value(_, PassPhraseLabelName, value) => value}
+  lazy val betaPhaseBanner: Boolean = flow.values
+      .collect{case vs: ValueStanza => vs.values}.flatten
+      .collectFirst{case Value(_, PhaseBannerPhase, value) => value}
+      .isDefined
 }
 
 object Process {

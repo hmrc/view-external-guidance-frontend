@@ -55,34 +55,36 @@ class SessionTimeoutPageController @Inject()(appConfig: AppConfig,
               logger.warn(s"Unexpected process code encountered when removing session ($id) after timeout warning. " +
                 s"Expected code $processCode; actual code ${session.process.meta.processCode}")
               // Session not as expected, user must be running another piece of guidance, signal answers deleted
-              Future.successful(Ok(createDeleteYourAnswersResponse(messages("session.timeout.header.title"), processCode)).withNewSession)
+              Future.successful(Ok(createDeleteYourAnswersResponse(messages("session.timeout.header.title"), processCode, session.process.betaPhaseBanner)).withNewSession)
             case Right(session) =>
-              Future.successful(Ok(createDeleteYourAnswersResponse(session.process.title.value(messages.lang), processCode)).withNewSession)
+              Future.successful(Ok(createDeleteYourAnswersResponse(session.process.title.value(messages.lang), processCode, session.process.betaPhaseBanner)).withNewSession)
             case Left(SessionNotFoundError) =>
               logger.warn(s"Session Timeout ($id) - retrieving processCode $processCode returned NotFound, displaying deleted your answers to user")
-              Future.successful(Ok(createDeleteYourAnswersResponse(messages("session.timeout.header.title"), processCode)).withNewSession)
+              Future.successful(Ok(createDeleteYourAnswersResponse(messages("session.timeout.header.title"), processCode, false)).withNewSession)
             case Left(err) =>
               logger.error(s"Error $err occurred retrieving process context for process $processCode when removing session ($id)")
-              Future.successful(InternalServerError(errorHandler.internalServerErrorTemplateWithProcessCode(Some(processCode))).withNewSession)
+              Future.successful(InternalServerError(errorHandler.internalServerErrorTemplateWithProcessCode(Some(processCode), false)).withNewSession)
           }
         case _ =>
-          Future.successful(Ok(createYourSessionHasExpiredResponse(messages("session.timeout.header.title"), processCode)).withNewSession)
+          Future.successful(Ok(createYourSessionHasExpiredResponse(messages("session.timeout.header.title"), processCode, false)).withNewSession)
       }
     }
 
-  def createDeleteYourAnswersResponse(processTitle: String, processCode: String)(implicit request: Request[_]): Html =
+  def createDeleteYourAnswersResponse(processTitle: String, processCode: String, betaPhaseBanner: Boolean)(implicit request: Request[_]): Html =
     delete_answers_view(
       processTitle,
       Some(processCode),
       None,
-      s"${appConfig.baseUrl}/$processCode")
+      s"${appConfig.baseUrl}/$processCode",
+      betaPhaseBanner)
 
-  def createYourSessionHasExpiredResponse(processTitle: String, processCode: String)(implicit request: Request[_]): Html =
+  def createYourSessionHasExpiredResponse(processTitle: String, processCode: String, betaPhaseBanner: Boolean)(implicit request: Request[_]): Html =
     session_timeout_view(
       processTitle,
       Some(processCode),
       None,
-      s"${appConfig.baseUrl}/$processCode")
+      s"${appConfig.baseUrl}/$processCode",
+      betaPhaseBanner)
 
   /**
     * If last request update is available check if session has timed out

@@ -22,9 +22,9 @@
         hmrcHeading: HmrcPageHeading,
         appConfig: AppConfig)
 
-@(pageTitle: String, heading: String, message: String, processCode: Option[String])(implicit request: Request[_], messages: Messages)
+@(pageTitle: String, heading: String, message: String, processCode: Option[String], betaPhaseBanner: Boolean)(implicit request: Request[_], messages: Messages)
 
-@layout(pageTitle, messages("service.name"), processCode, enableTimeout = false) {
+@layout(pageTitle, messages("service.name"), processCode, betaPhaseBanner = betaPhaseBanner, enableTimeout = false) {
  @hmrcHeading(PageHeading(heading))
  <p>@message</p>
 }

@@ -33,7 +33,7 @@
 
 @implicitCtx = @{ctx}
 
-@layout(pageTitle(page), ctx.processTitle.asString, Some(ctx.processCode), ctx.processStartUrl, ctx.backLink) {
+@layout(pageTitle(page), ctx.processTitle.asString, Some(ctx.processCode), ctx.processStartUrl, ctx.backLink, ctx.betaPhaseBanner) {
 
   @components.error_summary(page.formComponent, inputName, form)
 

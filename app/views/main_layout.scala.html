@@ -39,6 +39,7 @@
   processCode: Option[String] = None,
   startUrl: Option[String] = None,
   backUrl: Option[String] = None,
+  betaPhaseBanner: Boolean = false,
   enableTimeout: Boolean = true
 )(contentBlock: Html)(implicit request: Request[_], messages: Messages)
 
@@ -49,12 +50,14 @@
 }
 
 @beforeContentBlock = {
-    @phaseBanner(PhaseBanner(
-        tag = Some(Tag(
-            content = Text(messages("service.phaseName"))
-        )),
-content = HtmlContent(s"""${messages("feedback.before")} <a class='govuk-link' href="${appConfig.feedbackUrl}">${messages("feedback.linkLabel")}</a> ${messages("feedback.after")}""")
-    ))
+    @if(betaPhaseBanner) {
+        @phaseBanner(PhaseBanner(
+            tag = Some(Tag(
+                content = Text(messages("service.phaseName"))
+            )),
+        content = HtmlContent(s"""${messages("feedback.before")} <a class='govuk-link' href="${appConfig.feedbackUrl}">${messages("feedback.linkLabel")}</a> ${messages("feedback.after")}""")
+        ))
+    }
     @hmrcLanguageSelect(
         LanguageSelect(if (messages.lang.language == "en") En else Cy,
             En -> s"${appConfig.baseUrl}/language/english",
