@@ -56,7 +56,8 @@ class SessionTimeoutSpec extends BaseSpec with ViewFns with ViewSpec with GuiceO
         processTitle,
         Some(processCode),
         Some(startUrl),
-        buttonTarget)(fakeRequest, messages))
+        buttonTarget,
+        false)(fakeRequest, messages))
 
       val pageTitleElement: Element = getSingleElementByTag(doc, "title")
 
@@ -108,7 +109,8 @@ class SessionTimeoutSpec extends BaseSpec with ViewFns with ViewSpec with GuiceO
         processTitle,
         Some(processCode),
         Some(startUrl),
-        buttonTarget)(fakeRequest, messages))
+        buttonTarget,
+        false)(fakeRequest, messages))
 
       val pageTitleElement: Element = getSingleElementByTag(doc, "title")
 
