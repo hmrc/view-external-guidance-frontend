@@ -80,7 +80,7 @@ class RetrieveAndCacheServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
       val processWithUpdatedId = process.copy(meta = process.meta.copy( id = uuid))
 
       MockSessionRepository
-        .create(uuid, processWithUpdatedId, Map("/first-page" -> PageNext("start"), "/page-1" -> PageNext("1"), "/last-page" -> PageNext("2")))
+        .create(uuid, processWithUpdatedId, Map("/first-page" -> PageNext("start"), "/page-1" -> PageNext("1"), "/last-page" -> PageNext("2")), List("start"))
         .returns(Future.successful(Right(())))
 
       MockPageBuilder
@@ -104,7 +104,7 @@ class RetrieveAndCacheServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
         .returns(Future.successful(Right(processWithProcessCode)))
 
       MockSessionRepository
-        .create(sessionRepoId, processWithProcessCode,Map("/first-page" -> PageNext("start"), "/page-1" -> PageNext("1"), "/last-page" -> PageNext("2")))
+        .create(sessionRepoId, processWithProcessCode,Map("/first-page" -> PageNext("start"), "/page-1" -> PageNext("1"), "/last-page" -> PageNext("2")), List("start"))
         .returns(Future.successful(Right(())))
 
       MockPageBuilder
@@ -128,7 +128,7 @@ class RetrieveAndCacheServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
         .returns(Future.successful(Right(processWithProcessCode)))
 
       MockSessionRepository
-        .create(sessionRepoId, processWithProcessCode, Map("/first-page" -> PageNext("start"), "/page-1" -> PageNext("1"), "/last-page" -> PageNext("2")))
+        .create(sessionRepoId, processWithProcessCode, Map("/first-page" -> PageNext("start"), "/page-1" -> PageNext("1"), "/last-page" -> PageNext("2")), List("start"))
         .returns(Future.successful(Right(())))
 
       MockPageBuilder
@@ -143,4 +143,29 @@ class RetrieveAndCacheServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
     }
   }
 
+  "Calling retrieveAndCacheApprovalByPageUrl" should {
+
+    "retrieve the url of the nominated page and published process" in new Test {
+
+      MockGuidanceConnector
+        .approvalProcess(processId)
+        .returns(Future.successful(Right(processWithProcessCode)))
+
+      MockSessionRepository
+        .create(sessionRepoId, processWithProcessCode, Map("/first-page" -> PageNext("start"), "/page-1" -> PageNext("1"), "/last-page" -> PageNext("2")), List("1"))
+        .returns(Future.successful(Right(())))
+
+      MockPageBuilder
+        .pages(processWithProcessCode)
+        .returns(Right(pages))
+
+      private val result = target.retrieveAndCacheApprovalByPageUrl("/page-1")(processId, sessionRepoId)
+
+      whenReady(result) { url =>
+        url shouldBe Right(("/page-1", processCode))
+      }
+    }
+  }
+
 }
+

@@ -65,9 +65,10 @@ object Session {
   def apply(key: SessionKey,
             processId: String,
             process: Process,
+            legalPageIds: List[String],
             pageMap: Map[String, PageNext] = Map(),
-            lastAccessed: Instant = Instant.now()): Session =
-    Session(key, processId, process, Map(), Nil, Map(), pageMap, Map(), Nil, Nil, None, lastAccessed)
+            lastAccessed: Instant = Instant.now): Session =
+    Session(key, processId, process, Map(), Nil, Map(), pageMap, Map(), Nil, legalPageIds, None, lastAccessed)
 
   implicit lazy val format: Format[Session] = Json.format[Session]
 }
@@ -86,7 +87,7 @@ trait SessionRepositoryConstants {
 }
 
 trait SessionRepository extends SessionRepositoryConstants {
-  def create(key: String, process: Process, pageMap: Map[String, PageNext]): Future[RequestOutcome[Unit]]
+  def create(key: String, process: Process, pageMap: Map[String, PageNext], legalPageIds: List[String]): Future[RequestOutcome[Unit]]
   def getById(key: String, processCode: String): Future[RequestOutcome[GuidanceSession]]
   def get(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[Session]]
   def reset(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[GuidanceSession]]
@@ -115,9 +116,9 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
   ) with SessionRepository {
   val logger: Logger = Logger(getClass)
 
-  def create(key: String, process: Process, pageMap: Map[String, PageNext]): Future[RequestOutcome[Unit]] =
+  def create(key: String, process: Process, pageMap: Map[String, PageNext], legalPageIds: List[String]): Future[RequestOutcome[Unit]] =
     collection.findOneAndReplace(equal("_id", SessionKey(key, process.meta.processCode)),
-                                 Session(SessionKey(key, process.meta.processCode), process.meta.id, process, pageMap, Instant.now),
+                                 Session(SessionKey(key, process.meta.processCode), process.meta.id, process, legalPageIds, pageMap, Instant.now),
                                  FindOneAndReplaceOptions().upsert(true))
     .toFutureOption
     .map{
@@ -212,7 +213,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
     .toFutureOption()
     .map{
       case None => Left(NotFoundError)
-      case _ =>Right({})
+      case _ => Right({})
     }
     .recover{ case lastError =>
       logger.error(s"Error $lastError while trying to update question answers and labels within session repo with _id=$key, url: $url, answer: $answer")
@@ -231,7 +232,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
     .toFutureOption()
     .map{
       case None => Left(NotFoundError)
-      case _ =>Right({})
+      case _ => Right({})
     }
     .recover { case lastError =>
       logger.error(s"Error $lastError while trying to update labels within session repo with _id=$key")
@@ -257,7 +258,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
     .toFutureOption()
     .map{
       case None => Left(NotFoundError)
-      case _ =>Right({})
+      case _ => Right({})
     }
     .recover { case lastError =>
       logger.error(s"Error $lastError while trying to savePageHistory to session repo with _id=$key")
