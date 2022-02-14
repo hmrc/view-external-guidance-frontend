@@ -30,7 +30,8 @@ case class PageEvaluationContext(page: Page,
                                  processCode: String,
                                  labels: Labels = LabelCache(),
                                  backLink: Option[String] = None,
-                                 answer: Option[String] = None)
+                                 answer: Option[String] = None,
+                                 betaPhaseBanner: Boolean = false)
 
 
 case class PageContext(page: ui.Page,
@@ -43,7 +44,8 @@ case class PageContext(page: ui.Page,
                        processCode: String,
                        labels: Labels = LabelCache(),
                        backLink: Option[String] = None,
-                       answer: Option[String] = None)
+                       answer: Option[String] = None,
+                       betaPhaseBanner: Boolean = false)
 
 object PageContext {
   def apply(pec: PageEvaluationContext, page: ui.Page): PageContext = PageContext(pec, page, pec.labels)
@@ -59,6 +61,7 @@ object PageContext {
       pec.processCode,
       labels,
       pec.backLink,
-      pec.answer
+      pec.answer,
+      pec.betaPhaseBanner
     )
 }

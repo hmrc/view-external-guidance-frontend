@@ -303,7 +303,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
 
       whenReady(result) { pageCtx =>
         pageCtx match {
-          case Right(PageContext(_, _, _, _, _, _, _, _, _, _, Some(answer))) => succeed
+          case Right(PageContext(_, _, _, _, _, _, _, _, _, _, Some(answer), _)) => succeed
           case Right(wrongContext) => fail(s"Previous answer missing from PageContext, $wrongContext")
           case Left(err) => fail(s"Previous answer missing from PageContext, $err")
         }

@@ -27,29 +27,32 @@ import views.html.error_template
 class ErrorHandler @Inject() (val messagesApi: MessagesApi, view: error_template, implicit val appConfig: AppConfig) extends FrontendErrorHandler {
 
   override def standardErrorTemplate(pageTitle: String, heading: String, message: String)(implicit request: Request[_]): Html =
-    view(pageTitle, heading, message, None)
+    view(pageTitle, heading, message, None, false)
 
-  def standardErrorTemplate(pageTitle: String, heading: String, message: String, processCode: Option[String])(implicit request: Request[_]): Html =
-    view(pageTitle, heading, message, processCode)
+  def standardErrorTemplate(pageTitle: String, heading: String, message: String, processCode: Option[String], betaPhaseBanner: Boolean)(implicit request: Request[_]): Html =
+    view(pageTitle, heading, message, processCode, betaPhaseBanner)
 
-  def badRequestTemplateWithProcessCode(processCode: Option[String])(implicit request: Request[_]): Html =
+  def badRequestTemplateWithProcessCode(processCode: Option[String], betaPhaseBanner: Boolean)(implicit request: Request[_]): Html =
     standardErrorTemplate(
       Messages("global.error.badRequest400.title"),
       Messages("global.error.badRequest400.heading"),
       Messages("global.error.badRequest400.message"),
-      processCode)
+      processCode,
+      betaPhaseBanner)
 
-  def notFoundTemplateWithProcessCode(processCode: Option[String])(implicit request: Request[_]): Html =
+  def notFoundTemplateWithProcessCode(processCode: Option[String], betaPhaseBanner: Boolean)(implicit request: Request[_]): Html =
     standardErrorTemplate(
       Messages("global.error.pageNotFound404.title"),
       Messages("global.error.pageNotFound404.heading"),
       Messages("global.error.pageNotFound404.message"),
-      processCode)
+      processCode,
+      betaPhaseBanner)
 
-  def internalServerErrorTemplateWithProcessCode(processCode: Option[String])(implicit request: Request[_]): Html =
+  def internalServerErrorTemplateWithProcessCode(processCode: Option[String], betaPhaseBanner: Boolean)(implicit request: Request[_]): Html =
     standardErrorTemplate(
       Messages("global.error.InternalServerError500.title"),
       Messages("global.error.InternalServerError500.heading"),
       Messages("global.error.InternalServerError500.message"),
-      processCode)
+      processCode,
+      betaPhaseBanner)
 }

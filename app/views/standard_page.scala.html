@@ -23,7 +23,7 @@
 
 @implicitCtx = @{ctx}
 
-@layout(page.heading.asString, ctx.processTitle.asString, Some(ctx.processCode), ctx.processStartUrl, ctx.backLink) {
+@layout(page.heading.asString, ctx.processTitle.asString, Some(ctx.processCode), ctx.processStartUrl, ctx.backLink, ctx.betaPhaseBanner) {
 
   @components.render_components(page.components)
 
