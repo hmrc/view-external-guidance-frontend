@@ -112,7 +112,7 @@ class GuidanceService @Inject() (
                                           sp.continuationPool, sp.pageMap, legalPageIds, sp.pageUrl, backLink)
             sessionRepository.updateForNewPage(key, processCode, historyUpdate, flowStackUpdate, labelUpdates, legalPageIds, requestId).map {
               case Left(NotFoundError) =>
-                logger.error(s"TRANSACTION FAULT: saveUpdates _id=$key, requestId: $requestId")
+                logger.warn(s"TRANSACTION FAULT(Recoverable): saveUpdates _id=$key, requestId: $requestId")
                 Left(TransactionFaultError)
               case Left(err) =>
                 logger.error(s"Unable to update session data, error = $err")
@@ -163,7 +163,7 @@ class GuidanceService @Inject() (
           logger.debug(s"Next page found at stanzaId: $next")
           sessionRepository.updateAfterFormSubmission(ctx.sessionId, ctx.processCode, url, submittedAnswer, labels, List(next), requestId).map{
             case Left(NotFoundError) =>
-              logger.error(s"TRANSACTION FAULT: saveFormPageState _id=${ctx.sessionId}, url: $url, answer: $validatedAnswer, requestId: ${requestId}")
+              logger.warn(s"TRANSACTION FAULT(Recoverable): saveFormPageState _id=${ctx.sessionId}, url: $url, answer: $validatedAnswer, requestId: ${requestId}")
               Left(TransactionFaultError)
             case Left(err) =>
               logger.error(s"Failed to save updated labels, error = $err")
@@ -177,7 +177,7 @@ class GuidanceService @Inject() (
                    (implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[Unit]] =
     sessionRepository.updateAfterStandardPage(sessionId, processCode, labels, hc.requestId.map(_.value)).map{
       case Left(NotFoundError) =>
-        logger.error(s"TRANSACTION FAULT: saveLabels _id=$sessionId, requestId: ${hc.requestId.map(_.value)}")
+        logger.warn(s"TRANSACTION FAULT(Recoverable): saveLabels _id=$sessionId, requestId: ${hc.requestId.map(_.value)}")
         Left(TransactionFaultError)
       case result => result
     }
