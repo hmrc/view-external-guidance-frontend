@@ -10,7 +10,7 @@ backlink.label = Yn ôl
 
 passphrase.prompt = Rhowch gyfrinair
 
-getpagehelp.linkText = Help gyda’r dudalen hon (yn agor tab newydd)
+getpagehelp.linkText = A yw’r dudalen hon yn gweithio’n iawn? (yn agor ffenestr newydd)
 
 site.continue = Yn eich blaen
 
