@@ -128,8 +128,8 @@ class InputSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite {
 
     "render input with hints" in new Test {
       private val doc = asDocument(components.input(input, "test", textFormProvider("test" -> nonEmptyText))(fakeRequest, messages, ctx))
-      private val hints = doc.getElementsByTag("span").asScala.toList
-      private val firstHint = hints.head
+      private val hints = doc.getElementsByTag("div").asScala.toList
+      private val firstHint = hints(1)
       private val hint1Attrs = elementAttrs(firstHint)
       hint1Attrs("class") shouldBe "govuk-hint"
       firstHint.text() shouldBe i1Hint
@@ -237,8 +237,8 @@ class InputSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite {
 
     "render input with hints" in new TextTest {
       private val doc = asDocument(components.input(input, "test", textFormProvider("test" -> nonEmptyText))(fakeRequest, messages, ctx))
-      private val hints = doc.getElementsByTag("span").asScala.toList
-      private val firstHint = hints.head
+      private val hints = doc.getElementsByTag("div").asScala.toList
+      private val firstHint = hints(1)
       private val hint1Attrs = elementAttrs(firstHint)
       hint1Attrs("class") shouldBe "govuk-hint"
       firstHint.text() shouldBe i1Hint
@@ -351,8 +351,8 @@ class InputSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite {
 
     "render input with hints" in new DateTest {
       private val doc = asDocument(components.input_date(input, "test", dateFormProvider())(fakeRequest, messages, ctx))
-      private val hints = doc.getElementsByTag("span").asScala.toList
-      private val firstHint = hints.head
+      private val hints = doc.getElementsByTag("div").asScala.toList
+      private val firstHint = hints(1)
       private val hint1Attrs = elementAttrs(firstHint)
       hint1Attrs("class") shouldBe "govuk-hint"
       firstHint.text() shouldBe Text(i1Hint).asString
@@ -589,8 +589,8 @@ class InputSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite {
 
     "render input with hints" in new NumberTest {
       private val doc = asDocument(components.input(input, "test", textFormProvider("test" -> nonEmptyText))(fakeRequest, messages, ctx))
-      private val hints = doc.getElementsByTag("span").asScala.toList
-      private val firstHint = hints.head
+      private val hints = doc.getElementsByTag("div").asScala.toList
+      private val firstHint = hints(1)
       private val hint1Attrs = elementAttrs(firstHint)
       hint1Attrs("class") shouldBe "govuk-hint"
       firstHint.text() shouldBe i1Hint

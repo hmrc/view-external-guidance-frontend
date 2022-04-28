@@ -31,7 +31,7 @@
       @components.h1_within_legend_with_fieldset(H1(input.text))
   }
 
-      @{input.hint.map(hintText => <span id="input-hint" class="govuk-hint">{components.render_text(hintText)}</span>)}
+      @{input.hint.map(hintText => <div id="input-hint" class="govuk-hint">{components.render_text(hintText)}</div>)}
       @components.error_message(input.errorMsgs)
       @components.input_date_field(input, name, form)
     </fieldset>

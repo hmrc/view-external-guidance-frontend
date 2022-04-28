@@ -20,10 +20,10 @@
 
 @for(err <- errors) {
 
-  <span id="@err.id-error" class="govuk-error-message">
+  <p id="@err.id-error" class="govuk-error-message">
     <span class="govuk-visually-hidden">@messages("error.browser.title.prefix")</span>
     @components.render_text(err.text)
-  </span>
+  </p>
 
 }
 

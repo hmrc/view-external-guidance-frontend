@@ -112,16 +112,13 @@ class QuestionSpec extends AnyWordSpec with Matchers with ViewFns with GuiceOneA
 
     "render answers with hints vertically" in new Test {
       val doc: Document = asDocument(components.question(question, "test", formProvider("test" -> nonEmptyText))(fakeRequest, messages, ctx))
-      val hints = doc.getElementsByTag("span").asScala.toList
+      val hints = doc.getElementsByClass("govuk-hint govuk-radios__hint").asScala.toList
 
       val hint1Attrs = elementAttrs(hints(0))
-      hint1Attrs("class") shouldBe "govuk-hint govuk-radios__hint"
       hints(0).text() shouldBe ans1Hint
       val hint2Attrs = elementAttrs(hints(1))
-      hint1Attrs("class") shouldBe "govuk-hint govuk-radios__hint"
       hints(1).text() shouldBe ans2Hint
       val hint3Attrs = elementAttrs(hints(2))
-      hint1Attrs("class") shouldBe "govuk-hint govuk-radios__hint"
       hints(2).text() shouldBe ans3Hint
     }
 
@@ -156,7 +153,7 @@ class QuestionSpec extends AnyWordSpec with Matchers with ViewFns with GuiceOneA
       val fieldset = doc.getElementsByTag("fieldset").first
       Option(fieldset).fold(fail("Missing fieldset")){ fset =>
         elementAttrs(fset)("aria-describedby") shouldBe "question-hint"
-        Option(fset.getElementsByTag("span").first).fold(fail("Missing hint span within fieldset")) { span =>
+        Option(fset.getElementsByTag("div").first).fold(fail("Missing hint span within fieldset")) { span =>
           val attrs = elementAttrs(span)
           attrs("id") shouldBe "question-hint"
           attrs("class").contains("govuk-hint") shouldBe true
@@ -170,7 +167,7 @@ class QuestionSpec extends AnyWordSpec with Matchers with ViewFns with GuiceOneA
       val fieldset = doc.getElementsByTag("fieldset").first
       Option(fieldset).fold(fail("Missing fieldset")){ fset =>
         elementAttrs(fset)("aria-describedby") shouldBe "question-hint"
-        Option(fset.getElementsByTag("span").first).fold(fail("Missing hint span within fieldset")) { span =>
+        Option(fset.getElementsByTag("div").first).fold(fail("Missing hint span within fieldset")) { span =>
           val attrs = elementAttrs(span)
           attrs("id") shouldBe "question-hint"
           attrs("class").contains("govuk-hint") shouldBe true

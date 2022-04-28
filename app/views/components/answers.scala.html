@@ -36,9 +36,9 @@
       </label>
 
       @ans.hint.map{ hintText =>
-        <span id="@name-item-@index-hint" class="govuk-hint govuk-radios__hint">
+        <div id="@name-item-@index-hint" class="govuk-hint govuk-radios__hint">
           @components.render_text(hintText)
-        </span>
+        </div>
       }
     </div>
   }

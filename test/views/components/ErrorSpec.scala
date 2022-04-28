@@ -406,9 +406,9 @@ class ErrorSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with 
 
     "render error message" in new Test {
       val doc: Document = asDocument(components.error_message(requiredErrMsgs)(messages, ctx))
-      val span: List[Element] = doc.getElementsByTag("span").asScala.toList.filter(_.id == "required-error")
+      val p: List[Element] = doc.getElementsByTag("p").asScala.toList.filter(_.id == "required-error")
 
-      span.head.text() shouldBe messages("error.browser.title.prefix") + " " + requiredSelectionError
+      p.head.text() shouldBe messages("error.browser.title.prefix") + " " + requiredSelectionError
     }
 
     "render hidden text with error message" in new Test {
