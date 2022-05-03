@@ -62,7 +62,8 @@ package object ocelot {
   val DatePlaceHolderRegex: Regex = s"^$DatePlaceHolderPattern$$".r
   val TimescaleIdUsageRegex: Regex = TimescaleIdUsagePattern.r
   val DateOutputFormat = "d MMMM uuuu"
-  val ignoredCurrencyChars: Seq[Char] = Seq(' ', '£', ',')
+  val ignoredNumericChars: Seq[Char] = Seq(' ', ',')
+  val ignoredCurrencyChars: Seq[Char] = Seq('£') ++ ignoredNumericChars
   val dateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("d/M/uuuu", java.util.Locale.UK).withResolverStyle(ResolverStyle.STRICT)
   val pageLinkOnlyPattern: String = s"^${linkToPageOnlyPattern}$$"
   val boldOnlyPattern: String = s"^${boldPattern}$$"
@@ -113,7 +114,7 @@ package object ocelot {
 
   def asTextString(value: String): Option[String] = value.trim.headOption.fold[Option[String]](None)(_ => Some(value.trim))
   def asNumeric(value: String): Option[BigDecimal] =
-    numericRegex.findFirstIn(value.filterNot(c => c == ' ')).map(s => BigDecimal(s.filterNot(ignoredCurrencyChars.contains(_))))
+    numericRegex.findFirstIn(value.filterNot(c => c == ' ')).map(s => BigDecimal(s.filterNot(ignoredNumericChars.contains(_))))
   def asCurrency(value: String): Option[BigDecimal] =
     inputCurrencyRegex.findFirstIn(value.filterNot(c => c == ' ')).map(s => BigDecimal(s.filterNot(ignoredCurrencyChars.contains(_))))
   def asCurrencyPounds(value: String): Option[BigDecimal] =

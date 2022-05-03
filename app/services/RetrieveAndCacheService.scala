@@ -64,7 +64,6 @@ class RetrieveAndCacheService @Inject() (
         Future.successful(Left(err))
       case Right(process) =>
         logger.warn(s"Loaded process ${process.meta.id}, containing ${process.flow.keys.toList.length} stanzas, ${process.phrases.length} phrases")
-        logger.warn(s"Passphrase ${process.passPhrase}, ValueStanzaPassphrase ${process.valueStanzaPassPhrase}")
         pageBuilder.pages(process, process.startPageId).fold(err => {
           logger.warn(s"Failed to parse process with error $err")
           Future.successful(Left(InvalidProcessError))
