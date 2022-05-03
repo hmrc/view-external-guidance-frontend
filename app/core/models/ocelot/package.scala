@@ -50,6 +50,7 @@ package object ocelot {
   val pageLinkRegex: Regex = pageLinkPattern.r
   val buttonLinkRegex: Regex = buttonLinkPattern.r
   val labelRefRegex: Regex = LabelPattern.r
+  val numericRegex: Regex = "^-?(\\d{1,3}(,\\d{3})*|\\d+)(\\.(\\d*)?)?$".r
   val inputCurrencyRegex: Regex = "^-?£?(\\d{1,3}(,\\d{3})*|\\d+)(\\.(\\d{1,2})?)?$".r
   val inputCurrencyPoundsRegex: Regex = "^-?£?(\\d{1,3}(,\\d{3})*|\\d+)$".r
   val positiveIntRegex: Regex = s"^$TenDigitIntPattern$$".r                                 // Limited to 10 decimal digits
@@ -111,7 +112,9 @@ package object ocelot {
   }
 
   def asTextString(value: String): Option[String] = value.trim.headOption.fold[Option[String]](None)(_ => Some(value.trim))
-  def asDecimal(value: String): Option[BigDecimal] =
+  def asNumeric(value: String): Option[BigDecimal] =
+    numericRegex.findFirstIn(value.filterNot(c => c == ' ')).map(s => BigDecimal(s.filterNot(ignoredCurrencyChars.contains(_))))
+  def asCurrency(value: String): Option[BigDecimal] =
     inputCurrencyRegex.findFirstIn(value.filterNot(c => c == ' ')).map(s => BigDecimal(s.filterNot(ignoredCurrencyChars.contains(_))))
   def asCurrencyPounds(value: String): Option[BigDecimal] =
     inputCurrencyPoundsRegex.findFirstIn(value.filterNot(c => c == ' ')).map(s => BigDecimal(s.filterNot(ignoredCurrencyChars.contains(_))))
