@@ -31,7 +31,7 @@
      @components.h1_within_legend_with_fieldset(H1(sequence.text))
    }
 
-    @{sequence.hint.map(hintText => <span id="sequence-hint" class="govuk-hint">{components.render_text(hintText)}</span>)}
+    @{sequence.hint.map(hintText => <div id="sequence-hint" class="govuk-hint">{components.render_text(hintText)}</div>)}
     @components.error_message(sequence.errorMsgs)
 
     @components.sequence_checkboxes(name, sequence.options, sequence.exclusiveOption, form)

@@ -428,9 +428,9 @@ class SequenceSpec extends AnyWordSpec with Matchers with ViewSpec with ViewFns 
 
       outerErrorMsgSpan match {
         case Some(elem) =>
-          val innerErrorMsgSpans: Elements = elem.getElementsByTag("span")
-          innerErrorMsgSpans.size shouldBe 2
-          innerErrorMsgSpans.first.text() shouldBe s"Error: ${errorMsg.text.asString}"
+          val innerErrorMsgs: Elements = elem.getElementsByTag("p")
+          innerErrorMsgs.size shouldBe 1
+          innerErrorMsgs.first.text() shouldBe s"Error: ${errorMsg.text.asString}"
         case None => fail("Error message is missing")
       }
     }

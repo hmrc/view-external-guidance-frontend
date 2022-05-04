@@ -35,7 +35,7 @@
     <fieldset class="govuk-fieldset" @optionalAria("question", q.hint, q.errorMsgs)>
       <legend class="govuk-fieldset__legend govuk-fieldset__legend--xl">@components.h1_heading(H1(q.text))</legend>
   }
-    @{q.hint.map(hintText => <span id="question-hint" class="govuk-hint">{components.render_text(hintText)}</span>)}
+    @{q.hint.map(hintText => <div id="question-hint" class="govuk-hint">{components.render_text(hintText)}</div>)}
     @components.error_message(q.errorMsgs)
 
     @components.answers(q, name, form)
