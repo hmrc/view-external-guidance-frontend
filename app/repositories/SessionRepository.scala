@@ -127,6 +127,9 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
       Right(())
     }
     .recover {
+      case ex: MongoCommandException if ex.getErrorCode == 11000 =>
+        logger.error(s"Duplicate key Error ${ex.getErrorMessage} while trying to persist process=${process.meta.id} to session repo using _id=$key")
+        Left(DuplicateKeyError)
       case lastError =>
         logger.error(s"Error $lastError while trying to persist process=${process.meta.id} to session repo using _id=$key")
         Left(DatabaseError)

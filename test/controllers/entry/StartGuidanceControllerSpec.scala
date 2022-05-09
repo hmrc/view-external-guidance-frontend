@@ -17,7 +17,7 @@
 package controllers.entry
 
 import base.BaseSpec
-import mocks.MockRetrieveAndCacheService
+import mocks.{MockAppConfig, MockRetrieveAndCacheService}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.Status
 import play.api.mvc._
@@ -35,12 +35,13 @@ class StartGuidanceControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
 
   trait TestData {
     lazy val uuid = "683d9aa0-2a0e-4e28-9ac8-65ce453d2730"
+    lazy val sessionId = s"session-$uuid"
     lazy val path = "/some-path"
     lazy val pageViewBaseUrl = "/guidance"
     lazy val relativePath = path.drop(1)
     lazy val expectedUrl = "/start-url"
     lazy val processId = "ext90002"
-
+    lazy val processCode = "process-code"
     lazy val ans1 = Answer(Text("ANS1"), Some(Text("")))
     lazy val ans2 = Answer(Text("ANS2"), Some(Text("")))
 
@@ -78,7 +79,8 @@ class StartGuidanceControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
         errorHandler,
         mockRetrieveAndCacheService,
         fakeSessionIdAction,
-        stubMessagesControllerComponents()
+        stubMessagesControllerComponents(),
+        MockAppConfig
       )
   }
 
@@ -90,7 +92,8 @@ class StartGuidanceControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
         errorHandler,
         mockRetrieveAndCacheService,
         fakeSessionIdAction,
-        stubMessagesControllerComponents()
+        stubMessagesControllerComponents(),
+        MockAppConfig
       )
   }
 
@@ -163,21 +166,28 @@ class StartGuidanceControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
 
     "redirect the caller to another page" in new ProcessTest {
       MockRetrieveAndCacheService
-        .retrieveAndCachePublished(processId, processId)
-        .returns(Future.successful(Right((expectedUrl,processId))))
+        .retrieveAndCachePublished(processCode, sessionId)
+        .returns(Future.successful(Right((expectedUrl,processCode))))
 
-      val result = target.published(processId)(fakeRequest)
+      val result = target.published(processCode)(fakeRequest)
       status(result) shouldBe Status.SEE_OTHER
     }
 
     "redirect the caller to the start page of the process" in new ProcessTest {
       MockRetrieveAndCacheService
-        .retrieveAndCachePublished(processId, processId)
-        .returns(Future.successful(Right((expectedUrl,processId))))
-      val result = target.published(processId)(fakeRequest)
-      redirectLocation(result) shouldBe Some(s"$pageViewBaseUrl/$processId$expectedUrl")
+        .retrieveAndCachePublished(processCode, sessionId)
+        .returns(Future.successful(Right((expectedUrl,processCode))))
+      val result = target.published(processCode)(fakeRequest)
+      redirectLocation(result) shouldBe Some(s"$pageViewBaseUrl/$processCode$expectedUrl")
     }
 
+    "redirect the caller to restart the chosen process in the event of a duplicate key error" in new ProcessTest {
+      MockRetrieveAndCacheService
+        .retrieveAndCachePublished(processCode, sessionId)
+        .returns(Future.successful(Left(DuplicateKeyError)))
+      val result = target.published(processCode)(fakeRequest)
+      redirectLocation(result) shouldBe Some(s"$pageViewBaseUrl/$processCode")
+    }
   }
 
   "Calling published endpoint with a invalid process ID" should {
