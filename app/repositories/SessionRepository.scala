@@ -128,6 +128,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
     }
     .recover {
       case ex: MongoCommandException if ex.getErrorCode == 11000 =>
+        // Appears two concurrent findOneAndReplace() finding no underlying doc, would then both try to insert with the second triggering a duplicate key err
         logger.error(s"Duplicate key Error ${ex.getErrorMessage} while trying to persist process=${process.meta.id} to session repo using _id=$key")
         Left(DuplicateKeyError)
       case lastError =>
