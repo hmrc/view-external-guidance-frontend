@@ -78,6 +78,7 @@ class InputSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite {
     protected val errorMsg = RequiredErrorMsg(Text("An error has occurred"))
     protected val valueErrorMsg = ValueErrorMsg(Text("A value error has occurred"))
     val inputWithErrors: Input = CurrencyInput(Text(i1), None, Seq.empty, Seq(errorMsg))
+    val inputWithHint: Input = CurrencyInput(Text(i1), Some(Text(i1Hint)), Seq(bpList, para1), Seq.empty, true)
     val inputWithHintAndErrors: Input = CurrencyInput(Text(i1), Some(Text(i1Hint)), Seq(bpList, para1), Seq(errorMsg))
     implicit val labels: Labels = LabelCache()
     val currencyInput = models.ui.CurrencyInput(Text(), None, Seq.empty)
@@ -142,6 +143,13 @@ class InputSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite {
       attrs("class").contains("govuk-label-wrapper") shouldBe true
     }
 
+    "Input modified with [norepeat] with body should have a label wrapper class on H1" in new Test {
+      private val doc = asDocument(components.input(inputWithHint, "test", textFormProvider("test" -> nonEmptyText))(fakeRequest, messages, ctx))
+      private val h1 = doc.getElementsByTag("h1").first
+      private val attrs = elementAttrs(h1)
+      attrs("class").contains("govuk-label-wrapper") shouldBe true
+    }
+
     "input without body should not contain an Html label element with class govuk-label--m" in new Test {
       private val doc = asDocument(components.input(inputWithoutBody, "test", textFormProvider("test" -> nonEmptyText))(fakeRequest, messages, ctx))
       private val htmlLabels: Elements = doc.getElementsByTag("label")
@@ -166,7 +174,7 @@ class InputSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite {
       }
     }
 
-   "input with hint in error should include hint id and error id in aria-desribedby on input" in new Test {
+   "input with hint in error should include hint id and error id in aria-describedby on input" in new Test {
       private val doc = asDocument(components.input(inputWithHintAndErrors, "test", textFormProvider("test" -> nonEmptyText))(fakeRequest, messages, ctx))
 
       doc.getElementsByTag("input").asScala.toList.foreach { inp =>
@@ -199,6 +207,7 @@ class InputSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite {
       override val inputWithoutBody: TextInput = TextInput(Text(i1), None, Seq.empty)
       override val inputWithHintAndNoBody: TextInput = TextInput(Text(i1), Some(Text(i1Hint)), Seq.empty)
       override val inputWithErrors: TextInput = TextInput(Text(i1), None, Seq.empty, Seq(errorMsg))
+      override val inputWithHint: TextInput = TextInput(Text(i1), Some(Text(i1Hint)), Seq(para1), Seq.empty, true)
       override val inputWithHintAndErrors: TextInput = TextInput(Text(i1), Some(Text(i1Hint)), Seq(para1), Seq(errorMsg))
       val textInput: TextInput = models.ui.TextInput(Text(), None, Seq.empty)
       val textInputPage: FormPage = models.ui.FormPage("/url", textInput)
@@ -251,6 +260,13 @@ class InputSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite {
       attrs("class").contains("govuk-label-wrapper") shouldBe true
     }
 
+    "Input modified with [norepeat] with body should have a label wrapper class on H1" in new Test {
+      private val doc = asDocument(components.input(inputWithHint, "test", textFormProvider("test" -> nonEmptyText))(fakeRequest, messages, ctx))
+      private val h1 = doc.getElementsByTag("h1").first
+      private val attrs = elementAttrs(h1)
+      attrs("class").contains("govuk-label-wrapper") shouldBe true
+    }
+
     "input without body should render hint within a span without a fieldset" in new TextTest {
       private val doc = asDocument(components.input(inputWithHintAndNoBody, "test", textFormProvider("test" -> nonEmptyText))(fakeRequest, messages, ctx))
       private val fieldset = doc.getElementsByTag("fieldset").first
@@ -265,7 +281,7 @@ class InputSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite {
       }
     }
 
-   "input with hint in error should include hint id and error id in aria-desribedby on input" in new TextTest {
+   "input with hint in error should include hint id and error id in aria-describedby on input" in new TextTest {
       private val doc = asDocument(components.input(inputWithHintAndErrors, "test", textFormProvider("test" -> nonEmptyText))(fakeRequest, messages, ctx))
 
       doc.getElementsByTag("input").asScala.toList.foreach { inp =>
@@ -298,6 +314,7 @@ class InputSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite {
       override val inputWithoutBody: DateInput = DateInput(Text(i1), None, Seq.empty)
       override val inputWithHintAndNoBody: DateInput = DateInput(Text(i1), Some(Text(i1Hint)), Seq.empty)
       override val inputWithErrors: DateInput = DateInput(Text(i1), None, Seq.empty, Seq(errorMsg))
+      override val inputWithHint: DateInput = DateInput(Text(i1), Some(Text(i1Hint)), Seq(para1), Seq.empty, true)
       override val inputWithHintAndErrors: DateInput = DateInput(Text(i1), Some(Text(i1Hint)), Seq(para1), Seq(errorMsg))
       val inputWithValueErrors: DateInput = DateInput(Text(i1), Some(Text(i1Hint)), Seq(para1), Seq(valueErrorMsg))
       val dateInput: DateInput = models.ui.DateInput(Text(), None, Seq.empty)
@@ -363,6 +380,13 @@ class InputSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite {
       private val h1 = doc.getElementsByTag("h1").first
       private val attrs = elementAttrs(h1)
       attrs("class").contains("govuk-fieldset__heading") shouldBe true
+    }
+
+    "Input modified with [norepeat] with body should have a label wrapper class on H1" in new Test {
+      private val doc = asDocument(components.input(inputWithHint, "test", textFormProvider("test" -> nonEmptyText))(fakeRequest, messages, ctx))
+      private val h1 = doc.getElementsByTag("h1").first
+      private val attrs = elementAttrs(h1)
+      attrs("class").contains("govuk-label-wrapper") shouldBe true
     }
 
     "render input without body within a fieldset" in new DateTest {
@@ -552,6 +576,7 @@ class InputSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite {
 
       override val inputWithoutBody: NumberInput = NumberInput(Text(i1), None, Seq.empty)
       override val inputWithHintAndNoBody: NumberInput = NumberInput(Text(i1), Some(Text(i1Hint)), Seq.empty)
+      override val inputWithHint: NumberInput = NumberInput(Text(i1), Some(Text(i1Hint)), Seq(para1), Seq.empty, true)
       override val inputWithHintAndErrors: NumberInput = NumberInput(Text(i1), Some(Text(i1Hint)), Seq(para1), Seq(errorMsg))
       val NumberInputPage: FormPage = models.ui.FormPage("/url", input)
       override val ctx = PageContext(NumberInputPage, Seq.empty, None, "sessionId", None, Text(), "processId", "processCode", labels)
@@ -603,6 +628,13 @@ class InputSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite {
       attrs("class").contains("govuk-label-wrapper") shouldBe true
     }
 
+    "Input modified with [norepeat] with body should have a label wrapper class on H1" in new Test {
+      private val doc = asDocument(components.input(inputWithHint, "test", textFormProvider("test" -> nonEmptyText))(fakeRequest, messages, ctx))
+      private val h1 = doc.getElementsByTag("h1").first
+      private val attrs = elementAttrs(h1)
+      attrs("class").contains("govuk-label-wrapper") shouldBe true
+    }
+
     "input without body should render hint within a span without a fieldset" in new NumberTest {
       private val doc = asDocument(components.input(inputWithHintAndNoBody, "test", textFormProvider("test" -> nonEmptyText))(fakeRequest, messages, ctx))
       private val fieldset = doc.getElementsByTag("fieldset").first
@@ -617,7 +649,7 @@ class InputSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite {
       }
     }
 
-    "input with hint in error should include hint id and error id in aria-desribedby on input" in new NumberTest {
+    "input with hint in error should include hint id and error id in aria-describedby on input" in new NumberTest {
       private val doc = asDocument(components.input(inputWithHintAndErrors, "test", textFormProvider("test" -> nonEmptyText))(fakeRequest, messages, ctx))
 
       doc.getElementsByTag("input").asScala.toList.foreach { inp =>
