@@ -20,24 +20,25 @@
 
 @(input: models.ui.Input, name: String, form: Form[_])(implicit request: Request[_], messages: Messages, ctx: PageContext)
 
-<div class="govuk-form-group @if(input.errorMsgs.nonEmpty) {govuk-form-group--error}">
-
-  @if(input.body.nonEmpty) {
-    @if(input.dontRepeatText){
-      @components.h1_heading_with_label(H1(input.text), name + "-0")
-      @components.render_components(input.body)
-    } else {
-      @components.h1_heading(H1(input.text))
-      @components.render_components(input.body)
-      <label class="govuk-label govuk-label--m" for="@name-0">@components.render_text(input.text)</label>
-    }
-  } else {
+@if(input.body.nonEmpty) {
+  @if(input.dontRepeatText){
     @components.h1_heading_with_label(H1(input.text), name + "-0")
+    @components.render_components(input.body)
+    <div class="govuk-form-group @if(input.errorMsgs.nonEmpty) {govuk-form-group--error}">
+  } else {
+    @components.h1_heading(H1(input.text))
+    @components.render_components(input.body)
+    <div class="govuk-form-group @if(input.errorMsgs.nonEmpty) {govuk-form-group--error}">
+    <label class="govuk-label govuk-label--m" for="@name-0">@components.render_text(input.text)</label>
   }
+} else {
+  <div class="govuk-form-group @if(input.errorMsgs.nonEmpty) {govuk-form-group--error}">
+  @components.h1_heading_with_label(H1(input.text), name + "-0")
+}
 
-  @{input.hint.map(hintText => <div id="input-hint" class="govuk-hint">{components.render_text(hintText)}</div>)}
-  @components.error_message(input.errorMsgs)
-  @components.input_field(input, name, form)
+@{input.hint.map(hintText => <div id="input-hint" class="govuk-hint">{components.render_text(hintText)}</div>)}
+@components.error_message(input.errorMsgs)
+@components.input_field(input, name, form)
 
 </div>
 @{
