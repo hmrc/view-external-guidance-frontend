@@ -21,17 +21,17 @@
 
 @(q: Question, name: String, form: Form[_])(implicit request: Request[_], messages: Messages, ctx: PageContext)
 
-<div class="govuk-form-group @if(!q.errorMsgs.isEmpty) {govuk-form-group--error}">
-
   @if(q.body.nonEmpty) {
     @components.h1_heading(H1(q.text))
 
     @components.render_components(q.body)
 
+    <div class="govuk-form-group @if(!q.errorMsgs.isEmpty) {govuk-form-group--error}">
     <fieldset class="govuk-fieldset" @optionalAria("question", q.hint, q.errorMsgs)>
       <legend class="govuk-fieldset__legend govuk-visually-hidden">@components.render_text(q.text)</legend>
 
   } else  {
+    <div class="govuk-form-group @if(!q.errorMsgs.isEmpty) {govuk-form-group--error}">
     <fieldset class="govuk-fieldset" @optionalAria("question", q.hint, q.errorMsgs)>
       <legend class="govuk-fieldset__legend govuk-fieldset__legend--xl">@components.h1_heading(H1(q.text))</legend>
   }
