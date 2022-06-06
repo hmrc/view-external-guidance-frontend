@@ -19,23 +19,23 @@
 
 @(sequence: Sequence, name: String, form: Form[_])(implicit request: Request[_], messages: Messages, ctx: PageContext)
 
-<div class="govuk-form-group @if(sequence.errorMsgs.nonEmpty) {govuk-form-group--error}">
+@if(sequence.body.nonEmpty) {
+ @components.h1_heading(H1(sequence.text))
+ @components.render_components(sequence.body)
+ <div class="govuk-form-group @if(sequence.errorMsgs.nonEmpty) {govuk-form-group--error}">
+  <fieldset class="govuk-fieldset" role="group" @optionalAria("sequence", sequence.hint, sequence.errorMsgs)>
+  <legend class="govuk-fieldset__legend govuk-visually-hidden">@components.render_text(sequence.text)</legend>
+} else {
+ <div class="govuk-form-group @if(sequence.errorMsgs.nonEmpty) {govuk-form-group--error}">
+  <fieldset class="govuk-fieldset" role="group" @optionalAria("sequence", sequence.hint, sequence.errorMsgs)>
+  @components.h1_within_legend_with_fieldset(H1(sequence.text))
+}
 
-   @if(sequence.body.nonEmpty) {
-     @components.h1_heading(H1(sequence.text))
-     @components.render_components(sequence.body)
-     <fieldset class="govuk-fieldset" role="group" @optionalAria("sequence", sequence.hint, sequence.errorMsgs)>
-     <legend class="govuk-fieldset__legend govuk-visually-hidden">@components.render_text(sequence.text)</legend>
-   } else {
-     <fieldset class="govuk-fieldset" role="group" @optionalAria("sequence", sequence.hint, sequence.errorMsgs)>
-     @components.h1_within_legend_with_fieldset(H1(sequence.text))
-   }
+  @{sequence.hint.map(hintText => <div id="sequence-hint" class="govuk-hint">{components.render_text(hintText)}</div>)}
+  @components.error_message(sequence.errorMsgs)
 
-    @{sequence.hint.map(hintText => <div id="sequence-hint" class="govuk-hint">{components.render_text(hintText)}</div>)}
-    @components.error_message(sequence.errorMsgs)
-
-    @components.sequence_checkboxes(name, sequence.options, sequence.exclusiveOption, form)
- </fieldset>
+  @components.sequence_checkboxes(name, sequence.options, sequence.exclusiveOption, form)
+  </fieldset>
 
 </div>
 @{
