@@ -19,6 +19,7 @@ package models
 import core.models.ocelot.stanzas.Stanza
 import core.models.ocelot.{FlowStage, SecuredProcess, Process, Label}
 import play.api.libs.json.{Json, OFormat}
+import repositories.Session
 
 case class GuidanceSession(process: Process,
                            answers: Map[String, String],
@@ -28,10 +29,52 @@ case class GuidanceSession(process: Process,
                            pageMap: Map[String, PageNext],
                            legalPageIds: List[String],
                            currentPageUrl: Option[String],
-                           backLink: Option[String]) {
+                           backLink: Option[String],
+                           runMode: RunMode) {
   val secure: Boolean = process.flow.get(SecuredProcess.PassPhrasePageId).fold(true){_ =>
     labels.get(SecuredProcess.PassPhraseResponseLabelName).fold(false)(lbl => lbl.english.headOption == process.passPhrase)
   }
+}
+
+object GuidanceSession {
+  def apply(sp: Session, pageMap: Map[String, PageNext], legalPageIds: List[String]): GuidanceSession =
+    GuidanceSession(sp.process,
+                    sp.answers,
+                    sp.labels,
+                    sp.flowStack,
+                    sp.continuationPool,
+                    pageMap,
+                    legalPageIds,
+                    sp.pageUrl,
+                    None,
+                    sp.runMode.getOrElse(Published))
+
+  def apply(sp: Session, labels: Map[String, Label], flowStack: List[FlowStage], backLink: Option[String]): GuidanceSession =
+    GuidanceSession(sp.process,
+                    sp.answers,
+                    labels,
+                    flowStack,
+                    sp.continuationPool,
+                    sp.pageMap,
+                    sp.legalPageIds,
+                    sp.pageUrl,
+                    backLink,
+                    sp.runMode.getOrElse(Published))
+
+  def apply(sp: Session, backLink: Option[String]): GuidanceSession =
+    GuidanceSession(sp.process,
+                    sp.answers,
+                    sp.labels,
+                    sp.flowStack,
+                    sp.continuationPool,
+                    sp.pageMap,
+                    sp.legalPageIds,
+                    sp.pageUrl,
+                    backLink,
+                    sp.runMode.getOrElse(Published))
+
+  def apply(process: Process): GuidanceSession = GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None, Published)
+
 }
 
 case class PageNext(id: String, next: List[String] = Nil, linked: List[String] = Nil)

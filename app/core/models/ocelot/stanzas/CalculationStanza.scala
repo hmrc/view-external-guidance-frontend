@@ -20,6 +20,7 @@ import core.models.ocelot.{labelReferences, asAnyInt, Labels}
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import play.api.libs.json.Reads._
+import core.models.ocelot.errors.RuntimeError
 
 case class CalcOperation(left:String, op: CalcOperationType, right: String, label: String)
 
@@ -73,9 +74,9 @@ case class Calculation(override val next: Seq[String], calcs: Seq[Operation]) ex
   override val labels: List[String] = calcs.map(op => op.label).toList
   override val labelRefs: List[String] = calcs.flatMap(op => labelReferences(op.left) ++ labelReferences(op.right)).toList
 
-  def eval(labels: Labels): (String, Labels) = {
+  def eval(labels: Labels): (String, Labels, Option[RuntimeError]) = {
     val updatedLabels: Labels = calcs.foldLeft(labels) { case (l, f) => f.eval(l) }
-    (next.last, updatedLabels)
+    (next.last, updatedLabels, None)
   }
 }
 

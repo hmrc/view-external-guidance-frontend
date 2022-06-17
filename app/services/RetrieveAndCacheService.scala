@@ -26,7 +26,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import scala.concurrent.{ExecutionContext, Future}
 import repositories.SessionRepository
 import core.models.ocelot.Process
-import models.PageNext
+import models.{RunMode, PageNext, PageReview, Scratch, Approval, Published}
 
 @Singleton
 class RetrieveAndCacheService @Inject() (
@@ -41,21 +41,21 @@ class RetrieveAndCacheService @Inject() (
 
   def retrieveAndCacheScratch(uuid: String, docId: String)
                              (implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[(String,String)]] =
-    retrieveAndCache(uuid, docId, map(connector.scratchProcess)(p => spb.secureIfRequired(p.copy(meta = p.meta.copy(id = uuid)))))
+    retrieveAndCache(uuid, docId, map(connector.scratchProcess)(p => spb.secureIfRequired(p.copy(meta = p.meta.copy(id = uuid)))), Scratch)
 
   def retrieveAndCachePublished(processCode: String, docId: String)
                                (implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[(String,String)]] =
-    retrieveAndCache(processCode, docId, map(connector.publishedProcess)(spb.secureIfRequired))
+    retrieveAndCache(processCode, docId, map(connector.publishedProcess)(spb.secureIfRequired), Published)
 
   def retrieveAndCacheApproval(processId: String, docId: String)
                               (implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[(String,String)]] =
-    retrieveAndCache(processId, docId, map(connector.approvalProcess)(spb.secureIfRequired))
+    retrieveAndCache(processId, docId, map(connector.approvalProcess)(spb.secureIfRequired), Approval)
 
   def retrieveAndCacheApprovalByPageUrl(url: String)(processId: String, docId: String)
                               (implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[(String,String)]] =
-    retrieveAndCache(processId, docId, connector.approvalProcess, Some(url))
+    retrieveAndCache(processId, docId, connector.approvalProcess, PageReview, Some(url))
 
-  private def retrieveAndCache(processIdentifier: String, docId: String, retrieveProcessById: Retrieve[Process], url: Option[String] = None)(
+  private def retrieveAndCache(processIdentifier: String, docId: String, retrieveProcessById: Retrieve[Process], runMode: RunMode, url: Option[String] = None)(
     implicit context: ExecutionContext
   ): Future[RequestOutcome[(String,String)]] =
     retrieveProcessById(processIdentifier).flatMap {
@@ -82,7 +82,7 @@ class RetrieveAndCacheService @Inject() (
           val pageMap: Map[String, PageNext] = pages.map(p => p.url -> PageNext(p.id, p.next.toList, p.linked.toList)).toMap
           val startPageUrl: String = url.getOrElse(pages.head.url)
           val startPageId: Option[String] = pageMap.get(startPageUrl).map(_.id)
-          sessionRepository.create(docId, process, pageMap, startPageId.toList).map{
+          sessionRepository.create(docId, runMode, process, pageMap, startPageId.toList).map{
             case Right(_) => Right((startPageUrl, process.meta.processCode))
             case Left(err) =>
               logger.error(s"Failed to store new parsed process in session repository, $err")

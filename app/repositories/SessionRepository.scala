@@ -39,6 +39,7 @@ import uk.gov.hmrc.mongo._
 import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 import scala.concurrent.{ExecutionContext, Future}
 import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats.Implicits._
+import models.RunMode
 
 case class SessionKey(id: String, processCode: String)
 
@@ -47,6 +48,7 @@ object SessionKey {
 }
 
 final case class Session(_id: SessionKey,
+                         runMode: Option[RunMode],
                          processId: String,
                          process: Process,
                          labels: Map[String, Label],
@@ -63,12 +65,13 @@ final case class Session(_id: SessionKey,
 
 object Session {
   def apply(key: SessionKey,
+            runMode: RunMode,
             processId: String,
             process: Process,
             legalPageIds: List[String],
             pageMap: Map[String, PageNext] = Map(),
             lastAccessed: Instant = Instant.now): Session =
-    Session(key, processId, process, Map(), Nil, Map(), pageMap, Map(), Nil, legalPageIds, None, lastAccessed)
+    Session(key, Some(runMode), processId, process, Map(), Nil, Map(), pageMap, Map(), Nil, legalPageIds, None, lastAccessed)
 
   implicit lazy val format: Format[Session] = Json.format[Session]
 }
@@ -87,7 +90,7 @@ trait SessionRepositoryConstants {
 }
 
 trait SessionRepository extends SessionRepositoryConstants {
-  def create(key: String, process: Process, pageMap: Map[String, PageNext], legalPageIds: List[String]): Future[RequestOutcome[Unit]]
+  def create(key: String, runMode: RunMode, process: Process, pageMap: Map[String, PageNext], legalPageIds: List[String]): Future[RequestOutcome[Unit]]
   def getById(key: String, processCode: String): Future[RequestOutcome[GuidanceSession]]
   def get(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[Session]]
   def reset(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[GuidanceSession]]
@@ -116,9 +119,9 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
   ) with SessionRepository {
   val logger: Logger = Logger(getClass)
 
-  def create(key: String, process: Process, pageMap: Map[String, PageNext], legalPageIds: List[String]): Future[RequestOutcome[Unit]] =
+  def create(key: String, runMode: RunMode, process: Process, pageMap: Map[String, PageNext], legalPageIds: List[String]): Future[RequestOutcome[Unit]] =
     collection.findOneAndReplace(equal("_id", SessionKey(key, process.meta.processCode)),
-                                 Session(SessionKey(key, process.meta.processCode), process.meta.id, process, legalPageIds, pageMap, Instant.now),
+                                 Session(SessionKey(key, process.meta.processCode), runMode, process.meta.id, process, legalPageIds, pageMap, Instant.now),
                                  FindOneAndReplaceOptions().upsert(true))
     .toFutureOption
     .map{
@@ -142,7 +145,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
       .headOption()
       .map{
         case None =>  Left(SessionNotFoundError)
-        case Some(sp) => Right(GuidanceSession(sp.process,sp.answers,sp.labels,sp.flowStack,sp.continuationPool,sp.pageMap,sp.legalPageIds,sp.pageUrl,None))
+        case Some(sp) => Right(GuidanceSession(sp, sp.pageMap, sp.legalPageIds))
       }
       .recover {
         case lastError =>
@@ -165,8 +168,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
       case None =>
         logger.warn(s"Attempt to retrieve cached process from session repo with _id=$key returned no result")
         Left(SessionNotFoundError)
-      case Some(session) =>
-        Right(session)
+      case Some(session) => Right(session)
     }.recover { case lastError =>
       logger.error(s"Error $lastError while trying to retrieve process from session repo with _id=$key")
       Left(DatabaseError)
@@ -189,8 +191,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
       case None =>
         logger.warn(s"Attempt to retrieve cached process from session repo with _id=$key returned no result")
         Left(SessionNotFoundError)
-      case Some(sp) =>
-        Right(GuidanceSession(sp.process,sp.answers,sp.labels,sp.flowStack,sp.continuationPool,sp.pageMap,Nil,sp.pageUrl,None))
+      case Some(sp) => Right(GuidanceSession(sp, sp.pageMap, Nil))
     }.recover { case lastError =>
       logger.error(s"Error $lastError while trying to retrieve reset process from session repo with _id=$key")
       Left(DatabaseError)

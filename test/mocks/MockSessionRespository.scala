@@ -23,6 +23,7 @@ import core.models.RequestOutcome
 import org.scalamock.handlers.CallHandler
 import org.scalamock.scalatest.MockFactory
 import scala.concurrent.Future
+import models.RunMode
 
 trait MockSessionRepository extends MockFactory {
 
@@ -30,10 +31,10 @@ trait MockSessionRepository extends MockFactory {
 
   object MockSessionRepository {
 
-    def create(key: String, process: Process, pageMap: Map[String, PageNext], legalPageIds: List[String]): CallHandler[Future[RequestOutcome[Unit]]] =
+    def create(key: String, runMode: RunMode, process: Process, pageMap: Map[String, PageNext], legalPageIds: List[String]): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockSessionRepository
-        .create(_: String, _: Process, _: Map[String, PageNext], _: List[String]))
-        .expects(key, process, pageMap, legalPageIds)
+        .create(_: String, _: RunMode, _: Process, _: Map[String, PageNext], _: List[String]))
+        .expects(key, runMode, process, pageMap, legalPageIds)
 
     def updateAfterFormSubmission(docId: String, processCode: String, url: String, answer: String, labels: Labels, nextLegalPageIds: List[String], requestId: Option[String]): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockSessionRepository
