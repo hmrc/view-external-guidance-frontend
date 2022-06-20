@@ -37,7 +37,7 @@ trait VisualStanza extends Stanza {
 trait Populated
 
 trait Evaluate {
-  def eval(labels: Labels): (String, Labels, Option[RuntimeError])
+  def eval(labels: Labels): (String, Labels, List[RuntimeError])
 }
 
 trait DataInput {

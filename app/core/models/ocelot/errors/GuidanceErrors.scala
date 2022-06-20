@@ -26,7 +26,9 @@ sealed trait LinksError extends GuidanceError
 sealed trait TimescalesError extends GuidanceError
 
 sealed trait RuntimeError extends GuidanceError
-case class CalculationError(msg: String, left: String, right: String) extends RuntimeError
+
+case class UnsupportedOperationError(msg: String, left: String, right: String) extends RuntimeError
+//case class OperationFailedError(msg: String, left: String, right: String) extends RuntimeError
 
 // General and section parse errors
 case class ParseError(jsPath: JsPath, errs: Seq[JsonValidationError]) extends GuidanceError

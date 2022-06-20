@@ -73,8 +73,6 @@ object GuidanceSession {
                     backLink,
                     sp.runMode.getOrElse(Published))
 
-  def apply(process: Process): GuidanceSession = GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None, Published)
-
 }
 
 case class PageNext(id: String, next: List[String] = Nil, linked: List[String] = Nil)

@@ -22,7 +22,7 @@ import mocks.{MockGuidanceConnector, MockPageBuilder, MockSessionRepository}
 import core.models.ocelot.stanzas._
 import core.models.ocelot.{Page, KeyedStanza, Process, ProcessJson}
 import models.ui
-import models.PageNext
+import models.{Scratch, Published, Approval, PageReview, PageNext}
 import uk.gov.hmrc.http.HeaderCarrier
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -80,7 +80,7 @@ class RetrieveAndCacheServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
       val processWithUpdatedId = process.copy(meta = process.meta.copy( id = uuid))
 
       MockSessionRepository
-        .create(uuid, processWithUpdatedId, Map("/first-page" -> PageNext("start"), "/page-1" -> PageNext("1"), "/last-page" -> PageNext("2")), List("start"))
+        .create(uuid, Scratch, processWithUpdatedId, Map("/first-page" -> PageNext("start"), "/page-1" -> PageNext("1"), "/last-page" -> PageNext("2")), List("start"))
         .returns(Future.successful(Right(())))
 
       MockPageBuilder
@@ -104,7 +104,7 @@ class RetrieveAndCacheServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
         .returns(Future.successful(Right(processWithProcessCode)))
 
       MockSessionRepository
-        .create(sessionRepoId, processWithProcessCode,Map("/first-page" -> PageNext("start"), "/page-1" -> PageNext("1"), "/last-page" -> PageNext("2")), List("start"))
+        .create(sessionRepoId, Published, processWithProcessCode,Map("/first-page" -> PageNext("start"), "/page-1" -> PageNext("1"), "/last-page" -> PageNext("2")), List("start"))
         .returns(Future.successful(Right(())))
 
       MockPageBuilder
@@ -128,7 +128,7 @@ class RetrieveAndCacheServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
         .returns(Future.successful(Right(processWithProcessCode)))
 
       MockSessionRepository
-        .create(sessionRepoId, processWithProcessCode, Map("/first-page" -> PageNext("start"), "/page-1" -> PageNext("1"), "/last-page" -> PageNext("2")), List("start"))
+        .create(sessionRepoId, Approval, processWithProcessCode, Map("/first-page" -> PageNext("start"), "/page-1" -> PageNext("1"), "/last-page" -> PageNext("2")), List("start"))
         .returns(Future.successful(Right(())))
 
       MockPageBuilder
@@ -152,7 +152,7 @@ class RetrieveAndCacheServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
         .returns(Future.successful(Right(processWithProcessCode)))
 
       MockSessionRepository
-        .create(sessionRepoId, processWithProcessCode, Map("/first-page" -> PageNext("start"), "/page-1" -> PageNext("1"), "/last-page" -> PageNext("2")), List("1"))
+        .create(sessionRepoId, PageReview, processWithProcessCode, Map("/first-page" -> PageNext("start"), "/page-1" -> PageNext("1"), "/last-page" -> PageNext("2")), List("1"))
         .returns(Future.successful(Right(())))
 
       MockPageBuilder

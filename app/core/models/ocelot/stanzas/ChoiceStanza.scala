@@ -209,10 +209,10 @@ object ContainsTest {
 }
 
 case class Choice(override val next: Seq[String], tests: Seq[ChoiceTest]) extends Stanza with Evaluate {
-  def eval(labels: Labels): (String, Labels, Option[RuntimeError]) =
+  def eval(labels: Labels): (String, Labels, List[RuntimeError]) =
     tests.zipWithIndex
       .find { case (x, _) => x.eval(labels) }
-      .fold((next.last, labels, None)) { case (_, y) => (next(y), labels, None) }
+      .fold((next.last, labels, Nil)) { case (_, y) => (next(y), labels, Nil) }
 }
 
 object Choice {

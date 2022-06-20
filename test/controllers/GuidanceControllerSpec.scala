@@ -30,7 +30,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import play.api.test.Helpers.stubMessagesControllerComponents
 import uk.gov.hmrc.http.SessionKeys
-import models.{PageContext, PageDesc, PageNext, GuidanceSession, PageEvaluationContext, RunMode, Published}
+import models.{PageContext, PageDesc, PageNext, GuidanceSession, PageEvaluationContext, Published}
 import core.models.ocelot.{KeyedStanza, Labels, Page, Phrase, Process, Meta, ProcessJson}
 import core.models.ocelot.stanzas.{CurrencyInput, DateInput, Question, Sequence, _}
 import models.ui._

@@ -54,7 +54,8 @@ class PageRenderer @Inject() (appConfig: AppConfig) {
               case None => Right((None, labels))
             }
           case s: Stanza with Evaluate =>
-            val (next, updatedLabels, err) = s.eval(labels)
+            val (next, updatedLabels, errs) = s.eval(labels)
+            print(s" ****** ERRORS: $errs")
             evaluatePostInputStanzas(next, updatedLabels, seen, stanzaCount+1)
         }
         case Some(s) => Left(NonTerminatingPageError)
@@ -89,7 +90,8 @@ class PageRenderer @Inject() (appConfig: AppConfig) {
         case EndStanza => Right((visualStanzas, labels, seen :+ stanzaId, stanzaId, None))
         case s: VisualStanza with DataInput => Right((visualStanzas :+ s, labels, seen :+ stanzaId, stanzaId, Some(s)))
         case s: Stanza with Evaluate =>
-          val (next, updatedLabels, err) = s.eval(labels)
+          val (next, updatedLabels, errs) = s.eval(labels)
+          print(s" ****** ERRORS: $errs")
           evaluateStanzas(next, updatedLabels, visualStanzas, seen :+ stanzaId, stanzaCount+1)
         case s: VisualStanza => evaluateStanzas(s.next.head, labels, visualStanzas :+ s, seen :+ stanzaId, stanzaCount+1)
       }

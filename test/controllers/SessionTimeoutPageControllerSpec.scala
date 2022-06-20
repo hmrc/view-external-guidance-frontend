@@ -32,7 +32,7 @@ import views.html.{delete_your_answers, session_timeout}
 import play.api.test.Helpers.stubMessagesControllerComponents
 import uk.gov.hmrc.http.SessionKeys
 import play.api.mvc.{AnyContentAsEmpty, Result}
-
+import models.Published
 import scala.concurrent.Future
 
 class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
@@ -48,7 +48,7 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
     lazy val invalidProcessCode = "cup-of-coffee"
 
     lazy val process: Process = validOnePageJson.as[Process]
-    lazy val session: GuidanceSession = GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None)
+    lazy val session: GuidanceSession = GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None, Published)
 
     val timeout: Int = MockAppConfig.timeoutInSeconds * MockAppConfig.toMilliSeconds
 
