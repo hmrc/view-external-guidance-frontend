@@ -17,7 +17,7 @@
 package models
 
 import core.models.ocelot.stanzas.Stanza
-import core.models.ocelot.{FlowStage, SecuredProcess, Process, Label}
+import core.models.ocelot.{FlowStage, SecuredProcess, Process, Label, RunMode, Published}
 import play.api.libs.json.{Json, OFormat}
 import repositories.Session
 

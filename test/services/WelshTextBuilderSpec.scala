@@ -235,7 +235,7 @@ class WelshTextBuilderSpec extends BaseSpec with WelshLanguage with GuiceOneAppP
       "SomeDate"->ScalarLabel("SomeDate", List("22/9/1973"), List("23/9/1973")),
       "SomeList" -> ListLabel("SomeList", List("x", "y", "z")))
 
-    val labels: Labels = LabelCache(labelsMap, Map(), Nil, Map(), Map(), message(lang))
+    val labels: Labels = LabelCache(labelsMap, Map(), Nil, Map(), Map(), message(lang), Published)
     override implicit val ctx: UIContext = UIContext(labels, lang, urlMap1, messagesApi)
   }
 

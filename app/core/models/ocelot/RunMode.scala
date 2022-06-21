@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package models
+package core.models.ocelot
 
 import play.api.libs.json._
 

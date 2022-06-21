@@ -194,7 +194,7 @@ class GuidanceService @Inject() (
           val pageMapById: Map[String, PageDesc] =
             gs.pageMap.map{case (k, pn) => (pn.id, PageDesc(pn, s"${appConfig.baseUrl}/$processCode${k}"))}
           val labelCache: Labels =
-            LabelCache(gs.labels, Map(), gs.flowStack, gs.continuationPool, gs.process.timescales, messagesApi.preferred(Seq(lang)).apply)
+            LabelCache(gs.labels, Map(), gs.flowStack, gs.continuationPool, gs.process.timescales, messagesApi.preferred(Seq(lang)).apply, gs.runMode)
           pageRenderer.renderPage(page, labelCache) match {
             case Left(err) => Left(err)
             case Right((visualStanzas, labels, dataInput)) =>

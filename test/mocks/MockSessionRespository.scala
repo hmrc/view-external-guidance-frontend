@@ -20,10 +20,10 @@ import repositories.{Session, SessionRepository, PageHistory}
 import models.{PageNext, GuidanceSession}
 import core.models.ocelot._
 import core.models.RequestOutcome
+import core.models.ocelot.RunMode
 import org.scalamock.handlers.CallHandler
 import org.scalamock.scalatest.MockFactory
 import scala.concurrent.Future
-import models.RunMode
 
 trait MockSessionRepository extends MockFactory {
 

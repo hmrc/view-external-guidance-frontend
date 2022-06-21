@@ -25,8 +25,8 @@ import core.models.RequestOutcome
 import uk.gov.hmrc.http.HeaderCarrier
 import scala.concurrent.{ExecutionContext, Future}
 import repositories.SessionRepository
-import core.models.ocelot.Process
-import models.{RunMode, PageNext, PageReview, Scratch, Approval, Published}
+import models.PageNext
+import core.models.ocelot.{Process, RunMode, PageReview, Scratch, Approval, Published}
 
 @Singleton
 class RetrieveAndCacheService @Inject() (

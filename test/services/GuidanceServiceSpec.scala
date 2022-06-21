@@ -21,9 +21,9 @@ import base.BaseSpec
 import mocks.{MockAppConfig, MockGuidanceConnector, MockPageBuilder, MockPageRenderer, MockSessionRepository, MockUIBuilder}
 import core.models.errors.{DatabaseError, NotFoundError, NonTerminatingPageError}
 import core.models.ocelot.stanzas._
-import core.models.ocelot.{Page, KeyedStanza, Process, SecuredProcess, ProcessJson, LabelCache, Labels, Phrase}
+import core.models.ocelot.{Page, KeyedStanza, Process, SecuredProcess, ProcessJson, LabelCache, Labels, Phrase, Published}
 import models.ui
-import models.{PageDesc, PageNext, PageEvaluationContext, Published}
+import models.{PageDesc, PageNext, PageEvaluationContext}
 import uk.gov.hmrc.http.{RequestId, HeaderCarrier}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future

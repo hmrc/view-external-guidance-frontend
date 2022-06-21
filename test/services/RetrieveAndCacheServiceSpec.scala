@@ -20,9 +20,9 @@ import base.BaseSpec
 
 import mocks.{MockGuidanceConnector, MockPageBuilder, MockSessionRepository}
 import core.models.ocelot.stanzas._
-import core.models.ocelot.{Page, KeyedStanza, Process, ProcessJson}
+import core.models.ocelot.{Page, KeyedStanza, Process, ProcessJson, Scratch, Published, Approval, PageReview}
 import models.ui
-import models.{Scratch, Published, Approval, PageReview, PageNext}
+import models.PageNext
 import uk.gov.hmrc.http.HeaderCarrier
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future

@@ -18,8 +18,8 @@ package repositories
 
 import base.BaseSpec
 import core.models.ocelot.stanzas.{ValueStanza, Value, ScalarType}
-import core.models.ocelot.{Process, ProcessJson, SequenceJson, FlowStage, ScalarLabel, ListLabel, Flow, Continuation, Label, LabelValue, Phrase}
-import models.{Published, PageNext}
+import core.models.ocelot.{Process, ProcessJson, SequenceJson, FlowStage, ScalarLabel, ListLabel, Flow, Continuation, Label, LabelValue, Phrase, Published}
+import models.PageNext
 import java.time.Instant
 
 class SessionFSMSpec extends BaseSpec {

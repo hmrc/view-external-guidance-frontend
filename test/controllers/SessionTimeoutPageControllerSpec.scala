@@ -26,13 +26,12 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import config.ErrorHandler
 import core.models.errors._
-import core.models.ocelot.{Process, ProcessJson}
+import core.models.ocelot.{Process, ProcessJson, Published}
 import models.GuidanceSession
 import views.html.{delete_your_answers, session_timeout}
 import play.api.test.Helpers.stubMessagesControllerComponents
 import uk.gov.hmrc.http.SessionKeys
 import play.api.mvc.{AnyContentAsEmpty, Result}
-import models.Published
 import scala.concurrent.Future
 
 class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
