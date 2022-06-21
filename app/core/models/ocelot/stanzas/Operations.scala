@@ -79,26 +79,25 @@ sealed trait Operation {
   private[stanzas] def evalDateTimePeriod(l: LocalDate, r: TimePeriod): Result[String] = unsupported(l, r)
 
   def eval(labels: Labels): Result[Labels] = {
-    def mapScalar(v: Result[String], labels: Labels): Result[Labels] = v.fold(err => Left(err), result => Right(labels.update(label, result)))
-    def mapCollection(v: Result[List[String]], labels: Labels): Result[Labels] = v.fold(err => Left(err), result => Right(labels.updateList(label, result)))
+    def foldScalarResult(v: Result[String], labels: Labels): Result[Labels] = v.fold(err => Left(err), result => Right(labels.update(label, result)))
+    def foldCollectionResult(v: Result[List[String]], labels: Labels): Result[Labels] = v.fold(err => Left(err), result => Right(labels.updateList(label, result)))
 
     (Operand(left, labels), Operand(right, labels)) match {
-      case (Some(NumericOperand(l)), Some(NumericOperand(r))) => mapScalar(evalNumericOp(l, r), labels)
-      case (Some(DateOperand(l)), Some(DateOperand(r))) => mapScalar(evalDateOp(l, r), labels)
-      case (Some(DateOperand(l)), Some(TimePeriodOperand(r))) => mapScalar(evalDateTimePeriod(l,r), labels)
-      case (Some(DateOperand(l)), Some(NumericOperand(r))) => mapScalar(evalDateTimePeriod(l, TimePeriod(r.toInt, Day)), labels)
-      case (Some(StringOperand(l)), Some(StringOperand(r))) => mapScalar(evalStringOp(l, r), labels)
-      case (Some(StringCollection(l)), Some(StringCollection(r))) => mapCollection(evalCollectionCollectionOp(l, r), labels)
-      case (Some(StringCollection(l)), Some(r: Scalar[_])) => mapCollection(evalCollectionScalarOp(l, r.toString), labels)
-      case (Some(l: Scalar[_]), Some(StringCollection(r))) => mapCollection(evalScalarCollectionOp(l.toString, r), labels)
+      case (Some(NumericOperand(l)), Some(NumericOperand(r))) => foldScalarResult(evalNumericOp(l, r), labels)
+      case (Some(DateOperand(l)), Some(DateOperand(r))) => foldScalarResult(evalDateOp(l, r), labels)
+      case (Some(DateOperand(l)), Some(TimePeriodOperand(r))) => foldScalarResult(evalDateTimePeriod(l,r), labels)
+      case (Some(DateOperand(l)), Some(NumericOperand(r))) => foldScalarResult(evalDateTimePeriod(l, TimePeriod(r.toInt, Day)), labels)
+      case (Some(StringOperand(l)), Some(StringOperand(r))) => foldScalarResult(evalStringOp(l, r), labels)
+      case (Some(StringCollection(l)), Some(StringCollection(r))) => foldCollectionResult(evalCollectionCollectionOp(l, r), labels)
+      case (Some(StringCollection(l)), Some(r: Scalar[_])) => foldCollectionResult(evalCollectionScalarOp(l, r.toString), labels)
+      case (Some(l: Scalar[_]), Some(StringCollection(r))) => foldCollectionResult(evalScalarCollectionOp(l.toString, r), labels)
       // No typed op, fall back to String, String op
-      case (Some(l: Operand[_]), Some(r: Operand[_])) => mapScalar(evalStringOp(l.toString, r.toString), labels)
+      case (Some(l: Operand[_]), Some(r: Operand[_])) => foldScalarResult(evalStringOp(l.toString, r.toString), labels)
       case _ => unsupported(right, left)
     }
   }
 
-  protected def unsupported[A, B, C, D](l: A, r: B): Result[D] =
-    Left(UnsupportedOperationError(s"Unsupported ${getClass.getSimpleName} operation. Evaluated Left $l, Right $r", left, right))
+  protected def unsupported[A, B, C, D](l: A, r: B): Result[D] = Left(UnsupportedOperationError(getClass.getSimpleName.toString, l.toString, r.toString, left, right))
 
 }
 

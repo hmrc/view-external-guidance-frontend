@@ -97,8 +97,6 @@ object ProcessError {
     case e: PhrasesParseError => ProcessError(s"PhrasesParseError: Process Phrases section parse error, reason: ${e.msg}, index: ${e.id}", "")
     case e: LinksParseError => ProcessError(s"LinksParseError: Process Links section parse error, reason: ${e.msg}, index: ${e.id}", "")
     case e: TimescalesParseError => ProcessError(s"TimescalesParseError: Process timescales section parse error, reason: ${e.msg}, index: ${e.id}", "")
-
-    case e: UnsupportedOperationError => ProcessError(s"UnsupportedOperationError: ${e.msg}; left = ${e.left}, right = ${e.right}", "")
   }
 
   implicit def processErrs(errs: List[GuidanceError]): List[ProcessError] = errs.map(toProcessErr)

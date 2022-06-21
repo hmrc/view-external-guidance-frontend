@@ -25,9 +25,9 @@ sealed trait PhrasesError extends GuidanceError
 sealed trait LinksError extends GuidanceError
 sealed trait TimescalesError extends GuidanceError
 
-sealed trait RuntimeError extends GuidanceError
+sealed trait RuntimeError
 
-case class UnsupportedOperationError(msg: String, left: String, right: String) extends RuntimeError
+case class UnsupportedOperationError(op: String, lvalue: String, rvalue: String, left: String, right: String) extends RuntimeError
 //case class OperationFailedError(msg: String, left: String, right: String) extends RuntimeError
 
 // General and section parse errors
