@@ -19,13 +19,17 @@ package services
 import javax.inject.{Inject, Singleton}
 import scala.annotation.tailrec
 import config.AppConfig
+import play.api.Logger
 import core.models.RequestOutcome
 import core.models.errors.NonTerminatingPageError
 import core.models.ocelot.stanzas.{PageStanza, EndStanza, VisualStanza, Stanza, Evaluate, DataInput}
 import core.models.ocelot.{Page, Labels, Process}
+import core.models.ocelot.errors.RuntimeError
+import core.models.ocelot.{Published, PageReview, RunMode}
 
 @Singleton
 class PageRenderer @Inject() (appConfig: AppConfig) {
+  val logger: Logger = Logger(getClass)
 
   def renderPage(page: Page, labels: Labels): RequestOutcome[(Seq[VisualStanza], Labels, Option[DataInput])] = {
     implicit val stanzaMap: Map[String, Stanza] = page.keyedStanzas.map(ks => (ks.key, ks.stanza)).toMap ++ labels.continuationPool
@@ -55,7 +59,7 @@ class PageRenderer @Inject() (appConfig: AppConfig) {
             }
           case s: Stanza with Evaluate =>
             val (next, updatedLabels, errs) = s.eval(labels)
-            println(s" ****** ERRORS in ${labels.runMode}: $errs")
+            logRuntimeErrors(errs, labels.runMode)
             evaluatePostInputStanzas(next, updatedLabels, seen, stanzaCount+1)
         }
         case Some(s) => Left(NonTerminatingPageError)
@@ -91,10 +95,17 @@ class PageRenderer @Inject() (appConfig: AppConfig) {
         case s: VisualStanza with DataInput => Right((visualStanzas :+ s, labels, seen :+ stanzaId, stanzaId, Some(s)))
         case s: Stanza with Evaluate =>
           val (next, updatedLabels, errs) = s.eval(labels)
-          println(s" ****** ERRORS in ${labels.runMode}: $errs")
+          logRuntimeErrors(errs, labels.runMode)
           evaluateStanzas(next, updatedLabels, visualStanzas, seen :+ stanzaId, stanzaCount+1)
         case s: VisualStanza => evaluateStanzas(s.next.head, labels, visualStanzas :+ s, seen :+ stanzaId, stanzaCount+1)
       }
       case Some(s) => Left(NonTerminatingPageError)
+    }
+
+  private def logRuntimeErrors(errs: List[RuntimeError], runMode: RunMode): Unit =
+    runMode match {
+      case Published => errs.foreach(e => logger.error(s"RuntimeError: $e"))
+      case PageReview => errs.foreach(e => logger.info(s"PageReview: $e"))
+      case _ => errs.foreach(e => logger.error(s"ERROR in $runMode: $e"))
     }
 }
