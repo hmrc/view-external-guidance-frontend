@@ -28,7 +28,6 @@ sealed trait TimescalesError extends GuidanceError
 sealed trait RuntimeError
 
 case class UnsupportedOperationError(op: String, lvalue: String, rvalue: String, left: String, right: String) extends RuntimeError
-//case class OperationFailedError(msg: String, left: String, right: String) extends RuntimeError
 
 // General and section parse errors
 case class ParseError(jsPath: JsPath, errs: Seq[JsonValidationError]) extends GuidanceError

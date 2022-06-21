@@ -51,7 +51,7 @@ class PageRenderer @Inject() (appConfig: AppConfig) {
         case Some(s) if stanzaCount < appConfig.pageStanzaLimit => s match { // Limit stanzas within page to catch non-terminating loops in guidance
           case _: PageStanza => Right((Some(next), labels))
           case EndStanza => labels.nextFlow match {
-              case Some((nxt, updatedLabels)) => evaluatePostInputStanzas(nxt, updatedLabels, seen, stanzaCount+1)
+              case Some((nxt, updatedLabels)) => evaluatePostInputStanzas(nxt, updatedLabels, seen, stanzaCount + 1)
               // Encountering an EndStanza following input suggests incomplete guidance, i.e. a form page which accepts input and stops
               // Therefore handle as if guidance indicated a Value error and cause current form page to be re-displayed. Logically also
               // an EndStanza indicates there is no Next!
@@ -60,7 +60,7 @@ class PageRenderer @Inject() (appConfig: AppConfig) {
           case s: Stanza with Evaluate =>
             val (next, updatedLabels, errs) = s.eval(labels)
             logRuntimeErrors(errs, labels.runMode)
-            evaluatePostInputStanzas(next, updatedLabels, seen, stanzaCount+1)
+            evaluatePostInputStanzas(next, updatedLabels, seen, stanzaCount + 1)
         }
         case Some(s) => Left(NonTerminatingPageError)
       }}
@@ -96,8 +96,8 @@ class PageRenderer @Inject() (appConfig: AppConfig) {
         case s: Stanza with Evaluate =>
           val (next, updatedLabels, errs) = s.eval(labels)
           logRuntimeErrors(errs, labels.runMode)
-          evaluateStanzas(next, updatedLabels, visualStanzas, seen :+ stanzaId, stanzaCount+1)
-        case s: VisualStanza => evaluateStanzas(s.next.head, labels, visualStanzas :+ s, seen :+ stanzaId, stanzaCount+1)
+          evaluateStanzas(next, updatedLabels, visualStanzas, seen :+ stanzaId, stanzaCount + 1)
+        case s: VisualStanza => evaluateStanzas(s.next.head, labels, visualStanzas :+ s, seen :+ stanzaId, stanzaCount + 1)
       }
       case Some(s) => Left(NonTerminatingPageError)
     }
