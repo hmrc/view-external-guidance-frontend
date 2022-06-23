@@ -93,9 +93,7 @@ class GuidanceService @Inject() (
     sessionRepository.get(key, processCode, hc.requestId.map(_.value)).flatMap{
       case Left(err) => Future.successful(Left(err))
       case Right(sp) =>
-      pageUrl.fold[Future[RequestOutcome[GuidanceSession]]](
-        Future.successful(Right(GuidanceSession(sp.process, sp.answers, sp.labels, sp.flowStack, sp.continuationPool, sp.pageMap, Nil, sp.pageUrl, None)))
-      ){url =>
+      pageUrl.fold[Future[RequestOutcome[GuidanceSession]]](Future.successful(Right(GuidanceSession(sp, sp.pageMap, Nil)))){url =>
         sp.pageMap.get(url.drop(sp.process.meta.processCode.length)).fold[Future[RequestOutcome[GuidanceSession]]]{
           logger.warn(s"Attempt to move to unknown page $url in process ${sp.processId}, page count = ${sp.pageMap.size}")
           Future.successful(Left(NotFoundError))
@@ -108,8 +106,7 @@ class GuidanceService @Inject() (
             val labels: Map[String, Label] = sp.labels ++ labelUpdates.map(l => l.name -> l).toMap
             val legalPageIds = (pageNext.id :: Process.StartStanzaId :: pageNext.linked ++
                                 backLink.fold(List.empty[String])(bl => List(sp.pageMap(bl.drop(sp.process.meta.processCode.length)).id))).distinct
-            val session = GuidanceSession(sp.process, sp.answers, labels, flowStackUpdate.getOrElse(sp.flowStack),
-                                          sp.continuationPool, sp.pageMap, legalPageIds, sp.pageUrl, backLink)
+            val session = GuidanceSession(sp, labels, flowStackUpdate.getOrElse(sp.flowStack), backLink)
             sessionRepository.updateForNewPage(key, processCode, historyUpdate, flowStackUpdate, labelUpdates, legalPageIds, requestId).map {
               case Left(NotFoundError) =>
                 logger.warn(s"TRANSACTION FAULT(Recoverable): saveUpdates _id=$key, requestId: $requestId")
@@ -149,7 +146,7 @@ class GuidanceService @Inject() (
             case _ => None
           }
         }
-        Right(GuidanceSession(sp.process, sp.answers, sp.labels, sp.flowStack, sp.continuationPool, sp.pageMap, sp.legalPageIds, sp.pageUrl, backlink))
+        Right(GuidanceSession(sp, backlink))
       case Right(sp) => Left(IllegalPageSubmissionError)
     }
 
@@ -197,7 +194,7 @@ class GuidanceService @Inject() (
           val pageMapById: Map[String, PageDesc] =
             gs.pageMap.map{case (k, pn) => (pn.id, PageDesc(pn, s"${appConfig.baseUrl}/$processCode${k}"))}
           val labelCache: Labels =
-            LabelCache(gs.labels, Map(), gs.flowStack, gs.continuationPool, gs.process.timescales, messagesApi.preferred(Seq(lang)).apply)
+            LabelCache(gs.labels, Map(), gs.flowStack, gs.continuationPool, gs.process.timescales, messagesApi.preferred(Seq(lang)).apply, gs.runMode)
           pageRenderer.renderPage(page, labelCache) match {
             case Left(err) => Left(err)
             case Right((visualStanzas, labels, dataInput)) =>

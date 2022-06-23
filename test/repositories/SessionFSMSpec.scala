@@ -18,7 +18,7 @@ package repositories
 
 import base.BaseSpec
 import core.models.ocelot.stanzas.{ValueStanza, Value, ScalarType}
-import core.models.ocelot.{Process, ProcessJson, SequenceJson, FlowStage, ScalarLabel, ListLabel, Flow, Continuation, Label, LabelValue, Phrase}
+import core.models.ocelot.{Process, ProcessJson, SequenceJson, FlowStage, ScalarLabel, ListLabel, Flow, Continuation, Label, LabelValue, Phrase, Published}
 import models.PageNext
 import java.time.Instant
 
@@ -55,6 +55,7 @@ class SessionFSMSpec extends BaseSpec {
     val session: Session =
       new Session(
         SessionKey("id", process.meta.processCode),
+        Some(Published),
         "processId",
         process,
         Map(),
@@ -71,7 +72,7 @@ class SessionFSMSpec extends BaseSpec {
 
   "SessionFSM with no flowStack" must {
     "Return no backlink or updates for any url with no page history, forceForward false (Nil)" in new NoFlowStackTest {
-      verify(fsm("/start", Session(SessionKey("id", process.meta.processCode), "processId", process, Nil), false, "/start"),
+      verify(fsm("/start", Session(SessionKey("id", process.meta.processCode), Published, "processId", process, Nil), false, "/start"),
              None,
              Some(List(PageHistory("/start", Nil))),
              None,
@@ -79,7 +80,7 @@ class SessionFSMSpec extends BaseSpec {
     }
 
     "Return no backlink or updates for any url with no page history, forceForward true (Nil)" in new NoFlowStackTest {
-      verify(fsm("/start", Session(SessionKey("id", process.meta.processCode), "processId", process, Nil), true, "/start"),
+      verify(fsm("/start", Session(SessionKey("id", process.meta.processCode), Published, "processId", process, Nil), true, "/start"),
              None,
              Some(List(PageHistory("/start", Nil))),
              None,
@@ -197,6 +198,7 @@ class SessionFSMSpec extends BaseSpec {
     val session: Session =
       new Session(
         SessionKey("id", process.meta.processCode),
+        Some(Published),
         "processId",
         nestedSeqJson.as[Process],
         Map("Choice" -> ScalarLabel("Choice",List(phraseThree.english),List(phraseThree.welsh)),
@@ -214,7 +216,7 @@ class SessionFSMSpec extends BaseSpec {
 
   "SessionFSM with flowStack" must {
     "Return no backlink or updates for any url with no page history, forceForward false (Nil)" in new FlowStackTest {
-      verify(fsm("/start", Session(SessionKey("id", process.meta.processCode), "processId", process, Nil), false, "/start"),
+      verify(fsm("/start", Session(SessionKey("id", process.meta.processCode), Published, "processId", process, Nil), false, "/start"),
              None,
              Some(List(PageHistory("/start", Nil))),
              None,
@@ -222,7 +224,7 @@ class SessionFSMSpec extends BaseSpec {
     }
 
     "Return no backlink or updates for any url with no page history, forceForward true (Nil)" in new FlowStackTest {
-      verify(fsm("/start", Session(SessionKey("id", process.meta.processCode), "processId", process, Nil), true, "/start"),
+      verify(fsm("/start", Session(SessionKey("id", process.meta.processCode), Published, "processId", process, Nil), true, "/start"),
              None,
              Some(List(PageHistory("/start", Nil))),
              None,
