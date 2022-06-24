@@ -23,12 +23,12 @@ import scala.util.matching.Regex
 import scala.util.matching.Regex._
 
 package object ocelot {
-  val Twenty: String = "twenty"
-  val Ten: String = "ten"
-  val Five: String = "five"
-  val Four: String = "four"
-  val Three: String = "three"
-  val Two: String = "two"
+  val Twenty: String = "20"
+  val Ten: String = "10"
+  val Five: String = "5"
+  val Four: String = "4"
+  val Three: String = "3"
+  val Two: String = "2"
 
   val TimescaleIdPattern: String = "[A-Za-z][a-zA-Z0-9_-]+"
   val DatePattern: String = "\\d{1,2}\\/\\d{1,2}\\/\\d{4}"
@@ -121,18 +121,30 @@ package object ocelot {
   def stringFromDate(when: LocalDate): String = when.format(dateFormatter)
   def stripHintPlaceholder(p: Phrase): Phrase = Phrase(hintRegex.replaceAllIn(p.english, ""), hintRegex.replaceAllIn(p.welsh, ""))
   def trimTrailing(s: String): String = s.reverse.dropWhile(_.equals(' ')).reverse
-  def stripNoRepeatPlaceholder(s: String): (Boolean, String) = {
-    val trimmed = trimTrailing(s)
-    if (trimmed.endsWith(NoRepeatPlaceholder)) (true, trimmed.dropRight(NoRepeatPlaceholder.length)) else (false, s)
-  }
-  def stripNoRepeatPlaceholder(p: Phrase): (Boolean, Phrase) = {
-    val (dontRepeatEnglish, english) = stripNoRepeatPlaceholder(p.english)
-    (dontRepeatEnglish, Phrase(english, stripNoRepeatPlaceholder(p.welsh)._2))
-  }
-  // def stripInputOptions(p: Phrase): (Boolean, Option[String], Phrase) = {
-  //   val p: Phrase = Phrase(trimTrailing(p.english), trimTrailing(p.welsh))
 
-  // }
+  val FieldGroup = 1
+  val NoRepeatGroup1 = 2
+  val WidthGroup1 = 3
+  val WidthGroup2 = 4
+  val NoRepeatGroup2 = 5
+
+  def fieldAndInputOptions(s: String):(String, Boolean, Option[String]) = {
+    InputOptionsRegex.findFirstMatchIn(trimTrailing(s)).fold[(String, Boolean, Option[String])]((s, false, None)){m =>
+      val capture = matchGroup(m) _
+      capture(FieldGroup).fold[(String, Boolean, Option[String])]((s, false, None)){field =>
+        (capture(NoRepeatGroup1), capture(NoRepeatGroup2)) match {
+          case (Some(nr1), _) => (field, true, capture(WidthGroup1))
+          case (_, Some(nr2)) => (field, true, capture(WidthGroup2))
+          case (_, _) => (field, false, capture(WidthGroup1))
+        }
+      }
+    }
+  }
+
+  def fieldAndInputOptions(p: Phrase): (Phrase, Boolean, String) = {
+    val (english, dontRepeat, width) = fieldAndInputOptions(p.english)
+    (Phrase(english, fieldAndInputOptions(p.welsh)._1), dontRepeat, width.getOrElse(Ten))
+  }
 
   def fromPattern(pattern: Regex, text: String): (List[String], List[Match]) = (pattern.split(text).toList, pattern.findAllMatchIn(text).toList)
   def isLinkOnlyPhrase(phrase: Phrase): Boolean =phrase.english.matches(pageLinkOnlyPattern)

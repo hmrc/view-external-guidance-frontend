@@ -14,18 +14,9 @@
  * limitations under the License.
  *@
 
-@import views.html.components.fieldWidthClass
+@(width: String) govuk-input--width-@width
 
-@(input: models.ui.Input, name: String, form: Form[_])(implicit request: Request[_], messages: Messages, ctx: PageContext)
-
-<input class="govuk-input @fieldWidthClass(input.width)@optionalErrorClass(input)"
-       id="@name-0"
-       name="@name"
-       type="text"
-       value="@form(name).value"
-       spellcheck="false"
-       autocomplete="off"
-       @optionalAria("input", input.hint,input.errorMsgs)/>
 @{
-    //$COVERAGE-OFF$
+     //$COVERAGE-OFF$
 }
+
