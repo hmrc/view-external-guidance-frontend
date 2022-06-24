@@ -42,6 +42,7 @@ class WelshTextBuilderSpec extends BaseSpec with WelshLanguage with GuiceOneAppP
 
     val link1 = Link("https://www.bbc.co.uk", link1CyWords, false)
     val link2 = Link("https://www.gov.uk", link2CyWords, false)
+    val linkPrint = "Javascript:window.print()"
     val urlMap1: Map[String, PageDesc] = Map("start" -> PageDesc("start",  "dummy-path/start", Nil),
                                              "3" -> PageDesc("3", "dummy-path", Nil),
                                              "5" -> PageDesc("5","dummy-path/blah", Nil),
@@ -51,6 +52,13 @@ class WelshTextBuilderSpec extends BaseSpec with WelshLanguage with GuiceOneAppP
       Vector(
         s"[bold:This is a ][link:${link1EnWords}:https://www.bbc.co.uk] followed by [link:${link2EnWords}:https://www.gov.uk] and nothing",
         s"[bold:Welsh: This is a ][link:${link1CyWords}:https://www.bbc.co.uk] Welsh: followed by [link:${link2CyWords}:https://www.gov.uk] Welsh: and nothing"
+      )
+    )
+
+    val txtWithPrintLinks = Phrase(
+      Vector(
+        s"Click [link:here:$linkPrint] to print this page for your records",
+        s"Welsh: Click [link:here:$linkPrint] to print this page for your records"
       )
     )
 
@@ -226,6 +234,40 @@ class WelshTextBuilderSpec extends BaseSpec with WelshLanguage with GuiceOneAppP
       altTxt.items(1) shouldBe Link("https://www.bbc.co.uk", "Blah Blah", true)
       altTxt.items(3) shouldBe Link("dummy-path/blah", "Blah Blah", true)
       altTxt.items(5) shouldBe Link("dummy-path/start", "Blah Blah", true)
+    }
+
+    "Convert all print-link placeholders into appropriate link objects" in new Test {
+      val txt = TextBuilder.fromPhrase(txtWithPrintLinks)
+
+      txt.items.length shouldBe 3
+
+      txt.items(0) shouldBe Words("Welsh: Click ")
+      txt.items(1) shouldBe Link(linkPrint, "here")
+      txt.items(2) shouldBe Words(" to print this page for your records")
+
+      val altTxt = TextBuilder.fromPhraseWithOptionalHint(txtWithPrintLinks)._1
+
+      altTxt.items.length shouldBe 3
+
+      altTxt.items(0) shouldBe Words("Welsh: Click ")
+      altTxt.items(1) shouldBe Link(linkPrint, "here")
+      altTxt.items(2) shouldBe Words(" to print this page for your records")
+    }
+
+    "leave syntactically incorrect print link placeholders as text within a phrase" in new Test {
+      val phrase = Phrase(Vector(
+        "Click [link:here:Javascript:Window.print] to print this page for your records",
+        "Welsh: Click [link:here:Javascript:Window.print] to print this page for your records"
+      ))
+      val txt = TextBuilder.fromPhrase(phrase)
+
+      txt.items.length shouldBe 1
+      txt.items(0) shouldBe Words("Welsh: Click [link:here:Javascript:Window.print] to print this page for your records")
+
+      val altTxt = TextBuilder.fromPhraseWithOptionalHint(phrase)._1
+
+      altTxt.items.length shouldBe 1
+      altTxt.items(0) shouldBe Words("Welsh: Click [link:here:Javascript:Window.print] to print this page for your records")
     }
   }
 
