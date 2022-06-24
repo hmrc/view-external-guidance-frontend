@@ -31,7 +31,7 @@ import play.api.test.Helpers._
 import play.api.test.Helpers.stubMessagesControllerComponents
 import uk.gov.hmrc.http.SessionKeys
 import models.{PageContext, PageDesc, PageNext, GuidanceSession, PageEvaluationContext}
-import core.models.ocelot.{KeyedStanza, Labels, Page, Phrase, Process, Meta, ProcessJson}
+import core.models.ocelot.{KeyedStanza, Labels, Page, Phrase, Process, Meta, ProcessJson, Published}
 import core.models.ocelot.stanzas.{CurrencyInput, DateInput, Question, Sequence, _}
 import models.ui._
 import models.ui
@@ -390,18 +390,18 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
       val url = "/rent/less-than-1000/do-you-receive-any-income"
       MockGuidanceService
         .getSubmitGuidanceSession(processId, process.meta.processCode, Some(s"tell-hmrc$url"))
-        .returns(Future.successful(Right(GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None))))
+        .returns(Future.successful(Right(GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None, Published))))
 
       MockSessionRepository
         .get(processId, process.meta.processCode, requestId)
         .returns(Future.successful(Right(
-          Session(SessionKey(processId, process.meta.processCode), process.meta.id, process, Map(), Nil, Map(), Map(), Map(), List(PageHistory(s"tell-hmrc$url",Nil)), Nil, None, Instant.now)
+          Session(SessionKey(processId, process.meta.processCode), Some(Published), process.meta.id, process, Map(), Nil, Map(), Map(), Map(), List(PageHistory(s"tell-hmrc$url",Nil)), Nil, None, Instant.now)
         )))
 
       MockSessionRepository
         .getById(processId, process.meta.processCode)
         .returns(Future.successful(Right(
-          GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None)
+          GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None, Published)
         )))
 
       override val fakeRequest = FakeRequest("POST", path)
@@ -419,7 +419,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
 
     "Force redirect to current page" in new QuestionSubmissionTest with MockGuidanceService {
       val outOfSequence = "/rent/1000-or-more/was-your-income-more-than-3750"
-      val session = GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, Some(url), None)
+      val session = GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, Some(url), None, Published)
       MockGuidanceService
         .getSubmitGuidanceSession(processId, process.meta.processCode, Some(s"tell-hmrc$outOfSequence"))
         .returns(Future.successful(Left(IllegalPageSubmissionError)))
@@ -427,7 +427,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
       MockSessionRepository
         .get(processId, process.meta.processCode, requestId)
         .returns(Future.successful(Right(
-          Session(SessionKey(processId, process.meta.processCode), process.meta.id, process, Map(), Nil, Map(),
+          Session(SessionKey(processId, process.meta.processCode), Some(Published), process.meta.id, process, Map(), Nil, Map(),
                   Map(url -> PageNext("36", Nil, Nil), outOfSequence -> PageNext("80", Nil, Nil)), Map(),
                   List(PageHistory(s"tell-hmrc$url",Nil)), Nil, None, Instant.now)
         )))
@@ -447,7 +447,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
     }
 
     "Restart process when no current page available" in new QuestionSubmissionTest with MockGuidanceService {
-      val session = GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None)
+      val session = GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None, Published)
       MockGuidanceService
         .getSubmitGuidanceSession(processId, process.meta.processCode, Some(s"tell-hmrc$path"))
         .returns(Future.successful(Left(IllegalPageSubmissionError)))
@@ -455,7 +455,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
       MockSessionRepository
         .get(processId, process.meta.processCode, requestId)
         .returns(Future.successful(Right(
-          Session(SessionKey(processId, process.meta.processCode), process.meta.id, process, Map(), Nil, Map(),
+          Session(SessionKey(processId, process.meta.processCode), Some(Published), process.meta.id, process, Map(), Nil, Map(),
                   Map(url -> PageNext("36", Nil, Nil)), Map(),
                   List(PageHistory(s"tell-hmrc$url",Nil)), Nil, None, Instant.now)
         )))
@@ -475,7 +475,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
     }
 
     "Sync process when process code doesnt match current session" in new QuestionSubmissionTest with MockGuidanceService {
-      val session = GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, Some("/current-page-url"), None)
+      val session = GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, Some("/current-page-url"), None, Published)
       MockGuidanceService
         .getSubmitGuidanceSession(processId, "blah", Some(s"blah$path"))
         .returns(Future.successful(Left(SessionNotFoundError)))
@@ -1162,11 +1162,11 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
       val emptyProcess = Process(meta, Map(), Vector(), Vector())
       val pageMap = Map("/start" -> PageNext("1", List("2", "3")), path -> PageNext("2"))
       val session: GuidanceSession =
-        GuidanceSession(emptyProcess,Map("/start" -> "0"),Map(),Nil,Map(),pageMap,List("1","2"), None,None)
+        GuidanceSession(emptyProcess,Map("/start" -> "0"),Map(),Nil,Map(),pageMap,List("1","2"), None,None, Published)
     }
 
     "Return SEE_OTHER from getPage as a result trying to access valid page illegal in the current context, redirect to start" in new Test {
-      override val session: GuidanceSession = GuidanceSession(emptyProcess,Map("/start" -> "0"),Map(),Nil,Map(),pageMap,Nil, None,None)
+      override val session: GuidanceSession = GuidanceSession(emptyProcess,Map("/start" -> "0"),Map(),Nil,Map(),pageMap,Nil, None,None, Published)
 
       MockGuidanceService
         .getPageContext(processCode, path, false, processId)
@@ -1182,7 +1182,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
     }
 
     "Return SEE_OTHER from getPage as a result trying to access valid page illegal in the current context, redirect to current page" in new Test {
-      override val session: GuidanceSession = GuidanceSession(emptyProcess,Map("/start" -> "0"),Map(),Nil,Map(),pageMap,List("1"), None,None)
+      override val session: GuidanceSession = GuidanceSession(emptyProcess,Map("/start" -> "0"),Map(),Nil,Map(),pageMap,List("1"), None,None, Published)
 
       MockGuidanceService
         .getPageContext(processCode, path, false, processId)
@@ -1455,7 +1455,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
       MockSessionRepository
         .getById(sessionId, process.meta.processCode)
         .returns(Future.successful(Right(
-          GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, Some(path), None)
+          GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, Some(path), None, Published)
         )))
 
 
@@ -1479,7 +1479,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
       MockSessionRepository
         .getById(sessionId, processCode)
         .returns(Future.successful(Right(
-          GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None)
+          GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None, Published)
         )))
 
 

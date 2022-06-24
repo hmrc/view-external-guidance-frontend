@@ -21,7 +21,7 @@ import base.BaseSpec
 import mocks.{MockAppConfig, MockGuidanceConnector, MockPageBuilder, MockPageRenderer, MockSessionRepository, MockUIBuilder}
 import core.models.errors.{DatabaseError, NotFoundError, NonTerminatingPageError}
 import core.models.ocelot.stanzas._
-import core.models.ocelot.{Page, KeyedStanza, Process, SecuredProcess, ProcessJson, LabelCache, Labels, Phrase}
+import core.models.ocelot.{Page, KeyedStanza, Process, SecuredProcess, ProcessJson, LabelCache, Labels, Phrase, Published}
 import models.ui
 import models.{PageDesc, PageNext, PageEvaluationContext}
 import uk.gov.hmrc.http.{RequestId, HeaderCarrier}
@@ -140,7 +140,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
       MockSessionRepository
         .get(sessionRepoId, processCode, requestId)
         .returns(Future.successful(Right(
-          Session(SessionKey(sessionRepoId, processCode), process.meta.id, process, Map(), Nil, Map(), Map(page.url -> PageNext("2", Nil)), Map(), Nil, Nil, None, Instant.now)
+          Session(SessionKey(sessionRepoId, processCode), Some(Published), process.meta.id, process, Map(), Nil, Map(), Map(page.url -> PageNext("2", Nil)), Map(), Nil, Nil, None, Instant.now)
         )))
 
       MockPageBuilder
@@ -172,7 +172,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
       MockSessionRepository
         .get(sessionRepoId, processCode, requestId)
         .returns(Future.successful(Right(
-          Session(SessionKey(sessionRepoId, processCode), process.meta.id, process, Map(), Nil, Map(), Map(page.url -> PageNext("2", Nil)), Map(), Nil, Nil, None, Instant.now)
+          Session(SessionKey(sessionRepoId, processCode), Some(Published), process.meta.id, process, Map(), Nil, Map(), Map(page.url -> PageNext("2", Nil)), Map(), Nil, Nil, None, Instant.now)
         )))
 
       MockPageBuilder
@@ -200,7 +200,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
       MockSessionRepository
         .get(sessionRepoId, processCode, requestId)
         .returns(Future.successful(Right(
-          Session(SessionKey(sessionRepoId, processCode), process.meta.id, process, Map(), Nil, Map(), Map(lastPageUrl -> PageNext("2", Nil)), Map(), Nil, Nil, None, Instant.now)
+          Session(SessionKey(sessionRepoId, processCode), Some(Published), process.meta.id, process, Map(), Nil, Map(), Map(lastPageUrl -> PageNext("2", Nil)), Map(), Nil, Nil, None, Instant.now)
         )))
 
       MockPageBuilder
@@ -241,7 +241,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
        MockSessionRepository
         .get(sessionRepoId, processCode, requestId)
         .returns(Future.successful(Right(
-          Session(SessionKey(sessionRepoId, processCode), process.meta.id, process, Map(), Nil, Map(), Map(lastPageUrl -> PageNext("2", Nil)), Map(), Nil, Nil, None, Instant.now)
+          Session(SessionKey(sessionRepoId, processCode), Some(Published), process.meta.id, process, Map(), Nil, Map(), Map(lastPageUrl -> PageNext("2", Nil)), Map(), Nil, Nil, None, Instant.now)
         )))
 
       MockSessionRepository
@@ -276,7 +276,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
       MockSessionRepository
         .get(sessionRepoId, processCode, requestId)
         .returns(Future.successful(Right(
-          Session(SessionKey(sessionRepoId, processCode), fullProcess.meta.id, fullProcess, Map(), Nil, Map(), Map(lastPageUrl -> PageNext("2")), Map(lastPageUrl -> "answer"), Nil, Nil, None, Instant.now)
+          Session(SessionKey(sessionRepoId, processCode), Some(Published), fullProcess.meta.id, fullProcess, Map(), Nil, Map(), Map(lastPageUrl -> PageNext("2")), Map(lastPageUrl -> "answer"), Nil, Nil, None, Instant.now)
         )))
 
       MockSessionRepository
@@ -321,7 +321,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
       MockSessionRepository
         .get(processId, processCode, requestId)
         .returns(Future.successful(Right(
-          Session(SessionKey(sessionRepoId, processCode), process.meta.id, process, Map(), Nil, Map(), Map(), Map(), Nil, Nil, None, Instant.now)
+          Session(SessionKey(sessionRepoId, processCode), Some(Published), process.meta.id, process, Map(), Nil, Map(), Map(), Map(), Nil, Nil, None, Instant.now)
         )))
 
       MockPageBuilder
@@ -340,7 +340,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
 
     "successfully retrieve a process context when the session data contains a single process" in new Test {
 
-      val expectedGuidanceSession: GuidanceSession = GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None)
+      val expectedGuidanceSession: GuidanceSession = GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None, Published)
 
       MockSessionRepository
         .getById(sessionRepoId, process.meta.processCode)
@@ -384,7 +384,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
   "Calling getPageGuidanceSession" should {
 
     "When passed a url to the passphrase page should send no pageHistory url to the repository" in new Test {
-      val expectedSession: Session = Session(SessionKey(sessionRepoId, process.meta.processCode), process.meta.id, process, Map(), Nil, Map(), Map(), Map(), Nil, Nil, None, Instant.now)
+      val expectedSession: Session = Session(SessionKey(sessionRepoId, process.meta.processCode), Some(Published), process.meta.id, process, Map(), Nil, Map(), Map(), Map(), Nil, Nil, None, Instant.now)
 
       MockSessionRepository
         .get(sessionRepoId, process.meta.processCode, requestId)
@@ -394,7 +394,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
     }
 
     "When passed a url to a standard page should send pageHistory url to the repository" in new Test {
-      val expectedSession: Session = Session(SessionKey(sessionRepoId, process.meta.processCode), process.meta.id, process, Map(), Nil, Map(), Map(), Map(), Nil, Nil, None, Instant.now)
+      val expectedSession: Session = Session(SessionKey(sessionRepoId, process.meta.processCode), Some(Published), process.meta.id, process, Map(), Nil, Map(), Map(), Map(), Nil, Nil, None, Instant.now)
 
       MockSessionRepository
         .get(sessionRepoId, process.meta.processCode, requestId)
