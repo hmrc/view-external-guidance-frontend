@@ -66,8 +66,10 @@ package object ocelot {
   val anyIntegerRegex: Regex = s"^-?(\\d{1,3}(,\\d{3}){0,3}|$TenDigitIntPattern)$$".r       // Limited to 10 decimal digits or 12 comma separated
   val EmbeddedParameterRegex: Regex = """\{(\d)\}""".r
   val ExclusivePlaceholder: String = "[exclusive]"
-  val NoRepeatPlaceholder: String = "[norepeat]"
-  val fieldWidthRegex: Regex = s"\\[width:($Twenty|$Ten|$Five|$Four|$Three|$Two)\\]".r
+  val NoRepeatPlaceholder: String = "\\[norepeat\\]"
+  val FieldWidthPattern: String = s"\\[width:($Twenty|$Ten|$Five|$Four|$Three|$Two)\\]"
+  val InputOptionsPattern: String = s"^(.*?)(?:(?:($NoRepeatPlaceholder)?+\\s*(?:$FieldWidthPattern)?+)|(?:(?:$FieldWidthPattern)?+\\s*($NoRepeatPlaceholder)?+)){1}$$"
+  val InputOptionsRegex: Regex = InputOptionsPattern.r
   val timeConstantRegex: Regex = timeConstantPattern.r
   val DatePlaceHolderRegex: Regex = s"^$DatePlaceHolderPattern$$".r
   val TimescaleIdUsageRegex: Regex = TimescaleIdUsagePattern.r
@@ -127,7 +129,10 @@ package object ocelot {
     val (dontRepeatEnglish, english) = stripNoRepeatPlaceholder(p.english)
     (dontRepeatEnglish, Phrase(english, stripNoRepeatPlaceholder(p.welsh)._2))
   }
-  //def stripInputOptions
+  // def stripInputOptions(p: Phrase): (Boolean, Option[String], Phrase) = {
+  //   val p: Phrase = Phrase(trimTrailing(p.english), trimTrailing(p.welsh))
+
+  // }
 
   def fromPattern(pattern: Regex, text: String): (List[String], List[Match]) = (pattern.split(text).toList, pattern.findAllMatchIn(text).toList)
   def isLinkOnlyPhrase(phrase: Phrase): Boolean =phrase.english.matches(pageLinkOnlyPattern)
