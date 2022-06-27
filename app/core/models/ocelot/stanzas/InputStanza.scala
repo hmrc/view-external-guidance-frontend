@@ -16,7 +16,7 @@
 
 package core.models.ocelot.stanzas
 
-import core.models.ocelot.{Page, Labels, Phrase, asAnyInt, asCurrency, asCurrencyPounds, asDate, asTextString, labelReferences, stringFromDate, fieldAndInputOptions, Ten}
+import core.models.ocelot.{Page, Labels, Phrase, asAnyInt, asCurrency, asCurrencyPounds, asDate, asTextString, labelReferences, stringFromDate, Ten}
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
 import play.api.libs.json._
@@ -137,8 +137,7 @@ case class DateInput(
 }
 
 object Input {
-  def apply(stanza: InputStanza, nameWithOptions: Phrase, help: Option[Phrase], placeholder: Option[Phrase]): Input = {
-    val (name, dontRepeatName, width) = fieldAndInputOptions(nameWithOptions)
+  def apply(stanza: InputStanza, name: Phrase, dontRepeatName: Boolean, width: String, help: Option[Phrase], placeholder: Option[Phrase]): Input =
     stanza.ipt_type match {
       case Number => NumberInput(stanza.next, name, help, stanza.label, placeholder, stanza.stack, dontRepeatName, width)
       case Txt => TextInput(stanza.next, name, help, stanza.label, placeholder, stanza.stack, dontRepeatName, width)
@@ -146,5 +145,4 @@ object Input {
       case CurrencyPoundsOnly => CurrencyPoundsOnlyInput(stanza.next, name, help, stanza.label, placeholder, stanza.stack, dontRepeatName, width)
       case Date => DateInput(stanza.next, name, help, stanza.label, placeholder, stanza.stack, dontRepeatName, width)
     }
-  }
 }

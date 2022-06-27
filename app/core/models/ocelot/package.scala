@@ -67,7 +67,8 @@ package object ocelot {
   val EmbeddedParameterRegex: Regex = """\{(\d)\}""".r
   val ExclusivePlaceholder: String = "[exclusive]"
   val NoRepeatPlaceholder: String = "\\[norepeat\\]"
-  val FieldWidthPattern: String = s"\\[width:($Twenty|$Ten|$Five|$Four|$Three|$Two)\\]"
+  val FieldWidthPattern: String = s"\\[width:(.+?)\\]"
+  val ValidInputFieldWidths: List[String] = List(Twenty, Ten, Five, Four, Three, Two)
   val InputOptionsPattern: String = s"^(.*?)(?:(?:($NoRepeatPlaceholder)?+\\s*(?:$FieldWidthPattern)?+)|(?:(?:$FieldWidthPattern)?+\\s*($NoRepeatPlaceholder)?+)){1}$$"
   val InputOptionsRegex: Regex = InputOptionsPattern.r
   val timeConstantRegex: Regex = timeConstantPattern.r
