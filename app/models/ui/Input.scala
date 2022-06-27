@@ -16,13 +16,40 @@
 
 package models.ui
 
+import core.models.ocelot.Ten
+
 sealed trait Input extends FormComponent {
   val dontRepeatText: Boolean
   val width: String
 }
 
-case class NumberInput(text: Text, hint: Option[Text], body: Seq[UIComponent], errorMsgs: Seq[ErrorMsg] = Nil, dontRepeatText: Boolean, width: String) extends Input
-case class TextInput(text: Text, hint: Option[Text], body: Seq[UIComponent], errorMsgs: Seq[ErrorMsg] = Nil, dontRepeatText: Boolean, width: String) extends Input
-case class CurrencyInput(text: Text, hint: Option[Text], body: Seq[UIComponent], errorMsgs: Seq[ErrorMsg] = Nil, dontRepeatText: Boolean, width: String) extends Input
-case class CurrencyPoundsOnlyInput(text: Text, hint: Option[Text], body: Seq[UIComponent], errorMsgs: Seq[ErrorMsg] = Nil, dontRepeatText: Boolean, width: String) extends Input
-case class DateInput(text: Text, hint: Option[Text], body: Seq[UIComponent], errorMsgs: Seq[ErrorMsg] = Nil, dontRepeatText: Boolean, width: String) extends Input
+case class NumberInput(text: Text,
+                       hint: Option[Text],
+                       body: Seq[UIComponent],
+                       errorMsgs: Seq[ErrorMsg] = Nil,
+                       dontRepeatText: Boolean = false,
+                       width: String = Ten) extends Input
+case class TextInput(text: Text,
+                       hint: Option[Text],
+                       body: Seq[UIComponent],
+                       errorMsgs: Seq[ErrorMsg] = Nil,
+                       dontRepeatText: Boolean = false,
+                       width: String = Ten) extends Input
+case class CurrencyInput(text: Text,
+                       hint: Option[Text],
+                       body: Seq[UIComponent],
+                       errorMsgs: Seq[ErrorMsg] = Nil,
+                       dontRepeatText: Boolean = false,
+                       width: String = Ten) extends Input
+case class CurrencyPoundsOnlyInput(text: Text,
+                       hint: Option[Text],
+                       body: Seq[UIComponent],
+                       errorMsgs: Seq[ErrorMsg] = Nil,
+                       dontRepeatText: Boolean = false,
+                       width: String = Ten) extends Input
+case class DateInput(text: Text,
+                       hint: Option[Text],
+                       body: Seq[UIComponent],
+                       errorMsgs: Seq[ErrorMsg] = Nil,
+                       dontRepeatText: Boolean = false,
+                       width: String = Ten) extends Input
