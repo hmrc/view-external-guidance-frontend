@@ -42,15 +42,32 @@ class EnglishTextBuilderSpec extends BaseSpec with GuiceOneAppPerSuite {
 
     val link1 = "https://www.bbc.co.uk/news/#nw-c-most-watched-heading__title"
     val link2 = "https://www.gov.uk"
+    val linkPrint = "javascript:window.print()"
+    val testEmail = "test@example.com"
+    val emailLink = "mailto:test@example.com"
     val urlMap1: Map[String, PageDesc] = Map("start" -> PageDesc("start",  "dummy-path/start", Nil),
-                                             "3" -> PageDesc("3", "dummy-path", Nil),
-                                             "5" -> PageDesc("5","dummy-path/blah", Nil),
-                                             "34" -> PageDesc("34","dummy-path/next", Nil))
+      "3" -> PageDesc("3", "dummy-path", Nil),
+      "5" -> PageDesc("5","dummy-path/blah", Nil),
+      "34" -> PageDesc("34","dummy-path/next", Nil))
 
     val txtWithLinks = Phrase(
       Vector(
         s"[bold:This is a ][link:${link1EnWords}:${link1}] followed by [link:${link2EnWords}:${link2}] and nothing",
         s"[bold:Welsh: This is a ][link:${link1CyWords}:${link1}] Welsh: followed by [link:${link2CyWords}:${link2}] Welsh: and nothing"
+      )
+    )
+
+    val txtWithPrintLink = Phrase(
+      Vector(
+        s"Click [link:here:$linkPrint] to print this page for your records",
+        s"Welsh: Click [link:here:$linkPrint] to print this page for your records"
+      )
+    )
+
+    val txtWithEmailLink = Phrase(
+      Vector(
+        s"Contact us at [link:$testEmail:$emailLink] to get help",
+        s"Welsh: Contact us at [link:$testEmail:$emailLink] to get help"
       )
     )
 
@@ -96,7 +113,7 @@ class EnglishTextBuilderSpec extends BaseSpec with GuiceOneAppPerSuite {
 
     "Convert label reference with currency output format placeholders within phrase to LabelRef TextItems" in new Test {
       val p = Phrase("""Sentence containing [label:BLAH:currency] (label reference)""",
-                     """Welsh: Sentence containing [label:BLAH:currency] (label reference)""")
+        """Welsh: Sentence containing [label:BLAH:currency] (label reference)""")
       TextBuilder.fromPhrase(p).items shouldBe Seq(Words("Sentence containing £1.00 (label reference)"))
       TextBuilder.fromPhraseWithOptionalHint(p)._1.items shouldBe Seq(Words("Sentence containing £1.00 (label reference)"))
     }
@@ -115,7 +132,7 @@ class EnglishTextBuilderSpec extends BaseSpec with GuiceOneAppPerSuite {
 
     "Convert a label placeholderwith currency output format within a bold placeholder to a bold label ref" in new Test {
       val p = Phrase("""Sentence with a [bold:[label:BLAH:currencyPoundsOnly]] label reference""",
-                     """Welsh: Sentence with a [bold:[label:BLAH]:currencyPoundsOnly]] label reference""")
+        """Welsh: Sentence with a [bold:[label:BLAH]:currencyPoundsOnly]] label reference""")
       TextBuilder.fromPhrase(p).items shouldBe Seq(Words("Sentence with a "), Words("£1", true), Words(" label reference"))
       TextBuilder.fromPhraseWithOptionalHint(p)._1.items shouldBe Seq(Words("Sentence with a "), Words("£1", true), Words(" label reference"))
     }
@@ -175,7 +192,7 @@ class EnglishTextBuilderSpec extends BaseSpec with GuiceOneAppPerSuite {
 
     "convert syntactically correct link placeholders into Link objects" in new Test {
       val linkPhrase = Phrase("Hello [link:Blah Blah:https://www.bbc.co.uk] [link:Blah Blah:5]",
-                              "Welsh: Hello [link:Blah Blah:https://www.bbc.co.uk] [link:Blah Blah:5]")
+        "Welsh: Hello [link:Blah Blah:https://www.bbc.co.uk] [link:Blah Blah:5]")
       val txt: Text = TextBuilder.fromPhrase(linkPhrase)
 
       txt.items.length shouldBe 4
@@ -196,7 +213,7 @@ class EnglishTextBuilderSpec extends BaseSpec with GuiceOneAppPerSuite {
 
     "Convert all link placeholders into appropriate Link objects" in new Test {
       val linkPhrase = Phrase("Hello [link:Blah Blah:https://www.bbc.co.uk] [link:Blah Blah:5] [link:Blah Blah:start]",
-                              "Welsh: Hello [link:Blah Blah:https://www.bbc.co.uk] [link:Blah Blah:5] [link:Blah Blah:start]")
+        "Welsh: Hello [link:Blah Blah:https://www.bbc.co.uk] [link:Blah Blah:5] [link:Blah Blah:start]")
       val txt = TextBuilder.fromPhrase(linkPhrase)
 
       txt.items.length shouldBe 6
@@ -214,7 +231,7 @@ class EnglishTextBuilderSpec extends BaseSpec with GuiceOneAppPerSuite {
 
     "Convert all link-same placeholders into appropriate Link objects" in new Test {
       val linkSamePhrase = Phrase("Hello [link-same:Blah Blah:https://www.bbc.co.uk] [link-same:Blah Blah:5] [link-same:Blah Blah:start]",
-                                  "Welsh: Hello [link-same:Blah Blah:https://www.bbc.co.uk] [link-same:Blah Blah:5] [link-same:Blah Blah:start]")
+        "Welsh: Hello [link-same:Blah Blah:https://www.bbc.co.uk] [link-same:Blah Blah:5] [link-same:Blah Blah:start]")
       val txt = TextBuilder.fromPhrase(linkSamePhrase)
 
       txt.items.length shouldBe 6
@@ -232,7 +249,7 @@ class EnglishTextBuilderSpec extends BaseSpec with GuiceOneAppPerSuite {
 
     "Convert all link-tab placeholders into appropriate Link objects" in new Test {
       val linkTabPhrase = Phrase("Hello [link-tab:Blah Blah:https://www.bbc.co.uk] [link-tab:Blah Blah:5] [link-tab:Blah Blah:start]",
-                                 "Welsh: Hello [link-tab:Blah Blah:https://www.bbc.co.uk] [link-tab:Blah Blah:5] [link-tab:Blah Blah:start]")
+        "Welsh: Hello [link-tab:Blah Blah:https://www.bbc.co.uk] [link-tab:Blah Blah:5] [link-tab:Blah Blah:start]")
       val txt = TextBuilder.fromPhrase(linkTabPhrase)
 
       txt.items.length shouldBe 6
@@ -246,6 +263,74 @@ class EnglishTextBuilderSpec extends BaseSpec with GuiceOneAppPerSuite {
       altTxt.items(1) shouldBe Link("https://www.bbc.co.uk", "Blah Blah", true)
       altTxt.items(3) shouldBe Link("dummy-path/blah", "Blah Blah", true)
       altTxt.items(5) shouldBe Link("dummy-path/start", "Blah Blah", true)
+    }
+
+    "Convert all javascript-link placeholders into appropriate link objects" in new Test {
+      val txt = TextBuilder.fromPhrase(txtWithPrintLink)
+
+      txt.items.length shouldBe 3
+
+      txt.items(0) shouldBe Words("Click ")
+      txt.items(1) shouldBe Link(linkPrint, "here")
+      txt.items(2) shouldBe Words(" to print this page for your records")
+
+      val altTxt = TextBuilder.fromPhraseWithOptionalHint(txtWithPrintLink)._1
+
+      altTxt.items.length shouldBe 3
+
+      altTxt.items(0) shouldBe Words("Click ")
+      altTxt.items(1) shouldBe Link(linkPrint, "here")
+      altTxt.items(2) shouldBe Words(" to print this page for your records")
+    }
+
+    "leave syntactically incorrect javascript link placeholders as text within a phrase" in new Test {
+      val phrase = Phrase(Vector(
+        "Click [link:here:Javascript:Window.print] to print this page for your records",
+        "Welsh: Click [link:here:Javascript:Window.print] to print this page for your records"
+      ))
+      val txt = TextBuilder.fromPhrase(phrase)
+
+      txt.items.length shouldBe 1
+      txt.items(0) shouldBe Words("Click [link:here:Javascript:Window.print] to print this page for your records")
+
+      val altTxt = TextBuilder.fromPhraseWithOptionalHint(phrase)._1
+
+      altTxt.items.length shouldBe 1
+      altTxt.items(0) shouldBe Words("Click [link:here:Javascript:Window.print] to print this page for your records")
+    }
+
+    "Convert all email-link placeholders into appropriate link objects" in new Test {
+      val txt = TextBuilder.fromPhrase(txtWithEmailLink)
+
+      txt.items.length shouldBe 3
+
+      txt.items(0) shouldBe Words("Contact us at ")
+      txt.items(1) shouldBe Link(emailLink, "test@example.com")
+      txt.items(2) shouldBe Words(" to get help")
+
+      val altTxt = TextBuilder.fromPhraseWithOptionalHint(txtWithEmailLink)._1
+
+      altTxt.items.length shouldBe 3
+
+      altTxt.items(0) shouldBe Words("Contact us at ")
+      altTxt.items(1) shouldBe Link(emailLink, "test@example.com")
+      altTxt.items(2) shouldBe Words(" to get help")
+    }
+
+    "leave syntactically incorrect email link placeholders as text within a phrase" in new Test {
+      val phrase = Phrase(Vector(
+        "Contact us at  [link:test@example.com:mailtotest@example.com] to get help",
+        "Welsh: Contact us at  [link:test@example.com:mailtotest@example.com] to get help"
+      ))
+      val txt = TextBuilder.fromPhrase(phrase)
+
+      txt.items.length shouldBe 1
+      txt.items(0) shouldBe Words("Contact us at  [link:test@example.com:mailtotest@example.com] to get help")
+
+      val altTxt = TextBuilder.fromPhraseWithOptionalHint(phrase)._1
+
+      altTxt.items.length shouldBe 1
+      altTxt.items(0) shouldBe Words("Contact us at  [link:test@example.com:mailtotest@example.com] to get help")
     }
   }
 
@@ -287,7 +372,7 @@ class EnglishTextBuilderSpec extends BaseSpec with GuiceOneAppPerSuite {
 
     "Convert a label placeholder with currency output format within a bold placeholder" in new ExpandTest {
       val phrase = Phrase("""Sentence with a [bold:[label:BLAH:currencyPoundsOnly]] label reference""",
-                          """Welsh: Sentence with a [bold:[label:BLAH:currencyPoundsOnly]] label reference""")
+        """Welsh: Sentence with a [bold:[label:BLAH:currencyPoundsOnly]] label reference""")
       val expectedPhrase = Phrase("""Sentence with a [bold:£33] label reference""", """Welsh: Sentence with a [bold:£33] label reference""")
       TextBuilder.expandLabels(phrase) shouldBe expectedPhrase
     }
@@ -315,14 +400,14 @@ class EnglishTextBuilderSpec extends BaseSpec with GuiceOneAppPerSuite {
   "TextBuilder.fromPhraseWithOptionalHint" must {
     "Return hint when present" in new Test {
       val (mainText, optionalHint): (Text, Option[Text]) = TextBuilder.fromPhraseWithOptionalHint(answerWithHint)
-       mainText shouldBe Text("Yes")
-       optionalHint shouldBe Some(Text("You agree with the assertion"))
+      mainText shouldBe Text("Yes")
+      optionalHint shouldBe Some(Text("You agree with the assertion"))
     }
 
     "Return no hint when not present" in new Test {
       val (mainText, optionalHint): (Text, Option[Text]) = TextBuilder.fromPhraseWithOptionalHint(answerWithNoHint)
-       mainText shouldBe Text("Yes")
-       optionalHint shouldBe None
+      mainText shouldBe Text("Yes")
+      optionalHint shouldBe None
     }
   }
 }
