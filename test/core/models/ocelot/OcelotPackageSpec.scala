@@ -594,6 +594,14 @@ class OcelotPackageSpec extends BaseSpec with TestTimescaleDefnsDB {
       width shouldBe "4"
     }
 
+    "Support [width:<Int>] option with no leading text" in {
+      val phrase = Phrase("[width:4]","Welsh: [width:4]")
+      val (p, dontRepeat, width) = fieldAndInputOptions(phrase)
+      p shouldBe Phrase("", "Welsh:")
+      dontRepeat shouldBe false
+      width shouldBe "4"
+    }
+
   }
 
 }
