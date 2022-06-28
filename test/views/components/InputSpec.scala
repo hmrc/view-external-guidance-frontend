@@ -71,7 +71,7 @@ class InputSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite {
     val inputPhrase: Phrase = Phrase(Vector("Some Text", "Welsh: Some Text"))
     val helpPhrase: Phrase = Phrase(Vector("Help text", "Welsh: Help text"))
 
-    val input: Input = CurrencyInput(Text(i1), Some(Text(i1Hint)), Seq(h2, h3, h4, bpList, para1))
+    val input: Input = CurrencyInput(Text(i1), Some(Text(i1Hint)), Seq(h2, h3, h4, bpList, para1), Nil, false, "5")
 
     val inputWithoutBody: Input = CurrencyInput(Text(i1), None, Seq.empty)
     val inputWithHintAndNoBody: Input = CurrencyInput(Text(i1), Some(Text(i1Hint)), Seq.empty)
@@ -107,6 +107,14 @@ class InputSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite {
       private val doc = asDocument(components.input(input, "test", textFormProvider("test" -> nonEmptyText))(fakeRequest, messages, ctx))
       private val inputFields = doc.getElementsByTag("input")
       inputFields.size shouldBe 1
+    }
+
+    "render input as input field of correct width" in new Test {
+      private val doc = asDocument(components.input(input, "test", textFormProvider("test" -> nonEmptyText))(fakeRequest, messages, ctx))
+      private val inputFields = doc.getElementsByTag("input")
+      inputFields.size shouldBe 1
+      private val attrs = elementAttrs(inputFields.first())
+      attrs("class").contains("govuk-input--width-5") shouldBe true
     }
 
     "render label for input when input component body is not empty" in new Test {
@@ -202,7 +210,7 @@ class InputSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite {
   "English Text Input component" must {
 
     trait TextTest extends Test {
-      override val input: TextInput = TextInput(Text(i1), Some(Text(i1Hint)), Seq(h2, h3, h4, para1))
+      override val input: TextInput = TextInput(Text(i1), Some(Text(i1Hint)), Seq(h2, h3, h4, para1), Nil, false, "5")
 
       override val inputWithoutBody: TextInput = TextInput(Text(i1), None, Seq.empty)
       override val inputWithHintAndNoBody: TextInput = TextInput(Text(i1), Some(Text(i1Hint)), Seq.empty)
@@ -233,6 +241,14 @@ class InputSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite {
       private val doc = asDocument(components.input(input, "test", textFormProvider("test" -> nonEmptyText))(fakeRequest, messages, ctx))
       private val inputFields = doc.getElementsByTag("input")
       inputFields.size shouldBe 1
+    }
+
+    "render input as input field of correct width" in new TextTest {
+      private val doc = asDocument(components.input(input, "test", textFormProvider("test" -> nonEmptyText))(fakeRequest, messages, ctx))
+      private val inputFields = doc.getElementsByTag("input")
+      inputFields.size shouldBe 1
+      private val attrs = elementAttrs(inputFields.first())
+      attrs("class").contains("govuk-input--width-5") shouldBe true
     }
 
     "render input with previous answer entered" in new TextTest {
@@ -572,7 +588,7 @@ class InputSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite {
   "English Number Input component" must {
 
     trait NumberTest extends Test {
-      override val input: NumberInput = NumberInput(Text(i1), Some(Text(i1Hint)), Seq(h2, h3, h4, para1))
+      override val input: NumberInput = NumberInput(Text(i1), Some(Text(i1Hint)), Seq(h2, h3, h4, para1), Nil, false, "5")
 
       override val inputWithoutBody: NumberInput = NumberInput(Text(i1), None, Seq.empty)
       override val inputWithHintAndNoBody: NumberInput = NumberInput(Text(i1), Some(Text(i1Hint)), Seq.empty)
@@ -601,6 +617,14 @@ class InputSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite {
       private val doc = asDocument(components.input(input, "test", textFormProvider("test" -> nonEmptyText))(fakeRequest, messages, ctx))
       private val inputFields = doc.getElementsByTag("input")
       inputFields.size shouldBe 1
+    }
+
+    "render input as input field of correct width" in new NumberTest {
+      private val doc = asDocument(components.input(input, "test", textFormProvider("test" -> nonEmptyText))(fakeRequest, messages, ctx))
+      private val inputFields = doc.getElementsByTag("input")
+      inputFields.size shouldBe 1
+      private val attrs = elementAttrs(inputFields.first())
+      attrs("class").contains("govuk-input--width-5") shouldBe true
     }
 
     "render input with previous answer entered" in new NumberTest {

@@ -14,9 +14,11 @@
  * limitations under the License.
  *@
 
+@import views.html.components.fieldWidthClass
+
 @(input: models.ui.Input, name: String, form: Form[_])(implicit request: Request[_], messages: Messages, ctx: PageContext)
 
-<input class="govuk-input govuk-input--width-10@optionalErrorClass(input)"
+<input class="govuk-input @fieldWidthClass(input.width)@optionalErrorClass(input)"
        id="@name-0"
        name="@name"
        type="text"
