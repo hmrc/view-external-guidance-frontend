@@ -55,17 +55,21 @@ class SessionTimeoutPageController @Inject()(appConfig: AppConfig,
               logger.warn(s"Unexpected process code encountered when removing session ($id) after timeout warning. " +
                 s"Expected code $processCode; actual code ${session.process.meta.processCode}")
               // Session not as expected, user must be running another piece of guidance, signal answers deleted
-              Future.successful(Ok(createDeleteYourAnswersResponse(messages("session.timeout.header.title"), processCode, session.process.betaPhaseBanner)).withNewSession)
+              Future.successful(Ok(createDeleteYourAnswersResponse(messages("session.timeout.header.title"), processCode, session.process.betaPhaseBanner)))
             case Right(session) =>
-              Future.successful(Ok(createDeleteYourAnswersResponse(session.process.title.value(messages.lang), processCode, session.process.betaPhaseBanner)).withNewSession)
+              Future.successful(Ok(createDeleteYourAnswersResponse(session.process.title.value(messages.lang), processCode, session.process.betaPhaseBanner)))
             case Left(SessionNotFoundError) =>
               logger.warn(s"Session Timeout ($id) - retrieving processCode $processCode returned NotFound, displaying deleted your answers to user")
-              Future.successful(Ok(createDeleteYourAnswersResponse(messages("session.timeout.header.title"), processCode, false)).withNewSession)
+              Future.successful(Ok(createDeleteYourAnswersResponse(messages("session.timeout.header.title"), processCode, false)))
             case Left(err) =>
               logger.error(s"Error $err occurred retrieving process context for process $processCode when removing session ($id)")
-              Future.successful(InternalServerError(errorHandler.internalServerErrorTemplateWithProcessCode(Some(processCode), false)).withNewSession)
+              Future.successful(InternalServerError(errorHandler.internalServerErrorTemplateWithProcessCode(Some(processCode), false)))
           }
-        case _ =>
+        case Some(id) =>
+          logger.warn(s"Session ($id) has expired")
+          Future.successful(Ok(createYourSessionHasExpiredResponse(messages("session.timeout.header.title"), processCode, false)).withNewSession)
+        case None =>
+          logger.warn(s"No session found ")
           Future.successful(Ok(createYourSessionHasExpiredResponse(messages("session.timeout.header.title"), processCode, false)).withNewSession)
       }
     }
