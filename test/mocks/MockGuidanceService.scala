@@ -33,6 +33,11 @@ trait MockGuidanceService extends MockFactory {
 
   object MockGuidanceService {
 
+    def deleteSession(processCode: String, key: String): CallHandler[Future[RequestOutcome[Unit]]] =
+      (mockGuidanceService
+        .deleteSession(_: String, _: String))
+        .expects(processCode, key)
+
     def getCurrentGuidanceSession(processCode: String)(sessionId: String): CallHandler[Future[RequestOutcome[GuidanceSession]]] =
       (mockGuidanceService
         .getCurrentGuidanceSession(_: String)(_: String)(_: ExecutionContext))

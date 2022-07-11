@@ -21,12 +21,12 @@
 @(headerTitle: String,
   processCode: Option[String],
   startUrl: Option[String],
-  buttonTarget: String,
-  betaPhaseBanner: Boolean)(implicit request: Request[_], messages: Messages)
+  buttonTarget: String)(implicit request: Request[_], messages: Messages)
 
-@layout(messages("session.timeout.delete.your.answers"), headerTitle, processCode, startUrl, betaPhaseBanner = betaPhaseBanner, enableTimeout = false){
+@layout(messages("session.timeout.session.has.expired"), headerTitle, processCode, startUrl, betaPhaseBanner = false, enableTimeout = false){
 
-    <h1 class="govuk-heading-xl">@messages("session.timeout.delete.your.answers")</h1>
+    <h1 class="govuk-heading-xl">@messages("session.timeout.session.has.expired")</h1>
+    <p>@messages("session.timeout.session.has.expired.info")</p>
 
     <a id="startAgain" href="@buttonTarget" role="button" class="govuk-button" data-module="govuk-button">@messages("session.timeout.button.text")</a>
 }
