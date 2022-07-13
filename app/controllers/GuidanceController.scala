@@ -99,7 +99,7 @@ class GuidanceController @Inject() (
               Future.successful(Ok(formView(page, pageCtx, inputName, populatedForm(input, inputName, pageCtx.answer))))
             case _ =>
               logger.error(s"Unable to locate input stanza for process ${pageCtx.processCode} on page load")
-              Future.successful(BadRequest(errorHandler.badRequestTemplateWithProcessCode(Some(processCode), pageCtx.betaPhaseBanner)))
+              Future.successful(BadRequest(errorHandler.badRequestTemplateWithProcessCode(Some(processCode))))
           }
         }
     }
@@ -119,7 +119,7 @@ class GuidanceController @Inject() (
         Future.successful(redirectToGuidanceStart(processCode))
       case NotFoundError =>
         logger.warn(s"Request for PageContext at /$path returned NotFound, returning NotFound")
-        Future.successful(NotFound(errorHandler.notFoundTemplateWithProcessCode(Some(processCode), false)))
+        Future.successful(NotFound(errorHandler.notFoundTemplateWithProcessCode(Some(processCode))))
       case ExpectationFailedError =>
         logger.warn(s"ExpectationFailed error on getPage. Redirecting to ${appConfig.baseUrl}/$processCode")
         Future.successful(redirectToGuidanceStart(processCode))
@@ -143,7 +143,7 @@ class GuidanceController @Inject() (
       case Left(err) => logAndTranslateSubmitError(err, processCode, path)
       case Right(ctx) => ctx.dataInput.fold{
           logger.error( s"Unable to locate input stanza for process ${ctx.processCode} on submission")
-          Future.successful(BadRequest(errorHandler.badRequestTemplateWithProcessCode(Some(processCode), ctx.betaPhaseBanner)))
+          Future.successful(BadRequest(errorHandler.badRequestTemplateWithProcessCode(Some(processCode))))
         }{ input =>
           val inputName: String = formInputName(path)
           bindFormData(input, inputName) match {
@@ -181,10 +181,10 @@ class GuidanceController @Inject() (
         Future.successful(Redirect(routes.GuidanceController.getPage(processCode, SecuredProcess.SecuredProcessStartUrl, None)))
       case NotFoundError =>
         logger.warn(s"Request for PageContext at /$path returned NotFound during form submission, returning NotFound")
-        Future.successful(NotFound(errorHandler.notFoundTemplateWithProcessCode(Some(processCode), false)))
+        Future.successful(NotFound(errorHandler.notFoundTemplateWithProcessCode(Some(processCode))))
       case BadRequestError =>
         logger.warn(s"Request for PageContext at /$path returned BadRequest during form submission, returning BadRequest")
-        Future.successful(BadRequest(errorHandler.badRequestTemplateWithProcessCode(Some(processCode), false)))
+        Future.successful(BadRequest(errorHandler.badRequestTemplateWithProcessCode(Some(processCode))))
       case ExpectationFailedError =>
         logger.warn(s"ExpectationFailed error on submitPage. Redirect to ${appConfig.baseUrl}/$processCode")
         Future.successful(redirectToGuidanceStart(processCode))
@@ -219,11 +219,11 @@ class GuidanceController @Inject() (
   private def createErrorView(ctxOutcome: RequestOutcome[PageContext], inputName: String, form: Form[_])
                                   (implicit request: Request[_], messages: Messages): Html =
     ctxOutcome match {
-      case Left(err) => errorHandler.internalServerErrorTemplateWithProcessCode(None, false)
+      case Left(err) => errorHandler.internalServerErrorTemplateWithProcessCode(None)
       case Right(ctx) =>
         ctx.page match {
           case page: FormPage => formView(page, ctx, inputName, form)
-          case _ => errorHandler.badRequestTemplateWithProcessCode(Some(ctx.processCode), ctx.betaPhaseBanner)
+          case _ => errorHandler.badRequestTemplateWithProcessCode(Some(ctx.processCode))
         }
     }
 

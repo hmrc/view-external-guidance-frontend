@@ -21,6 +21,7 @@ import java.time.Instant
 import play.twirl.api.Html
 import config.{AppConfig, ErrorHandler}
 import javax.inject.{Inject, Singleton}
+import core.models.errors.SessionNotFoundError
 import play.api.Logger
 import play.api.i18n.{I18nSupport, Messages}
 import play.api.mvc._
@@ -50,29 +51,34 @@ class SessionTimeoutPageController @Inject()(appConfig: AppConfig,
       implicit val messages: Messages = mcc.messagesApi.preferred(request)
       hc.sessionId match {
         case Some(id) if !hasSessionExpired(request.session) =>
-          service.deleteSession(processCode, id.value).map{
-            case Right(()) =>
-              logger.warn(s"User deleted session for $id with $processCode")
+          service.getCurrentGuidanceSession(processCode)(id.value).map {
+            case Right(session) if processCode != session.process.meta.processCode =>
+              logger.warn(s"Unexpected process code encountered when removing session ($id) after timeout warning. " +
+                s"Expected code $processCode; actual code ${session.process.meta.processCode}")
+              // Session not as expected, user must be running another piece of guidance, signal answers deleted
               Ok(userDeletedSessionView(messages("session.timeout.header.title"), processCode))
-            case Left(NotFoundError) =>
-              logger.warn(s"User deleted session for $id with $processCode")
-              Ok(systemTimedoutSessionView(messages("session.timeout.header.title"), processCode))
+            case Right(session) =>
+              Ok(userDeletedSessionView(session.process.title.value(messages.lang), processCode))
+            case Left(SessionNotFoundError) =>
+              logger.warn(s"Session Timeout ($id) - retrieving processCode $processCode returned NotFound, displaying deleted your answers to user")
+              Ok(userDeletedSessionView(messages("session.timeout.header.title"), processCode))
             case Left(err) =>
-              logger.error(s"Attempt to delete user session for $id with $processCode, returned error $err")
-              InternalServerError(errorHandler.internalServerErrorTemplateWithProcessCode(Some(processCode), false))
+              logger.error(s"Error $err occurred retrieving process context for process $processCode when removing session ($id)")
+              InternalServerError(errorHandler.internalServerErrorTemplateWithProcessCode(Some(processCode)))
           }
         case Some(id) =>
           service.deleteSession(processCode, id.value).map{
-            case Right(()) | Left(NotFoundError) =>
-              logger.warn(s"Session ($id) has expired")
-              Ok(systemTimedoutSessionView(messages("session.timeout.header.title"), processCode))
+            case Right(()) =>
+              logger.warn(s"Session for $id and $processCode deleted successfully")
+              Ok(systemTimedoutSessionView(messages("session.timeout.header.title"), processCode)).withNewSession
+            case Left(NotFoundError) =>
+              Ok(systemTimedoutSessionView(messages("session.timeout.header.title"), processCode)).withNewSession
             case Left(err) =>
-              logger.error(s"Attempt to delete user session for $id with $processCode, returned error $err")
-              InternalServerError(errorHandler.internalServerErrorTemplateWithProcessCode(Some(processCode), false))
+              logger.error(s"Error occurred attempting to delete session for $id and $processCode : $err")
+              InternalServerError(errorHandler.internalServerErrorTemplateWithProcessCode(Some(processCode)))
           }
-        case None =>
-          logger.warn(s"No session id found ")
-          Future.successful(Ok(systemTimedoutSessionView(messages("session.timeout.header.title"), processCode)))
+        case _ =>
+          Future.successful(Ok(systemTimedoutSessionView(messages("session.timeout.header.title"), processCode)).withNewSession)
       }
     }
 

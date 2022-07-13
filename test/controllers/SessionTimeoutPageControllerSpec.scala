@@ -70,7 +70,7 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
         SessionKeys.sessionId -> sessionId,
         SessionKeys.lastRequestTimestamp -> now)
 
-      MockGuidanceService.deleteSession(processCode, sessionId).returns(Future.successful(Right(())))
+      MockGuidanceService.getCurrentGuidanceSession(processCode)(sessionId).returns(Future.successful(Right(session)))
 
       val result: Future[Result] = target.sessionTimeout(processCode)(fakeRequest)
 
@@ -85,7 +85,7 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
         SessionKeys.sessionId -> sessionId,
         SessionKeys.lastRequestTimestamp -> now)
 
-      MockGuidanceService.deleteSession(processCode, sessionId).returns(Future.successful(Right(())))
+      MockGuidanceService.getCurrentGuidanceSession(processCode)(sessionId).returns(Future.successful(Left(SessionNotFoundError)))
 
       val result: Future[Result] = target.sessionTimeout(processCode)(fakeRequest)
 
@@ -101,7 +101,7 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
         SessionKeys.sessionId -> sessionId,
         SessionKeys.lastRequestTimestamp -> now)
 
-      MockGuidanceService.deleteSession(processCode, sessionId).returns(Future.successful(Left(DatabaseError)))
+      MockGuidanceService.getCurrentGuidanceSession(processCode)(sessionId).returns(Future.successful(Left(DatabaseError)))
 
       val result: Future[Result] = target.sessionTimeout(processCode)(fakeRequest)
 
@@ -116,7 +116,7 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
         SessionKeys.sessionId -> sessionId,
         SessionKeys.lastRequestTimestamp -> now)
 
-      MockGuidanceService.deleteSession(invalidProcessCode, sessionId).returns(Future.successful(Left(NotFoundError)))
+      MockGuidanceService.getCurrentGuidanceSession(invalidProcessCode)(sessionId).returns(Future.successful(Right(session)))
 
       val result: Future[Result] = target.sessionTimeout(invalidProcessCode)(fakeRequest)
 
@@ -131,6 +131,20 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
 
       val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("GET", "/")
 
+      val result: Future[Result] = target.sessionTimeout(processCode)(fakeRequest)
+      status(result) shouldBe Status.OK
+    }
+
+    "return successful response when session remains but session timeout exceeded by 60 seconds " in new Test {
+      // This scenario should not occur but is catered for as a possible extension of the timeout expiry calculation
+      val now: Long = Instant.now.toEpochMilli
+      val ts: Long = now - (timeout + (60 * MockAppConfig.toMilliSeconds))
+      val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("GET", "/").withSession(
+        SessionKeys.sessionId -> sessionId,
+        SessionKeys.lastRequestTimestamp -> ts.toString
+      )
+
+      MockGuidanceService.deleteSession(processCode, sessionId).returns(Future.successful(Right(())))
       val result: Future[Result] = target.sessionTimeout(processCode)(fakeRequest)
 
       status(result) shouldBe Status.OK
@@ -147,7 +161,7 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
         SessionKeys.lastRequestTimestamp -> ts.toString
       )
 
-      MockGuidanceService.deleteSession(processCode, sessionId).returns(Future.successful(Left(NotFoundError)))
+      MockGuidanceService.deleteSession(processCode, sessionId).returns(Future.successful(Right(())))
       val result: Future[Result] = target.sessionTimeout(processCode)(fakeRequest)
 
       status(result) shouldBe Status.OK
