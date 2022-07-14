@@ -190,6 +190,10 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
       hasSessionExpired(None, MockAppConfig, now) shouldBe false
     }
 
+    "Return false with lastRequest times in the future" in {
+      hasSessionExpired(Some((now + 20000).toString), MockAppConfig, now) shouldBe false
+    }
+
   }
 
 }
