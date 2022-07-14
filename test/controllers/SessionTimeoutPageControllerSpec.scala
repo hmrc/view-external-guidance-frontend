@@ -49,7 +49,7 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
     lazy val process: Process = validOnePageJson.as[Process]
     lazy val session: GuidanceSession = GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None, Published)
 
-    val timeout: Int = MockAppConfig.timeoutInSeconds * MockAppConfig.toMilliSeconds
+    val timeout: Int = MockAppConfig.timeoutInSeconds * 1000
 
     val target = new SessionTimeoutPageController( MockAppConfig,
       mockGuidanceService,
@@ -138,7 +138,7 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
     "return successful response when session remains but session timeout exceeded by 60 seconds " in new Test {
       // This scenario should not occur but is catered for as a possible extension of the timeout expiry calculation
       val now: Long = Instant.now.toEpochMilli
-      val ts: Long = now - (timeout + (60 * MockAppConfig.toMilliSeconds))
+      val ts: Long = now - (timeout + (60 * 1000))
       val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("GET", "/").withSession(
         SessionKeys.sessionId -> sessionId,
         SessionKeys.lastRequestTimestamp -> ts.toString
@@ -166,6 +166,30 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
 
       status(result) shouldBe Status.OK
     }
+  }
+
+
+  "hasSessionExpired" should {
+    val now = 1657796066757L
+    val lastRequestTime = 1657796057930L
+    "detect session has not expired" in {
+      hasSessionExpired(Some(lastRequestTime.toString), MockAppConfig, now) shouldBe false
+    }
+
+    "detect session is acceptably close to expiry" in {
+      val currentTime = lastRequestTime + MockAppConfig.timeoutInSeconds * 1000 - 50
+      hasSessionExpired(Some(lastRequestTime.toString), MockAppConfig, currentTime) shouldBe true
+    }
+
+    "detect session has expired" in {
+      val currentTime = lastRequestTime + MockAppConfig.timeoutInSeconds * 1000L + 20000L
+      hasSessionExpired(Some(lastRequestTime.toString), MockAppConfig, currentTime) shouldBe true
+    }
+
+    "Deem missing session lastRequest time as Session not expired" in {
+      hasSessionExpired(None, MockAppConfig, now) shouldBe false
+    }
+
   }
 
 }

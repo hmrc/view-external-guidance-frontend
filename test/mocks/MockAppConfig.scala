@@ -41,7 +41,6 @@ object MockAppConfig extends AppConfig {
   val defaultSignOutUrl: String = "https://www.gov.uk"
   val timeoutInSeconds: Int = 1200
   val timeoutWarningInSeconds: Int = 300
-  val toMilliSeconds: Int = 1000
   val expiryErrorMarginInMilliSeconds: Int = 100
   def feedbackUrl(implicit request: RequestHeader): String = "somefeedbackUrl"
   val baseUrl: String = "/guidance"

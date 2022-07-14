@@ -14,6 +14,22 @@
  * limitations under the License.
  */
 
+import java.time.Instant
+import config.AppConfig
+
 package object controllers {
   val SessionIdPrefix: String = "session-"
+
+  /**
+    * If last request update is available check if session has timed out
+    *
+    * @param session - Browser session
+    * @return Returns "true" if time since last update exceeds timeout limit or is very close to the limit
+    */
+  def hasSessionExpired(sessionLastRequestTime: Option[String], appConfig: AppConfig, timeNow: Long = Instant.now.toEpochMilli): Boolean =
+    sessionLastRequestTime.fold(false){lastRequestTs =>
+      val elapsedMilliseconds = timeNow - lastRequestTs.toLong  // How many millis since last request
+      // Is the elapsed period greater than the timeout minus the grace period
+      elapsedMilliseconds >= (appConfig.timeoutInSeconds * 1000L -appConfig.expiryErrorMarginInMilliSeconds)
+    }
 }

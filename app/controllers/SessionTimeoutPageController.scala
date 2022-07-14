@@ -16,8 +16,6 @@
 
 package controllers
 
-import java.time.Instant
-
 import play.twirl.api.Html
 import config.{AppConfig, ErrorHandler}
 import javax.inject.{Inject, Singleton}
@@ -50,7 +48,7 @@ class SessionTimeoutPageController @Inject()(appConfig: AppConfig,
     def sessionTimeout(processCode: String): Action[AnyContent] = Action.async { implicit request =>
       implicit val messages: Messages = mcc.messagesApi.preferred(request)
       hc.sessionId match {
-        case Some(id) if !hasSessionExpired(request.session) =>
+        case Some(id) if !hasSessionExpired(request.session.get(lastRequestTimestamp), appConfig) =>
           service.getCurrentGuidanceSession(processCode)(id.value).map {
             case Right(session) if processCode != session.process.meta.processCode =>
               logger.warn(s"Unexpected process code encountered when removing session ($id) after timeout warning. " +
@@ -83,38 +81,8 @@ class SessionTimeoutPageController @Inject()(appConfig: AppConfig,
     }
 
   def userDeletedSessionView(processTitle: String, processCode: String)(implicit request: Request[_]): Html =
-    user_deleted_session_view(
-      processTitle,
-      Some(processCode),
-      None,
-      s"${appConfig.baseUrl}/$processCode")
+    user_deleted_session_view(processTitle, Some(processCode), None, s"${appConfig.baseUrl}/$processCode")
 
   def systemTimedoutSessionView(processTitle: String, processCode: String)(implicit request: Request[_]): Html =
-    system_timedout_session_view(
-      processTitle,
-      Some(processCode),
-      None,
-      s"${appConfig.baseUrl}/$processCode")
-
-  /**
-    * If last request update is available check if session has timed out
-    *
-    * @param session - Browser session
-    * @return Returns "true" if time since last update exceeds timeout limit or is very close to the limit
-    */
-  def hasSessionExpired(session: Session): Boolean = {
-
-    session.get(lastRequestTimestamp).fold(false){tsStr =>
-
-      val now = Instant.now.toEpochMilli
-      val ts = tsStr.toLong
-
-      val duration = now - ts
-      val timeout = appConfig.timeoutInSeconds * appConfig.toMilliSeconds
-      val diff = duration - timeout
-
-      (duration > timeout) || (diff.abs < appConfig.expiryErrorMarginInMilliSeconds)
-    }
-  }
-
+    system_timedout_session_view(processTitle, Some(processCode), None, s"${appConfig.baseUrl}/$processCode")
 }
