@@ -35,6 +35,7 @@ import org.mongodb.scala.model.Filters._
 import org.mongodb.scala.model.Sorts._
 import org.mongodb.scala.model.Updates.combine
 import org.mongodb.scala.model._
+import org.mongodb.scala.result.DeleteResult
 import uk.gov.hmrc.mongo._
 import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 import scala.concurrent.{ExecutionContext, Future}
@@ -90,6 +91,7 @@ trait SessionRepositoryConstants {
 
 trait SessionRepository extends SessionRepositoryConstants {
   def create(key: String, runMode: RunMode, process: Process, pageMap: Map[String, PageNext], legalPageIds: List[String]): Future[RequestOutcome[Unit]]
+  def delete(key: String, processCode: String): Future[RequestOutcome[Unit]]
   def getById(key: String, processCode: String): Future[RequestOutcome[GuidanceSession]]
   def get(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[Session]]
   def reset(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[GuidanceSession]]
@@ -137,6 +139,25 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
         logger.error(s"Error $lastError while trying to persist process=${process.meta.id} to session repo using _id=$key")
         Left(DatabaseError)
     }
+
+  def delete(key: String, processCode: String): Future[RequestOutcome[Unit]] =
+    collection
+      .deleteOne(equal("_id", SessionKey(key, processCode)))
+      .toFutureOption
+      .map {
+        case Some(result: DeleteResult) if result.getDeletedCount > 0 => Right(())
+        case Some(result: DeleteResult) =>
+          logger.warn(s"Attempt to delete session for $key and $processCode failed as no such session exists")
+          Left(NotFoundError)
+        case None =>
+          logger.error(s"Attempt to delete session for $key and $processCode failed")
+          Left(DatabaseError)
+      }
+      .recover {
+        case error =>
+          logger.error(s"Attempt to delete session for $key and $processCode failed with error : ${error.getMessage}")
+          Left(DatabaseError)
+      }
 
   def getById(key:String, processCode: String): Future[RequestOutcome[GuidanceSession]] =
     collection

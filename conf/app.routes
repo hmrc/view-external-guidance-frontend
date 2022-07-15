@@ -5,7 +5,10 @@ GET   /assets/*file                      controllers.Assets.versioned(path="/pub
 
 GET   /language/:lang                    controllers.SwitchLanguageController.switchToLanguage(lang: String)
 
-GET   /:processCode/session-timeout      controllers.SessionTimeoutPageController.getPage(processCode: String)
+#
+# If the session-timeout URL is changed, ensure the core.models.ocelot.Process.ReservedUrls constant is updated also
+#
+GET   /:processCode/session-timeout      controllers.SessionTimeoutPageController.sessionTimeout(processCode: String)
 
 GET   /:processCode                      controllers.entry.StartGuidanceController.published(processCode: String)
 

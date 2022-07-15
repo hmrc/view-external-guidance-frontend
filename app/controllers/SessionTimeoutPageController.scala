@@ -16,8 +16,6 @@
 
 package controllers
 
-import java.time.Instant
-
 import play.twirl.api.Html
 import config.{AppConfig, ErrorHandler}
 import javax.inject.{Inject, Singleton}
@@ -28,83 +26,63 @@ import play.api.mvc._
 import services.GuidanceService
 import uk.gov.hmrc.http.SessionKeys._
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
-import views.html.{delete_your_answers, session_timeout}
+import views.html.{user_deleted_session, system_timedout_session}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import core.models.errors.NotFoundError
 
 @Singleton
 class SessionTimeoutPageController @Inject()(appConfig: AppConfig,
                                              service: GuidanceService,
                                              errorHandler: ErrorHandler,
                                              mcc: MessagesControllerComponents,
-                                             session_timeout_view: session_timeout,
-                                             delete_answers_view: delete_your_answers
+                                             system_timedout_session_view: system_timedout_session,
+                                             user_deleted_session_view: user_deleted_session
                                              )
     extends FrontendController(mcc)
     with I18nSupport {
 
     val logger: Logger = Logger(getClass)
 
-    def getPage(processCode: String): Action[AnyContent] = Action.async { implicit request =>
+    def sessionTimeout(processCode: String): Action[AnyContent] = Action.async { implicit request =>
       implicit val messages: Messages = mcc.messagesApi.preferred(request)
       hc.sessionId match {
-        case Some(id) if !hasSessionExpired(request.session) =>
-          service.getCurrentGuidanceSession(processCode)(id.value).flatMap {
+        case Some(id) if !hasSessionExpired(request.session.get(lastRequestTimestamp), appConfig) =>
+          service.getCurrentGuidanceSession(processCode)(id.value).map {
             case Right(session) if processCode != session.process.meta.processCode =>
               logger.warn(s"Unexpected process code encountered when removing session ($id) after timeout warning. " +
                 s"Expected code $processCode; actual code ${session.process.meta.processCode}")
               // Session not as expected, user must be running another piece of guidance, signal answers deleted
-              Future.successful(Ok(createDeleteYourAnswersResponse(messages("session.timeout.header.title"), processCode, session.process.betaPhaseBanner)).withNewSession)
+              Ok(userDeletedSessionView(messages("session.timeout.header.title"), processCode))
             case Right(session) =>
-              Future.successful(Ok(createDeleteYourAnswersResponse(session.process.title.value(messages.lang), processCode, session.process.betaPhaseBanner)).withNewSession)
+              Ok(userDeletedSessionView(session.process.title.value(messages.lang), processCode))
             case Left(SessionNotFoundError) =>
               logger.warn(s"Session Timeout ($id) - retrieving processCode $processCode returned NotFound, displaying deleted your answers to user")
-              Future.successful(Ok(createDeleteYourAnswersResponse(messages("session.timeout.header.title"), processCode, false)).withNewSession)
+              Ok(userDeletedSessionView(messages("session.timeout.header.title"), processCode))
             case Left(err) =>
               logger.error(s"Error $err occurred retrieving process context for process $processCode when removing session ($id)")
-              Future.successful(InternalServerError(errorHandler.internalServerErrorTemplateWithProcessCode(Some(processCode), false)).withNewSession)
+              InternalServerError(errorHandler.internalServerErrorTemplateWithProcessCode(Some(processCode)))
+          }
+        case Some(id) =>
+          service.deleteSession(processCode, id.value).map{
+            case Right(()) =>
+              logger.warn(s"Session for $id and $processCode deleted successfully")
+              Ok(systemTimedoutSessionView(messages("session.timeout.header.title"), processCode)).withNewSession
+            case Left(NotFoundError) =>
+              Ok(systemTimedoutSessionView(messages("session.timeout.header.title"), processCode)).withNewSession
+            case Left(err) =>
+              logger.error(s"Error occurred attempting to delete session for $id and $processCode : $err")
+              InternalServerError(errorHandler.internalServerErrorTemplateWithProcessCode(Some(processCode)))
           }
         case _ =>
-          Future.successful(Ok(createYourSessionHasExpiredResponse(messages("session.timeout.header.title"), processCode, false)).withNewSession)
+          Future.successful(Ok(systemTimedoutSessionView(messages("session.timeout.header.title"), processCode)).withNewSession)
       }
     }
 
-  def createDeleteYourAnswersResponse(processTitle: String, processCode: String, betaPhaseBanner: Boolean)(implicit request: Request[_]): Html =
-    delete_answers_view(
-      processTitle,
-      Some(processCode),
-      None,
-      s"${appConfig.baseUrl}/$processCode",
-      betaPhaseBanner)
+  def userDeletedSessionView(processTitle: String, processCode: String)(implicit request: Request[_]): Html =
+    user_deleted_session_view(processTitle, Some(processCode), None, s"${appConfig.baseUrl}/$processCode")
 
-  def createYourSessionHasExpiredResponse(processTitle: String, processCode: String, betaPhaseBanner: Boolean)(implicit request: Request[_]): Html =
-    session_timeout_view(
-      processTitle,
-      Some(processCode),
-      None,
-      s"${appConfig.baseUrl}/$processCode",
-      betaPhaseBanner)
-
-  /**
-    * If last request update is available check if session has timed out
-    *
-    * @param session - Browser session
-    * @return Returns "true" if time since last update exceeds timeout limit or is very close to the limit
-    */
-  def hasSessionExpired(session: Session): Boolean = {
-
-    session.get(lastRequestTimestamp).fold(false){tsStr =>
-
-      val now = Instant.now.toEpochMilli
-      val ts = tsStr.toLong
-
-      val duration = now - ts
-      val timeout = appConfig.timeoutInSeconds * appConfig.toMilliSeconds
-      val diff = duration - timeout
-
-      (duration > timeout) || (diff.abs < appConfig.expiryErrorMarginInMilliSeconds)
-    }
-  }
-
+  def systemTimedoutSessionView(processTitle: String, processCode: String)(implicit request: Request[_]): Html =
+    system_timedout_session_view(processTitle, Some(processCode), None, s"${appConfig.baseUrl}/$processCode")
 }

@@ -28,7 +28,7 @@ import config.ErrorHandler
 import core.models.errors._
 import core.models.ocelot.{Process, ProcessJson, Published}
 import models.GuidanceSession
-import views.html.{delete_your_answers, session_timeout}
+import views.html.{user_deleted_session, system_timedout_session}
 import play.api.test.Helpers.stubMessagesControllerComponents
 import uk.gov.hmrc.http.SessionKeys
 import play.api.mvc.{AnyContentAsEmpty, Result}
@@ -39,8 +39,8 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
   private trait Test extends MockGuidanceService with ProcessJson {
 
     lazy val errorHandler: ErrorHandler = app.injector.instanceOf[ErrorHandler]
-    lazy val view: session_timeout = app.injector.instanceOf[session_timeout]
-    lazy val delete_answers_view: delete_your_answers = app.injector.instanceOf[delete_your_answers]
+    lazy val view: system_timedout_session = app.injector.instanceOf[system_timedout_session]
+    lazy val delete_answers_view: user_deleted_session = app.injector.instanceOf[user_deleted_session]
 
     lazy val processCode = "cup-of-tea"
     lazy val sessionId = "sessionId"
@@ -49,7 +49,7 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
     lazy val process: Process = validOnePageJson.as[Process]
     lazy val session: GuidanceSession = GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None, Published)
 
-    val timeout: Int = MockAppConfig.timeoutInSeconds * MockAppConfig.toMilliSeconds
+    val timeout: Int = MockAppConfig.timeoutInSeconds * 1000
 
     val target = new SessionTimeoutPageController( MockAppConfig,
       mockGuidanceService,
@@ -60,7 +60,7 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
 
   }
 
-  "SessionTimeoutPageController method getPage invoked by delete your answers link" should {
+  "SessionTimeoutPageController method sessionTimeout invoked by delete your answers link" should {
 
     "delete the current session data if it exists" in new Test {
 
@@ -72,7 +72,7 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
 
       MockGuidanceService.getCurrentGuidanceSession(processCode)(sessionId).returns(Future.successful(Right(session)))
 
-      val result: Future[Result] = target.getPage(processCode)(fakeRequest)
+      val result: Future[Result] = target.sessionTimeout(processCode)(fakeRequest)
 
       status(result) shouldBe Status.OK
     }
@@ -87,13 +87,13 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
 
       MockGuidanceService.getCurrentGuidanceSession(processCode)(sessionId).returns(Future.successful(Left(SessionNotFoundError)))
 
-      val result: Future[Result] = target.getPage(processCode)(fakeRequest)
+      val result: Future[Result] = target.sessionTimeout(processCode)(fakeRequest)
 
       status(result) shouldBe Status.OK
     }
 
 
-    "return an internal server error if a database error occurs retrieving the session data" in new Test {
+    "return an internal server error if a database error occurs deleting the session data" in new Test {
 
       val now: String = Instant.now.toEpochMilli.toString
 
@@ -103,7 +103,7 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
 
       MockGuidanceService.getCurrentGuidanceSession(processCode)(sessionId).returns(Future.successful(Left(DatabaseError)))
 
-      val result: Future[Result] = target.getPage(processCode)(fakeRequest)
+      val result: Future[Result] = target.sessionTimeout(processCode)(fakeRequest)
 
       status(result) shouldBe Status.INTERNAL_SERVER_ERROR
     }
@@ -118,36 +118,34 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
 
       MockGuidanceService.getCurrentGuidanceSession(invalidProcessCode)(sessionId).returns(Future.successful(Right(session)))
 
-      val result: Future[Result] = target.getPage(invalidProcessCode)(fakeRequest)
+      val result: Future[Result] = target.sessionTimeout(invalidProcessCode)(fakeRequest)
 
       status(result) shouldBe Status.OK
     }
 
   }
 
-  "SessionTimeoutPageController method getPage invoked after timeout dialog expires" should {
+  "SessionTimeoutPageController method sessionTimeout invoked after timeout dialog expires" should {
 
     "return a successful response if the session has expired" in new Test {
 
       val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("GET", "/")
 
-      val result: Future[Result] = target.getPage(processCode)(fakeRequest)
-
+      val result: Future[Result] = target.sessionTimeout(processCode)(fakeRequest)
       status(result) shouldBe Status.OK
     }
 
     "return successful response when session remains but session timeout exceeded by 60 seconds " in new Test {
-
       // This scenario should not occur but is catered for as a possible extension of the timeout expiry calculation
       val now: Long = Instant.now.toEpochMilli
-      val ts: Long = now - (timeout + (60 * MockAppConfig.toMilliSeconds))
-
+      val ts: Long = now - (timeout + (60 * 1000))
       val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("GET", "/").withSession(
         SessionKeys.sessionId -> sessionId,
         SessionKeys.lastRequestTimestamp -> ts.toString
       )
 
-      val result: Future[Result] = target.getPage(processCode)(fakeRequest)
+      MockGuidanceService.deleteSession(processCode, sessionId).returns(Future.successful(Right(())))
+      val result: Future[Result] = target.sessionTimeout(processCode)(fakeRequest)
 
       status(result) shouldBe Status.OK
     }
@@ -163,10 +161,39 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
         SessionKeys.lastRequestTimestamp -> ts.toString
       )
 
-      val result: Future[Result] = target.getPage(processCode)(fakeRequest)
+      MockGuidanceService.deleteSession(processCode, sessionId).returns(Future.successful(Right(())))
+      val result: Future[Result] = target.sessionTimeout(processCode)(fakeRequest)
 
       status(result) shouldBe Status.OK
     }
+  }
+
+
+  "hasSessionExpired" should {
+    val now = 1657796066757L
+    val lastRequestTime = 1657796057930L
+    "detect session has not expired" in {
+      hasSessionExpired(Some(lastRequestTime.toString), MockAppConfig, now) shouldBe false
+    }
+
+    "detect session is acceptably close to expiry" in {
+      val currentTime = lastRequestTime + MockAppConfig.timeoutInSeconds * 1000 - 50
+      hasSessionExpired(Some(lastRequestTime.toString), MockAppConfig, currentTime) shouldBe true
+    }
+
+    "detect session has expired" in {
+      val currentTime = lastRequestTime + MockAppConfig.timeoutInSeconds * 1000L + 20000L
+      hasSessionExpired(Some(lastRequestTime.toString), MockAppConfig, currentTime) shouldBe true
+    }
+
+    "Deem missing session lastRequest time as Session not expired" in {
+      hasSessionExpired(None, MockAppConfig, now) shouldBe false
+    }
+
+    "Return false with lastRequest times in the future" in {
+      hasSessionExpired(Some((now + 20000).toString), MockAppConfig, now) shouldBe false
+    }
+
   }
 
 }

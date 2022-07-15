@@ -54,6 +54,8 @@ class GuidanceService @Inject() (
       case Left(err) => Left(err)
     }
 
+  def deleteSession(processCode: String, sessionId: String): Future[RequestOutcome[Unit]] = sessionRepository.delete(sessionId, processCode)
+
   def getSubmitPageContext(pec: PageEvaluationContext, errStrategy: ErrorStrategy = NoError)(implicit lang: Lang): RequestOutcome[PageContext] =
     pageRenderer.renderPage(pec.page, pec.labels) match {
       case Left(err) =>

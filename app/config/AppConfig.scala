@@ -43,7 +43,6 @@ trait AppConfig {
   val defaultSignOutUrl: String
   val timeoutInSeconds: Int
   val timeoutWarningInSeconds: Int
-  val toMilliSeconds: Int
   val expiryErrorMarginInMilliSeconds: Int
   def feedbackUrl(implicit request: RequestHeader): String
   val host: String
@@ -84,7 +83,6 @@ class AppConfigImpl @Inject() (val config: Configuration, servicesConfig: Servic
   lazy val defaultSignOutUrl: String = config.get[String]("session-timeout.defaultSignOutUrl")
   lazy val timeoutInSeconds: Int = config.get[Int]("session-timeout.seconds")
   lazy val timeoutWarningInSeconds: Int = config.get[Int]("session-timeout.warning")
-  lazy val toMilliSeconds: Int = config.get[Int]("session-timeout.toMilliSeconds")
   lazy val expiryErrorMarginInMilliSeconds: Int = config.get[Int]("session-timeout.expiryErrorMarginInMilliSeconds")
   lazy val baseUrl: String = config.get[String]("urls.baseUrl")
   lazy val hostBaseUrl: String = s"$host$baseUrl"

@@ -24,7 +24,7 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.i18n.{Lang, Messages, MessagesApi}
 import play.api.inject.Injector
 import play.api.test.FakeRequest
-import views.html.{delete_your_answers, session_timeout}
+import views.html.{user_deleted_session, system_timedout_session}
 
 class SessionTimeoutSpec extends BaseSpec with ViewFns with ViewSpec with GuiceOneAppPerSuite {
 
@@ -34,8 +34,8 @@ class SessionTimeoutSpec extends BaseSpec with ViewFns with ViewSpec with GuiceO
 
     def messagesApi: MessagesApi = injector.instanceOf[MessagesApi]
 
-    def sessionTimeout: session_timeout = injector.instanceOf[session_timeout]
-    def deleteYourAnswers: delete_your_answers = injector.instanceOf[delete_your_answers]
+    def sessionTimeout: system_timedout_session = injector.instanceOf[system_timedout_session]
+    def deleteYourAnswers: user_deleted_session = injector.instanceOf[user_deleted_session]
 
     implicit def messages: Messages = messagesApi.preferred(Seq(Lang("en")))
 
@@ -56,8 +56,7 @@ class SessionTimeoutSpec extends BaseSpec with ViewFns with ViewSpec with GuiceO
         processTitle,
         Some(processCode),
         Some(startUrl),
-        buttonTarget,
-        false)(fakeRequest, messages))
+        buttonTarget)(fakeRequest, messages))
 
       val pageTitleElement: Element = getSingleElementByTag(doc, "title")
 
@@ -109,8 +108,7 @@ class SessionTimeoutSpec extends BaseSpec with ViewFns with ViewSpec with GuiceO
         processTitle,
         Some(processCode),
         Some(startUrl),
-        buttonTarget,
-        false)(fakeRequest, messages))
+        buttonTarget)(fakeRequest, messages))
 
       val pageTitleElement: Element = getSingleElementByTag(doc, "title")
 

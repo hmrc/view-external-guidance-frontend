@@ -36,6 +36,11 @@ trait MockSessionRepository extends MockFactory {
         .create(_: String, _: RunMode, _: Process, _: Map[String, PageNext], _: List[String]))
         .expects(key, runMode, process, pageMap, legalPageIds)
 
+    def delete(key: String, processCode: String): CallHandler[Future[RequestOutcome[Unit]]] =
+      (mockSessionRepository
+        .delete(_: String, _: String))
+        .expects(key, processCode)
+
     def updateAfterFormSubmission(docId: String, processCode: String, url: String, answer: String, labels: Labels, nextLegalPageIds: List[String], requestId: Option[String]): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockSessionRepository
         .updateAfterFormSubmission(_: String, _: String, _: String, _: String, _: Labels, _: List[String], _: Option[String]))
