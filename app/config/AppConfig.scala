@@ -55,10 +55,10 @@ trait AppConfig {
 
 @Singleton
 class AppConfigImpl @Inject() (val config: Configuration, servicesConfig: ServicesConfig) extends AppConfig {
-  private val contactBaseUrl = servicesConfig.baseUrl("contact-frontend")
-
-  private val assetsUrl = config.get[String]("assets.url")
   val serviceIdentifier = "EGVWR"
+  val PageStanzaCountLimit = 1000
+  private val contactBaseUrl = servicesConfig.baseUrl("contact-frontend")
+  private val assetsUrl = config.get[String]("assets.url")
   lazy val host: String = servicesConfig.getString("host")
   lazy val adminHost: String = servicesConfig.getString("adminHost")
   lazy val betaFeedback: String = servicesConfig.getString("betafeedback")
@@ -87,5 +87,5 @@ class AppConfigImpl @Inject() (val config: Configuration, servicesConfig: Servic
   lazy val baseUrl: String = config.get[String]("urls.baseUrl")
   lazy val hostBaseUrl: String = s"$host$baseUrl"
   lazy val adminHostBaseUrl: String = s"$adminHost$baseUrl"
-  lazy val pageStanzaLimit: Int = config.getOptional[Int]("page-rendering.page-stanza-limit").getOrElse(1000)
+  lazy val pageStanzaLimit: Int = config.getOptional[Int]("page-rendering.page-stanza-limit").getOrElse(PageStanzaCountLimit)
 }
