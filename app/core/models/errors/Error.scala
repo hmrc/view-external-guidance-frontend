@@ -43,10 +43,11 @@ object TransactionFaultError extends Error("TRANSACTION_FAULT")
 
 object Error {
   val UnprocessableEntity = "UNPROCESSABLE_ENTITY"
-  //def apply(code: String, msg: String): Error = Error(code, Some(msg), Some(List(ProcessError(msg, ""))))
+  val ExecutionError = "PROCESS_EXECUTION_ERROR"
+
   def apply(code: String, processErrors: List[ProcessError]): Error = Error(code, None, Some(processErrors))
-  //def apply(processError: ProcessError): Error = Error(UnprocessableEntity, Some(List(processError)))
   def apply(processErrors: List[ProcessError]): Error = Error(UnprocessableEntity, None, Some(processErrors))
+
   implicit val peformat: OFormat[ProcessError] = Json.format[ProcessError]
   implicit val formats: OFormat[Error] = Json.format[Error]
 }
