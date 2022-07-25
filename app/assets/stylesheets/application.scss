@@ -21,3 +21,21 @@ $govuk-global-styles: true;
 .govuk-skip-link:link {text-decoration: underline; }
 
 .govuk-summary-list__value.numeric { text-align: right }
+
+@media print {
+  .govuk-phase-banner,
+  .cbanner-govuk-cookie-banner,
+  .hmrc-report-technical-issue,
+  .govuk-header,
+  .centered-content,
+  .govuk-button,
+  .govuk-breadcrumbs,
+  .hmrc-language-select,
+  .govuk-skip-link,
+  .govuk-back-link,
+  .app-get-help-link,
+  .govuk-summary-list__actions .govuk-link,
+  footer
+  { display: none; }
+
+}
