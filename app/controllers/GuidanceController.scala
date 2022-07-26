@@ -123,8 +123,8 @@ class GuidanceController @Inject() (
       case ExpectationFailedError =>
         logger.warn(s"ExpectationFailed error on getPage. Redirecting to ${appConfig.baseUrl}/$processCode")
         Future.successful(redirectToGuidanceStart(processCode))
-      case NonTerminatingPageError =>
-        logger.error(s"Encountered non terminating page error within page /$path of processCode ${processCode}")
+      case Error(Error.ExecutionError, errorRunMode, Some(errs)) =>
+        logger.error(s"Encountered execution error within page /$path of processCode ${processCode}, errors = $errs")
         Future.successful(InternalServerError(errorHandler.internalServerErrorTemplate))
       case err =>
         logger.error(s"Request for PageContext at /$path returned $err, returning InternalServerError")
@@ -191,8 +191,8 @@ class GuidanceController @Inject() (
       case SessionNotFoundError =>
         logger.warn(s"Request for page at /$path returned SessionNotFound. Redirect to ${appConfig.baseUrl}/$processCode")
         Future.successful(redirectToGuidanceStart(processCode))
-      case NonTerminatingPageError =>
-        logger.error(s"Encountered non terminating page error within submit to page /$path of processCode ${processCode}")
+      case Error(Error.ExecutionError, errorRunMode, Some(errs)) =>
+        logger.error(s"Encountered execution error within page /$path of processCode ${processCode}, errors = $errs")
         Future.successful(InternalServerError(errorHandler.internalServerErrorTemplate))
       case err =>
         logger.error(s"Request for PageContext at /$path returned $err during form submission, returning InternalServerError")

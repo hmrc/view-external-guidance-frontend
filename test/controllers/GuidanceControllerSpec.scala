@@ -31,8 +31,10 @@ import play.api.test.Helpers._
 import play.api.test.Helpers.stubMessagesControllerComponents
 import uk.gov.hmrc.http.SessionKeys
 import models.{PageContext, PageDesc, PageNext, GuidanceSession, PageEvaluationContext}
-import core.models.ocelot.{KeyedStanza, Labels, Page, Phrase, Process, Meta, ProcessJson, Published}
-import core.models.ocelot.stanzas.{CurrencyInput, DateInput, Question, Sequence, _}
+import models.errors._
+import core.models.ocelot.errors._
+import core.models.ocelot.{KeyedStanza, Labels, Page, Phrase, Process, Meta, ProcessJson, Published, Scratch}
+import core.models.ocelot.stanzas.{CurrencyInput, DateInput, Question, Sequence, InstructionStanza, PageStanza, VisualStanza, DataInput}
 import models.ui._
 import models.ui
 import play.api.test.CSRFTokenHelper._
@@ -696,9 +698,10 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
     }
 
     "return a INTERNAL_SERVER_ERROR response if encountering non-terminating page when submitting to page" in new QuestionTest {
+      val err = Error(Error.ExecutionError, Some(List(fromRuntimeError(NonTerminatingPageError("1"), "1"))), Some(Scratch))
       MockGuidanceService
         .getSubmitEvaluationContext(processId, path, processId)
-        .returns(Future.successful(Left(NonTerminatingPageError)))
+        .returns(Future.successful(Left(err)))
 
       override val fakeRequest = FakeRequest("POST", path)
         .withSession(SessionKeys.sessionId -> processId)
@@ -1280,10 +1283,10 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
 
     trait Test extends MockGuidanceService with TestBase {
       lazy val fakeRequest = FakeRequest(GET, path).withSession(SessionKeys.sessionId -> processId).withCSRFToken
-
+      val err = Error(Error.ExecutionError, Some(List(fromRuntimeError(NonTerminatingPageError("1"), "1"))), Some(Scratch))
       MockGuidanceService
         .getPageContext(processCode, path, previousPageByLink = false, processId)
-        .returns(Future.successful(Left(NonTerminatingPageError)))
+        .returns(Future.successful(Left(err)))
 
       lazy val target =
         new GuidanceController(

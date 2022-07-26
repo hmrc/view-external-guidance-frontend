@@ -21,11 +21,12 @@ import scala.annotation.tailrec
 import config.AppConfig
 import play.api.Logger
 import core.models.RequestOutcome
-import core.models.errors.NonTerminatingPageError
+import core.models.errors._
 import core.models.ocelot.stanzas.{PageStanza, EndStanza, VisualStanza, Stanza, Evaluate, DataInput}
 import core.models.ocelot.{Page, Labels, Process}
-import core.models.ocelot.errors.RuntimeError
+import core.models.ocelot.errors.NonTerminatingPageError
 import core.models.ocelot.PageReview
+import models.errors._
 
 @Singleton
 class PageRenderer @Inject() (appConfig: AppConfig) {
@@ -58,11 +59,18 @@ class PageRenderer @Inject() (appConfig: AppConfig) {
               case None => Right((None, labels))
             }
           case s: Stanza with Evaluate =>
-            val (nxt, updatedLabels, errs) = s.eval(labels)
-            logRuntimeErrors(errs)
-            evaluatePostInputStanzas(nxt, updatedLabels, seen, stanzaCount + 1)
+            s.eval(labels) match {
+              case (nxt, updatedLabels, Nil) => evaluatePostInputStanzas(nxt, updatedLabels, seen, stanzaCount + 1)
+              case (_, _, errs) =>
+                val runtimeError = Error(Error.ExecutionError, Some(fromRuntimeErrors(errs, next)), Some(labels.runMode))
+                logError(runtimeError)
+                Left(runtimeError)
+            }
         }
-        case Some(s) => Left(NonTerminatingPageError)
+        case Some(s) =>
+          val runtimeError = Error(Error.ExecutionError, Some(fromRuntimeErrors(List(NonTerminatingPageError(next)), next)), Some(labels.runMode))
+          logError(runtimeError)
+          Left(runtimeError)
       }}
 
     implicit val stanzaMap: Map[String, Stanza] = page.keyedStanzas.map(ks => (ks.key, ks.stanza)).toMap ++ labels.continuationPool
@@ -94,19 +102,32 @@ class PageRenderer @Inject() (appConfig: AppConfig) {
         case EndStanza => Right((visualStanzas, labels, seen :+ stanzaId, stanzaId, None))
         case s: VisualStanza with DataInput => Right((visualStanzas :+ s, labels, seen :+ stanzaId, stanzaId, Some(s)))
         case s: Stanza with Evaluate =>
-          val (next, updatedLabels, errs) = s.eval(labels)
-          logRuntimeErrors(errs)
-          evaluateStanzas(next, updatedLabels, visualStanzas, seen :+ stanzaId, stanzaCount + 1)
+          s.eval(labels) match {
+            case (nxt, updatedLabels, Nil) => evaluateStanzas(nxt, updatedLabels, visualStanzas, seen :+ stanzaId, stanzaCount + 1)
+            case (_, _, errs) =>
+              val runtimeError = Error(Error.ExecutionError, Some(fromRuntimeErrors(errs, stanzaId)), Some(labels.runMode))
+              logError(runtimeError)
+              Left(runtimeError)
+          }
+
         case s: VisualStanza => evaluateStanzas(s.next.head, labels, visualStanzas :+ s, seen :+ stanzaId, stanzaCount + 1)
       }
-      case Some(s) => Left(NonTerminatingPageError)
+      case Some(s) =>
+        val runtimeError = Error(Error.ExecutionError, Some(fromRuntimeErrors(List(NonTerminatingPageError(stanzaId)), stanzaId)), Some(labels.runMode))
+        logError(runtimeError)
+        Left(runtimeError)
     }
 
-  private def logRuntimeErrors(errs: List[RuntimeError]): Unit =
-    errs.foreach{err =>
-      err.runMode match {
-        case PageReview => logger.info(s"RuntimeError: $err")
-        case _ => logger.error(s"RuntimeError: $err")
+  private def logError(err: Error): Unit = {
+    logger.error(s"Error ${err.code}")
+    err.messages.map{
+      _.foreach{report =>
+        err.runMode match {
+          case Some(PageReview) => logger.info(s"RuntimeError: $report")
+          case _ => logger.error(s"RuntimeError: $report")
+        }
       }
     }
+  }
+
 }

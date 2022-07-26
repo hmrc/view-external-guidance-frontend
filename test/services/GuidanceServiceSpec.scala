@@ -18,9 +18,13 @@ package services
 
 import base.BaseSpec
 
+import core.models.errors._
+import core.models.ocelot.errors._
+import models.errors._
+import core.models.ocelot.Scratch
 import mocks.{MockAppConfig, MockGuidanceConnector, MockPageBuilder, MockPageRenderer, MockSessionRepository, MockUIBuilder}
-import core.models.errors.{DatabaseError, NotFoundError, NonTerminatingPageError}
-import core.models.ocelot.stanzas._
+import core.models.errors.{DatabaseError, NotFoundError}
+import core.models.ocelot.stanzas.{EndStanza, InstructionStanza, Question, PageStanza, VisualStanza, DataInput}
 import core.models.ocelot.{Page, KeyedStanza, Process, SecuredProcess, ProcessJson, LabelCache, Labels, Phrase, Published}
 import models.ui
 import models.{PageDesc, PageNext, PageEvaluationContext}
@@ -181,11 +185,11 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
 
       MockPageRenderer
         .renderPage(page, labels)
-        .returns(Left(NonTerminatingPageError))
+        .returns(Left(Error(Error.ExecutionError, Some(fromRuntimeErrors(List(NonTerminatingPageError("1")), "1")), Some(Scratch))))
 
       target.getSubmitPageContext(pec, NoError) match {
-        case Left(err) if err == NonTerminatingPageError => succeed
-        case Right(_) => fail
+        case Left(Error(Error.ExecutionError,_, _)) => succeed
+        case _ => fail
       }
     }
   }
@@ -237,7 +241,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
     "retrieve a page for the process" in new Test {
 
       override val processCode = "cup-of-tea"
-
+      val nonTerminatingPageError = Error(Error.ExecutionError, Some(fromRuntimeErrors(List(NonTerminatingPageError("1")), "1")), Some(Scratch))
        MockSessionRepository
         .get(sessionRepoId, processCode, requestId)
         .returns(Future.successful(Right(
@@ -254,13 +258,13 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
 
       MockPageRenderer
         .renderPage(lastPage, labels)
-        .returns(Left(NonTerminatingPageError))
+        .returns(Left(nonTerminatingPageError))
 
       private val result = target.getPageContext(processCode, lastPageUrl, previousPageByLink = false, sessionRepoId)
 
       whenReady(result) {
-        case Left(err) if err == NonTerminatingPageError => succeed
-        case Right(_) => fail
+        case Left(error) if error == nonTerminatingPageError => succeed
+        case _ => fail
       }
     }
   }
@@ -439,16 +443,17 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
     }
 
     "Return error if page submission evaluation finds a non-terminating page" in new Test {
+      val nonTerminatingPageError = Error(Error.ExecutionError, Some(fromRuntimeErrors(List(NonTerminatingPageError("1")), "1")), Some(Scratch))
       MockPageRenderer
         .renderPagePostSubmit(page, LabelCache(), "yes")
-        .returns(Left(NonTerminatingPageError))
+        .returns(Left(nonTerminatingPageError))
 
       MockSessionRepository
         .updateAfterFormSubmission(processId, processCode, "/test-page", "yes", labels, Nil, requestId)
         .returns(Future.successful(Right({})))
 
       target.submitPage(pec, "/test-page", "yes", "yes").map{
-        case Left(err) if err == NonTerminatingPageError => succeed
+        case Left(error) if error == nonTerminatingPageError => succeed
         case _ => fail
       }
     }

@@ -20,7 +20,7 @@ import play.api.libs.json.{Json, OFormat}
 import core.models.ocelot.RunMode
 
 case class ErrorReport(message: String, stanza: String)
-case class Error(code: String, runMode: Option[RunMode] = None, messages: Option[List[ErrorReport]] = None)
+case class Error(code: String, messages: Option[List[ErrorReport]] = None, runMode: Option[RunMode] = None)
 
 object InternalServerError extends Error("INTERNAL_SERVER_ERROR")
 object DatabaseError extends Error("DATABASE_ERROR")
@@ -38,15 +38,14 @@ object ForbiddenError extends Error("FORBIDDEN")
 object UpgradeRequiredError extends Error("UPGRADE_REQUIRED")
 object IllegalPageSubmissionError extends Error("ILLEGAL_PAGE_SUBMISSION")
 object SessionNotFoundError extends Error("SESSION_NOT_FOUND")
-object NonTerminatingPageError extends Error("NON_TERMINATING_PAGE")
 object TransactionFaultError extends Error("TRANSACTION_FAULT")
 
 object Error {
   val UnprocessableEntity = "UNPROCESSABLE_ENTITY"
-  val ExecutionError = "PROCESS_EXECUTION_ERROR"
+  val ExecutionError = "EXECUTION_ERROR"
 
-  def apply(code: String, errorReports: List[ErrorReport]): Error = Error(code, None, Some(errorReports))
-  def apply(errorReports: List[ErrorReport]): Error = Error(UnprocessableEntity, None, Some(errorReports))
+  def apply(code: String, errorReports: List[ErrorReport]): Error = Error(code, Some(errorReports))
+  def apply(errorReports: List[ErrorReport]): Error = Error(UnprocessableEntity, Some(errorReports))
 
   implicit val erformat: OFormat[ErrorReport] = Json.format[ErrorReport]
   implicit val formats: OFormat[Error] = Json.format[Error]

@@ -21,10 +21,11 @@ import core.models.ocelot.errors._
 
 package object errors {
 
-  def fromRuntimeError(err: RuntimeError): ErrorReport = err match {
+  def fromRuntimeError(err: RuntimeError, stanzId: String): ErrorReport = err match {
     // Placeholder Implementation
-    case e: UnsupportedOperationError => ErrorReport(s"UnsupportedOperationError: $err", "")
+    case e: UnsupportedOperationError => ErrorReport(s"UnsupportedOperationError: $err on stanza $stanzId", "")
+    case e: NonTerminatingPageError => ErrorReport(s"NonTerminatingPageError: $err on stanza $stanzId", "")
   }
 
-  def fromRuntimeErrors(errs: List[RuntimeError]): List[ErrorReport] = errs.map(fromRuntimeError)
+  def fromRuntimeErrors(errs: List[RuntimeError], stanzId: String): List[ErrorReport] = errs.map(e => fromRuntimeError(e,stanzId))
 }
