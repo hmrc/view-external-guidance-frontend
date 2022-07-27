@@ -698,10 +698,10 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
     }
 
     "return a INTERNAL_SERVER_ERROR response if encountering non-terminating page when submitting to page" in new QuestionTest {
-      val err = Error(Error.ExecutionError, Some(List(fromRuntimeError(NonTerminatingPageError("1"), "1"))), Some(Scratch))
+      val NtpError = executionError(NonTerminatingPageError("1"), "1", Scratch)
       MockGuidanceService
         .getSubmitEvaluationContext(processId, path, processId)
-        .returns(Future.successful(Left(err)))
+        .returns(Future.successful(Left(NtpError)))
 
       override val fakeRequest = FakeRequest("POST", path)
         .withSession(SessionKeys.sessionId -> processId)
@@ -1283,10 +1283,10 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
 
     trait Test extends MockGuidanceService with TestBase {
       lazy val fakeRequest = FakeRequest(GET, path).withSession(SessionKeys.sessionId -> processId).withCSRFToken
-      val err = Error(Error.ExecutionError, Some(List(fromRuntimeError(NonTerminatingPageError("1"), "1"))), Some(Scratch))
+      val NtpError = executionError(NonTerminatingPageError("1"), "1", Scratch)
       MockGuidanceService
         .getPageContext(processCode, path, previousPageByLink = false, processId)
-        .returns(Future.successful(Left(err)))
+        .returns(Future.successful(Left(NtpError)))
 
       lazy val target =
         new GuidanceController(

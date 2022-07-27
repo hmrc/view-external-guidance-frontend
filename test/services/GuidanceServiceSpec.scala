@@ -172,7 +172,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
     "return an error when retrieving a non-terminating page" in new Test {
 
       override val processCode = "cup-of-tea"
-
+      val NtpError = executionError(NonTerminatingPageError("1"), "1", Scratch)
       MockSessionRepository
         .get(sessionRepoId, processCode, requestId)
         .returns(Future.successful(Right(
@@ -185,10 +185,10 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
 
       MockPageRenderer
         .renderPage(page, labels)
-        .returns(Left(Error(Error.ExecutionError, Some(fromRuntimeErrors(List(NonTerminatingPageError("1")), "1")), Some(Scratch))))
+        .returns(Left(NtpError))
 
       target.getSubmitPageContext(pec, NoError) match {
-        case Left(Error(Error.ExecutionError,_, _)) => succeed
+        case Left(err) if err == NtpError => succeed
         case _ => fail
       }
     }
@@ -241,7 +241,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
     "retrieve a page for the process" in new Test {
 
       override val processCode = "cup-of-tea"
-      val nonTerminatingPageError = Error(Error.ExecutionError, Some(fromRuntimeErrors(List(NonTerminatingPageError("1")), "1")), Some(Scratch))
+      val nonTerminatingPageError = executionError(NonTerminatingPageError("1"), "1", Scratch)
        MockSessionRepository
         .get(sessionRepoId, processCode, requestId)
         .returns(Future.successful(Right(
@@ -443,7 +443,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
     }
 
     "Return error if page submission evaluation finds a non-terminating page" in new Test {
-      val nonTerminatingPageError = Error(Error.ExecutionError, Some(fromRuntimeErrors(List(NonTerminatingPageError("1")), "1")), Some(Scratch))
+      val nonTerminatingPageError = executionError(NonTerminatingPageError("1"), "1", Scratch)
       MockPageRenderer
         .renderPagePostSubmit(page, LabelCache(), "yes")
         .returns(Left(nonTerminatingPageError))

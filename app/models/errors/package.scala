@@ -16,16 +16,20 @@
 
 package models
 
-import core.models.errors.ErrorReport
+import core.models.ocelot.RunMode
+import core.models.errors.{ErrorReport, Error}
 import core.models.ocelot.errors._
 
 package object errors {
 
-  def fromRuntimeError(err: RuntimeError, stanzId: String): ErrorReport = err match {
-    // Placeholder Implementation
-    case e: UnsupportedOperationError => ErrorReport(s"UnsupportedOperationError: $err on stanza $stanzId", "")
-    case e: NonTerminatingPageError => ErrorReport(s"NonTerminatingPageError: $err on stanza $stanzId", "")
+  private def fromRuntimeError(err: RuntimeError, stanzId: String): ErrorReport = err match {
+    case e: UnsupportedOperationError => ErrorReport(s"UnsupportedOperationError: Operation ${e.op}, left ${e.left} (${e.lvalue}), right ${e.right} (${e.rvalue}) on stanza $stanzId", stanzId)
+    case e: NonTerminatingPageError => ErrorReport(s"NonTerminatingPageError: Guidance contains non-terminating loop which includes stanza $stanzId", stanzId)
   }
+  private def fromRuntimeErrors(errs: List[RuntimeError], stanzId: String): List[ErrorReport] = errs.map(e => fromRuntimeError(e,stanzId))
 
-  def fromRuntimeErrors(errs: List[RuntimeError], stanzId: String): List[ErrorReport] = errs.map(e => fromRuntimeError(e,stanzId))
+  def executionError(errs: List[RuntimeError], stanzId: String, runMode: RunMode): Error =
+    Error(Error.ExecutionError, Some(fromRuntimeErrors(errs, stanzId)), Some(runMode))
+  def executionError(err: RuntimeError, stanzId: String, runMode: RunMode): Error = executionError(List(err), stanzId, runMode)
+
 }
