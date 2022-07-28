@@ -22,9 +22,10 @@ import config.AppConfig
 import play.api.Logger
 import core.models.RequestOutcome
 import core.models.ocelot.stanzas.{PageStanza, EndStanza, VisualStanza, Stanza, Evaluate, DataInput}
-import core.models.ocelot.{Page, Labels, Process}
-import core.models.ocelot.errors.NonTerminatingPageError
+import core.models.ocelot.{Page, Labels, Process, PageReview}
+import core.models.ocelot.errors.{RuntimeError, NonTerminatingPageError}
 import models.errors._
+import core.models.ocelot.errors.UnsupportedOperationError
 
 @Singleton
 class PageRenderer @Inject() (appConfig: AppConfig) {
@@ -57,7 +58,7 @@ class PageRenderer @Inject() (appConfig: AppConfig) {
               case None => Right((None, labels))
             }
           case s: Stanza with Evaluate =>
-            s.eval(labels) match {
+            evalStanza(s,labels) match {
               case (nxt, updatedLabels, Nil) => evaluatePostInputStanzas(nxt, updatedLabels, seen, stanzaCount + 1)
               case (_, _, errs) => Left(executionError(errs, next, labels.runMode))
             }
@@ -85,6 +86,13 @@ class PageRenderer @Inject() (appConfig: AppConfig) {
     }
   }
 
+  private def evalStanza(s: Evaluate, labels: Labels):(String, Labels, List[RuntimeError]) =
+    (s.eval(labels), labels.runMode) match {
+      // Ignore errors when all are UnsupportedOperationError if running in PageReview run mode
+      case ((nxt, updatedLabels, errs), PageReview) if errs.collect{case e: UnsupportedOperationError => e}.size == errs.size => (nxt, updatedLabels, Nil)
+      case ((nxt, updatedLabels, errs), _) => (nxt, updatedLabels, errs)
+    }
+
   @tailrec
    private def evaluateStanzas(stanzaId: String, labels: Labels, visualStanzas: Seq[VisualStanza] = Nil, seen: Seq[String] = Nil, stanzaCount: Int = 0)
                               (implicit stanzaMap: Map[String, Stanza]): RequestOutcome[(Seq[VisualStanza], Labels, Seq[String], String, Option[DataInput])] =
@@ -94,7 +102,7 @@ class PageRenderer @Inject() (appConfig: AppConfig) {
         case EndStanza => Right((visualStanzas, labels, seen :+ stanzaId, stanzaId, None))
         case s: VisualStanza with DataInput => Right((visualStanzas :+ s, labels, seen :+ stanzaId, stanzaId, Some(s)))
         case s: Stanza with Evaluate =>
-          s.eval(labels) match {
+          evalStanza(s,labels) match {
             case (nxt, updatedLabels, Nil) => evaluateStanzas(nxt, updatedLabels, visualStanzas, seen :+ stanzaId, stanzaCount + 1)
             case (_, _, errs) => Left(executionError(errs, stanzaId, labels.runMode))
           }
