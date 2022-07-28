@@ -28,7 +28,6 @@ package object errors {
     case e: UnsupportedOperationError => s"UnsupportedOperationError: Operation ${e.op}, left ${e.left} (${e.lvalue}), right ${e.right} (${e.rvalue}) on stanza $stanzId"
     case e: NonTerminatingPageError => s"NonTerminatingPageError: Guidance contains non-terminating loop which includes stanza $stanzId"
   }
-  // private def fromRuntimeErrors(errs: List[RuntimeError], stanzId: String): List[ErrorReport] = errs.map(e => fromRuntimeError(e,stanzId))
 
   def executionError(errs: List[RuntimeError], stanzId: String, runMode: RunMode): Error = Error(Error.ExecutionError, errs, Some(runMode), Some(stanzId))
   def executionError(err: RuntimeError, stanzId: String, runMode: RunMode): Error = executionError(List(err), stanzId, runMode)
