@@ -108,6 +108,46 @@ class PageRendererSpec extends BaseSpec with ProcessJson  {
       }
     }
 
+    "Detect unsupported operations before input" in new Test {
+      val operations: Seq[CalcOperation] = Seq(
+        CalcOperation("[label:input1]", Addition, "10", "output1")
+      )
+      val unsupportedOpError = executionError(UnsupportedOperationError("AddOperation", "[label:input1]", "10", "[label:input1]", "10"), "3", Published)
+
+      val stanzas: Seq[KeyedStanza] = Seq(KeyedStanza("start", PageStanza("/start", Seq("1"), false)),
+                        KeyedStanza("1", InstructionStanza(3, Seq("3"), None, false)),
+                        KeyedStanza("4", Question(questionPhrase, answers, Seq("end","end","end"), None, false)),
+                        KeyedStanza("3", Calculation(CalculationStanza(operations, Seq("4"), stack = false))),
+                        KeyedStanza("end", EndStanza)
+                      )
+      val page = Page(Process.StartStanzaId, "/test-page", stanzas, answerDestinations)
+
+      renderer.renderPage(page, LabelCache()) match {
+        case Left(err) if err == unsupportedOpError => succeed
+        case res => fail
+      }
+    }
+
+    "Detect unsupported operations after input" in new Test {
+      val operations: Seq[CalcOperation] = Seq(
+        CalcOperation("[label:input1]", Addition, "10", "output1")
+      )
+      val unsupportedOpError = executionError(UnsupportedOperationError("AddOperation", "[label:input1]", "10", "[label:input1]", "10"), "3", Published)
+
+      val stanzas: Seq[KeyedStanza] = Seq(KeyedStanza("start", PageStanza("/start", Seq("1"), false)),
+                        KeyedStanza("1", InstructionStanza(3, Seq("4"), None, false)),
+                        KeyedStanza("4", Question(questionPhrase, answers, Seq("3","3","3"), None, false)),
+                        KeyedStanza("3", Calculation(CalculationStanza(operations, Seq("end"), stack = false))),
+                        KeyedStanza("end", EndStanza)
+                      )
+      val page = Page(Process.StartStanzaId, "/test-page", stanzas, answerDestinations)
+
+      renderer.renderPagePostSubmit(page, LabelCache(), "0") match {
+        case Left(err) if err == unsupportedOpError => succeed
+        case res => fail
+      }
+    }
+
     "Determine the correct sequence of stanzas within a page with no user input" in new Test {
       val instructionStanza = InstructionStanza(3, Seq("5"), None, false)
       val callout1 = ErrorCallout(Phrase(Vector("Some Text", "Welsh: Some Text")), Seq("3"), false)
