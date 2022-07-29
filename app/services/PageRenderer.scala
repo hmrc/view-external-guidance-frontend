@@ -25,7 +25,6 @@ import core.models.ocelot.stanzas.{PageStanza, EndStanza, VisualStanza, Stanza, 
 import core.models.ocelot.{Page, Labels, Process, PageReview}
 import core.models.ocelot.errors.{RuntimeError, NonTerminatingPageError}
 import models.errors._
-import core.models.ocelot.errors.UnsupportedOperationError
 
 @Singleton
 class PageRenderer @Inject() (appConfig: AppConfig) {
@@ -88,8 +87,8 @@ class PageRenderer @Inject() (appConfig: AppConfig) {
 
   private def evalStanza(s: Evaluate, labels: Labels):(String, Labels, List[RuntimeError]) =
     (s.eval(labels), labels.runMode) match {
-      // Ignore errors when all are UnsupportedOperationError if running in PageReview run mode
-      case ((nxt, updatedLabels, errs), PageReview) if errs.collect{case e: UnsupportedOperationError => e}.size == errs.size => (nxt, updatedLabels, Nil)
+      // Ignore evaluation errors when running in PageReview run mode
+      case ((nxt, updatedLabels, errs), PageReview) => (nxt, updatedLabels, Nil)
       case ((nxt, updatedLabels, errs), _) => (nxt, updatedLabels, errs)
     }
 
