@@ -62,7 +62,7 @@ class PageRenderer @Inject() (appConfig: AppConfig) {
               case (_, _, errs) => Left(executionError(errs, next, labels.runMode))
             }
         }
-        case Some(s) => Left(executionError(NonTerminatingPageError(next), next, labels.runMode))
+        case Some(s) => Left(executionError(NonTerminatingPageError, next, labels.runMode))
       }}
 
     implicit val stanzaMap: Map[String, Stanza] = page.keyedStanzas.map(ks => (ks.key, ks.stanza)).toMap ++ labels.continuationPool
@@ -108,6 +108,6 @@ class PageRenderer @Inject() (appConfig: AppConfig) {
 
         case s: VisualStanza => evaluateStanzas(s.next.head, labels, visualStanzas :+ s, seen :+ stanzaId, stanzaCount + 1)
       }
-      case Some(s) => Left(executionError(NonTerminatingPageError(stanzaId), stanzaId, labels.runMode))
+      case Some(s) => Left(executionError(NonTerminatingPageError, stanzaId, labels.runMode))
     }
 }

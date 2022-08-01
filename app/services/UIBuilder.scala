@@ -19,9 +19,12 @@ package services
 import javax.inject.Singleton
 import models._
 import models.ocelot.stanzas._
+import core.models.errors.Error
+import core.models.RequestOutcome
 import core.models.ocelot.stanzas.{CurrencyInput, CurrencyPoundsOnlyInput, DateInput, Input, Question}
 import core.models.ocelot.stanzas._
 import core.models.ocelot.{Labels, Link, EmbeddedParameterRegex}
+import core.models.ocelot.errors.UnsupportedUiPatternError
 import models.ui.{Answer, SequenceAnswer, BulletPointList, ConfirmationPanel, CyaSummaryList, Details, ErrorMsg, H1, H2, H3, H4, InsetText, WarningText}
 import models.ui.{NameValueSummaryList, Page, Paragraph, RequiredErrorMsg, Table, Text, TypeErrorMsg, UIComponent, ValueErrorMsg, stackStanzas}
 import play.api.Logger
@@ -46,9 +49,12 @@ case object ValueTypeError extends ErrorStrategy {
 class UIBuilder {
   val logger: Logger = Logger(getClass)
 
-  def buildPage(url: String, stanzas: Seq[VisualStanza], errStrategy: ErrorStrategy = NoError)(implicit ctx: UIContext): Page = {
+  def buildPage(url: String, stanzas: Seq[VisualStanza], errStrategy: ErrorStrategy = NoError)(implicit ctx: UIContext): RequestOutcome[Page] = {
     val transformPipeline: List[Seq[VisualStanza] => Seq[VisualStanza]] = List(expandLabelReferences(Nil), Aggregator.aggregateStanzas(Nil), stackStanzas(Nil))
-    Page(url, fromStanzas(transformPipeline.foldLeft(stanzas){case (s, t) => t(s)}, Nil, errStrategy.default(stanzas)))
+    fromStanzas(transformPipeline.foldLeft(stanzas){case (s, t) => t(s)}, Nil, errStrategy.default(stanzas)) match {
+      case Right(stanzas) => Right(Page(url, stanzas))
+      case Left(err) => Left(err)
+    }
   }
 
   @tailrec
@@ -61,10 +67,14 @@ class UIBuilder {
     }
 
   @tailrec
-  private def fromStanzas(stanzas: Seq[VisualStanza], acc: Seq[UIComponent], errStrategy: ErrorStrategy)(implicit ctx: UIContext): Seq[UIComponent] =
+  private def fromStanzas(stanzas: Seq[VisualStanza], acc: Seq[UIComponent], errStrategy: ErrorStrategy)(implicit ctx: UIContext): RequestOutcome[Seq[UIComponent]] =
     stanzas match {
-      case Nil => acc
-      case (sg: StackedGroup) :: xs => fromStanzas(xs, acc ++ fromStackedGroup(sg, errStrategy), errStrategy)
+      case Nil => Right(acc)
+      case (sg: StackedGroup) :: xs =>
+        fromStackedGroup(sg, errStrategy) match {
+          case Left(err) => Left(err)
+          case Right(uiComponents) => fromStanzas(xs, acc ++ uiComponents, errStrategy)
+        }
       case (eg: RequiredErrorGroup) :: xs => fromStanzas(xs, acc ++ fromRequiredErrorGroup(eg, errStrategy), errStrategy)
       case (i: Instruction) :: xs => fromStanzas(xs, acc ++ Seq(fromInstruction(i)), errStrategy)
       case (ig: InstructionGroup) :: xs => fromStanzas(xs, acc ++ Seq(fromInstructionGroup(ig)), errStrategy)
@@ -81,10 +91,11 @@ class UIBuilder {
       case (ycg: YourCallGroup) :: xs => fromStanzas(xs, acc ++ Seq(fromYourCallGroup(ycg)), errStrategy)
       case x :: xs =>
         logger.error(s"Encountered and ignored invalid VisualStanza due to accessibility rules, $x")
-        fromStanzas(xs, acc, errStrategy)
+        val nextStanzaId: Option[String] = x.next.headOption
+        Left(Error(UnsupportedUiPatternError, ctx.labels.runMode, nextStanzaId))
     }
 
-  private def fromStackedGroup(sg: StackedGroup, errStrategy: ErrorStrategy)(implicit ctx: UIContext): Seq[UIComponent] =
+  private def fromStackedGroup(sg: StackedGroup, errStrategy: ErrorStrategy)(implicit ctx: UIContext): RequestOutcome[Seq[UIComponent]] =
     sg.group match {
       case (c: SubSectionCallout) :: (rg: RowGroup) :: xs if rg.isTableCandidate =>
         fromStanzas(stackStanzas(Nil)(xs), Seq(fromTableRowGroup(TextBuilder.fromPhrase(c.text), rg)), errStrategy)

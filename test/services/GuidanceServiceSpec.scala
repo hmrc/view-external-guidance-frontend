@@ -161,7 +161,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
 
       MockUIBuilder
         .buildPage(page.url, page.stanzas.collect{case s: VisualStanza => s}, NoError)
-        .returns(ui.Page(page.url, Seq()))
+        .returns(Right(ui.Page(page.url, Seq())))
 
       target.getSubmitPageContext(pec, NoError) match {
         case Right(pageCtx) => pageCtx.page.urlPath shouldBe page.url
@@ -172,7 +172,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
     "return an error when retrieving a non-terminating page" in new Test {
 
       override val processCode = "cup-of-tea"
-      val NtpError = executionError(NonTerminatingPageError("1"), "1", Scratch)
+      val NtpError = executionError(NonTerminatingPageError, "1", Scratch)
       MockSessionRepository
         .get(sessionRepoId, processCode, requestId)
         .returns(Future.successful(Right(
@@ -221,7 +221,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
 
       MockUIBuilder
         .buildPage(lastPageUrl, lastPage.stanzas.collect{case s: VisualStanza => s}, NoError)
-        .returns(lastUiPage)
+        .returns(Right(lastUiPage))
 
       MockSessionRepository
         .updateForNewPage(sessionRepoId, processCode, Some(List(PageHistory("cup-of-tea/last-page",Nil))), None, Nil, List("2", "start"), requestId)
@@ -241,7 +241,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
     "retrieve a page for the process" in new Test {
 
       override val processCode = "cup-of-tea"
-      val nonTerminatingPageError = executionError(NonTerminatingPageError("1"), "1", Scratch)
+      val nonTerminatingPageError = executionError(NonTerminatingPageError, "1", Scratch)
        MockSessionRepository
         .get(sessionRepoId, processCode, requestId)
         .returns(Future.successful(Right(
@@ -301,7 +301,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
 
       MockUIBuilder
         .buildPage(lastPageUrl, lastPage.stanzas.collect{case s: VisualStanza => s}, NoError)
-        .returns(lastUiPage)
+        .returns(Right(lastUiPage))
 
       private val result = target.getPageContext(processCode, lastPageUrl, previousPageByLink = false, sessionRepoId)
 
@@ -443,7 +443,7 @@ class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
     }
 
     "Return error if page submission evaluation finds a non-terminating page" in new Test {
-      val nonTerminatingPageError = executionError(NonTerminatingPageError("1"), "1", Scratch)
+      val nonTerminatingPageError = executionError(NonTerminatingPageError, "1", Scratch)
       MockPageRenderer
         .renderPagePostSubmit(page, LabelCache(), "yes")
         .returns(Left(nonTerminatingPageError))

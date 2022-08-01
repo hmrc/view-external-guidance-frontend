@@ -62,15 +62,18 @@ class GuidanceService @Inject() (
         logger.error(s"Execution error on page ${pec.page.id} of processCode ${pec.processCode}")
         Left(err)
       case Right((visualStanzas, labels, dataInput)) =>
-        val uiPage = uiBuilder.buildPage(pec.page.url, visualStanzas, errStrategy)(UIContext(labels, lang, pec.pageMapById, messagesApi))
-        Right(PageContext(pec.copy(dataInput = dataInput), uiPage, labels))
+        uiBuilder.buildPage(pec.page.url, visualStanzas, errStrategy)(UIContext(labels, lang, pec.pageMapById, messagesApi)).fold(err => Left(err), uiPage =>
+          Right(PageContext(pec.copy(dataInput = dataInput), uiPage, labels))
+        )
     }
 
   def getPageContext(processCode: String, url: String, previousPageByLink: Boolean, sessionId: String)
                     (implicit hc: HeaderCarrier, context: ExecutionContext, lang: Lang): Future[RequestOutcome[PageContext]] =
     getPageEvaluationContext(processCode, url, previousPageByLink, sessionId).map{
       case Right(ctx) =>
-        Right(PageContext(ctx, uiBuilder.buildPage(ctx.page.url, ctx.visualStanzas)(UIContext(ctx.labels, lang, ctx.pageMapById, messagesApi))))
+        uiBuilder.buildPage(ctx.page.url, ctx.visualStanzas)(UIContext(ctx.labels, lang, ctx.pageMapById, messagesApi)).fold(err => Left(err), page =>
+          Right(PageContext(ctx, page))
+        )
       case Left(err) => Left(err)
     }
 
