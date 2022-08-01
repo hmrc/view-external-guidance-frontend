@@ -21,11 +21,10 @@ import scala.annotation.tailrec
 import config.AppConfig
 import play.api.Logger
 import core.models.RequestOutcome
-import core.models.errors.NonTerminatingPageError
 import core.models.ocelot.stanzas.{PageStanza, EndStanza, VisualStanza, Stanza, Evaluate, DataInput}
-import core.models.ocelot.{Page, Labels, Process}
-import core.models.ocelot.errors.RuntimeError
-import core.models.ocelot.PageReview
+import core.models.ocelot.{Page, Labels, Process, PageReview}
+import core.models.ocelot.errors.{RuntimeError, NonTerminatingPageError}
+import models.errors._
 
 @Singleton
 class PageRenderer @Inject() (appConfig: AppConfig) {
@@ -58,11 +57,12 @@ class PageRenderer @Inject() (appConfig: AppConfig) {
               case None => Right((None, labels))
             }
           case s: Stanza with Evaluate =>
-            val (nxt, updatedLabels, errs) = s.eval(labels)
-            logRuntimeErrors(errs)
-            evaluatePostInputStanzas(nxt, updatedLabels, seen, stanzaCount + 1)
+            evalStanza(s,labels) match {
+              case (nxt, updatedLabels, Nil) => evaluatePostInputStanzas(nxt, updatedLabels, seen, stanzaCount + 1)
+              case (_, _, errs) => Left(executionError(errs, next, labels.runMode))
+            }
         }
-        case Some(s) => Left(NonTerminatingPageError)
+        case Some(s) => Left(executionError(NonTerminatingPageError(next), next, labels.runMode))
       }}
 
     implicit val stanzaMap: Map[String, Stanza] = page.keyedStanzas.map(ks => (ks.key, ks.stanza)).toMap ++ labels.continuationPool
@@ -85,6 +85,13 @@ class PageRenderer @Inject() (appConfig: AppConfig) {
     }
   }
 
+  private def evalStanza(s: Evaluate, labels: Labels):(String, Labels, List[RuntimeError]) =
+    (s.eval(labels), labels.runMode) match {
+      // Ignore evaluation errors when running in PageReview run mode
+      case ((nxt, updatedLabels, errs), PageReview) => (nxt, updatedLabels, Nil)
+      case ((nxt, updatedLabels, errs), _) => (nxt, updatedLabels, errs)
+    }
+
   @tailrec
    private def evaluateStanzas(stanzaId: String, labels: Labels, visualStanzas: Seq[VisualStanza] = Nil, seen: Seq[String] = Nil, stanzaCount: Int = 0)
                               (implicit stanzaMap: Map[String, Stanza]): RequestOutcome[(Seq[VisualStanza], Labels, Seq[String], String, Option[DataInput])] =
@@ -94,19 +101,13 @@ class PageRenderer @Inject() (appConfig: AppConfig) {
         case EndStanza => Right((visualStanzas, labels, seen :+ stanzaId, stanzaId, None))
         case s: VisualStanza with DataInput => Right((visualStanzas :+ s, labels, seen :+ stanzaId, stanzaId, Some(s)))
         case s: Stanza with Evaluate =>
-          val (next, updatedLabels, errs) = s.eval(labels)
-          logRuntimeErrors(errs)
-          evaluateStanzas(next, updatedLabels, visualStanzas, seen :+ stanzaId, stanzaCount + 1)
+          evalStanza(s,labels) match {
+            case (nxt, updatedLabels, Nil) => evaluateStanzas(nxt, updatedLabels, visualStanzas, seen :+ stanzaId, stanzaCount + 1)
+            case (_, _, errs) => Left(executionError(errs, stanzaId, labels.runMode))
+          }
+
         case s: VisualStanza => evaluateStanzas(s.next.head, labels, visualStanzas :+ s, seen :+ stanzaId, stanzaCount + 1)
       }
-      case Some(s) => Left(NonTerminatingPageError)
-    }
-
-  private def logRuntimeErrors(errs: List[RuntimeError]): Unit =
-    errs.foreach{err =>
-      err.runMode match {
-        case PageReview => logger.info(s"RuntimeError: $err")
-        case _ => logger.error(s"RuntimeError: $err")
-      }
+      case Some(s) => Left(executionError(NonTerminatingPageError(stanzaId), stanzaId, labels.runMode))
     }
 }
