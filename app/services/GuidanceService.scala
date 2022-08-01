@@ -59,7 +59,7 @@ class GuidanceService @Inject() (
   def getSubmitPageContext(pec: PageEvaluationContext, errStrategy: ErrorStrategy = NoError)(implicit lang: Lang): RequestOutcome[PageContext] =
     pageRenderer.renderPage(pec.page, pec.labels) match {
       case Left(err) =>
-        logger.error(s"Encountered non terminating page error within page ${pec.page.id} of processCode ${pec.processCode}")
+        logger.error(s"Execution error on page ${pec.page.id} of processCode ${pec.processCode}")
         Left(err)
       case Right((visualStanzas, labels, dataInput)) =>
         val uiPage = uiBuilder.buildPage(pec.page.url, visualStanzas, errStrategy)(UIContext(labels, lang, pec.pageMapById, messagesApi))

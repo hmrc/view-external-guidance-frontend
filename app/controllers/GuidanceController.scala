@@ -26,7 +26,9 @@ import services.{ErrorStrategy, GuidanceService, ValueTypeError}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 import core.models.RequestOutcome
 import core.models.errors._
-import core.models.ocelot.SecuredProcess
+import core.models.ocelot.errors.RuntimeError
+import core.models.ocelot.{RunMode, Published, SecuredProcess}
+import models.errors._
 import models.{PageContext, PageEvaluationContext}
 import models.ui.{FormPage, StandardPage, SubmittedAnswer}
 import views.html.{form_page, standard_page}
@@ -123,9 +125,9 @@ class GuidanceController @Inject() (
       case ExpectationFailedError =>
         logger.warn(s"ExpectationFailed error on getPage. Redirecting to ${appConfig.baseUrl}/$processCode")
         Future.successful(redirectToGuidanceStart(processCode))
-      case NonTerminatingPageError =>
-        logger.error(s"Encountered non terminating page error within page /$path of processCode ${processCode}")
-        Future.successful(InternalServerError(errorHandler.internalServerErrorTemplate))
+      case Error(Error.ExecutionError, errs, Some(errorRunMode), stanzaId) =>
+        logger.error(s"Encountered execution error within page /$path of processCode ${processCode}, errors = $errs")
+        Future.successful(logAndTranslateExecutionError(err.errors.collect{case e: RuntimeError => e}, processCode, path, errorRunMode, stanzaId))
       case err =>
         logger.error(s"Request for PageContext at /$path returned $err, returning InternalServerError")
         Future.successful(InternalServerError(errorHandler.internalServerErrorTemplate))
@@ -191,13 +193,24 @@ class GuidanceController @Inject() (
       case SessionNotFoundError =>
         logger.warn(s"Request for page at /$path returned SessionNotFound. Redirect to ${appConfig.baseUrl}/$processCode")
         Future.successful(redirectToGuidanceStart(processCode))
-      case NonTerminatingPageError =>
-        logger.error(s"Encountered non terminating page error within submit to page /$path of processCode ${processCode}")
-        Future.successful(InternalServerError(errorHandler.internalServerErrorTemplate))
+      case Error(Error.ExecutionError, errs, Some(errorRunMode), stanzaId) =>
+        logger.error(s"Encountered execution error within page /$path of processCode ${processCode}, errors = $errs")
+        Future.successful(logAndTranslateExecutionError(err.errors.collect{case e: RuntimeError => e}, processCode, path, errorRunMode, stanzaId))
       case err =>
         logger.error(s"Request for PageContext at /$path returned $err during form submission, returning InternalServerError")
         Future.successful(InternalServerError(errorHandler.internalServerErrorTemplate))
     }
+
+  private def logAndTranslateExecutionError(errors: List[RuntimeError], processCode: String, path: String, runMode: RunMode, stanzaId: Option[String])
+                                           (implicit request: Request[_]): Result = {
+    errors.foreach{err => logger.error(s"RuntimeError: ${fromRuntimeError(err, stanzaId.getOrElse(""))}")}
+    runMode match {
+      case Published =>
+        InternalServerError(errorHandler.internalServerErrorTemplate)
+      case _ =>
+        InternalServerError(errorHandler.internalServerErrorTemplate) // Temporary until runtime error reporting errorhandler available
+    }
+  }
 
   private def redirectToActiveSessionFallbackRestart(processCode: String, cause: String)(implicit request: Request[_]): Future[Result] =
     withExistingSession[GuidanceSession](service.getCurrentGuidanceSession(processCode)).map{

@@ -16,15 +16,20 @@
 
 package models
 
-import core.models.errors.ErrorReport
+import core.models.ocelot.RunMode
+import core.models.errors.Error
 import core.models.ocelot.errors._
+
+
 
 package object errors {
 
-  def fromRuntimeError(err: RuntimeError): ErrorReport = err match {
-    // Placeholder Implementation
-    case e: UnsupportedOperationError => ErrorReport(s"UnsupportedOperationError: $err", "")
+  def fromRuntimeError(err: RuntimeError, stanzId: String): String = err match {
+    case e: UnsupportedOperationError => s"UnsupportedOperationError: Operation ${e.op}, left ${e.left} (${e.lvalue}), right ${e.right} (${e.rvalue}) on stanza $stanzId"
+    case e: NonTerminatingPageError => s"NonTerminatingPageError: Guidance contains non-terminating loop which includes stanza $stanzId"
   }
 
-  def fromRuntimeErrors(errs: List[RuntimeError]): List[ErrorReport] = errs.map(fromRuntimeError)
+  def executionError(errs: List[RuntimeError], stanzId: String, runMode: RunMode): Error = Error(Error.ExecutionError, errs, Some(runMode), Some(stanzId))
+  def executionError(err: RuntimeError, stanzId: String, runMode: RunMode): Error = executionError(List(err), stanzId, runMode)
+
 }
