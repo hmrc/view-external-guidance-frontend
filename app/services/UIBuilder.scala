@@ -17,13 +17,14 @@
 package services
 
 import javax.inject.Singleton
+import scala.util.matching.Regex._
 import models._
 import models.ocelot.stanzas._
 import core.models.errors.Error
 import core.models.RequestOutcome
 import core.models.ocelot.stanzas.{CurrencyInput, CurrencyPoundsOnlyInput, DateInput, Input, Question}
 import core.models.ocelot.stanzas._
-import core.models.ocelot.{Labels, Link, EmbeddedParameterRegex}
+import core.models.ocelot.{PageReview, Labels, Link, EmbeddedParameterRegex, EmbeddedParameterGroup}
 import core.models.ocelot.errors.UnsupportedUiPatternError
 import models.ui.{Answer, SequenceAnswer, BulletPointList, ConfirmationPanel, CyaSummaryList, Details, ErrorMsg, H1, H2, H3, H4, InsetText, WarningText}
 import models.ui.{NameValueSummaryList, Page, Paragraph, RequiredErrorMsg, Table, Text, TypeErrorMsg, UIComponent, ValueErrorMsg, stackStanzas}
@@ -89,10 +90,12 @@ class UIBuilder {
       case (ng: NoteGroup) :: xs => fromStanzas(xs, acc ++ Seq(fromNoteGroup(ng)), errStrategy)
       case (wt: ImportantGroup) :: xs => fromStanzas(xs, acc ++ Seq(fromImportantGroup(wt)), errStrategy)
       case (ycg: YourCallGroup) :: xs => fromStanzas(xs, acc ++ Seq(fromYourCallGroup(ycg)), errStrategy)
+      case x :: xs if ctx.labels.runMode == PageReview =>
+        logger.warn(s"Encountered and ignored (PageReview usage) invalid VisualStanza due to accessibility rules, $x")
+        fromStanzas(xs, acc, errStrategy)
       case x :: xs =>
-        logger.error(s"Encountered and ignored invalid VisualStanza due to accessibility rules, $x")
-        val nextStanzaId: Option[String] = x.next.headOption
-        Left(Error(UnsupportedUiPatternError, ctx.labels.runMode, nextStanzaId))
+        logger.error(s"Encountered invalid VisualStanza due to accessibility rules, $x")
+        Left(Error(UnsupportedUiPatternError, ctx.labels.runMode, x.next.headOption))
     }
 
   private def fromStackedGroup(sg: StackedGroup, errStrategy: ErrorStrategy)(implicit ctx: UIContext): RequestOutcome[Seq[UIComponent]] =
@@ -197,13 +200,15 @@ class UIBuilder {
       case e: ValueMissingGroupError =>   // Values missing by name
         // Find message corresponding to the number of missing values
         eg.group.find(co => EmbeddedParameterRegex.findAllMatchIn(co.text.value(ctx.lang)).length == e.missingFieldNames.length)
-                .fold[Seq[UIComponent]](Nil){eco => {
-                  // Substitute positional params with the supplied field names
-                  val errorMsg = EmbeddedParameterRegex.replaceSomeIn(eco.text.value(ctx.lang), { m =>
-                                   Option(m.group(1)).map(_.toInt).fold[Option[String]](None)(idx => e.missingFieldNames.lift(idx))
-                                 })
-                  Seq(RequiredErrorMsg(Text(StringTransform.transform(errorMsg))))
-                }}
+          .fold[Seq[UIComponent]](Nil){eco => {
+              // Substitute positional params with the supplied field names
+              val mapToFieldName: Match => Option[String] = m => Option(m.group(EmbeddedParameterGroup))
+                                                                  .map(_.toInt)
+                                                                  .fold[Option[String]](None)(idx => e.missingFieldNames.lift(idx))
+              val errorMsg = EmbeddedParameterRegex.replaceSomeIn(eco.text.value(ctx.lang), mapToFieldName)
+              Seq(RequiredErrorMsg(Text(StringTransform.transform(errorMsg))))
+            }
+          }
       case _ => Nil
     }
 
