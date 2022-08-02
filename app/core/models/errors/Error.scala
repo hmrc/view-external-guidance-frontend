@@ -18,8 +18,7 @@ package core.models.errors
 
 import core.models.ocelot.RunMode
 import core.models.ocelot.errors.EGError
-import core.models.ocelot.errors.GuidanceError
-import core.models.ocelot.errors.RuntimeError
+import core.models.ocelot.errors.{GuidanceError, RuntimeError}
 
 case class Error(code: String, errors: List[EGError] = Nil, runMode: Option[RunMode] = None, stanzaId: Option[String] = None)
 

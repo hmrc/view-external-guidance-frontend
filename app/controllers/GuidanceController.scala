@@ -202,15 +202,15 @@ class GuidanceController @Inject() (
     }
 
   private def logAndTranslateExecutionError(errors: List[RuntimeError], processCode: String, path: String, runMode: RunMode, stanzaId: Option[String])
-                                           (implicit request: Request[_]): Result = {
-    errors.foreach{err => logger.error(s"RuntimeError: ${fromRuntimeError(err, stanzaId.getOrElse(""))}")}
+                                           (implicit request: Request[_]): Result =
     runMode match {
       case Published =>
+        errors.foreach{err => logger.error(s"RuntimeError: ${fromRuntimeError(err, stanzaId.getOrElse(""))}")}
         InternalServerError(errorHandler.internalServerErrorTemplate)
       case _ =>
+        errors.foreach{err => logger.warn(s"RuntimeError: ${fromRuntimeError(err, stanzaId.getOrElse(""))}")}
         InternalServerError(errorHandler.internalServerErrorTemplate) // Temporary until runtime error reporting errorhandler available
     }
-  }
 
   private def redirectToActiveSessionFallbackRestart(processCode: String, cause: String)(implicit request: Request[_]): Future[Result] =
     withExistingSession[GuidanceSession](service.getCurrentGuidanceSession(processCode)).map{
