@@ -16,21 +16,35 @@
 
 package config
 
+import core.models.ocelot.errors._
+import models.errors.fromRuntimeError
+
 import javax.inject.{Inject, Singleton}
 import play.api.i18n.{Messages, MessagesApi}
 import play.api.mvc.Request
 import play.twirl.api.Html
 import uk.gov.hmrc.play.bootstrap.frontend.http.FrontendErrorHandler
-import views.html.error_template
+import views.html.{error_template, guidanceError_template}
 
 @Singleton
-class ErrorHandler @Inject() (val messagesApi: MessagesApi, view: error_template, implicit val appConfig: AppConfig) extends FrontendErrorHandler {
+class ErrorHandler @Inject()(val messagesApi: MessagesApi, view: error_template, guidanceErrorView: guidanceError_template, implicit val appConfig: AppConfig) extends FrontendErrorHandler {
 
   override def standardErrorTemplate(pageTitle: String, heading: String, message: String)(implicit request: Request[_]): Html =
     view(pageTitle, heading, message, None, false)
 
   def standardErrorTemplate(pageTitle: String, heading: String, message: String, processCode: Option[String])(implicit request: Request[_]): Html =
     view(pageTitle, heading, message, processCode, false)
+
+  def runtimeErrorHandler(processCode: Option[String], runtimeErrors: List[RuntimeError], stanzaId: String)(implicit request: Request[_]): Html = {
+    val errorMessageList = runtimeErrors.map(error => fromRuntimeError(error, stanzaId))
+
+    guidanceErrorView(Messages("guidance.error.title", processCode),
+      Messages("guidance.error.heading", processCode),
+      Messages("guidance.error.message"),
+      processCode,
+      betaPhaseBanner = false,
+      errorMessageList)
+  }
 
   def badRequestTemplateWithProcessCode(processCode: Option[String])(implicit request: Request[_]): Html =
     standardErrorTemplate(
