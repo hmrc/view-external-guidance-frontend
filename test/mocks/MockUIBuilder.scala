@@ -20,6 +20,7 @@ import org.scalamock.handlers.CallHandler
 import org.scalamock.scalatest.MockFactory
 import core.models.ocelot.stanzas.VisualStanza
 import services.{ErrorStrategy, UIBuilder, UIContext}
+import core.models.RequestOutcome
 
 trait MockUIBuilder extends MockFactory {
 
@@ -27,7 +28,7 @@ trait MockUIBuilder extends MockFactory {
 
   object MockUIBuilder {
 
-    def buildPage(url: String, stanzas: Seq[VisualStanza], errStrategy: ErrorStrategy): CallHandler[models.ui.Page] = {
+    def buildPage(url: String, stanzas: Seq[VisualStanza], errStrategy: ErrorStrategy): CallHandler[RequestOutcome[models.ui.Page]] = {
 
       (mockUIBuilder
         .buildPage(_: String, _: Seq[VisualStanza], _: ErrorStrategy)(_: UIContext))

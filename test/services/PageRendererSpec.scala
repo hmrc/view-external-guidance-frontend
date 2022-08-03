@@ -75,7 +75,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson  {
   "PageRenderer" must {
 
     "Detect non-terminating page by enforcing a max number of stanzas per page before input" in new Test {
-      val nonTerminatingPageError = executionError(NonTerminatingPageError("2"), "2", Published)
+      val nonTerminatingPageError = executionError(NonTerminatingPageError, "2", Published)
       val stanzas: Seq[KeyedStanza] = Seq(KeyedStanza("start", PageStanza("/start", Seq("1"), false)),
                         KeyedStanza("1", ValueStanza(List(Value(ScalarType, "X", "9")), Seq("2"), true)),
                         KeyedStanza("2", InstructionStanza(3, Seq("3"), None, false)),
@@ -92,7 +92,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson  {
     }
 
     "Detect non-terminating page by enforcing a max number of stanzas per page after input" in new Test {
-      val nonTerminatingPageError = executionError(NonTerminatingPageError("3"), "3", Published)
+      val nonTerminatingPageError = executionError(NonTerminatingPageError, "3", Published)
       val stanzas: Seq[KeyedStanza] = Seq(KeyedStanza("start", PageStanza("/start", Seq("1"), false)),
                         KeyedStanza("1", InstructionStanza(3, Seq("4"), None, false)),
                         KeyedStanza("4", Question(questionPhrase, answers, Seq("3","3","3"), None, false)),

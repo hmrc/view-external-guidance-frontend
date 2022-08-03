@@ -20,16 +20,14 @@ import core.models.ocelot.RunMode
 import core.models.errors.Error
 import core.models.ocelot.errors._
 
-
-
 package object errors {
 
-  def fromRuntimeError(err: RuntimeError, stanzId: String): String = err match {
-    case e: UnsupportedOperationError => s"UnsupportedOperationError: Operation ${e.op}, left ${e.left} (${e.lvalue}), right ${e.right} (${e.rvalue}) on stanza $stanzId"
-    case e: NonTerminatingPageError => s"NonTerminatingPageError: Guidance contains non-terminating loop which includes stanza $stanzId"
+  def fromRuntimeError(err: RuntimeError, stanzaId: String): String = err match {
+    case e: UnsupportedOperationError => s"UnsupportedOperationError: Operation ${e.op}, left ${e.left} (${e.lvalue}), right ${e.right} (${e.rvalue}) on stanza $stanzaId"
+    case NonTerminatingPageError => s"NonTerminatingPageError: Guidance contains non-terminating loop which includes stanza $stanzaId"
+    case UnsupportedUiPatternError => s"UnsupportedUiPatternError: Stanza grouping (including stanza $stanzaId) does not form a GDS UI pattern"
   }
 
   def executionError(errs: List[RuntimeError], stanzId: String, runMode: RunMode): Error = Error(Error.ExecutionError, errs, Some(runMode), Some(stanzId))
   def executionError(err: RuntimeError, stanzId: String, runMode: RunMode): Error = executionError(List(err), stanzId, runMode)
-
 }
