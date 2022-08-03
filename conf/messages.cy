@@ -146,3 +146,8 @@ complaint.nine.p2.4=(
 compliant.nine.p2.5=)
 compliant.nine.p2.3= Profwyd y gwasanaeth llawn gan CThEM, ac roedd y gwaith o brofi’r gwasanaeth yn cynnwys defnyddwyr anabl.
 compliant.nine.p3=Paratowyd y dudalen hon ar 5 Awst 2020. Cafodd ei diweddaru ddiwethaf ar 5 Awst 2020.
+
+## guidance error page
+guidance.error.title=There is an error with process {0}
+guidance.error.heading=There is an error with process {0}
+guidance.error.message=There is an error in process {0}
