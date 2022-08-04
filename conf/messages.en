@@ -149,4 +149,3 @@ compliant.nine.p3=This page was prepared on 5 August 2020. It was last updated o
 ## guidance error page
 guidance.error.title=Execution of the current process has encountered a problem
 guidance.error.heading=Error: The following problem has been encountered
-guidance.error.message=There is an error in process {0}

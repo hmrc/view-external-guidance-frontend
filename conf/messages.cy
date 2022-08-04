@@ -150,4 +150,3 @@ compliant.nine.p3=Paratowyd y dudalen hon ar 5 Awst 2020. Cafodd ei diweddaru dd
 ## guidance error page
 guidance.error.title=Execution of the current process has encountered a problem
 guidance.error.heading=Error: The following problem has been encountered
-guidance.error.message=There is an error in process {0}
