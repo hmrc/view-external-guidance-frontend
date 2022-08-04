@@ -147,6 +147,6 @@ compliant.nine.p2.3=The full service was tested by HMRC and included disabled us
 compliant.nine.p3=This page was prepared on 5 August 2020. It was last updated on 5 August 2020.
 
 ## guidance error page
-guidance.error.title=There is an error with process {0}
-guidance.error.heading=There is an error with process {0}
+guidance.error.title=Execution of the current process has encountered a problem
+guidance.error.heading=Error: The following problem has been encountered
 guidance.error.message=There is an error in process {0}

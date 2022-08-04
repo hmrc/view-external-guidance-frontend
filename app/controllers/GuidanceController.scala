@@ -209,7 +209,7 @@ class GuidanceController @Inject() (
         InternalServerError(errorHandler.internalServerErrorTemplate)
       case _ =>
         errors.foreach{err => logger.warn(s"RuntimeError: ${fromRuntimeError(err, stanzaId.getOrElse(""))}")}
-        InternalServerError(errorHandler.internalServerErrorTemplate) // Temporary until runtime error reporting errorhandler available
+        InternalServerError(errorHandler.runtimeErrorHandler(Some(processCode), errors, stanzaId.getOrElse(""))) // Temporary until runtime error reporting errorhandler available
     }
 
   private def redirectToActiveSessionFallbackRestart(processCode: String, cause: String)(implicit request: Request[_]): Future[Result] =

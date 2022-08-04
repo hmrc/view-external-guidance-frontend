@@ -148,6 +148,6 @@ compliant.nine.p2.3= Profwyd y gwasanaeth llawn gan CThEM, ac roedd y gwaith o b
 compliant.nine.p3=Paratowyd y dudalen hon ar 5 Awst 2020. Cafodd ei diweddaru ddiwethaf ar 5 Awst 2020.
 
 ## guidance error page
-guidance.error.title=There is an error with process {0}
-guidance.error.heading=There is an error with process {0}
+guidance.error.title=Execution of the current process has encountered a problem
+guidance.error.heading=Error: The following problem has been encountered
 guidance.error.message=There is an error in process {0}
