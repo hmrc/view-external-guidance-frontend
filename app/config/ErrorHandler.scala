@@ -40,7 +40,6 @@ class ErrorHandler @Inject()(val messagesApi: MessagesApi, view: error_template,
 
     runtimeErrorView(Messages("guidance.error.title", processCode),
       Messages("guidance.error.heading", processCode),
-      Messages("guidance.error.message"),
       processCode,
       betaPhaseBanner = false,
       errorMessageList)
