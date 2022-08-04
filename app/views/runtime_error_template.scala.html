@@ -27,9 +27,9 @@ appConfig: AppConfig)
 @layout(pageTitle, messages("service.name"), processCode, betaPhaseBanner = betaPhaseBanner, enableTimeout = false) {
 @hmrcHeading(PageHeading(heading))
 
-     errorMessagesList.map(error =>
-         <p>error</p>
-     )
+    @for(error <- errorMessagesList) {
+        <p class="govuk-body">@error</p>
+    }
 }
 
 @{
