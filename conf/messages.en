@@ -145,3 +145,7 @@ complaint.nine.p2.4=
 compliant.nine.p2.5=
 compliant.nine.p2.3=The full service was tested by HMRC and included disabled users.
 compliant.nine.p3=This page was prepared on 5 August 2020. It was last updated on 5 August 2020.
+
+## guidance error page
+guidance.error.title=Execution of the current process has encountered a problem
+guidance.error.heading=Error: The following problem has been encountered
