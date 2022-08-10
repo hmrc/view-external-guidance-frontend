@@ -150,3 +150,12 @@ compliant.nine.p3=Paratowyd y dudalen hon ar 5 Awst 2020. Cafodd ei diweddaru dd
 ## guidance error page
 guidance.error.title=Execution of the current process has encountered a problem
 guidance.error.heading=Error: The following problem has been encountered
+
+guidance.error.unsupported_operation=Unsupported operation. Calculation stanza ''{0}'' contains operation ''{1}'' with invalid arguments {2}, {3}.
+guidance.error.unsupported_operation.soln=Typically this error occurs where one or both operands are references to labels which have not been assigned a value.
+
+guidance.error.nonterminating_loop=Non-terminating page (infinite loop) found on page containing stanza {0}
+guidance.error.nonterminating_loop.soln=Ensure the page terminates for all input values (if any)
+
+guidance.error.unsupported_ui_pattern=Unrecognised RowStanza UI pattern including stanza ''{0}''. RowStanzas must used as part of a GDS "Summary List", "Table" or "Check you answers" summary list variant
+guidance.error.unsupported_ui_pattern.soln=

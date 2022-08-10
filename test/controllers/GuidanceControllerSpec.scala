@@ -20,7 +20,7 @@ import java.time.Instant
 import akka.stream.Materializer
 import base.{BaseSpec, ViewFns}
 import config.ErrorHandler
-import play.api.i18n.MessagesApi
+import play.api.i18n.{Messages, MessagesApi}
 import mocks.{MockAppConfig, MockGuidanceConnector, MockGuidanceService, MockSessionRepository}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.Status
@@ -57,6 +57,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
 
     def injector: Injector = app.injector
     val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
+    implicit val messages: Messages = messagesApi.preferred(Seq())
 
     val requestIdValue: String = "71dcc4a3-9d19-47f5-ad97-74bb6c2a15c4"
     implicit val mat: Materializer = injector.instanceOf[Materializer]
@@ -2174,6 +2175,24 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
         }
       }
 
+    }
+
+  }
+
+  "fromRuntimeError" should {
+    "translate UnsupportedOperationError" in new TestBase {
+      val report = fromRuntimeError(UnsupportedOperationError("AddOperation", "lvalue", "rvalue", "left", "right"), "stanzaId")
+      report.error shouldBe "Unsupported operation. Calculation stanza 'stanzaId' contains operation 'AddOperation' with invalid arguments left, right."
+    }
+
+    "translate NonTerminatingPageError" in new TestBase {
+      val report = fromRuntimeError(NonTerminatingPageError, "stanzaId")
+      report.error shouldBe "Non-terminating page (infinite loop) found on page containing stanza stanzaId"
+    }
+
+    "translate UnsupportedUiPatternError" in new TestBase {
+      val report = fromRuntimeError(UnsupportedUiPatternError, "stanzaId")
+      report.error shouldBe "Unrecognised RowStanza UI pattern including stanza 'stanzaId'. RowStanzas must used as part of a GDS \"Summary List\", \"Table\" or \"Check you answers\" summary list variant"
     }
 
   }
