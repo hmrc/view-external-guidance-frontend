@@ -18,7 +18,6 @@ import java.time.Instant
 import config.AppConfig
 import play.api.i18n.Messages
 import core.models.ocelot.errors._
-import models.errors.ErrorReport
 
 package object controllers {
   val SessionIdPrefix: String = "session-"
@@ -36,20 +35,17 @@ package object controllers {
     case UnsupportedUiPatternError => messages("guidance.error.unsupported_ui_pattern", stanzaId)
   }
 
-  def errorSolutions(errors: List[RuntimeError], stanzaId: String)(implicit messages: Messages): List[List[String]] = {
-    println(UnsupportedOperationError.getClass().getSimpleName())
-    println(NonTerminatingPageError.getClass().getSimpleName())
-    println(UnsupportedUiPatternError.getClass().getSimpleName())
-    errors.groupBy(_.getClass.getSimpleName()).keys.toList.map{
-      case "UnsupportedOperationError" => List(messages("guidance.error.unsupported_operation.soln"))
-      case "NonTerminatingPageError" => List(messages("guidance.error.nonterminating_loop.soln"))
-      case "UnsupportedUiPatternError" =>
-        List(messages("guidance.error.unsupported_ui_pattern.soln"),
+  def errorSolutions(errors: List[RuntimeError], stanzaId: String)(implicit messages: Messages): List[List[String]] =
+    List(errors.collectFirst{
+      case e: UnsupportedOperationError => List(messages("guidance.error.unsupported_operation.soln"))
+    }, errors.collectFirst{
+      case NonTerminatingPageError => List(messages("guidance.error.nonterminating_loop.soln"))
+    }, errors.collectFirst{
+      case UnsupportedUiPatternError =>
+         List(messages("guidance.error.unsupported_ui_pattern.soln"),
              messages("guidance.error.unsupported_ui_pattern.soln1"),
              messages("guidance.error.unsupported_ui_pattern.soln2"),
-             messages("guidance.error.unsupported_ui_pattern.soln3"))
-    }
-  }
-
-
+             messages("guidance.error.unsupported_ui_pattern.soln3"),
+             messages("guidance.error.unsupported_ui_pattern.soln4"))
+    }).collect{case Some(s) => s}
 }

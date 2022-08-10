@@ -16,7 +16,6 @@
 
 package config
 
-import models.errors.ErrorReport
 import javax.inject.{Inject, Singleton}
 import play.api.i18n.{Messages, MessagesApi}
 import play.api.mvc.Request
@@ -38,7 +37,6 @@ class ErrorHandler @Inject()(val messagesApi: MessagesApi, view: error_template,
       Messages("guidance.error.title", processCode),
       Messages("guidance.error.heading", processCode),
       processCode,
-      betaPhaseBanner = false,
       errors,
       solns
     )

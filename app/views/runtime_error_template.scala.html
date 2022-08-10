@@ -22,9 +22,9 @@
 hmrcHeading: HmrcPageHeading,
 appConfig: AppConfig)
 
-@(pageTitle: String, heading: String, processCode: String, betaPhaseBanner: Boolean, errorMessages: List[String], solns: List[List[String]])(implicit request: Request[_], messages: Messages)
+@(pageTitle: String, heading: String, processCode: String, errorMessages: List[String], solns: List[List[String]])(implicit request: Request[_], messages: Messages)
 
-@layout(pageTitle, messages("service.name"), Some(processCode), betaPhaseBanner = betaPhaseBanner, enableTimeout = false) {
+@layout(pageTitle, messages("service.name"), Some(processCode), betaPhaseBanner = false, enableTimeout = false) {
 @hmrcHeading(PageHeading(heading))
 
     @for(msg <- errorMessages) {

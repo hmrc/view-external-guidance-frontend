@@ -148,16 +148,18 @@ compliant.nine.p3=This page was prepared on 5 August 2020. It was last updated o
 
 ## guidance error page
 guidance.error.title=Execution of the current process has encountered a problem
-guidance.error.heading=Error: The following problem has been encountered
-guidance.error.solns_heading=Possible solutions
-guidance.error.unsupported_operation=UnsupportedOperationError: Calculation stanza ''{0}'' contains operation ''{1}'' with invalid arguments {2}, {3}.
+guidance.error.heading=Error: There is a guidance problem
+guidance.error.solns_heading=Further explanations
+
+guidance.error.unsupported_operation=UnsupportedOperationError: Calculation stanza ''{0}'' contains operation ''{1}'' with invalid arguments ''{2}'', ''{3}''.
 guidance.error.unsupported_operation.soln=UnsupportedOperationError: Typically this error occurs where one or both operands are references to labels which have not been assigned a value.
 
-guidance.error.nonterminating_loop=NonTerminatingPageError: Infinite loop found on page containing stanza {0}
+guidance.error.nonterminating_loop=NonTerminatingPageError: Infinite loop found on page containing stanza ''{0}''
 guidance.error.nonterminating_loop.soln=NonTerminatingPageError: Ensure the page terminates for all input values (if any)
 
 guidance.error.unsupported_ui_pattern=UnsupportedUiPatternError: Unrecognised RowStanza UI pattern including stanza ''{0}''.
-guidance.error.unsupported_ui_pattern.soln=UnsupportedUiPatternError: RowStanzas must used as part of a GDS "Summary List", "Table" or "Check you answers" summary following one of the following rules:-
-guidance.error.unsupported_ui_pattern.soln2=1. Check your answers page with 3 columns, where no column 1 cell is bold and every column 3 is a link.
-guidance.error.unsupported_ui_pattern.soln3=2. A name/value summary list which has 2 columns where no column 1 cell is bold
-guidance.error.unsupported_ui_pattern.soln4=3. A table, which must have at least one column and two rows. The cells of row one are headings, all of which must be bold. The Row stanzas which make up the table must be stacked to a Callout of type SubSection which will become the overall title of the table
+guidance.error.unsupported_ui_pattern.soln=UnsupportedUiPatternError: RowStanzas can be used as part of a GDS "Summary List", "Table" or "Check you answers" pattern.
+guidance.error.unsupported_ui_pattern.soln1=Corresponding to one of of the following rules:-
+guidance.error.unsupported_ui_pattern.soln2=1. Check your answers page. Three columns, column 1 cells must not be bold and every column 3 is a link.
+guidance.error.unsupported_ui_pattern.soln3=2. Summary list. Two columns and column 1 cells must not be bold
+guidance.error.unsupported_ui_pattern.soln4=3. Table. At least one column and two rows. The cells of row 1 are headings, all of which must be bold. The Row stanzas which make up the table must be stacked to a Callout of type SubSection which will become the overall title of the table

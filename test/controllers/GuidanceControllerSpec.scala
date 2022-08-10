@@ -2182,17 +2182,18 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
   "fromRuntimeError" should {
     "translate UnsupportedOperationError" in new TestBase {
       val report = fromRuntimeError(UnsupportedOperationError("AddOperation", "lvalue", "rvalue", "left", "right"), "stanzaId")
-      report.error shouldBe "Unsupported operation. Calculation stanza 'stanzaId' contains operation 'AddOperation' with invalid arguments left, right."
+      report shouldBe "UnsupportedOperationError: Calculation stanza 'stanzaId' contains operation 'AddOperation' with invalid arguments 'left', 'right'."
     }
 
     "translate NonTerminatingPageError" in new TestBase {
       val report = fromRuntimeError(NonTerminatingPageError, "stanzaId")
-      report.error shouldBe "Non-terminating page (infinite loop) found on page containing stanza stanzaId"
+      report shouldBe "NonTerminatingPageError: Infinite loop found on page containing stanza 'stanzaId'"
     }
 
     "translate UnsupportedUiPatternError" in new TestBase {
       val report = fromRuntimeError(UnsupportedUiPatternError, "stanzaId")
-      report.error shouldBe "Unrecognised RowStanza UI pattern including stanza 'stanzaId'. RowStanzas must used as part of a GDS \"Summary List\", \"Table\" or \"Check you answers\" summary list variant"
+      report shouldBe "UnsupportedUiPatternError: Unrecognised RowStanza UI pattern including stanza \'stanzaId\'."
+
     }
 
   }

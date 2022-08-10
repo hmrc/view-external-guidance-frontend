@@ -202,14 +202,13 @@ class GuidanceController @Inject() (
                                            (implicit request: Request[_]): Result = {
     implicit val messages: Messages = mcc.messagesApi.preferred(request)
     val errorMsgs = errors.map(err => fromRuntimeError(err, stanzaId.getOrElse("UNKNOWN")))
-    val solns: List[List[String]] = errorSolutions(errors, stanzaId.getOrElse("UNKNOWN"))
     runMode match {
       case Published =>
-        errorMsgs.foreach{report => logger.error(s"RuntimeError: ${report}")}
+        errorMsgs.foreach{err => logger.error(s"RuntimeError: $err")}
         InternalServerError(errorHandler.internalServerErrorTemplate)
       case _ =>
-        errorMsgs.foreach{report => logger.warn(s"RuntimeError: ${report}")}
-        InternalServerError(errorHandler.runtimeErrorHandler(processCode, errorMsgs, solns, stanzaId))
+        errorMsgs.foreach{err => logger.warn(s"RuntimeError: $err")}
+        InternalServerError(errorHandler.runtimeErrorHandler(processCode, errorMsgs, errorSolutions(errors, stanzaId.getOrElse("UNKNOWN")), stanzaId))
     }
   }
 
