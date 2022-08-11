@@ -159,7 +159,7 @@ guidance.error.nonterminating_loop.soln=NonTerminatingPageError: Ensure the page
 
 guidance.error.unsupported_ui_pattern=UnsupportedUiPatternError: Unrecognised RowStanza UI pattern including stanza ''{0}''.
 guidance.error.unsupported_ui_pattern.soln=UnsupportedUiPatternError: RowStanzas can be used as part of a GDS "Summary List", "Table" or "Check you answers" pattern.
-guidance.error.unsupported_ui_pattern.soln1=Supported variants of these patterns :-
+guidance.error.unsupported_ui_pattern.soln1=Pattern rules :-
 guidance.error.unsupported_ui_pattern.soln2=1. Check your answers page. Three columns, column 1 cells must not be bold and every column 3 is a link.
 guidance.error.unsupported_ui_pattern.soln3=2. Summary list. Two columns and column 1 cells must not be bold
 guidance.error.unsupported_ui_pattern.soln4=3. Table. At least one column and two rows. The cells of row 1 are headings, all of which must be bold. The Row stanzas which make up the table must be stacked to a Callout of type SubSection which will become the overall title of the table
