@@ -16,20 +16,36 @@
 
 import java.time.Instant
 import config.AppConfig
+import play.api.i18n.Messages
+import core.models.ocelot.errors._
 
 package object controllers {
   val SessionIdPrefix: String = "session-"
 
-  /**
-    * If last request update is available check if session has timed out
-    *
-    * @param session - Browser session
-    * @return Returns "true" if time since last update exceeds timeout limit or is very close to the limit
-    */
   def hasSessionExpired(sessionLastRequestTime: Option[String], appConfig: AppConfig, timeNow: Long = Instant.now.toEpochMilli): Boolean =
     sessionLastRequestTime.fold(false){lastRequestTs =>
       val elapsedMilliseconds = timeNow - lastRequestTs.toLong  // How many millis since last request
       // Is the elapsed period greater than the timeout minus the grace period
       elapsedMilliseconds >= (appConfig.timeoutInSeconds * 1000L -appConfig.expiryErrorMarginInMilliSeconds)
     }
+
+  def fromRuntimeError(err: RuntimeError, stanzaId: String)(implicit messages: Messages): String = err match {
+    case e: UnsupportedOperationError => messages("guidance.error.unsupported_operation", stanzaId, e.op, e.left, e.right)
+    case NonTerminatingPageError => messages("guidance.error.nonterminating_loop", stanzaId)
+    case UnsupportedUiPatternError => messages("guidance.error.unsupported_ui_pattern", stanzaId)
+  }
+
+  def errorSolutions(errors: List[RuntimeError], stanzaId: String)(implicit messages: Messages): List[List[String]] =
+    List(errors.collectFirst{
+      case e: UnsupportedOperationError => List(messages("guidance.error.unsupported_operation.soln"))
+    }, errors.collectFirst{
+      case NonTerminatingPageError => List(messages("guidance.error.nonterminating_loop.soln"))
+    }, errors.collectFirst{
+      case UnsupportedUiPatternError =>
+         List(messages("guidance.error.unsupported_ui_pattern.soln"),
+             messages("guidance.error.unsupported_ui_pattern.soln1"),
+             messages("guidance.error.unsupported_ui_pattern.soln2"),
+             messages("guidance.error.unsupported_ui_pattern.soln3"),
+             messages("guidance.error.unsupported_ui_pattern.soln4"))
+    }).collect{case Some(s) => s}
 }

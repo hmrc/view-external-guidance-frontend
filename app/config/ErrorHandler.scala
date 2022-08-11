@@ -16,9 +16,6 @@
 
 package config
 
-import core.models.ocelot.errors._
-import models.errors.fromRuntimeError
-
 import javax.inject.{Inject, Singleton}
 import play.api.i18n.{Messages, MessagesApi}
 import play.api.mvc.Request
@@ -35,15 +32,14 @@ class ErrorHandler @Inject()(val messagesApi: MessagesApi, view: error_template,
   def standardErrorTemplate(pageTitle: String, heading: String, message: String, processCode: Option[String])(implicit request: Request[_]): Html =
     view(pageTitle, heading, message, processCode, false)
 
-  def runtimeErrorHandler(processCode: Option[String], runtimeErrors: List[RuntimeError], stanzaId: String)(implicit request: Request[_]): Html = {
-    val errorMessageList = runtimeErrors.map(error => fromRuntimeError(error, stanzaId))
-
-    runtimeErrorView(Messages("guidance.error.title", processCode),
+  def runtimeErrorHandler(processCode: String, errors: List[String], solns: List[List[String]], stanzaId: Option[String])(implicit request: Request[_]): Html =
+    runtimeErrorView(
+      Messages("guidance.error.title", processCode),
       Messages("guidance.error.heading", processCode),
       processCode,
-      betaPhaseBanner = false,
-      errorMessageList)
-  }
+      errors,
+      solns
+    )
 
   def badRequestTemplateWithProcessCode(processCode: Option[String])(implicit request: Request[_]): Html =
     standardErrorTemplate(

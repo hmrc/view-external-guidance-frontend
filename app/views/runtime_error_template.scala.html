@@ -22,14 +22,22 @@
 hmrcHeading: HmrcPageHeading,
 appConfig: AppConfig)
 
-@(pageTitle: String, heading: String, processCode: Option[String], betaPhaseBanner: Boolean, errorMessagesList: List[String])(implicit request: Request[_], messages: Messages)
+@(pageTitle: String, heading: String, processCode: String, errorMessages: List[String], solns: List[List[String]])(implicit request: Request[_], messages: Messages)
 
-@layout(pageTitle, messages("service.name"), processCode, betaPhaseBanner = betaPhaseBanner, enableTimeout = false) {
+@layout(pageTitle, messages("service.name"), Some(processCode), betaPhaseBanner = false, enableTimeout = false) {
 @hmrcHeading(PageHeading(heading))
 
-    @for(error <- errorMessagesList) {
-        <p class="govuk-body">@error</p>
+    @for(msg <- errorMessages) {
+        <p class="govuk-body">@msg</p>
     }
+    <h3 class="govuk-heading-m">@messages("guidance.error.solns_heading")
+    @for(soln <- solns) {
+        @for(s <- soln) {
+            <p class="govuk-body">@s</p>
+        }
+        <br/>
+    }
+
 }
 
 @{
