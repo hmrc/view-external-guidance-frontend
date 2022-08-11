@@ -30,7 +30,7 @@ appConfig: AppConfig)
     @for(msg <- errorMessages) {
         <p class="govuk-body">@msg</p>
     }
-    <h3>@messages("guidance.error.solns_heading")
+    <h3 class="govuk-heading-m">@messages("guidance.error.solns_heading")
     @for(soln <- solns) {
         @for(s <- soln) {
             <p class="govuk-body">@s</p>
