@@ -42,38 +42,57 @@ class GuidanceErrorSpec extends ViewSpec with ViewFns with GuiceOneAppPerSuite {
   "Guidance Error Page" must {
 
     "Display the correct error message for a single error" in new Test {
-      val errorList: List[String] = List("NonTerminatingPageError: Guidance contains non-terminating loop which includes stanza 4")
-      val solutionsList: List[List[String]] = List(List("NonTerminatingPageError: Ensure the page terminates for all input values (if any)"))
+      val errorList: List[String] = List(Messages("guidance.error.nonterminating_loop", 4))
+      val solutionsList: List[List[String]] = List(List(Messages("guidance.error.nonterminating_loop.soln")))
       val html: Html = guidanceErrorPage(pageTitle, heading, "123", errorList, solutionsList)
       val doc = asDocument(html)
 
       val errorParagraph = doc.getElementsByTag("p").text
       val solutionParagraph = doc.getElementsByTag("p").text
 
-      errorParagraph contains "NonTerminatingPageError: Guidance contains non-terminating loop which includes stanza 4"
+      errorParagraph contains "NonTerminatingPageError: Infinite loop found on page containing stanza '4'"
       solutionParagraph contains "UnsupportedOperationError: Typically this error occurs where one or both operands are references to labels which have not been assigned a value."
 
     }
   }
 
-  "Display the correct error message for a single error with multiple solutions" in new Test {
-    val errorList: List[String] = List("UnsupportedUiPatternError: Unrecognised RowStanza UI pattern including stanza ''{0}''")
-    val solutionsList: List[List[String]] = List(List("UnsupportedUiPatternError: RowStanzas can be used as part of a GDS \"Summary List\", \"Table\" or \"Check you answers\" pattern.",
-    "Pattern rules :-",
-    "1. Check your answers page. Three columns, column 1 cells must not be bold and every column 3 is a link.",
-    "2. Summary list. Two columns and column 1 cells must not be bold",
-    "3. Table. At least one column and two rows. The cells of row 1 are headings, all of which must be bold. The Row stanzas which make up the table must be stacked to a Callout of type SubSection which will become the overall title of the table"))
+  "Display the correct error messages for single error with multiple solutions" in new Test {
+    val errorList: List[String] = List(Messages("guidance.error.unsupported_ui_pattern", 4))
+    val solutionsList: List[List[String]] = List(
+        List(Messages("guidance.error.unsupported_ui_pattern.soln"),
+            Messages("guidance.error.unsupported_ui_pattern.sol1"),
+            Messages("guidance.error.unsupported_ui_pattern.soln2"),
+            Messages("guidance.error.unsupported_ui_pattern.soln3"),
+            Messages("guidance.error.unsupported_ui_pattern.soln4")))
     val html: Html = guidanceErrorPage(pageTitle, heading, "123", errorList, solutionsList)
     val doc = asDocument(html)
 
     val errorParagraph = doc.getElementsByTag("p").text
     val solutionParagraph = doc.getElementsByTag("p").text
 
-    errorParagraph contains "NonTerminatingPageError: Guidance contains non-terminating loop which includes stanza 4"
+    errorParagraph contains "NonTerminatingPageError: Guidance contains non-terminating loop which includes stanza '4'"
     solutionParagraph contains "Pattern rules :-"
     solutionParagraph contains "1. Check your answers page. Three columns, column 1 cells must not be bold and every column 3 is a link."
     solutionParagraph contains "2. Summary list. Two columns and column 1 cells must not be bold"
     solutionParagraph contains "3. Table. At least one column and two rows. The cells of row 1 are headings, all of which must be bold. The Row stanzas which make up the table must be stacked to a Callout of type SubSection which will become the overall title of the table\""
+  }
+
+  "Display the correct error messages for multiple errors with a single solution" in new Test {
+    val errorList: List[String] = List(Messages("guidance.error.unsupported_operation",2,"DivideOperation","[label:X]","[label:Y]"),
+        Messages("guidance.error.unsupported_operation",3,"MultiplyOperation","[label:X]","[label:Y]"),
+        Messages("guidance.error.unsupported_operation",4,"AddOperation","[label:X]","[label:Y]"))
+    val solutionsList: List[List[String]] = List(List(Messages("guidance.error.unsupported_operation.soln")))
+    val html: Html = guidanceErrorPage(pageTitle, heading, "123", errorList, solutionsList)
+    val doc = asDocument(html)
+
+    val errorParagraph = doc.getElementsByTag("p").text
+    val solutionParagraph = doc.getElementsByTag("p").text
+
+
+    errorParagraph contains "Calculation stanza '2' contains operation 'DivideOperation' with invalid arguments '[label:X]', '[label:Y]'."
+    errorParagraph contains "Calculation stanza '3' contains operation 'MultiplyOperation' with invalid arguments '[label:Count]', '10'."
+    errorParagraph contains "Calculation stanza '4' contains operation 'AddOperation' with invalid arguments '[label:X]', '[label:Y]'."
+    solutionParagraph contains "Typically this error occurs where one or both operands are references to labels which have not been assigned a value."
   }
 
 }
