@@ -34,7 +34,6 @@ class GuidanceErrorSpec extends ViewSpec with ViewFns with GuiceOneAppPerSuite {
     implicit val request = FakeRequest("GET", "/")
     implicit def messages: Messages = messagesApi.preferred(request)
 
-    val errorMessageList: List[String] = List("NonTerminatingPageError: Guidance contains non-terminating loop which includes stanza 4")
     val processCode = "processCode"
     val heading = Messages("guidance.error.heading", processCode)
     val pageTitle = Messages("guidance.error.title", processCode)
@@ -42,13 +41,39 @@ class GuidanceErrorSpec extends ViewSpec with ViewFns with GuiceOneAppPerSuite {
 
   "Guidance Error Page" must {
 
-    "Display the correct information" in new Test {
-      val html: Html = guidanceErrorPage(heading,pageTitle, None, false, errorMessageList)
+    "Display the correct error message for a single error" in new Test {
+      val errorList: List[String] = List("NonTerminatingPageError: Guidance contains non-terminating loop which includes stanza 4")
+      val solutionsList: List[List[String]] = List(List("NonTerminatingPageError: Ensure the page terminates for all input values (if any)"))
+      val html: Html = guidanceErrorPage(pageTitle, heading, "123", errorList, solutionsList)
       val doc = asDocument(html)
 
-      val errorMessageParagraph = doc.getElementsByTag("p").text
-      errorMessageParagraph shouldBe "NonTerminatingPageError: Guidance contains non-terminating loop which includes stanza 4"
+      val errorParagraph = doc.getElementsByTag("p").text
+      val solutionParagraph = doc.getElementsByTag("p").text
+
+      errorParagraph contains "NonTerminatingPageError: Guidance contains non-terminating loop which includes stanza 4"
+      solutionParagraph contains "UnsupportedOperationError: Typically this error occurs where one or both operands are references to labels which have not been assigned a value."
+
     }
+  }
+
+  "Display the correct error message for a single error with multiple solutions" in new Test {
+    val errorList: List[String] = List("UnsupportedUiPatternError: Unrecognised RowStanza UI pattern including stanza ''{0}''")
+    val solutionsList: List[List[String]] = List(List("UnsupportedUiPatternError: RowStanzas can be used as part of a GDS \"Summary List\", \"Table\" or \"Check you answers\" pattern.",
+    "Pattern rules :-",
+    "1. Check your answers page. Three columns, column 1 cells must not be bold and every column 3 is a link.",
+    "2. Summary list. Two columns and column 1 cells must not be bold",
+    "3. Table. At least one column and two rows. The cells of row 1 are headings, all of which must be bold. The Row stanzas which make up the table must be stacked to a Callout of type SubSection which will become the overall title of the table"))
+    val html: Html = guidanceErrorPage(pageTitle, heading, "123", errorList, solutionsList)
+    val doc = asDocument(html)
+
+    val errorParagraph = doc.getElementsByTag("p").text
+    val solutionParagraph = doc.getElementsByTag("p").text
+
+    errorParagraph contains "NonTerminatingPageError: Guidance contains non-terminating loop which includes stanza 4"
+    solutionParagraph contains "Pattern rules :-"
+    solutionParagraph contains "1. Check your answers page. Three columns, column 1 cells must not be bold and every column 3 is a link."
+    solutionParagraph contains "2. Summary list. Two columns and column 1 cells must not be bold"
+    solutionParagraph contains "3. Table. At least one column and two rows. The cells of row 1 are headings, all of which must be bold. The Row stanzas which make up the table must be stacked to a Callout of type SubSection which will become the overall title of the table\""
   }
 
 }
