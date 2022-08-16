@@ -94,7 +94,7 @@ class UIBuilder {
         logger.warn(s"Encountered and ignored (PageReview usage) invalid VisualStanza due to accessibility rules, $x")
         fromStanzas(xs, acc, errStrategy)
       case x :: xs =>
-        logger.error(s"Encountered invalid VisualStanza due to accessibility rules, $x")
+        logger.warn(s"Encountered invalid VisualStanza due to accessibility rules, $x")
         Left(Error(UnsupportedUiPatternError, ctx.labels.runMode, x.next.headOption))
     }
 
