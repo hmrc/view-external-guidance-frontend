@@ -23,6 +23,8 @@ import play.api.inject.Injector
 import play.api.test.FakeRequest
 import play.twirl.api.Html
 import views.html.runtime_error_template
+import org.jsoup.nodes.Element
+import scala.collection.JavaConverters._
 
 class GuidanceErrorSpec extends ViewSpec with ViewFns with GuiceOneAppPerSuite {
 
@@ -47,52 +49,55 @@ class GuidanceErrorSpec extends ViewSpec with ViewFns with GuiceOneAppPerSuite {
       val html: Html = guidanceErrorPage(pageTitle, heading, "123", errorList, solutionsList)
       val doc = asDocument(html)
 
-      val errorParagraph = doc.getElementsByTag("p").text
-      val solutionParagraph = doc.getElementsByTag("p").text
+      val paragraphs: List[String] = doc.getElementsByTag("p").asScala.toList.map(_.text)
 
-      errorParagraph contains "NonTerminatingPageError: Infinite loop found on page containing stanza '4'"
-      solutionParagraph contains "UnsupportedOperationError: Typically this error occurs where one or both operands are references to labels which have not been assigned a value."
+      doc.getElementsByTag("h1").text shouldBe heading
+      doc.getElementsByTag("h3").text shouldBe Messages("guidance.error.solns_heading")
 
+      paragraphs.size shouldBe 2
+      paragraphs(0) shouldBe errorList(0)
+      paragraphs(1) shouldBe solutionsList(0)(0)
     }
   }
 
-  "Display the correct error messages for single error with multiple solutions" in new Test {
+  "Display the correct error messages for single error and solution" in new Test {
     val errorList: List[String] = List(Messages("guidance.error.unsupported_ui_pattern", 4))
-    val solutionsList: List[List[String]] = List(
-        List(Messages("guidance.error.unsupported_ui_pattern.soln"),
-            Messages("guidance.error.unsupported_ui_pattern.sol1"),
-            Messages("guidance.error.unsupported_ui_pattern.soln2"),
-            Messages("guidance.error.unsupported_ui_pattern.soln3"),
-            Messages("guidance.error.unsupported_ui_pattern.soln4")))
-    val html: Html = guidanceErrorPage(pageTitle, heading, "123", errorList, solutionsList)
-    val doc = asDocument(html)
+    val solutionsList: List[List[String]] = List(List(Messages("guidance.error.unsupported_ui_pattern.soln"),
+                                                      Messages("guidance.error.unsupported_ui_pattern.sol1"),
+                                                      Messages("guidance.error.unsupported_ui_pattern.soln2"),
+                                                      Messages("guidance.error.unsupported_ui_pattern.soln3"),
+                                                      Messages("guidance.error.unsupported_ui_pattern.soln4")))
+    val doc = asDocument(guidanceErrorPage(pageTitle, heading, "123", errorList, solutionsList))
 
-    val errorParagraph = doc.getElementsByTag("p").text
-    val solutionParagraph = doc.getElementsByTag("p").text
+    val paragraphs: List[String] = doc.getElementsByTag("p").asScala.toList.map(_.text)
 
-    errorParagraph contains "NonTerminatingPageError: Guidance contains non-terminating loop which includes stanza '4'"
-    solutionParagraph contains "Pattern rules :-"
-    solutionParagraph contains "1. Check your answers page. Three columns, column 1 cells must not be bold and every column 3 is a link."
-    solutionParagraph contains "2. Summary list. Two columns and column 1 cells must not be bold"
-    solutionParagraph contains "3. Table. At least one column and two rows. The cells of row 1 are headings, all of which must be bold. The Row stanzas which make up the table must be stacked to a Callout of type SubSection which will become the overall title of the table\""
+    doc.getElementsByTag("h1").text shouldBe heading
+    doc.getElementsByTag("h3").text shouldBe Messages("guidance.error.solns_heading")
+
+    paragraphs(0) shouldBe errorList(0)
+    paragraphs(1) shouldBe solutionsList(0)(0)
+    paragraphs(2) shouldBe solutionsList(0)(1)
+    paragraphs(3) shouldBe solutionsList(0)(2)
+    paragraphs(4) shouldBe solutionsList(0)(3)
   }
 
-  "Display the correct error messages for multiple errors with a single solution" in new Test {
+  "Display the correct error messages for multiple errors and single solution" in new Test {
     val errorList: List[String] = List(Messages("guidance.error.unsupported_operation",2,"DivideOperation","[label:X]","[label:Y]"),
-        Messages("guidance.error.unsupported_operation",3,"MultiplyOperation","[label:X]","[label:Y]"),
-        Messages("guidance.error.unsupported_operation",4,"AddOperation","[label:X]","[label:Y]"))
+                                       Messages("guidance.error.unsupported_operation",3,"MultiplyOperation","[label:X]","[label:Y]"),
+                                       Messages("guidance.error.unsupported_operation",4,"AddOperation","[label:X]","[label:Y]"))
     val solutionsList: List[List[String]] = List(List(Messages("guidance.error.unsupported_operation.soln")))
-    val html: Html = guidanceErrorPage(pageTitle, heading, "123", errorList, solutionsList)
-    val doc = asDocument(html)
 
-    val errorParagraph = doc.getElementsByTag("p").text
-    val solutionParagraph = doc.getElementsByTag("p").text
+    val doc = asDocument(guidanceErrorPage(pageTitle, heading, "123", errorList, solutionsList))
 
+    doc.getElementsByTag("h1").text shouldBe heading
+    doc.getElementsByTag("h3").text shouldBe Messages("guidance.error.solns_heading")
 
-    errorParagraph contains "Calculation stanza '2' contains operation 'DivideOperation' with invalid arguments '[label:X]', '[label:Y]'."
-    errorParagraph contains "Calculation stanza '3' contains operation 'MultiplyOperation' with invalid arguments '[label:Count]', '10'."
-    errorParagraph contains "Calculation stanza '4' contains operation 'AddOperation' with invalid arguments '[label:X]', '[label:Y]'."
-    solutionParagraph contains "Typically this error occurs where one or both operands are references to labels which have not been assigned a value."
+    val paragraphs: List[String] = doc.getElementsByTag("p").asScala.toList.map(_.text)
+
+    paragraphs(0) shouldBe errorList(0)
+    paragraphs(1) shouldBe errorList(1)
+    paragraphs(2) shouldBe errorList(2)
+    paragraphs(3) shouldBe solutionsList(0)(0)
   }
 
 }
