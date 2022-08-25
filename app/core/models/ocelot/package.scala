@@ -109,11 +109,7 @@ package object ocelot {
             }{label => datePlaceholder(lbl(label), fn)}
           }
         }{tsId => capture(DateAddLabelNameGroup).fold(dateAdd(capture(DateAddLiteralGroup), tsId, labels)){daLabel => dateAdd(lbl(daLabel), tsId, labels)}}
-      }{list => capture(ListLabelIndexGroup).fold(listLength(list, labels)){
-          case "length" => listLength(list, labels)
-          case idx => listElement(list, idx, labels)
-        }
-      }
+      }{list => listOp(list, capture(ListLabelIndexGroup), labels)}
     }{label => lbl(label)}
 
   def labelNameValid(v: String): Boolean = v match {
@@ -128,11 +124,12 @@ package object ocelot {
   def labelReferences(str: String): List[String] = plSingleGroupCaptures(labelRefRegex, str)
   def labelReference(str: String): Option[String] = plSingleGroupCaptures(labelRefRegex, str).headOption
   def listLength(listName: String, labels: Labels): Option[String] = labels.valueAsList(listName).fold[Option[String]](None){l => Some(l.length.toString)}
-  def listElement(listName: String, element: String, labels: Labels): Option[String] = labels.valueAsList(listName).fold[Option[String]](None){l =>
-    element match {
-      case "first" => l.headOption
-      case "last" => l.reverse.headOption
-      case x => matchedInt(x, positiveIntRegex).flatMap{idx => if (idx > 1 && idx <= l.length) Some(l(idx-1)) else None}
+  def listOp(listName: String, op: Option[String], labels: Labels): Option[String] = labels.valueAsList(listName).fold[Option[String]](None){l =>
+    op match {
+      case Some("length")| None => Some(l.length.toString)
+      case Some("first") => l.headOption
+      case Some("last") => l.reverse.headOption
+      case Some(x) => matchedInt(x, positiveIntRegex).flatMap{idx => if (idx > 1 && idx <= l.length) Some(l(idx-1)) else None}
     }
   }
   def stringFromDate(when: LocalDate): String = when.format(dateFormatter)

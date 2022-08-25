@@ -211,30 +211,37 @@ class OcelotPackageSpec extends BaseSpec with TestTimescaleDefnsDB {
     }
   }
 
-  "listElement" must {
-    "return None if list does not exit" in {
-      listElement("NonExistent", "1", LabelCache()) shouldBe None
-    }
-
-    "return None if list element does not exit" in {
-      val labels = LabelCache().updateList("Blah", List("one", "two", "five"))
-      listElement("Blah", "5", labels) shouldBe None
-    }
-
-    "return first element of a list" in {
-      val labels = LabelCache().updateList("Blah", List("one", "two", "five"))
-      listElement("Blah", "first", labels) shouldBe Some("one")
-    }
-
-    "return last element of a list" in {
-      val labels = LabelCache().updateList("Blah", List("one", "two", "five"))
-      listElement("Blah", "last", labels) shouldBe Some("five")
-    }
+  "listOp" must {
 
     "return the number of elements in a list label" in {
       val labels = LabelCache().updateList("Blah", List("one", "two", "five"))
 
-      listElement("Blah", "2", labels) shouldBe Some("two")
+      listOp("Blah", Some("length"), labels) shouldBe Some("3")
+    }
+
+    "return None if list does not exit" in {
+      listOp("NonExistent", Some("1"), LabelCache()) shouldBe None
+    }
+
+    "return None if list element does not exit" in {
+      val labels = LabelCache().updateList("Blah", List("one", "two", "five"))
+      listOp("Blah", Some("5"), labels) shouldBe None
+    }
+
+    "return first element of a list" in {
+      val labels = LabelCache().updateList("Blah", List("one", "two", "five"))
+      listOp("Blah", Some("first"), labels) shouldBe Some("one")
+    }
+
+    "return last element of a list" in {
+      val labels = LabelCache().updateList("Blah", List("one", "two", "five"))
+      listOp("Blah", Some("last"), labels) shouldBe Some("five")
+    }
+
+    "return indexed element of a list label" in {
+      val labels = LabelCache().updateList("Blah", List("one", "two", "five"))
+
+      listOp("Blah", Some("2"), labels) shouldBe Some("two")
     }
   }
 

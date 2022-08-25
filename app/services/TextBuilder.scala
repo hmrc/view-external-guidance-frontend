@@ -17,7 +17,7 @@
 package services
 
 import models._
-import core.models.ocelot.{Link, Phrase, LabelPattern, listPattern, listLength, listElement, stringWithOptionalHint, fromPattern}
+import core.models.ocelot.{Link, Phrase, LabelPattern, listPattern, listOp, stringWithOptionalHint, fromPattern}
 import core.models.ocelot.{UiExpansionRegex, LabelOutputFormatGroup, matchGroup, scalarMatch, boldPattern, linkPattern}
 import models.ui._
 import scala.util.matching.Regex
@@ -77,12 +77,7 @@ object TextBuilder {
               val asButton: Boolean = capture(ButtonOrLinkIdx).fold(false)(_ == "button")
               val (lnkText, lnkHint) = stringWithOptionalHint(m.group(LinkTextIdx))
               ui.Link(dest, lnkText, window, asButton, lnkHint)
-            }){listName =>
-              capture(ListIndexIdx).fold(Words(listLength(listName, ctx.labels).getOrElse("0"))){
-                case "length" => Words(listLength(listName, ctx.labels).getOrElse("0"))
-                case idx => Words(listElement(listName, idx, ctx.labels).getOrElse(""))
-              }
-            }
+            }){listName => Words(listOp(listName, capture(ListIndexIdx), ctx.labels).getOrElse(""))}
           }){txt =>
             capture(BoldLabelNameIdx).fold[TextItem](Words(txt, true)){labelName =>
               LabelRef(labelName, OutputFormat(capture(BoldLabelFormatIdx)), true)
