@@ -17,7 +17,7 @@
 package services
 
 import models._
-import core.models.ocelot.{Link, Phrase, LabelPattern, listPattern, listLength, stringWithOptionalHint, fromPattern}
+import core.models.ocelot.{Link, Phrase, LabelPattern, listPattern, listLength, listElement, stringWithOptionalHint, fromPattern}
 import core.models.ocelot.{UiExpansionRegex, LabelOutputFormatGroup, matchGroup, scalarMatch, boldPattern, linkPattern}
 import models.ui._
 import scala.util.matching.Regex
@@ -60,6 +60,7 @@ object TextBuilder {
     val LinkTextIdx: Int = 8
     val LinkDestIdx: Int = 9
     val ListNameIdx: Int = 10
+    val ListIndexIdx: Int = 11
     val placeholderPattern: String = s"$LabelPattern|$boldPattern|$linkPattern|$listPattern"
     val plregex: Regex = placeholderPattern.r
     def from(text: String):(List[String], List[Match]) = fromPattern(plregex, text)
@@ -76,7 +77,12 @@ object TextBuilder {
               val asButton: Boolean = capture(ButtonOrLinkIdx).fold(false)(_ == "button")
               val (lnkText, lnkHint) = stringWithOptionalHint(m.group(LinkTextIdx))
               ui.Link(dest, lnkText, window, asButton, lnkHint)
-            }){listName => Words(listLength(listName, ctx.labels).getOrElse("0"))}
+            }){listName =>
+              capture(ListIndexIdx).fold(Words(listLength(listName, ctx.labels).getOrElse("0"))){
+                case "length" => Words(listLength(listName, ctx.labels).getOrElse("0"))
+                case idx => Words(listElement(listName, idx, ctx.labels).getOrElse(""))
+              }
+            }
           }){txt =>
             capture(BoldLabelNameIdx).fold[TextItem](Words(txt, true)){labelName =>
               LabelRef(labelName, OutputFormat(capture(BoldLabelFormatIdx)), true)

@@ -200,8 +200,41 @@ class OcelotPackageSpec extends BaseSpec with TestTimescaleDefnsDB {
   }
 
   "listLength" must {
-    "return None of list does not exit" in {
+    "return None if list does not exit" in {
       listLength("NonExistent", LabelCache()) shouldBe None
+    }
+
+    "return the number of elements in a list label" in {
+      val labels = LabelCache().updateList("Blah", List("one", "two", "five"))
+
+      listLength("Blah", labels) shouldBe Some("3")
+    }
+  }
+
+  "listElement" must {
+    "return None if list does not exit" in {
+      listElement("NonExistent", "1", LabelCache()) shouldBe None
+    }
+
+    "return None if list element does not exit" in {
+      val labels = LabelCache().updateList("Blah", List("one", "two", "five"))
+      listElement("Blah", "5", labels) shouldBe None
+    }
+
+    "return first element of a list" in {
+      val labels = LabelCache().updateList("Blah", List("one", "two", "five"))
+      listElement("Blah", "first", labels) shouldBe Some("one")
+    }
+
+    "return last element of a list" in {
+      val labels = LabelCache().updateList("Blah", List("one", "two", "five"))
+      listElement("Blah", "last", labels) shouldBe Some("five")
+    }
+
+    "return the number of elements in a list label" in {
+      val labels = LabelCache().updateList("Blah", List("one", "two", "five"))
+
+      listElement("Blah", "2", labels) shouldBe Some("two")
     }
   }
 
