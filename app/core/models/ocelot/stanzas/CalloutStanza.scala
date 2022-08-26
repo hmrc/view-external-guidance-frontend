@@ -21,7 +21,7 @@ import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
 import play.api.libs.json._
 
-sealed trait Callout extends VisualStanza with Populated {
+sealed trait Callout extends VisualStanza {
   val text: Phrase
   override val labelRefs: List[String] = labelReferences(text.english)
   override val links: List[String] = pageLinkIds(text.english)
@@ -29,7 +29,7 @@ sealed trait Callout extends VisualStanza with Populated {
 
 sealed trait Heading
 
-case class CalloutStanza(noteType: CalloutType, text: Int, override val next: Seq[String], stack: Boolean) extends VisualStanza
+case class CalloutStanza(noteType: CalloutType, text: Int, override val next: Seq[String], stack: Boolean) extends Stanza
 
 object CalloutStanza {
   implicit val calloutReads: Reads[CalloutStanza] =
@@ -66,17 +66,43 @@ object Callout {
     }
 }
 
-case class TitleCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout with Heading
-case class SubTitleCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout with Heading
-case class SectionCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout with Heading
-case class SubSectionCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout with Heading
-case class LedeCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout
-case class ErrorCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout
-case class ValueErrorCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout
-case class TypeErrorCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout
-case class ImportantCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout
-case class YourCallCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout
-case class NumberedListItemCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout
-case class NumberedCircleListItemCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout
-case class NoteCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout
+case class TitleCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout with Heading {
+  override def rendered(expand: Phrase => Phrase): VisualStanza = TitleCallout(expand(text), next, stack)
+}
+case class SubTitleCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout with Heading {
+  override def rendered(expand: Phrase => Phrase): VisualStanza = SubTitleCallout(expand(text), next, stack)
+}
+case class SectionCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout with Heading {
+  override def rendered(expand: Phrase => Phrase): VisualStanza = SectionCallout(expand(text), next, stack)
+}
+case class SubSectionCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout with Heading {
+  override def rendered(expand: Phrase => Phrase): VisualStanza = SubSectionCallout(expand(text), next, stack)
+}
+case class LedeCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout {
+  override def rendered(expand: Phrase => Phrase): VisualStanza = LedeCallout(expand(text), next, stack)
+}
+case class ErrorCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout {
+  override def rendered(expand: Phrase => Phrase): VisualStanza = ErrorCallout(expand(text), next, stack)
+}
+case class ValueErrorCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout {
+  override def rendered(expand: Phrase => Phrase): VisualStanza = ValueErrorCallout(expand(text), next, stack)
+}
+case class TypeErrorCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout {
+  override def rendered(expand: Phrase => Phrase): VisualStanza = TypeErrorCallout(expand(text), next, stack)
+}
+case class ImportantCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout {
+  override def rendered(expand: Phrase => Phrase): VisualStanza = ImportantCallout(expand(text), next, stack)
+}
+case class YourCallCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout {
+  override def rendered(expand: Phrase => Phrase): VisualStanza = YourCallCallout(expand(text), next, stack)
+}
+case class NumberedListItemCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout {
+  override def rendered(expand: Phrase => Phrase): VisualStanza = NumberedListItemCallout(expand(text), next, stack)
+}
+case class NumberedCircleListItemCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout {
+  override def rendered(expand: Phrase => Phrase): VisualStanza = NumberedCircleListItemCallout(expand(text), next, stack)
+}
+case class NoteCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout {
+  override def rendered(expand: Phrase => Phrase): VisualStanza = NoteCallout(expand(text), next, stack)
+}
 

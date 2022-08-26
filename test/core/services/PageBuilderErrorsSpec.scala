@@ -321,7 +321,7 @@ class PageBuilderErrorsSpec extends BaseSpec with ProcessJson {
           UnknownInputType("34", "UnknownInputType"),
           LinksParseError("0", "error.path.missing", ""),
           PhrasesParseError("5", "error.minLength","2"),
-          UnknownStanza("2", "UnknownStanza"),
+          //UnknownStanza("2", "UnknownStanza"),
           FlowParseError("5", """'type' is undefined on object: {"next":["end"],"noteType":"Error","stack":false,"text":59}""", """/flow/5"""),
           UnknownCalloutType("4", "UnknownType"),
           UnknownValueType("33", "AnUnknownType"),

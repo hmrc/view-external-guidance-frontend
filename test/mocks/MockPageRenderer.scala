@@ -22,21 +22,22 @@ import core.models.ocelot.{Page, Labels}
 import services.PageRenderer
 import org.scalamock.handlers.CallHandler
 import org.scalamock.scalatest.MockFactory
+import services.UIContext
 
 trait MockPageRenderer extends MockFactory {
   val mockPageRenderer: PageRenderer = mock[PageRenderer]
 
   object MockPageRenderer {
 
-    def renderPage(page: Page, labels: Labels): CallHandler[RequestOutcome[(Seq[VisualStanza], Labels, Option[DataInput])]] =
+    def renderPage(page: Page): CallHandler[RequestOutcome[(Seq[VisualStanza], Labels, Option[DataInput])]] =
       (mockPageRenderer
-        .renderPage(_: Page, _: Labels))
+        .renderPage(_: Page)(_: UIContext))
         .expects(page, *)
 
-    def renderPagePostSubmit(page: Page, labels: Labels, answer: String): CallHandler[RequestOutcome[(Option[String], Labels)]] =
+    def renderPagePostSubmit(page: Page, answer: String): CallHandler[RequestOutcome[(Option[String], Labels)]] =
       (mockPageRenderer
-        .renderPagePostSubmit(_: Page, _: Labels, _: String))
-        .expects(page, *, answer)
+        .renderPagePostSubmit(_: Page, _: String)(_: UIContext))
+        .expects(page, answer, *)
 
   }
 

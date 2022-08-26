@@ -90,6 +90,7 @@ object TextBuilder {
   import StringTransform._
 
   def expandLabels(p: Phrase)(implicit ctx: UIContext): Phrase = Phrase(expandLabels(p.english, English), expandLabels(p.welsh, Welsh))
+  def expandLabels(ctx: UIContext)(p: Phrase): Phrase = expandLabels(p)(ctx)
 
   private def expandLabels(s: String, lang: Lang)(implicit ctx: UIContext): String = {
     val messages: Messages = ctx.messagesApi.preferred(Seq(lang))

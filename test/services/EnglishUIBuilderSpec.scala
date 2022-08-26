@@ -125,7 +125,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
 
   trait Test extends BaseTest with ProcessJson {
 
-    case class UnsupportedVisualStanza(override val next: Seq[String], stack: Boolean) extends VisualStanza with Populated
+    case class UnsupportedVisualStanza(override val next: Seq[String], stack: Boolean) extends VisualStanza
     val lang0 = Vector("Some Text", "Welsh: Some Text")
     val lang1 = Vector("Some Text1", "Welsh: Some Text1")
     val lang2 = Vector("Some Text2", "Welsh: Some Text2")

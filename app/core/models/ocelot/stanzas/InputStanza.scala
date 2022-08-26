@@ -29,7 +29,7 @@ case class InputStanza(
   label: String,
   placeholder: Option[Int],
   stack: Boolean
-) extends VisualStanza {
+) extends Stanza {
   override val labels = List(label)
 }
 
@@ -57,7 +57,7 @@ object InputStanza {
 
 }
 
-sealed trait Input extends VisualStanza with Populated with DataInput {
+sealed trait Input extends VisualStanza with DataInput {
   val name: Phrase
   val help: Option[Phrase]
   val label: String
@@ -82,6 +82,17 @@ case class NumberInput(
   width: String = Ten
 ) extends Input {
   def validInput(value: String): Option[String] = asAnyInt(value).map(_.toString)
+  override def rendered(expand: Phrase => Phrase): VisualStanza =
+    NumberInput(
+      next,
+      expand(name),
+      help.map(expand),
+      label,
+      placeholder.map(expand),
+      stack,
+      dontRepeatName,
+      width
+    )
 }
 
 case class TextInput(
@@ -95,6 +106,17 @@ case class TextInput(
   width: String = Ten
 ) extends Input {
   def validInput(value: String): Option[String] = asTextString(value)
+  override def rendered(expand: Phrase => Phrase): VisualStanza =
+    TextInput(
+      next,
+      expand(name),
+      help.map(expand),
+      label,
+      placeholder.map(expand),
+      stack,
+      dontRepeatName,
+      width
+    )
 }
 
 case class CurrencyInput(
@@ -108,6 +130,17 @@ case class CurrencyInput(
   width: String = Ten
 ) extends Input {
   def validInput(value: String): Option[String] = asCurrency(value).map(_.toString)
+  override def rendered(expand: Phrase => Phrase): VisualStanza =
+    CurrencyInput(
+      next,
+      expand(name),
+      help.map(expand),
+      label,
+      placeholder.map(expand),
+      stack,
+      dontRepeatName,
+      width
+    )
 }
 
 case class CurrencyPoundsOnlyInput(
@@ -121,6 +154,17 @@ case class CurrencyPoundsOnlyInput(
   width: String = Ten
 ) extends Input {
   def validInput(value: String): Option[String] = asCurrencyPounds(value).map(_.toString)
+  override def rendered(expand: Phrase => Phrase): VisualStanza =
+    CurrencyPoundsOnlyInput(
+      next,
+      expand(name),
+      help.map(expand),
+      label,
+      placeholder.map(expand),
+      stack,
+      dontRepeatName,
+      width
+    )
 }
 
 case class DateInput(
@@ -134,6 +178,17 @@ case class DateInput(
   width: String = Ten
 ) extends Input {
   def validInput(value: String): Option[String] = asDate(value).map(stringFromDate)
+  override def rendered(expand: Phrase => Phrase): VisualStanza =
+    DateInput(
+      next,
+      expand(name),
+      help.map(expand),
+      label,
+      placeholder.map(expand),
+      stack,
+      dontRepeatName,
+      width
+    )
 }
 
 object Input {

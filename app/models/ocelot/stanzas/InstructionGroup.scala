@@ -16,7 +16,9 @@
 
 package models.ocelot.stanzas
 
-import core.models.ocelot.stanzas.{Instruction, VisualStanza, Populated}
+import core.models.ocelot.stanzas.{Instruction, VisualStanza}
+import core.models.ocelot.Phrase
+
 /**
   * Case class InstructionGroup is a container class for groups of Instructions
   * with similar leading text that comprise bullet point lists
@@ -24,7 +26,10 @@ import core.models.ocelot.stanzas.{Instruction, VisualStanza, Populated}
   * @param next - Identifier for next stanza in page
   * @param group - A group of instructions
   */
-case class InstructionGroup(override val next: Seq[String], group: Seq[Instruction], stack: Boolean) extends VisualStanza with Populated
+case class InstructionGroup(override val next: Seq[String], group: Seq[Instruction], stack: Boolean) extends VisualStanza {
+  override def rendered(expand: Phrase => Phrase): VisualStanza =
+    InstructionGroup(next, group.map(_.rendered(expand)).collect{case ig: Instruction => ig}, stack)
+}
 
 object InstructionGroup {
 

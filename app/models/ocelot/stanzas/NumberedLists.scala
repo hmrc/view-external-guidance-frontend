@@ -16,9 +16,13 @@
 
 package models.ocelot.stanzas
 
-import core.models.ocelot.stanzas.{NumberedListItemCallout, NumberedCircleListItemCallout, VisualStanza, Populated}
+import core.models.ocelot.stanzas.{NumberedListItemCallout, NumberedCircleListItemCallout, VisualStanza}
+import core.models.ocelot.Phrase
 
-case class NumberedList(override val next: Seq[String], group: Seq[NumberedListItemCallout], stack: Boolean) extends VisualStanza with Populated
+case class NumberedList(override val next: Seq[String], group: Seq[NumberedListItemCallout], stack: Boolean) extends VisualStanza {
+  override def rendered(expand: Phrase => Phrase): VisualStanza =
+    NumberedList(next, group.map(_.rendered(expand)).collect{case n: NumberedListItemCallout => n}, stack)
+}
 
 object NumberedList {
   def apply(group: Seq[NumberedListItemCallout]): NumberedList =
@@ -28,7 +32,10 @@ object NumberedList {
     }
 }
 
-case class NumberedCircleList(override val next: Seq[String], group: Seq[NumberedCircleListItemCallout], stack: Boolean) extends VisualStanza with Populated
+case class NumberedCircleList(override val next: Seq[String], group: Seq[NumberedCircleListItemCallout], stack: Boolean) extends VisualStanza {
+  override def rendered(expand: Phrase => Phrase): VisualStanza =
+    NumberedCircleList(next, group.map(_.rendered(expand)).collect{case n: NumberedCircleListItemCallout => n}, stack)
+}
 
 object NumberedCircleList {
   def apply(group: Seq[NumberedCircleListItemCallout]): NumberedCircleList =

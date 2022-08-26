@@ -51,21 +51,21 @@ class UIBuilder {
   val logger: Logger = Logger(getClass)
 
   def buildPage(url: String, stanzas: Seq[VisualStanza], errStrategy: ErrorStrategy = NoError)(implicit ctx: UIContext): RequestOutcome[Page] = {
-    val transformPipeline: List[Seq[VisualStanza] => Seq[VisualStanza]] = List(expandLabelReferences(Nil), Aggregator.aggregateStanzas(Nil), stackStanzas(Nil))
+    val transformPipeline: List[Seq[VisualStanza] => Seq[VisualStanza]] = List(Aggregator.aggregateStanzas(Nil), stackStanzas(Nil))
     fromStanzas(transformPipeline.foldLeft(stanzas){case (s, t) => t(s)}, Nil, errStrategy.default(stanzas)) match {
       case Right(stanzas) => Right(Page(url, stanzas))
       case Left(err) => Left(err)
     }
   }
 
-  @tailrec
-  private def expandLabelReferences(acc: List[VisualStanza])(stanzas: Seq[VisualStanza])(implicit ctx: UIContext): Seq[VisualStanza] =
-    stanzas match {
-      case Nil => acc.reverse
-      case (i: Instruction) +: xs => expandLabelReferences(i.copy(text = TextBuilder.expandLabels(i.text)) :: acc)(xs)
-      case (n: NoteCallout) +: xs => expandLabelReferences(n.copy(text = TextBuilder.expandLabels(n.text)) :: acc)(xs)
-      case s +: xs => expandLabelReferences(s :: acc)(xs)
-    }
+  // @tailrec
+  // private def expandLabelReferences(acc: List[VisualStanza])(stanzas: Seq[VisualStanza])(implicit ctx: UIContext): Seq[VisualStanza] =
+  //   stanzas match {
+  //     case Nil => acc.reverse
+  //     case (i: Instruction) +: xs => expandLabelReferences(i.copy(text = TextBuilder.expandLabels(i.text)) :: acc)(xs)
+  //     case (n: NoteCallout) +: xs => expandLabelReferences(n.copy(text = TextBuilder.expandLabels(n.text)) :: acc)(xs)
+  //     case s +: xs => expandLabelReferences(s :: acc)(xs)
+  //   }
 
   @tailrec
   private def fromStanzas(stanzas: Seq[VisualStanza], acc: Seq[UIComponent], errStrategy: ErrorStrategy)(implicit ctx: UIContext): RequestOutcome[Seq[UIComponent]] =

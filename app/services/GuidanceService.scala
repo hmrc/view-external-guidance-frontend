@@ -57,7 +57,7 @@ class GuidanceService @Inject() (
   def deleteSession(processCode: String, sessionId: String): Future[RequestOutcome[Unit]] = sessionRepository.delete(sessionId, processCode)
 
   def getSubmitPageContext(pec: PageEvaluationContext, errStrategy: ErrorStrategy = NoError)(implicit lang: Lang): RequestOutcome[PageContext] =
-    pageRenderer.renderPage(pec.page, pec.labels) match {
+    pageRenderer.renderPage(pec.page)(UIContext(pec.labels, lang, pec.pageMapById, messagesApi)) match {
       case Left(err) =>
         logger.error(s"Execution error on page ${pec.page.id} of processCode ${pec.processCode}")
         Left(err)
@@ -156,8 +156,8 @@ class GuidanceService @Inject() (
     }
 
   def submitPage(ctx: PageEvaluationContext, url: String, validatedAnswer: String, submittedAnswer: String)
-                (implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[(Option[String], Labels)]] =
-    pageRenderer.renderPagePostSubmit(ctx.page, ctx.labels, validatedAnswer) match {
+                (implicit hc: HeaderCarrier, context: ExecutionContext, lang: Lang): Future[RequestOutcome[(Option[String], Labels)]] =
+    pageRenderer.renderPagePostSubmit(ctx.page, validatedAnswer)(UIContext(ctx.labels, lang, ctx.pageMapById, messagesApi)) match {
       case Left(err) => Future.successful(Left(err))
       case Right((optionalNext, labels)) =>
         val requestId: Option[String] = hc.requestId.map(_.value)
@@ -200,7 +200,7 @@ class GuidanceService @Inject() (
             gs.pageMap.map{case (k, pn) => (pn.id, PageDesc(pn, s"${appConfig.baseUrl}/$processCode${k}"))}
           val labelCache: Labels =
             LabelCache(gs.labels, Map(), gs.flowStack, gs.continuationPool, gs.process.timescales, messagesApi.preferred(Seq(lang)).apply, gs.runMode)
-          pageRenderer.renderPage(page, labelCache) match {
+          pageRenderer.renderPage(page)(UIContext(labelCache, lang, pageMapById, messagesApi)) match {
             case Left(err) => Left(err)
             case Right((visualStanzas, labels, dataInput)) =>
               Right(

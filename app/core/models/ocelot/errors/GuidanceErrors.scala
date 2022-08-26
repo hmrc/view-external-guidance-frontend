@@ -76,7 +76,7 @@ object GuidanceError {
     def flowError(jsPath: JsPath, id: String, arg: String, msg: String, msgs: Seq[String]): FlowError =
       msgs.headOption.collect{
         case "CalloutType" => UnknownCalloutType(id, arg)
-        case "Stanza" => UnknownStanza(id, arg)
+        case "PopulatedStanza" => UnknownStanza(id, arg)
         case "ValueType" => UnknownValueType(id, arg)
         case "TestType" => UnknownTestType(id, arg)
         case "InputType" => UnknownInputType(id, arg)

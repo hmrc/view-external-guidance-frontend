@@ -22,7 +22,7 @@ import config.AppConfig
 import com.google.inject.{Inject, Singleton}
 import play.api.libs.json.{Format, Json}
 import core.models.ocelot._
-import core.models.ocelot.stanzas.Stanza
+import core.models.ocelot.stanzas.{PopulatedStanza, Stanza}
 import core.models.errors._
 import core.models.RequestOutcome
 import models.{PageNext, GuidanceSession}
@@ -202,7 +202,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
         Updates.set(LegalPageIdsKey, List[String]()),
         Updates.set(FlowStackKey, List[FlowStage]()),
         Updates.set(PageHistoryKey, List[PageHistory]()),
-        Updates.set(ContinuationPoolKey, Map[String, Stanza]()),
+        Updates.set(ContinuationPoolKey, Map[String, PopulatedStanza]()),
         Updates.set(s"${AnswersKey}./${SecuredProcess.SecuredProcessStartUrl}", ""),
         Updates.set(LabelsKey, Map[String, Label]())) ++ requestId.toList.map(rId => Updates.set(RequestId, rId))).toArray: _*)
     )

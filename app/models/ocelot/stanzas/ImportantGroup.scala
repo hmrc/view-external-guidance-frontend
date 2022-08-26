@@ -16,9 +16,13 @@
 
 package models.ocelot.stanzas
 
-import core.models.ocelot.stanzas.{Populated, VisualStanza, ImportantCallout}
+import core.models.ocelot.stanzas.{VisualStanza, ImportantCallout}
+import core.models.ocelot.Phrase
 
-case class ImportantGroup (override val next: Seq[String], group: Seq[ImportantCallout], stack: Boolean) extends VisualStanza with Populated
+case class ImportantGroup (override val next: Seq[String], group: Seq[ImportantCallout], stack: Boolean) extends VisualStanza {
+  override def rendered(expand: Phrase => Phrase): VisualStanza =
+    ImportantGroup(next, group.map(_.rendered(expand)).collect{case ig: ImportantCallout => ig}, stack)
+}
 
 object ImportantGroup {
   def apply(group: Seq[ImportantCallout]): ImportantGroup =

@@ -91,8 +91,8 @@ trait MockGuidanceService extends MockFactory {
                     validatedAnswer: String,
                     submittedAnswer: String): CallHandler[Future[RequestOutcome[(Option[String], Labels)]]] =
       (mockGuidanceService
-        .submitPage(_: PageEvaluationContext, _: String, _: String, _: String)(_: HeaderCarrier, _: ExecutionContext))
-        .expects(ctx, url, validatedAnswer, submittedAnswer, *, *)
+        .submitPage(_: PageEvaluationContext, _: String, _: String, _: String)(_: HeaderCarrier, _: ExecutionContext, _: Lang))
+        .expects(ctx, url, validatedAnswer, submittedAnswer, *, *, *)
 
     def savePageState(docId: String, processCode: String, labels: Labels): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockGuidanceService

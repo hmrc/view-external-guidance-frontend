@@ -18,7 +18,7 @@
 
 package models.ui
 //
-// Stanza stacking, Caption and RowGroup requirements
+// PopulatedStanza stacking, Caption and RowGroup requirements
 // 1. First Row all cells non-blank and all bold to encode <thead> containing row of <th> elements
 // 2. RowGroup stacked to a SubSection Callout, encode callout text as a <caption> within <table>
 // 3. Cell contents numeric (lable ref with output format currency), add the govuk-table__cell--numeric class

@@ -16,9 +16,14 @@
 
 package models.ocelot.stanzas
 
-import core.models.ocelot.stanzas.{NoteCallout, VisualStanza, Populated}
+import core.models.ocelot.stanzas.{NoteCallout, VisualStanza}
+import core.models.ocelot.Phrase
 
-case class NoteGroup (override val next: Seq[String], group: Seq[NoteCallout], stack: Boolean) extends VisualStanza with Populated
+
+case class NoteGroup (override val next: Seq[String], group: Seq[NoteCallout], stack: Boolean) extends VisualStanza {
+  override def rendered(expand: Phrase => Phrase): VisualStanza =
+    NoteGroup(next, group.map(_.rendered(expand)).collect{case n: NoteCallout => n}, stack)
+}
 
 object NoteGroup {
   def apply(group: Seq[NoteCallout]): NoteGroup =

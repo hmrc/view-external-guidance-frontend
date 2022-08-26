@@ -600,14 +600,6 @@ trait ProcessJson {
       |      ],
       |      "stack": true
       |    },
-      |    "2": {
-      |      "type": "UnknownStanza",
-      |      "text": 0,
-      |      "next": [
-      |        "4"
-      |      ],
-      |      "stack": true
-      |    },
       |    "4": {
       |      "next": [
       |        "end"
