@@ -21,7 +21,7 @@ import base.BaseSpec
 import core.models.ocelot._
 import mocks.MockAppConfig
 import play.api.inject.Injector
-import play.api.i18n.{Lang, MessagesApi}
+import play.api.i18n.{Messages, MessagesApi}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 
 class SequencePageRenderSpec extends BaseSpec with ProcessJson with GuiceOneAppPerSuite {
@@ -31,14 +31,15 @@ class SequencePageRenderSpec extends BaseSpec with ProcessJson with GuiceOneAppP
   val renderer: PageRenderer = new PageRenderer(MockAppConfig)
   private def injector: Injector = app.injector
   val messagesApi: MessagesApi = injector.instanceOf[MessagesApi]
-  implicit val ctx: UIContext = UIContext(LabelCache(), Lang("en"), Map(), messagesApi)
+  implicit val messages: Messages = messagesApi.preferred(Seq())
+  implicit val ctx: UIContext = UIContext(LabelCache(), Map(), messages)
 
   trait FlowTest extends SequenceJson {
     val emptyLabels = LabelCache()
     def followNext(next: Option[String], l: Labels, process: Process, f: (Page, Labels) => Unit): Unit =
       next.map(nxt => pageBuilder.buildPage(nxt, process).fold(e => fail(e.toString), p => f(p,l)))
     def renderPagePostSubmit(p: Page, l: Labels, a: String): (Option[String], Labels) = {
-      renderer.renderPagePostSubmit(p, a)(UIContext(l, Lang("en"), Map(), messagesApi)).fold(_ => fail, res => res)
+      renderer.renderPagePostSubmit(p, l, a).fold(_ => fail, res => res)
     }
   }
 

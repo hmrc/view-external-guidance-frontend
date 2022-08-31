@@ -21,6 +21,7 @@ import scala.annotation.tailrec
 import config.AppConfig
 import play.api.Logger
 import core.models.RequestOutcome
+import play.api.i18n.Messages
 import core.models.ocelot.stanzas.{PageStanza, EndStanza, VisualStanza, Stanza, Evaluate, DataInput}
 import core.models.ocelot.{Page, Labels, Process, PageReview}
 import core.models.ocelot.errors.{RuntimeError, NonTerminatingPageError}
@@ -30,15 +31,15 @@ import models.errors._
 class PageRenderer @Inject() (appConfig: AppConfig) {
   val logger: Logger = Logger(getClass)
 
-  def renderPage(page: Page)(implicit ctx: UIContext): RequestOutcome[(Seq[VisualStanza], Labels, Option[DataInput])] = {
-    implicit val stanzaMap: Map[String, Stanza] = page.keyedStanzas.map(ks => (ks.key, ks.stanza)).toMap ++ ctx.labels.continuationPool
-    evaluateStanzas(stanzaMap(page.id).next.head, ctx.labels) match {
+  def renderPage(page: Page, labels: Labels)(implicit messages: Messages): RequestOutcome[(Seq[VisualStanza], Labels, Option[DataInput])] = {
+    implicit val stanzaMap: Map[String, Stanza] = page.keyedStanzas.map(ks => (ks.key, ks.stanza)).toMap ++ labels.continuationPool
+    evaluateStanzas(stanzaMap(page.id).next.head, labels) match {
       case Right((visualStanzas, newLabels, _, _, optionalInput)) => Right((visualStanzas, newLabels, optionalInput))
       case Left(err) => Left(err)
     }
   }
 
-  def renderPagePostSubmit(page: Page, answer: String)(implicit ctx: UIContext): RequestOutcome[(Option[String], Labels)] = {
+  def renderPagePostSubmit(page: Page, labels: Labels, answer: String)(implicit messages: Messages): RequestOutcome[(Option[String], Labels)] = {
 
     @tailrec
     def evaluatePostInputStanzas(next: String, labels: Labels, seen: Seq[String], stanzaCount: Int = 0)
@@ -65,8 +66,8 @@ class PageRenderer @Inject() (appConfig: AppConfig) {
         case Some(s) => Left(executionError(NonTerminatingPageError, next, labels.runMode))
       }}
 
-    implicit val stanzaMap: Map[String, Stanza] = page.keyedStanzas.map(ks => (ks.key, ks.stanza)).toMap ++ ctx.labels.continuationPool
-    evaluateStanzas(stanzaMap(page.id).next.head, ctx.labels) match {
+    implicit val stanzaMap: Map[String, Stanza] = page.keyedStanzas.map(ks => (ks.key, ks.stanza)).toMap ++ labels.continuationPool
+    evaluateStanzas(stanzaMap(page.id).next.head, labels) match {
       case Right((_, newLabels, seen, nextPageId, optionalInput)) =>
         optionalInput.fold[RequestOutcome[(Option[String], Labels)]](Right((Some(nextPageId), newLabels))){dataInputStanza =>
           dataInputStanza.eval(answer, page, newLabels) match {
@@ -94,7 +95,7 @@ class PageRenderer @Inject() (appConfig: AppConfig) {
 
   @tailrec
    private def evaluateStanzas(stanzaId: String, labels: Labels, visualStanzas: Seq[VisualStanza] = Nil, seen: Seq[String] = Nil, stanzaCount: Int = 0)
-                              (implicit stanzaMap: Map[String, Stanza]): RequestOutcome[(Seq[VisualStanza], Labels, Seq[String], String, Option[DataInput])] =
+                              (implicit stanzaMap: Map[String, Stanza], messages: Messages): RequestOutcome[(Seq[VisualStanza], Labels, Seq[String], String, Option[DataInput])] =
     stanzaMap.get(stanzaId) match {
       case None => Right((visualStanzas, labels, seen, stanzaId, None))
       case Some(s) if stanzaCount < appConfig.pageStanzaLimit  => s match { // Limit stanzas within page to catch non-terminating loops in guidance

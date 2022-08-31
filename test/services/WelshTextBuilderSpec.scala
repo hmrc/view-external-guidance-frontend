@@ -17,7 +17,7 @@
 package services
 
 import play.api.inject.Injector
-import play.api.i18n.MessagesApi
+import play.api.i18n.{Messages, MessagesApi}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import base.{WelshLanguage, BaseSpec}
 
@@ -31,6 +31,7 @@ class WelshTextBuilderSpec extends BaseSpec with WelshLanguage with GuiceOneAppP
 
     private def injector: Injector = app.injector
     val messagesApi: MessagesApi = injector.instanceOf[MessagesApi]
+    implicit val messages: Messages = messagesApi.preferred(Seq(TextBuilder.Welsh))
 
     val words1 = Words("Welsh: This is a ", true)
     val words2 = Words(" Welsh: followed by ")
@@ -82,7 +83,7 @@ class WelshTextBuilderSpec extends BaseSpec with WelshLanguage with GuiceOneAppP
       "Colours" -> ListLabel("Colours", List("Red", "Green", "Blue"))
     )
 
-    implicit val ctx: UIContext = UIContext(LabelCache(labelsMap), lang, urlMap1, messagesApi)
+    implicit val ctx: UIContext = UIContext(LabelCache(labelsMap), urlMap1, messages)
 
     val answerWithNoHint = Phrase("Yes", "Welsh: Yes")
     val answerWithHint = Phrase("Yes[hint:You agree with the assertion]", "Welsh: Yes[hint:Welsh: You agree with the assertion]")
@@ -321,58 +322,58 @@ class WelshTextBuilderSpec extends BaseSpec with WelshLanguage with GuiceOneAppP
       "SomeList" -> ListLabel("SomeList", List("x", "y", "z")))
 
     val labels: Labels = LabelCache(labelsMap, Map(), Nil, Map(), Map(), message(lang), Published)
-    override implicit val ctx: UIContext = UIContext(labels, lang, urlMap1, messagesApi)
+    override implicit val ctx: UIContext = UIContext(labels, urlMap1, messages)
   }
 
   "TextBuilder expandLabels" must {
 
     "Convert label reference with default output format placeholders within phrase" in new ExpandTest {
       val phrase = Phrase("""Sentence with a [label:BLAH] label reference""", """Welsh: Sentence with a [label:BLAH] label reference""")
-      val expectedPhrase = Phrase("""Sentence with a 33.5 label reference""", """Welsh: Sentence with a 43.5 label reference""")
-      TextBuilder.expandLabels(phrase) shouldBe expectedPhrase
+      val expectedPhrase = Phrase("""Sentence with a [label:BLAH] label reference""", """Welsh: Sentence with a 43.5 label reference""")
+      TextBuilder.expandLabels(phrase, labels) shouldBe expectedPhrase
     }
 
     "Convert label reference with currency output format placeholders within phrase" in new ExpandTest {
       val phrase = Phrase("""Sentence with a [label:BLAH:currency] label reference""", """Welsh: Sentence with a [label:BLAH:currency] label reference""")
-      val expectedPhrase = Phrase("""Sentence with a £33.50 label reference""", """Welsh: Sentence with a £43.50 label reference""")
-      TextBuilder.expandLabels(phrase) shouldBe expectedPhrase
+      val expectedPhrase = Phrase("""Sentence with a [label:BLAH:currency] label reference""", """Welsh: Sentence with a £43.50 label reference""")
+      TextBuilder.expandLabels(phrase, labels) shouldBe expectedPhrase
     }
 
     "Convert label reference with date output format placeholders within phrase" in new ExpandTest {
       val phrase = Phrase("""Sentence with a [label:SomeDate:date] label reference""", """Welsh: Sentence with a [label:SomeDate:date] label reference""")
-      val expectedPhrase = Phrase("""Sentence with a 22 September 1973 label reference""", """Welsh: Sentence with a 23 Medi 1973 label reference""")
-      TextBuilder.expandLabels(phrase) shouldBe expectedPhrase
+      val expectedPhrase = Phrase("""Sentence with a [label:SomeDate:date] label reference""", """Welsh: Sentence with a 23 Medi 1973 label reference""")
+      TextBuilder.expandLabels(phrase, labels) shouldBe expectedPhrase
     }
 
     "Convert a label placeholder within a bold placeholder to a bold label ref" in new ExpandTest {
       val phrase = Phrase("""Sentence with a [bold:[label:BLAH]] label reference""", """Welsh: Sentence with a [bold:[label:BLAH]] label reference""")
-      val expectedPhrase = Phrase("""Sentence with a [bold:33.5] label reference""", """Welsh: Sentence with a [bold:43.5] label reference""")
-      TextBuilder.expandLabels(phrase) shouldBe expectedPhrase
+      val expectedPhrase = Phrase("""Sentence with a [bold:[label:BLAH]] label reference""", """Welsh: Sentence with a [bold:43.5] label reference""")
+      TextBuilder.expandLabels(phrase, labels) shouldBe expectedPhrase
     }
 
     "Convert a label placeholder with currency output format within a bold placeholder" in new ExpandTest {
       val phrase = Phrase("""Sentence with a [bold:[label:BLAH:currencyPoundsOnly]] label reference""",
                           """Welsh: Sentence with a [bold:[label:BLAH:currencyPoundsOnly]] label reference""")
-      val expectedPhrase = Phrase("""Sentence with a [bold:£33] label reference""", """Welsh: Sentence with a [bold:£43] label reference""")
-      TextBuilder.expandLabels(phrase) shouldBe expectedPhrase
+      val expectedPhrase = Phrase("""Sentence with a [bold:[label:BLAH:currencyPoundsOnly]] label reference""", """Welsh: Sentence with a [bold:£43] label reference""")
+      TextBuilder.expandLabels(phrase, labels) shouldBe expectedPhrase
     }
 
     "Convert a list length placeholder " in new ExpandTest {
       val phrase = Phrase("""SomeList has length [list:SomeList:length]""", """Welsh: SomeList has length [list:SomeList:length]""")
-      val expectedPhrase = Phrase("""SomeList has length 3""", """Welsh: SomeList has length 3""")
-      TextBuilder.expandLabels(phrase) shouldBe expectedPhrase
+      val expectedPhrase = Phrase("""SomeList has length [list:SomeList:length]""", """Welsh: SomeList has length 3""")
+      TextBuilder.expandLabels(phrase, labels) shouldBe expectedPhrase
     }
 
     "Convert a dateplacholder inside a phrase into a date" in new ExpandTest {
       val phrase = Phrase("""Some sentence with a date [date:12/12/2021:dow_name]""", """Welsh: Some sentence with a date [date:12/12/2021:dow_name]""")
-      val expectedPhrase = Phrase("""Some sentence with a date Dydd Sul""", """Welsh: Some sentence with a date Dydd Sul""")
-      TextBuilder.expandLabels(phrase) shouldBe expectedPhrase
+      val expectedPhrase = Phrase("""Some sentence with a date [date:12/12/2021:dow_name]""", """Welsh: Some sentence with a date Dydd Sul""")
+      TextBuilder.expandLabels(phrase, labels) shouldBe expectedPhrase
     }
 
     "Convert a dateplacholder inside a phrase into a date label" in new ExpandTest {
       val phrase = Phrase("""Some sentence with a date [date:[label:SomeDate]:dow_name]""", """Welsh: Some sentence with a date [date:[label:SomeDate]:dow_name]""")
-      val expectedPhrase = Phrase("""Some sentence with a date Dydd Sadwrn""", """Welsh: Some sentence with a date Dydd Sul""")
-      TextBuilder.expandLabels(phrase) shouldBe expectedPhrase
+      val expectedPhrase = Phrase("""Some sentence with a date [date:[label:SomeDate]:dow_name]""", """Welsh: Some sentence with a date Dydd Sul""")
+      TextBuilder.expandLabels(phrase, labels) shouldBe expectedPhrase
     }
   }
 

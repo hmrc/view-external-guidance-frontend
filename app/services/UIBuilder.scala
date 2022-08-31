@@ -29,11 +29,11 @@ import core.models.ocelot.errors.UnsupportedUiPatternError
 import models.ui.{Answer, SequenceAnswer, BulletPointList, ConfirmationPanel, CyaSummaryList, Details, ErrorMsg, H1, H2, H3, H4, InsetText, WarningText}
 import models.ui.{NameValueSummaryList, Page, Paragraph, RequiredErrorMsg, Table, Text, TypeErrorMsg, UIComponent, ValueErrorMsg, stackStanzas}
 import play.api.Logger
-import play.api.i18n.{Lang, MessagesApi}
+import play.api.i18n.Messages
 
 import scala.annotation.tailrec
 
-case class UIContext(labels: Labels, lang: Lang, pageMapById: Map[String, PageDesc], messagesApi: MessagesApi)
+case class UIContext(labels: Labels, pageMapById: Map[String, PageDesc], messages: Messages)
 
 sealed trait ErrorStrategy {
   def default(stanzas: Seq[VisualStanza]): ErrorStrategy = this
@@ -130,9 +130,9 @@ class UIBuilder {
   private def fromInstruction( i:Instruction)(implicit ctx: UIContext): UIComponent =
     i match {
       case Instruction(txt, _, Some(Link(_, dest, _, window)), _, _, _) if Link.isLinkableStanzaId(dest) =>
-        Paragraph(Text.link(ctx.pageMapById(dest).url, StringTransform.transform(txt.value(ctx.lang)), window))
+        Paragraph(Text.link(ctx.pageMapById(dest).url, StringTransform.transform(txt.value(ctx.messages.lang)), window))
       case Instruction(txt, _, Some(Link(_, dest, _, window)), _, _, _) =>
-        Paragraph(Text.link(dest, StringTransform.transform(txt.value(ctx.lang)), window))
+        Paragraph(Text.link(dest, StringTransform.transform(txt.value(ctx.messages.lang)), window))
       case Instruction(txt, _, _, _, _, _) => Paragraph(TextBuilder.fromPhrase(txt))
     }
 
@@ -195,17 +195,17 @@ class UIBuilder {
   private def fromRequiredErrorGroup(eg: RequiredErrorGroup, errStrategy: ErrorStrategy)(implicit ctx: UIContext): Seq[UIComponent] =
     errStrategy match {
       case ValueMissingGroupError(Nil) => // Nil names => all values missing
-        eg.group.find(co => EmbeddedParameterRegex.findAllMatchIn(co.text.value(ctx.lang)).isEmpty)
+        eg.group.find(co => EmbeddedParameterRegex.findAllMatchIn(co.text.value(ctx.messages.lang)).isEmpty)
                 .fold[Seq[UIComponent]](Nil)(eco => Seq(RequiredErrorMsg(Text(StringTransform.transform(eco.text)))))
       case e: ValueMissingGroupError =>   // Values missing by name
         // Find message corresponding to the number of missing values
-        eg.group.find(co => EmbeddedParameterRegex.findAllMatchIn(co.text.value(ctx.lang)).length == e.missingFieldNames.length)
+        eg.group.find(co => EmbeddedParameterRegex.findAllMatchIn(co.text.value(ctx.messages.lang)).length == e.missingFieldNames.length)
           .fold[Seq[UIComponent]](Nil){eco => {
               // Substitute positional params with the supplied field names
               val mapToFieldName: Match => Option[String] = m => Option(m.group(EmbeddedParameterGroup))
                                                                   .map(_.toInt)
                                                                   .fold[Option[String]](None)(idx => e.missingFieldNames.lift(idx))
-              val errorMsg = EmbeddedParameterRegex.replaceSomeIn(eco.text.value(ctx.lang), mapToFieldName)
+              val errorMsg = EmbeddedParameterRegex.replaceSomeIn(eco.text.value(ctx.messages.lang), mapToFieldName)
               Seq(RequiredErrorMsg(Text(StringTransform.transform(errorMsg))))
             }
           }

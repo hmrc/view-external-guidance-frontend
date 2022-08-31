@@ -20,7 +20,7 @@ import java.time.Instant
 import akka.stream.Materializer
 import base.{BaseSpec, ViewFns}
 import config.ErrorHandler
-import play.api.i18n.{Messages, MessagesApi, Lang}
+import play.api.i18n.{Messages, MessagesApi}
 import mocks.{MockAppConfig, MockGuidanceConnector, MockGuidanceService, MockSessionRepository}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.Status
@@ -163,10 +163,8 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
     val nonExclusiveSequenceInputPage: Page = Page("start", "/test-page", stanzasWithNonExclusiveSequence, Seq("4"))
     val exclusiveSequenceInputPage: Page = Page("start", "/test-page", stanzasWithExclusiveSequence, Seq("4"))
 
-    def renderPage(page: Page, labels: Labels):(Seq[VisualStanza], Labels, Option[DataInput]) = {
-      implicit val ctx: UIContext = UIContext(labels, Lang("en"), Map(), messagesApi)
-      new PageRenderer(MockAppConfig).renderPage(page).fold(_ => fail, result => result)
-    }
+    def renderPage(page: Page, labels: Labels):(Seq[VisualStanza], Labels, Option[DataInput]) =
+      new PageRenderer(MockAppConfig).renderPage(page, labels).fold(_ => fail, result => result)
   }
 
   trait QuestionTest extends MockGuidanceService with TestBase {

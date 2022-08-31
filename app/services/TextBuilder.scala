@@ -17,7 +17,7 @@
 package services
 
 import models._
-import core.models.ocelot.{Link, Phrase, LabelPattern, listPattern, listLength, stringWithOptionalHint, fromPattern}
+import core.models.ocelot.{Link, Phrase, Labels, LabelPattern, listPattern, listLength, stringWithOptionalHint, fromPattern}
 import core.models.ocelot.{UiExpansionRegex, LabelOutputFormatGroup, matchGroup, scalarMatch, boldPattern, linkPattern}
 import models.ui._
 import scala.util.matching.Regex
@@ -35,7 +35,7 @@ object StringTransform {
   val LongDash: String = " – "
   val DashCaptureIdx: Int = 2
   val matchRegex: Regex = s"($Apostrophe)|($StandardDash)".r
-  def transform(phrase: Phrase)(implicit ctx: UIContext): String = transform(phrase.value(ctx.lang))
+  def transform(phrase: Phrase)(implicit ctx: UIContext): String = transform(phrase.value(ctx.messages.lang))
   def transform(s: String): String = matchRegex.replaceAllIn(s, m =>
     Option(m.group(ApostropheCaptureIdx)).fold{
       Option(m.group(DashCaptureIdx)).fold(m.group(OriginalCaptureIdx))(_ => LongDash)
@@ -89,20 +89,23 @@ object TextBuilder {
   import TextPlaceholders._
   import StringTransform._
 
-  def expandLabels(p: Phrase)(implicit ctx: UIContext): Phrase = Phrase(expandLabels(p.english, English), expandLabels(p.welsh, Welsh))
-  def expandLabels(ctx: UIContext)(p: Phrase): Phrase = expandLabels(p)(ctx)
+  def expandLabels(p: Phrase, labels: Labels)(implicit messages: Messages): Phrase =
+    messages.lang match {
+      case English => Phrase(expandLabels(p.english, labels), p.welsh)
+      case Welsh => Phrase(p.english, expandLabels(p.welsh, labels))
+      case _ => Phrase(expandLabels(p.english, labels), p.welsh)
+    }
 
-  private def expandLabels(s: String, lang: Lang)(implicit ctx: UIContext): String = {
-    val messages: Messages = ctx.messagesApi.preferred(Seq(lang))
-    def labelValue(name: String): Option[String] = ctx.labels.displayValue(name)(lang)
+  private def expandLabels(s: String, labels: Labels)(implicit messages: Messages): String = {
+    def labelValue(name: String): Option[String] = labels.displayValue(name)(messages.lang)
     UiExpansionRegex.replaceAllIn(s, {m =>
-      OutputFormat(Option(m.group(LabelOutputFormatGroup))).asString(scalarMatch(matchGroup(m), labelValue)(ctx.labels), messages)
+      OutputFormat(Option(m.group(LabelOutputFormatGroup))).asString(scalarMatch(matchGroup(m), labelValue)(labels), messages)
     })
   }
 
   def fromPhrase(txt: Phrase)(implicit ctx: UIContext): Text = {
     val isEmpty: TextItem => Boolean = _.isEmpty
-    val (texts, matches) = from(transform(expandLabels(txt.value(ctx.lang), ctx.lang)))
+    val (texts, matches) = from(transform(expandLabels(txt.value(ctx.messages.lang), ctx.labels)(ctx.messages)))
     Text(merge(texts.map(Words(_)), placeholdersToItems(matches), Nil, isEmpty))
   }
 
@@ -112,8 +115,8 @@ object TextBuilder {
   // All characters after the optional hint pattern are discarded
   def fromPhraseWithOptionalHint(txt: Phrase)(implicit ctx: UIContext): (Text, Option[Text]) = {
     val isEmpty: TextItem => Boolean = _.isEmpty
-    val (str, hint) = stringWithOptionalHint(txt.value(ctx.lang))
-    val (texts, matches) = from(transform(expandLabels(str, ctx.lang)))
+    val (str, hint) = stringWithOptionalHint(txt.value(ctx.messages.lang))
+    val (texts, matches) = from(transform(expandLabels(str, ctx.labels)(ctx.messages)))
     (Text(merge(texts.map(Words(_)), placeholdersToItems(matches), Nil, isEmpty)), hint.map(Text(_)))
   }
 

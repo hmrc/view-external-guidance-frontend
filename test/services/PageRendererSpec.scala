@@ -23,7 +23,7 @@ import core.models.ocelot.stanzas._
 import core.models.ocelot._
 import models.errors._
 import play.api.libs.json._
-import play.api.i18n.Lang
+import play.api.i18n.{Messages, MessagesApi, Lang}
 import mocks.MockAppConfig
 import play.api.inject.Injector
 import play.api.i18n.MessagesApi
@@ -36,6 +36,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson with GuiceOneAppPerSuit
   val renderer: PageRenderer = new PageRenderer(MockAppConfig)
   private def injector: Injector = app.injector
   val messagesApi: MessagesApi = injector.instanceOf[MessagesApi]
+  implicit val messages: Messages = messagesApi.preferred(Seq())
   val meta: Meta = Json.parse(prototypeMetaSection).as[Meta]
 
   trait Test {
@@ -60,17 +61,17 @@ class PageRendererSpec extends BaseSpec with ProcessJson with GuiceOneAppPerSuit
 
     val question: core.models.ocelot.stanzas.Question = Question(questionPhrase, answers, answerDestinations, None, false)
 
-    implicit val ctx: UIContext = UIContext(LabelCache(), Lang("en"), Map(), messagesApi)
+    implicit val ctx: UIContext = UIContext(LabelCache(), Map(), messages)
 
     def renderPagePostSubmit(p: Page, l: Labels, a: String): (Option[String], Labels) = {
-      renderer.renderPagePostSubmit(p, a)(UIContext(l, Lang("en"), Map(), messagesApi)).fold(_ => fail, res => res)
+      renderer.renderPagePostSubmit(p, l, a).fold(_ => fail, res => res)
     }
     def renderPage(p: Page, l: Labels): (Seq[VisualStanza], Labels, Option[DataInput]) = {
-      renderer.renderPage(p)(UIContext(l, Lang("en"), Map(), messagesApi)).fold(_ => fail, res => res)
+      renderer.renderPage(p, l).fold(_ => fail, res => res)
     }
 
     def testRender(pge: Page, id: String, lbls: Labels): Unit = {
-      renderer.renderPagePostSubmit(pge, id) match {
+      renderer.renderPagePostSubmit(pge, lbls, id) match {
         case Right((nxt, newLabels)) =>
           nxt.fold(fail){ next =>
             next shouldBe answerDestinations(id.toInt)
@@ -95,7 +96,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson with GuiceOneAppPerSuit
                       )
       val page = Page(Process.StartStanzaId, "/test-page", stanzas, answerDestinations)
 
-      renderer.renderPage(page) match {
+      renderer.renderPage(page, LabelCache()) match {
         case Left(err) if err == nonTerminatingPageError => succeed
         case _ => fail
       }
@@ -112,7 +113,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson with GuiceOneAppPerSuit
                       )
       val page = Page(Process.StartStanzaId, "/test-page", stanzas, answerDestinations)
 
-      renderer.renderPagePostSubmit(page, "0") match {
+      renderer.renderPagePostSubmit(page, LabelCache(), "0") match {
         case Left(err) if err == nonTerminatingPageError => succeed
         case _ => fail
       }
@@ -132,7 +133,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson with GuiceOneAppPerSuit
                       )
       val page = Page(Process.StartStanzaId, "/test-page", stanzas, answerDestinations)
 
-      renderer.renderPage(page) match {
+      renderer.renderPage(page, LabelCache()) match {
         case Left(err) if err == unsupportedOpError => succeed
         case res => fail
       }
@@ -152,7 +153,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson with GuiceOneAppPerSuit
                       )
       val page = Page(Process.StartStanzaId, "/test-page", stanzas, answerDestinations)
 
-      renderer.renderPagePostSubmit(page, "0") match {
+      renderer.renderPagePostSubmit(page, LabelCache(), "0") match {
         case Left(err) if err == unsupportedOpError => succeed
         case res => fail
       }
@@ -429,7 +430,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson with GuiceOneAppPerSuit
     "execute calculation stanza when rendering page" in new Test {
 
       val callout: Callout = TitleCallout(
-        Phrase(Vector("Title", "Welsh - Title")),
+        Phrase(Vector("Title [label:input1]", "Welsh - Title [label:input1]")),
         Seq("2"),
         stack = false
       )
@@ -470,7 +471,10 @@ class PageRendererSpec extends BaseSpec with ProcessJson with GuiceOneAppPerSuit
 
       val labelMap: Map[String, Label] = Map(input1.name -> input1)
 
+      println(labelMap)
       val (visualStanzas, labels, dataInput) = renderPage(page, LabelCache(labelMap))
+      println(visualStanzas)
+      println(labels.labelMap)
 
       visualStanzas shouldBe List(callout, instruction1, instruction2)
 
