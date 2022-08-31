@@ -58,15 +58,6 @@ class UIBuilder {
     }
   }
 
-  // @tailrec
-  // private def expandLabelReferences(acc: List[VisualStanza])(stanzas: Seq[VisualStanza])(implicit ctx: UIContext): Seq[VisualStanza] =
-  //   stanzas match {
-  //     case Nil => acc.reverse
-  //     case (i: Instruction) +: xs => expandLabelReferences(i.copy(text = TextBuilder.expandLabels(i.text)) :: acc)(xs)
-  //     case (n: NoteCallout) +: xs => expandLabelReferences(n.copy(text = TextBuilder.expandLabels(n.text)) :: acc)(xs)
-  //     case s +: xs => expandLabelReferences(s :: acc)(xs)
-  //   }
-
   @tailrec
   private def fromStanzas(stanzas: Seq[VisualStanza], acc: Seq[UIComponent], errStrategy: ErrorStrategy)(implicit ctx: UIContext): RequestOutcome[Seq[UIComponent]] =
     stanzas match {
