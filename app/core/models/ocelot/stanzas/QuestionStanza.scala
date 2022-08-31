@@ -53,7 +53,7 @@ case class Question(text: Phrase,
                     answers: Seq[Phrase],
                     override val next: Seq[String],
                     label: Option[String],
-                    stack: Boolean) extends VisualStanza with DataInput {
+                    stack: Boolean) extends DataInputStanza {
   override val labelRefs: List[String] = labelReferences(text.english) ++ answers.flatMap(a => labelReferences(a.english))
   override val labels: List[String] = label.fold[List[String]](Nil)(l => List(l))
 
@@ -67,7 +67,7 @@ case class Question(text: Phrase,
     }
   def validInput(value: String): Option[String] =
     asPositiveInt(value).fold[Option[String]](None)(idx => if (answers.indices.contains(idx)) Some(idx.toString) else None)
-  override def rendered(expand: Phrase => Phrase): VisualStanza = Question(expand(text), answers.map(expand), next, label, stack)
+  override def rendered(expand: Phrase => Phrase): DataInputStanza = Question(expand(text), answers.map(expand), next, label, stack)
 }
 
 object Question {

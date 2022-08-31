@@ -89,6 +89,7 @@ object TextBuilder {
   import TextPlaceholders._
   import StringTransform._
 
+  def expandLabels(labels: Labels)(p: Phrase)(implicit messages: Messages): Phrase = expandLabels(p, labels)
   def expandLabels(p: Phrase, labels: Labels)(implicit messages: Messages): Phrase =
     messages.lang match {
       case English => Phrase(expandLabels(p.english, labels), p.welsh)

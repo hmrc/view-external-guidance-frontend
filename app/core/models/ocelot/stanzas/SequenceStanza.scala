@@ -64,7 +64,7 @@ case class Sequence(text: Phrase,
                     options: Seq[Phrase],
                     exclusive: Option[Phrase],
                     label: Option[String],
-                    stack: Boolean) extends VisualStanza with DataInput {
+                    stack: Boolean) extends DataInputStanza {
   override val labelRefs: List[String] = labelReferences(text.english) ++ options.flatMap(a => labelReferences(a.english))
   override val labels: List[String] = label.fold(List.empty[String])(l => List(l))
 
@@ -96,5 +96,5 @@ case class Sequence(text: Phrase,
       if (l.forall(options.indices.contains) || l.length == 1 && exclusive.fold(false)(_ => l.headOption.contains(options.length))) Some(value) else None
     }
 
-  override def rendered(expand: Phrase => Phrase): VisualStanza = Sequence(expand(text), next, options.map(expand), exclusive.map(expand), label, stack)
+  override def rendered(expand: Phrase => Phrase): DataInputStanza = Sequence(expand(text), next, options.map(expand), exclusive.map(expand), label, stack)
 }

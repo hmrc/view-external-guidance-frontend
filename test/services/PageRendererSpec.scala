@@ -429,32 +429,22 @@ class PageRendererSpec extends BaseSpec with ProcessJson with GuiceOneAppPerSuit
 
     "execute calculation stanza when rendering page" in new Test {
 
-      val callout: Callout = TitleCallout(
-        Phrase(Vector("Title [label:input1]", "Welsh - Title [label:input1]")),
-        Seq("2"),
-        stack = false
-      )
+      val p1: Phrase = Phrase(Vector("Title [label:input1]", "Welsh - Title [label:input1]"))
+      val callout: Callout = TitleCallout(p1,Seq("2"),stack = false)
+      val ep1: Phrase = Phrase(Vector("Title 60", "Welsh - Title [label:input1]"))
+      val expandedCallout = TitleCallout(ep1,Seq("2"),stack = false)
 
-      val instruction1: Instruction = Instruction(
-        Phrase(Vector("Example calculation", "Welsh - Example calculation")),
-        Seq("3"),
-        None,
-        stack = false)
+      val p2: Phrase = Phrase(Vector("Example calculation", "Welsh - Example calculation"))
+      val instruction1: Instruction = Instruction(p2,Seq("3"),None,stack = false)
 
-      val operations: Seq[CalcOperation] = Seq(
-        CalcOperation("[label:input1]", Addition, "10", "output1")
-      )
-
+      val operations: Seq[CalcOperation] = Seq(CalcOperation("[label:input1]", Addition, "10", "output1"))
       val calculationStanza: CalculationStanza = CalculationStanza(operations, Seq("4"), stack = false)
-
       val calculation: Calculation = Calculation(calculationStanza)
 
-      val instruction2: Instruction = Instruction(
-        Phrase(Vector("Sum of values : [label:output1]", "Welsh - Sum of values : [label:output1]")),
-        Seq("end"),
-        None,
-        stack = false
-      )
+      val p3: Phrase = Phrase(Vector("Sum of values : [label:output1]", "Welsh - Sum of values : [label:output1]"))
+      val instruction2: Instruction = Instruction(p3,Seq("end"),None,stack = false)
+      val ep3: Phrase = Phrase(Vector("Sum of values : 70", "Welsh - Sum of values : [label:output1]"))
+      val expandedInstruction2: Instruction = Instruction(ep3,Seq("end"),None,stack = false)
 
       val stanzas: Seq[KeyedStanza] = Seq(
         KeyedStanza("start", PageStanza("/start", Seq("1"), stack = false)),
@@ -471,12 +461,9 @@ class PageRendererSpec extends BaseSpec with ProcessJson with GuiceOneAppPerSuit
 
       val labelMap: Map[String, Label] = Map(input1.name -> input1)
 
-      println(labelMap)
       val (visualStanzas, labels, dataInput) = renderPage(page, LabelCache(labelMap))
-      println(visualStanzas)
-      println(labels.labelMap)
 
-      visualStanzas shouldBe List(callout, instruction1, instruction2)
+      visualStanzas shouldBe List(expandedCallout, instruction1, expandedInstruction2)
 
       dataInput shouldBe None
 

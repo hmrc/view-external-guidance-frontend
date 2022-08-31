@@ -57,7 +57,7 @@ object InputStanza {
 
 }
 
-sealed trait Input extends VisualStanza with DataInput {
+sealed trait Input extends DataInputStanza {
   val name: Phrase
   val help: Option[Phrase]
   val label: String
@@ -82,7 +82,7 @@ case class NumberInput(
   width: String = Ten
 ) extends Input {
   def validInput(value: String): Option[String] = asAnyInt(value).map(_.toString)
-  override def rendered(expand: Phrase => Phrase): VisualStanza =
+  override def rendered(expand: Phrase => Phrase): DataInputStanza =
     NumberInput(
       next,
       expand(name),
@@ -106,7 +106,7 @@ case class TextInput(
   width: String = Ten
 ) extends Input {
   def validInput(value: String): Option[String] = asTextString(value)
-  override def rendered(expand: Phrase => Phrase): VisualStanza =
+  override def rendered(expand: Phrase => Phrase): DataInputStanza =
     TextInput(
       next,
       expand(name),
@@ -130,7 +130,7 @@ case class CurrencyInput(
   width: String = Ten
 ) extends Input {
   def validInput(value: String): Option[String] = asCurrency(value).map(_.toString)
-  override def rendered(expand: Phrase => Phrase): VisualStanza =
+  override def rendered(expand: Phrase => Phrase): DataInputStanza =
     CurrencyInput(
       next,
       expand(name),
@@ -154,7 +154,7 @@ case class CurrencyPoundsOnlyInput(
   width: String = Ten
 ) extends Input {
   def validInput(value: String): Option[String] = asCurrencyPounds(value).map(_.toString)
-  override def rendered(expand: Phrase => Phrase): VisualStanza =
+  override def rendered(expand: Phrase => Phrase): DataInputStanza =
     CurrencyPoundsOnlyInput(
       next,
       expand(name),
@@ -178,7 +178,7 @@ case class DateInput(
   width: String = Ten
 ) extends Input {
   def validInput(value: String): Option[String] = asDate(value).map(stringFromDate)
-  override def rendered(expand: Phrase => Phrase): VisualStanza =
+  override def rendered(expand: Phrase => Phrase): DataInputStanza =
     DateInput(
       next,
       expand(name),

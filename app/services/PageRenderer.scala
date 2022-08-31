@@ -22,7 +22,7 @@ import config.AppConfig
 import play.api.Logger
 import core.models.RequestOutcome
 import play.api.i18n.Messages
-import core.models.ocelot.stanzas.{PageStanza, EndStanza, VisualStanza, Stanza, Evaluate, DataInput}
+import core.models.ocelot.stanzas.{PageStanza, EndStanza, VisualStanza, DataInputStanza, Stanza, Evaluate, DataInput}
 import core.models.ocelot.{Page, Labels, Process, PageReview}
 import core.models.ocelot.errors.{RuntimeError, NonTerminatingPageError}
 import models.errors._
@@ -100,14 +100,16 @@ class PageRenderer @Inject() (appConfig: AppConfig) {
       case None => Right((visualStanzas, labels, seen, stanzaId, None))
       case Some(s) if stanzaCount < appConfig.pageStanzaLimit  => s match { // Limit stanzas within page to catch non-terminating loops in guidance
         case EndStanza => Right((visualStanzas, labels, seen :+ stanzaId, stanzaId, None))
-        case s: VisualStanza with DataInput => Right((visualStanzas :+ s, labels, seen :+ stanzaId, stanzaId, Some(s)))
+        case s: DataInputStanza =>
+          val es: DataInputStanza = s.rendered(TextBuilder.expandLabels(labels))
+          Right((visualStanzas :+ es, labels, seen :+ stanzaId, stanzaId, Some(es)))
         case s: Stanza with Evaluate =>
           evalStanza(s,labels) match {
             case (nxt, updatedLabels, Nil) => evaluateStanzas(nxt, updatedLabels, visualStanzas, seen :+ stanzaId, stanzaCount + 1)
             case (_, _, errs) => Left(executionError(errs, stanzaId, labels.runMode))
           }
 
-        case s: VisualStanza => evaluateStanzas(s.next.head, labels, visualStanzas :+ s, seen :+ stanzaId, stanzaCount + 1)
+        case s: VisualStanza => evaluateStanzas(s.next.head, labels, visualStanzas :+ s.rendered(TextBuilder.expandLabels(labels)), seen :+ stanzaId, stanzaCount + 1)
       }
       case Some(s) => Left(executionError(NonTerminatingPageError, stanzaId, labels.runMode))
     }

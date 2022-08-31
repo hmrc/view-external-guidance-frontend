@@ -46,6 +46,10 @@ trait DataInput {
   def validInput(value: String): Option[String]
 }
 
+trait DataInputStanza extends VisualStanza with DataInput {
+  override def rendered(expand: Phrase => Phrase): DataInputStanza = this
+}
+
 case object EndStanza extends PopulatedStanza
 
 object Stanza {
