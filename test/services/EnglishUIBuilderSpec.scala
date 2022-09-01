@@ -516,13 +516,11 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
     }
 
     "convert a summarylist RowGroup into a NameValueSummaryList with a right aligned numeric column" in new TableTest {
-      val p = uiBuilder.buildPage("/start", Seq(TitleCallout(headingPhrase, Seq.empty, false),
-                                                numericRowGroup))
+      val p = uiBuilder.buildPage("/start", Seq(TitleCallout(headingPhrase, Seq.empty, false), numericRowGroup))
       p.fold(_ => fail, p => p).components match {
-        case Seq(_: H1, nvsl: ui.NameValueSummaryList) if nvsl.rows.forall(r => r(1).equals(Text("£2.00"))) => succeed
+        case Seq(_: H1, nvsl: ui.NameValueSummaryList) if nvsl.rows.size == 4 => succeed
         case x => fail(s"Found $x")
       }
-
     }
 
     "convert a RowGroup with three sparse columns including a link and hint into a SummaryList" in new SLTest {

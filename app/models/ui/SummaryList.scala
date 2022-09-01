@@ -33,5 +33,5 @@ case class CyaSummaryList(val rows: Seq[Seq[Text]]) extends SummaryList with UIC
 
 case class NameValueSummaryList(val rows: Seq[Seq[Text]]) extends SummaryList with UIComponent {
   val columnCount: Int = 2
-  lazy val numericColumns: Seq[Boolean] = Seq(false, validRows && rows.forall(r => r(1).isNumericLabelRef))
+  lazy val numericColumns: Seq[Boolean] = Seq(false, validRows && rows.forall(r => r(1).isNumeric))
 }

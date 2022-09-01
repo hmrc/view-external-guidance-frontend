@@ -24,7 +24,7 @@ package models.ui
 // 3. Cell contents numeric (lable ref with output format currency), add the govuk-table__cell--numeric class
 case class Table(caption: Text, headingRow: Seq[Text], rows: Seq[Seq[Text]]) extends UIComponent {
   val numericColumns: Seq[Boolean] = (for(colIdx <- headingRow.indices) yield {
-    rows.map(r => r(colIdx).isNumericLabelRef)
+    rows.map(r => r(colIdx).isNumeric)
   }).map(l => l.forall(x => x))
 
   val text: Text = caption

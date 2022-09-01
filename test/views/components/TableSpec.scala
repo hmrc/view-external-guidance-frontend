@@ -89,7 +89,7 @@ class TableSpec extends ViewSpec with ViewFns with GuiceOneAppPerSuite {
         case (rowElem, tableRow) =>
           val cells = rowElem.children.asScala.toList
           (cells zip tableRow).foreach{
-            case (c, td) if td.isNumericLabelRef =>
+            case (c, td) if td.isNumeric =>
               c.hasClass("govuk-table__cell--numeric") shouldBe true
 
             case (c, tc) =>
@@ -111,7 +111,7 @@ class TableSpec extends ViewSpec with ViewFns with GuiceOneAppPerSuite {
         case (rowElem, tableRow) =>
           val cells = rowElem.children.asScala.toList
           (cells zip tableRow).foreach{
-            case (c, td) if td.isNumericLabelRef => fail()
+            case (c, td) if td.isNumeric => fail()
             case (c, _) =>
               c.hasClass("govuk-table__cell--numeric") shouldBe false
           }

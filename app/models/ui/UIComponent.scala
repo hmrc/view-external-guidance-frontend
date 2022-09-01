@@ -16,6 +16,7 @@
 
 package models.ui
 
+import core.models.ocelot.asAnyInt
 trait UIComponent {
   val text: Text
 }
@@ -59,6 +60,10 @@ case class Text(items: Seq[TextItem]) {
   def +(other: Text): Text = Text(items ++ other.items)
   lazy val isBold: Boolean = items.length == 1 && (items.head match {
     case w: Words => w.bold
+    case _ => false
+  })
+  lazy val isNumeric: Boolean = items.length == 1 && (items.head match {
+    case w: Words => asAnyInt(w.s.trim).isDefined
     case _ => false
   })
   lazy val isNumericLabelRef: Boolean = items.length == 1 && (items.head match {

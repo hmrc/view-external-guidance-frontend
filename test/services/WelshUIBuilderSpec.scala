@@ -517,7 +517,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
       val p = uiBuilder.buildPage("/start", Seq(TitleCallout(headingPhrase, Seq.empty, false),
         numericRowGroup))
       p.fold(_ => fail, p => p).components match {
-        case Seq(_: H1, nvsl: ui.NameValueSummaryList) if nvsl.rows.forall(r => r(1).equals(Text("£1.00"))) => succeed
+        case Seq(_: H1, nvsl: ui.NameValueSummaryList) if nvsl.rows.size == 4 => succeed
         case x => fail(s"Found $x")
       }
 
@@ -1958,10 +1958,10 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
       val p = uiBuilder.buildPage(
         "/start",
         Seq(
-          detailSectionCallout,
-          detailStackedNote9,
-          detailStackedNote10,
-          detailStackedNote11
+          detailSectionCallout.rendered(TextBuilder.expandLabels(ctx.labels)),
+          detailStackedNote9.rendered(TextBuilder.expandLabels(ctx.labels)),
+          detailStackedNote10.rendered(TextBuilder.expandLabels(ctx.labels)),
+          detailStackedNote11.rendered(TextBuilder.expandLabels(ctx.labels))
         )
       )
 

@@ -46,6 +46,20 @@ class UIComponentsSpec extends BaseSpec with TestConstants {
       Text("").items.forall(_.isEmpty) shouldBe true
     }
 
+    "Detect numeric value" in {
+      Text("23").isNumeric shouldBe true
+
+      Text("2 3").isNumeric shouldBe true
+
+      Text("yes").isNumeric shouldBe false
+
+      Text("").isNumeric shouldBe false
+
+      Text(" ").isNumeric shouldBe false
+
+      Text("This is a sentence with 10 a number").isNumeric shouldBe false
+    }
+
     "Support text in HTML h1 elements" in {
       h1.text.items shouldBe Seq(Words(h1Str))
     }
