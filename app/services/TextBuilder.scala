@@ -72,44 +72,6 @@ object TextBuilder {
           })
         {txt => Words(txt, true)}
       }
-
-
-    // val LabelNameIdx: Int = 1
-    // val LabelFormatIdx: Int = 2
-    // val BoldTextIdx: Int = 3
-    // val BoldLabelNameIdx: Int = 4
-    // val BoldLabelFormatIdx: Int = 5
-    // val ButtonOrLinkIdx: Int = 6
-    // val LinkTypeIdx: Int = 7
-    // val LinkTextIdx: Int = 8
-    // val LinkDestIdx: Int = 9
-    // val ListNameIdx: Int = 10
-    // val placeholderPattern: String = s"$LabelPattern|$boldPattern|$linkPattern|$listPattern"
-    // val placeholderPattern2: String = s"$boldPattern|$linkPattern"
-    // val plregex: Regex = placeholderPattern.r
-    // def from(text: String):(List[String], List[Match]) = fromPattern(plregex, text)
-
-    // def placeholdersToItems(matches: List[Match])(implicit ctx: UIContext): List[TextItem] =
-    //   matches.map { m =>
-    //     val capture: Int => Option[String] = matchGroup(m)
-    //     capture(LabelNameIdx).fold[TextItem]({
-    //       capture(BoldTextIdx).fold[TextItem]({
-    //         capture(ListNameIdx).fold[TextItem]({
-    //           val linkDestination = m.group(LinkDestIdx)
-    //           val window: Boolean = capture(LinkTypeIdx).fold(false)(modifier => modifier == "-tab")
-    //           val dest: String = if (Link.isLinkableStanzaId(linkDestination)) ctx.pageMapById(linkDestination).url else linkDestination
-    //           val asButton: Boolean = capture(ButtonOrLinkIdx).fold(false)(_ == "button")
-    //           val (lnkText, lnkHint) = stringWithOptionalHint(m.group(LinkTextIdx))
-    //           ui.Link(dest, lnkText, window, asButton, lnkHint)
-    //         }){listName => Words(listLength(listName, ctx.labels).getOrElse("0"))}
-    //       }){txt =>
-    //         capture(BoldLabelNameIdx).fold[TextItem](Words(txt, true)){labelName =>
-    //           LabelRef(labelName, OutputFormat(capture(BoldLabelFormatIdx)), true)
-    //         }
-    //       }
-    //     })(labelName => LabelRef(labelName, OutputFormat(capture(LabelFormatIdx))))
-    //   }
-
   }
 
   import TextPlaceholders._
@@ -128,7 +90,7 @@ object TextBuilder {
     def expand(s: String): String = UiExpansionRegex.replaceAllIn(s, {m =>
       OutputFormat(Option(m.group(LabelOutputFormatGroup))).asString(scalarMatch(matchGroup(m), labelValue)(labels), messages)
     })
-    expand((expand(text))) // Double expansion to allow for labels as arguments to lists and functions
+    expand(expand(text)) // Double expansion to allow for labels as arguments to lists and functions
   }
 
   def fromPhrase(txt: Phrase)(implicit ctx: UIContext): Text = {
