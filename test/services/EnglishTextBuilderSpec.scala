@@ -94,14 +94,14 @@ class EnglishTextBuilderSpec extends BaseSpec with GuiceOneAppPerSuite {
 
   "TextBuilder placeholder parsing" must {
 
-    "Convert label reference with default output format placeholders within phrase to LabelRef TextItems" in new Test {
+    "Convert label reference with default output format placeholders within phrase to expanded TextItems" in new Test {
       val p = Phrase("""Sentence containing [label:BLAH] (label reference)""", """Welsh: Sentence containing [label:BLAH] (label reference)""")
       val expanded = TextBuilder.expandLabels(p, ctx.labels)
       TextBuilder.fromPhrase(expanded).items shouldBe Seq(Words("Sentence containing 1.0 (label reference)"))
       TextBuilder.fromPhraseWithOptionalHint(expanded)._1.items shouldBe Seq(Words("Sentence containing 1.0 (label reference)"))
     }
 
-    "Convert label reference with default output format placeholders within phrase to Bold LabelRef TextItems" in new Test {
+    "Convert label reference with default output format placeholders within phrase to Bold expanded TextItems" in new Test {
       val p = Phrase("""Sentence containing [bold:[label:BLAH]] (label reference)""", """Welsh: Sentence containing [bold:[label:BLAH]] (label reference)""")
       val expanded = TextBuilder.expandLabels(p, ctx.labels)
       TextBuilder.fromPhrase(expanded).items shouldBe Seq(Words("Sentence containing ") , Words("1.0", true) ,  Words(" (label reference)"))
@@ -116,7 +116,7 @@ class EnglishTextBuilderSpec extends BaseSpec with GuiceOneAppPerSuite {
       TextBuilder.fromPhraseWithOptionalHint(expanded)._1.items shouldBe Seq(Words("The length of the colours list is 3 (label reference)"))
     }
 
-    "Convert label reference with currency output format placeholders within phrase to LabelRef TextItems" in new Test {
+    "Convert label reference with currency output format placeholders within phrase to expanded TextItems" in new Test {
       val p = Phrase("""Sentence containing [label:BLAH:currency] (label reference)""",
         """Welsh: Sentence containing [label:BLAH:currency] (label reference)""")
       val expanded = TextBuilder.expandLabels(p, ctx.labels)
@@ -124,7 +124,7 @@ class EnglishTextBuilderSpec extends BaseSpec with GuiceOneAppPerSuite {
       TextBuilder.fromPhraseWithOptionalHint(expanded)._1.items shouldBe Seq(Words("Sentence containing £1.00 (label reference)"))
     }
 
-    "Convert label reference with date output format placeholders within phrase to LabelRef TextItems" in new Test {
+    "Convert label reference with date output format placeholders within phrase to expanded TextItems" in new Test {
       val p = Phrase("""Sentence with a [label:When:date] label reference""", """Welsh: Sentence with a [label:When:date] label reference""")
       val expanded = TextBuilder.expandLabels(p, ctx.labels)
       TextBuilder.fromPhrase(expanded).items shouldBe Seq(Words("Sentence with a 22 September 1973 label reference"))

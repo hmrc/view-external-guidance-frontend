@@ -94,14 +94,14 @@ class WelshTextBuilderSpec extends BaseSpec with WelshLanguage with GuiceOneAppP
 
   "TextBuilder placeholder parsing" must {
 
-    "Convert label reference with default output format placeholders within phrase to LabelRef TextItems" in new Test {
+    "Convert label reference with default output format placeholders within phrase to expanded TextItems" in new Test {
       val p = Phrase("""Sentence containing [label:BLAH] (label reference)""", """Welsh: Sentence containing [label:BLAH] (label reference)""")
       val expanded = TextBuilder.expandLabels(p, ctx.labels)
       TextBuilder.fromPhrase(expanded).items shouldBe Seq(Words("Welsh: Sentence containing 2.0 (label reference)"))
       TextBuilder.fromPhraseWithOptionalHint(expanded)._1.items shouldBe Seq(Words("Welsh: Sentence containing 2.0 (label reference)"))
     }
 
-    "Convert label reference with currency output format placeholders within phrase to LabelRef TextItems" in new Test {
+    "Convert label reference with currency output format placeholders within phrase to expanded TextItems" in new Test {
       val p = Phrase("""Sentence containing [label:BLAH:currency] (label reference)""",
                      """Welsh: Sentence containing [label:BLAH:currency] (label reference)""")
       val expanded = TextBuilder.expandLabels(p, ctx.labels)
@@ -109,7 +109,7 @@ class WelshTextBuilderSpec extends BaseSpec with WelshLanguage with GuiceOneAppP
       TextBuilder.fromPhraseWithOptionalHint(expanded)._1.items shouldBe Seq(Words("Welsh: Sentence containing £2.00 (label reference)"))
     }
 
-    "Convert label reference with date output format placeholders within phrase to LabelRef TextItems" in new Test {
+    "Convert label reference with date output format placeholders within phrase to expanded TextItems" in new Test {
       val p = Phrase("""Sentence with a [label:When:date] label reference""", """Welsh: Sentence with a [label:When:date] label reference""")
       val expanded = TextBuilder.expandLabels(p, ctx.labels)
       TextBuilder.fromPhrase(expanded).items shouldBe Seq(Words("Welsh: Sentence with a 21 Medi 1973 label reference"))

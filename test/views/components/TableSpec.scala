@@ -50,11 +50,11 @@ class TableSpec extends ViewSpec with ViewFns with GuiceOneAppPerSuite {
                               Seq.fill(3)(Seq(Text("HELLO"), Text("World"))))
     val expectedTableWithNumericCells = Table(Text("HELLO"),
                                               Seq(Text("Caption"), Text("Caption")),
-                                              Seq.fill(3)(Seq(Text("HELLO"), Text(LabelRef("Blah", Currency)))))
+                                              Seq.fill(3)(Seq(Text("HELLO"), Text("1.0"))))
     val expectedTableWithCaption = expectedTable.copy(caption = Text("Caption"))
     val expectedTableWithTxtCells = Table(Text("HELLO"),
                                           Seq(Text("Caption"), Text("Caption")),
-                                          Seq(Seq(Text("HELLO"), Text(LabelRef("Blah", Txt)))))
+                                          Seq(Seq(Text("HELLO"), Text("Text"))))
   }
 
   "English Tables" must {

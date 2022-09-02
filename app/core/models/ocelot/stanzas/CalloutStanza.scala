@@ -67,42 +67,42 @@ object Callout {
 }
 
 case class TitleCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout with Heading {
-  override def rendered(expand: Phrase => Phrase): VisualStanza = TitleCallout(expand(text), next, stack)
+  override def rendered(expand: Phrase => Phrase): VisualStanza = copy(text = expand(text))
 }
 case class SubTitleCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout with Heading {
-  override def rendered(expand: Phrase => Phrase): VisualStanza = SubTitleCallout(expand(text), next, stack)
+  override def rendered(expand: Phrase => Phrase): VisualStanza = copy(text = expand(text))
 }
 case class SectionCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout with Heading {
-  override def rendered(expand: Phrase => Phrase): VisualStanza = SectionCallout(expand(text), next, stack)
+  override def rendered(expand: Phrase => Phrase): VisualStanza = copy(text = expand(text))
 }
 case class SubSectionCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout with Heading {
-  override def rendered(expand: Phrase => Phrase): VisualStanza = SubSectionCallout(expand(text), next, stack)
+  override def rendered(expand: Phrase => Phrase): VisualStanza = copy(text = expand(text))
 }
 case class LedeCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout {
-  override def rendered(expand: Phrase => Phrase): VisualStanza = LedeCallout(expand(text), next, stack)
+  override def rendered(expand: Phrase => Phrase): VisualStanza = copy(text = expand(text))
 }
 case class ErrorCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout {
-  override def rendered(expand: Phrase => Phrase): VisualStanza = ErrorCallout(expand(text), next, stack)
+  override def rendered(expand: Phrase => Phrase): VisualStanza = copy(text = expand(text))
 }
 case class ValueErrorCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout {
-  override def rendered(expand: Phrase => Phrase): VisualStanza = ValueErrorCallout(expand(text), next, stack)
+  override def rendered(expand: Phrase => Phrase): VisualStanza = copy(text = expand(text))
 }
 case class TypeErrorCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout {
-  override def rendered(expand: Phrase => Phrase): VisualStanza = TypeErrorCallout(expand(text), next, stack)
+  override def rendered(expand: Phrase => Phrase): VisualStanza = copy(text = expand(text))
 }
 case class ImportantCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout {
-  override def rendered(expand: Phrase => Phrase): VisualStanza = ImportantCallout(expand(text), next, stack)
+  override def rendered(expand: Phrase => Phrase): VisualStanza = copy(text = expand(text))
 }
 case class YourCallCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout {
-  override def rendered(expand: Phrase => Phrase): VisualStanza = YourCallCallout(expand(text), next, stack)
+  override def rendered(expand: Phrase => Phrase): VisualStanza = copy(text = expand(text))
 }
 case class NumberedListItemCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout {
-  override def rendered(expand: Phrase => Phrase): VisualStanza = NumberedListItemCallout(expand(text), next, stack)
+  override def rendered(expand: Phrase => Phrase): VisualStanza = copy(text = expand(text))
 }
 case class NumberedCircleListItemCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout {
-  override def rendered(expand: Phrase => Phrase): VisualStanza = NumberedCircleListItemCallout(expand(text), next, stack)
+  override def rendered(expand: Phrase => Phrase): VisualStanza = copy(text = expand(text))
 }
 case class NoteCallout(text: Phrase, override val next: Seq[String], stack: Boolean) extends Callout {
-  override def rendered(expand: Phrase => Phrase): VisualStanza = NoteCallout(expand(text), next, stack)
+  override def rendered(expand: Phrase => Phrase): VisualStanza = copy(text = expand(text))
 }
 

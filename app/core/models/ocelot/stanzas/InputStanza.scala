@@ -82,17 +82,7 @@ case class NumberInput(
   width: String = Ten
 ) extends Input {
   def validInput(value: String): Option[String] = asAnyInt(value).map(_.toString)
-  override def rendered(expand: Phrase => Phrase): DataInputStanza =
-    NumberInput(
-      next,
-      expand(name),
-      help.map(expand),
-      label,
-      placeholder.map(expand),
-      stack,
-      dontRepeatName,
-      width
-    )
+  override def rendered(expand: Phrase => Phrase): DataInputStanza = copy(name = expand(name), help = help.map(expand), placeholder = placeholder.map(expand))
 }
 
 case class TextInput(
@@ -106,17 +96,7 @@ case class TextInput(
   width: String = Ten
 ) extends Input {
   def validInput(value: String): Option[String] = asTextString(value)
-  override def rendered(expand: Phrase => Phrase): DataInputStanza =
-    TextInput(
-      next,
-      expand(name),
-      help.map(expand),
-      label,
-      placeholder.map(expand),
-      stack,
-      dontRepeatName,
-      width
-    )
+  override def rendered(expand: Phrase => Phrase): DataInputStanza = copy(name = expand(name), help = help.map(expand), placeholder = placeholder.map(expand))
 }
 
 case class CurrencyInput(
@@ -130,17 +110,7 @@ case class CurrencyInput(
   width: String = Ten
 ) extends Input {
   def validInput(value: String): Option[String] = asCurrency(value).map(_.toString)
-  override def rendered(expand: Phrase => Phrase): DataInputStanza =
-    CurrencyInput(
-      next,
-      expand(name),
-      help.map(expand),
-      label,
-      placeholder.map(expand),
-      stack,
-      dontRepeatName,
-      width
-    )
+  override def rendered(expand: Phrase => Phrase): DataInputStanza = copy(name = expand(name), help = help.map(expand), placeholder = placeholder.map(expand))
 }
 
 case class CurrencyPoundsOnlyInput(
@@ -154,17 +124,7 @@ case class CurrencyPoundsOnlyInput(
   width: String = Ten
 ) extends Input {
   def validInput(value: String): Option[String] = asCurrencyPounds(value).map(_.toString)
-  override def rendered(expand: Phrase => Phrase): DataInputStanza =
-    CurrencyPoundsOnlyInput(
-      next,
-      expand(name),
-      help.map(expand),
-      label,
-      placeholder.map(expand),
-      stack,
-      dontRepeatName,
-      width
-    )
+  override def rendered(expand: Phrase => Phrase): DataInputStanza = copy(name = expand(name), help = help.map(expand), placeholder = placeholder.map(expand))
 }
 
 case class DateInput(
@@ -178,17 +138,7 @@ case class DateInput(
   width: String = Ten
 ) extends Input {
   def validInput(value: String): Option[String] = asDate(value).map(stringFromDate)
-  override def rendered(expand: Phrase => Phrase): DataInputStanza =
-    DateInput(
-      next,
-      expand(name),
-      help.map(expand),
-      label,
-      placeholder.map(expand),
-      stack,
-      dontRepeatName,
-      width
-    )
+  override def rendered(expand: Phrase => Phrase): DataInputStanza = copy(name = expand(name), help = help.map(expand), placeholder = placeholder.map(expand))
 }
 
 object Input {

@@ -231,22 +231,6 @@ class UIComponentsSpec extends BaseSpec with TestConstants {
       link.getDest(None) shouldBe destination
     }
 
-    "use LabelRef components which correctly support isEmpty" in {
-      LabelRef("Blah").isEmpty shouldBe false
-    }
-
-    "use LabelRef components which correctly support toString" in {
-      LabelRef("BLAH").toString shouldBe s"[label:BLAH:Txt]"
-    }
-
-    "use LabelRef components which correctly support toWords" in {
-      LabelRef("This is a label").toWords shouldBe List("This", "is", "a", "label")
-    }
-
-    "allow creation of Text object containing a simple LabelRef with labelRef() helper" in {
-      Text.labelRef("BLAH") shouldBe Text(Seq(LabelRef("BLAH")))
-    }
-
     "build a complete page" in {
       // Define page title
       val h1Page: H1 = H1(Text("Title text"))

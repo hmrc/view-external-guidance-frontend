@@ -96,5 +96,5 @@ case class Sequence(text: Phrase,
       if (l.forall(options.indices.contains) || l.length == 1 && exclusive.fold(false)(_ => l.headOption.contains(options.length))) Some(value) else None
     }
 
-  override def rendered(expand: Phrase => Phrase): DataInputStanza = Sequence(expand(text), next, options.map(expand), exclusive.map(expand), label, stack)
+  override def rendered(expand: Phrase => Phrase): DataInputStanza = copy(text = expand(text), options = options.map(expand), exclusive = exclusive.map(expand))
 }

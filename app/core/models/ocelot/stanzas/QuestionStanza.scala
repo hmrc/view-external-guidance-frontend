@@ -67,7 +67,7 @@ case class Question(text: Phrase,
     }
   def validInput(value: String): Option[String] =
     asPositiveInt(value).fold[Option[String]](None)(idx => if (answers.indices.contains(idx)) Some(idx.toString) else None)
-  override def rendered(expand: Phrase => Phrase): DataInputStanza = Question(expand(text), answers.map(expand), next, label, stack)
+  override def rendered(expand: Phrase => Phrase): DataInputStanza = copy(text = expand(text), answers = answers.map(expand))
 }
 
 object Question {

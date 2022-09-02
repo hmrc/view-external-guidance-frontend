@@ -47,7 +47,7 @@ case class Instruction(text: Phrase,
                        override val links: List[String] = Nil,
                        override val buttonLinks: List[String] = Nil) extends VisualStanza {
   override val labelRefs: List[String] = labelReferences(text.english)
-  override def rendered(expand: Phrase => Phrase): VisualStanza = Instruction(expand(text), next, link, stack, links, buttonLinks)
+  override def rendered(expand: Phrase => Phrase): VisualStanza = copy(text = expand(text))
 }
 
 object Instruction {

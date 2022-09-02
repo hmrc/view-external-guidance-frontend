@@ -47,7 +47,7 @@ case class Row( cells: Seq[Phrase],
                 override val links: List[String] = Nil) extends VisualStanza {
 
   override val labelRefs: List[String] = cells.toList.flatMap(c => labelReferences(c.english))
-  override def rendered(expand: Phrase => Phrase): VisualStanza = Row(cells.map(expand), next, stack, links)
+  override def rendered(expand: Phrase => Phrase): VisualStanza = copy(cells = cells.map(expand))
 }
 
 object Row {
