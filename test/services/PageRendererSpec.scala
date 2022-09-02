@@ -55,7 +55,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson with GuiceOneAppPerSuit
           Phrase(Vector("Some Text 3", "Welsh: Some Text 3")))
 
     val answerDestinations = Seq("4", "5", "6")
-    val questionPhrase: Phrase = Phrase(Vector("Some Text", "Welsh: Some Text"))
+    val questionPhrase: Phrase = Phrase(Vector("Some Text [label:X]", "Welsh: Some Text [label:X]"))
     val questionHintString = "A hint!!"
     val questionWithHintPhrase: Phrase = Phrase(Vector(s"Some Text[hint:${questionHintString}]", s"Welsh: Some Text[hint:${questionHintString}]"))
 
@@ -204,7 +204,10 @@ class PageRendererSpec extends BaseSpec with ProcessJson with GuiceOneAppPerSuit
 
     "Determine the correct sequence of stanzas within a Question page" in new Test {
       val instructionStanza = Instruction(Phrase("Hello", "Hello"), Seq("3"), None, false)
-      val questionStanza = Question(questionPhrase, answers, answerDestinations, None, false)
+      val qPhrase: Phrase = Phrase(Vector("Some Text [label:X]", "Welsh: Some Text [label:X]"))
+      val expQPhrase: Phrase = Phrase(Vector("Some Text 4", "Welsh: Some Text [label:X]"))
+      val questionStanza = Question(qPhrase, answers, answerDestinations, None, false)
+      val resultQuestion = Question(expQPhrase, answers, answerDestinations, None, false)
       val stanzas: Seq[KeyedStanza] = Seq(KeyedStanza("start", PageStanza("/start", Seq("1"), false)),
                         KeyedStanza("1", ValueStanza(List(Value(ScalarType, "X", "4")), Seq("22"), true)),
                         KeyedStanza("22", Choice(ChoiceStanza(Seq("2","3"), Seq(ChoiceStanzaTest("[label:X]", LessThanOrEquals, "8")), false))),
@@ -214,16 +217,20 @@ class PageRendererSpec extends BaseSpec with ProcessJson with GuiceOneAppPerSuit
       val page = Page(Process.StartStanzaId, "/test-page", stanzas, answerDestinations)
 
       val (visualStanzas, labels, dataInput) = renderPage(page, LabelCache())
-      visualStanzas shouldBe List(instructionStanza, questionStanza)
+      visualStanzas shouldBe List(instructionStanza, resultQuestion)
 
-      dataInput shouldBe Some(questionStanza)
+      dataInput shouldBe Some(resultQuestion)
 
       labels.updatedLabels.keys.toList.length shouldBe 1
     }
 
     "Determine the correct sequence of stanzas within a Question page involving Choice" in new Test {
-      val instructionStanza = Instruction(Phrase("Hello", "Hello"), Seq("3"), None, false)
-      val questionStanza = Question(questionPhrase, answers, answerDestinations, None, false)
+      val instructionStanza = Instruction(Phrase("Hello [label:X]", "Hello [label:X]"), Seq("3"), None, false)
+      val qPhrase: Phrase = Phrase(Vector("Some Text [label:X]", "Welsh: Some Text [label:X]"))
+      val expQPhrase: Phrase = Phrase(Vector("Some Text 9", "Welsh: Some Text [label:X]"))
+      val questionStanza = Question(qPhrase, answers, answerDestinations, None, false)
+      val resultQuestion = Question(expQPhrase, answers, answerDestinations, None, false)
+
       val stanzas: Seq[KeyedStanza] = Seq(KeyedStanza("start", PageStanza("/start", Seq("1"), false)),
                         KeyedStanza("1", ValueStanza(List(Value(ScalarType, "X", "9")), Seq("22"), true)),
                         KeyedStanza("22", Choice(ChoiceStanza(Seq("2","3"), Seq(ChoiceStanzaTest("[label:X]", LessThanOrEquals, "8")), false))),
@@ -233,8 +240,8 @@ class PageRendererSpec extends BaseSpec with ProcessJson with GuiceOneAppPerSuit
       val page = Page(Process.StartStanzaId, "/test-page", stanzas, answerDestinations)
 
       val (visualStanzas, labels, dataInput) = renderPage(page, LabelCache())
-      visualStanzas shouldBe List(questionStanza)
-      dataInput shouldBe Some(questionStanza)
+      visualStanzas shouldBe List(resultQuestion)
+      dataInput shouldBe Some(resultQuestion)
       labels.updatedLabels.keys.toList.length shouldBe 1
     }
 
@@ -538,4 +545,51 @@ class PageRendererSpec extends BaseSpec with ProcessJson with GuiceOneAppPerSuit
       newLabels.updatedLabels shouldBe expectedUpdatedLabels
     }
   }
+
+    "Build page with loop and display loop index" in new Test {
+
+      val p1: Phrase = Phrase("Title [label:input1]", "Welsh - Title [label:input1]")
+      val expP1: Phrase = Phrase("Title 56", "Welsh - Title [label:input1]")
+      val callout: Callout = TitleCallout(p1,Seq("2"),stack = false)
+      val expCallout: Callout = TitleCallout(expP1,Seq("2"),stack = false)
+
+      val valueStanza: ValueStanza = ValueStanza(List(Value(ScalarType, "X", "0")), Seq("3"), true)
+      val p2: Phrase = Phrase("X = [label:X]", "Welsh - X = [label:X]")
+      val instruction1: Instruction = Instruction(p2,Seq("4"),None,stack = false)
+
+      val operations: Seq[CalcOperation] = Seq(CalcOperation("[label:X]", Addition, "1", "X"))
+      val calculationStanza: CalculationStanza = CalculationStanza(operations, Seq("5"), stack = false)
+      val calculation: Calculation = Calculation(calculationStanza)
+
+      val choiceStanzaTest: ChoiceStanzaTest = ChoiceStanzaTest("[label:X]", LessThan, "10")
+
+      val choice: Choice = Choice(ChoiceStanza(Seq("3", "end"),Seq(choiceStanzaTest),stack = false))
+
+      val expandedInstructions: List[Instruction] = Range(0,10).toList.map(idx => Instruction(Phrase(s"X = $idx", "Welsh - X = [label:X]"),Seq("4"),None,stack = false))
+
+      val renderedVisualStanzas = expCallout :: expandedInstructions
+
+      val stanzas: Seq[KeyedStanza] = Seq(
+        KeyedStanza("start", PageStanza("/start", Seq("1"), stack = false)),
+        KeyedStanza("1", callout),
+        KeyedStanza("2", valueStanza),
+        KeyedStanza("3", instruction1),
+        KeyedStanza("4", calculation),
+        KeyedStanza("5", choice),
+        KeyedStanza("end", EndStanza)
+      )
+
+      val page: Page = Page(Process.StartStanzaId, "/render", stanzas, Seq("end"))
+
+      val (visualStanzas, labels, dataInput) = renderPage(page, LabelCache(List(ScalarLabel("input1", List("56")))))
+
+      visualStanzas.length shouldBe renderedVisualStanzas.length
+
+      visualStanzas shouldBe renderedVisualStanzas
+
+      dataInput shouldBe None
+
+      labels.updatedLabels shouldBe Map("X" -> ScalarLabel("X", List("10")))
+    }
+
 }
