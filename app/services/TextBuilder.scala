@@ -85,7 +85,7 @@ object TextBuilder {
       case _ => Phrase(expandLabels(p.english, labels), p.welsh)
     }
 
-  private def expandLabels(text: String, labels: Labels)(implicit messages: Messages): String = {
+  private [services] def expandLabels(text: String, labels: Labels)(implicit messages: Messages): String = {
     def labelValue(name: String): Option[String] = labels.displayValue(name)(messages.lang)
     def expand(s: String): String = UiExpansionRegex.replaceAllIn(s, {m =>
       OutputFormat(Option(m.group(LabelOutputFormatGroup))).asString(scalarMatch(matchGroup(m), labelValue)(labels), messages)
