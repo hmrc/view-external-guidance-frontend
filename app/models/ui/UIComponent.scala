@@ -66,7 +66,6 @@ object Text {
   def apply(item: TextItem): Text = Text(Seq(item))
   def apply(itemText: String): Text = Text(Words(itemText))
   def apply(): Text = Text(Nil)
-  //def labelRef(name: String): Text = Text(LabelRef(name))
   def link(dest: String, phraseString: String, window: Boolean = false, asButton: Boolean = false, hint: Option[String] = None): Text =
     Text(Link(dest, phraseString, window, asButton, hint.map(h => h)))
 }
