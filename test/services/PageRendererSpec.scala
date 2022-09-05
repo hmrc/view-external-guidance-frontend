@@ -23,15 +23,20 @@ import core.models.ocelot.stanzas._
 import core.models.ocelot._
 import models.errors._
 import play.api.libs.json._
-import play.api.i18n.Lang
+import play.api.i18n.{Messages, MessagesApi, Lang}
 import mocks.MockAppConfig
+import play.api.inject.Injector
+import play.api.i18n.MessagesApi
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 
-class PageRendererSpec extends BaseSpec with ProcessJson  {
+class PageRendererSpec extends BaseSpec with ProcessJson with GuiceOneAppPerSuite {
 
   // Define instance of class used in testing
   val pageBuilder = new PageBuilder(new Timescales(new DefaultTodayProvider))
   val renderer: PageRenderer = new PageRenderer(MockAppConfig)
-
+  private def injector: Injector = app.injector
+  val messagesApi: MessagesApi = injector.instanceOf[MessagesApi]
+  implicit val messages: Messages = messagesApi.preferred(Seq())
   val meta: Meta = Json.parse(prototypeMetaSection).as[Meta]
 
   trait Test {
@@ -50,17 +55,23 @@ class PageRendererSpec extends BaseSpec with ProcessJson  {
           Phrase(Vector("Some Text 3", "Welsh: Some Text 3")))
 
     val answerDestinations = Seq("4", "5", "6")
-    val questionPhrase: Phrase = Phrase(Vector("Some Text", "Welsh: Some Text"))
+    val questionPhrase: Phrase = Phrase(Vector("Some Text [label:X]", "Welsh: Some Text [label:X]"))
     val questionHintString = "A hint!!"
     val questionWithHintPhrase: Phrase = Phrase(Vector(s"Some Text[hint:${questionHintString}]", s"Welsh: Some Text[hint:${questionHintString}]"))
 
     val question: core.models.ocelot.stanzas.Question = Question(questionPhrase, answers, answerDestinations, None, false)
 
-    def renderPagePostSubmit(p: Page, l: Labels, a: String): (Option[String], Labels) = renderer.renderPagePostSubmit(p, l, a).fold(_ => fail, res => res)
-    def renderPage(p: Page, l: Labels): (Seq[VisualStanza], Labels, Option[DataInput]) = renderer.renderPage(p, l).fold(_ => fail, res => res)
+    implicit val ctx: UIContext = UIContext(LabelCache(), Map(), messages)
+
+    def renderPagePostSubmit(p: Page, l: Labels, a: String): (Option[String], Labels) = {
+      renderer.renderPagePostSubmit(p, l, a).fold(_ => fail, res => res)
+    }
+    def renderPage(p: Page, l: Labels): (Seq[VisualStanza], Labels, Option[DataInput]) = {
+      renderer.renderPage(p, l).fold(_ => fail, res => res)
+    }
 
     def testRender(pge: Page, id: String, lbls: Labels): Unit = {
-      renderer.renderPagePostSubmit(pge, LabelCache(), id) match {
+      renderer.renderPagePostSubmit(pge, lbls, id) match {
         case Right((nxt, newLabels)) =>
           nxt.fold(fail){ next =>
             next shouldBe answerDestinations(id.toInt)
@@ -78,7 +89,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson  {
       val nonTerminatingPageError = executionError(NonTerminatingPageError, "2", Published)
       val stanzas: Seq[KeyedStanza] = Seq(KeyedStanza("start", PageStanza("/start", Seq("1"), false)),
                         KeyedStanza("1", ValueStanza(List(Value(ScalarType, "X", "9")), Seq("2"), true)),
-                        KeyedStanza("2", InstructionStanza(3, Seq("3"), None, false)),
+                        KeyedStanza("2", Instruction(Phrase("Hello", "Hello"), Seq("3"), None, false)),
                         KeyedStanza("3", ValueStanza(List(Value(ScalarType, "X", "9")), Seq("1"), true)),
                         KeyedStanza("4", Question(questionPhrase, answers, Seq("23","23","23"), None, false)),
                         KeyedStanza("end", EndStanza)
@@ -94,7 +105,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson  {
     "Detect non-terminating page by enforcing a max number of stanzas per page after input" in new Test {
       val nonTerminatingPageError = executionError(NonTerminatingPageError, "3", Published)
       val stanzas: Seq[KeyedStanza] = Seq(KeyedStanza("start", PageStanza("/start", Seq("1"), false)),
-                        KeyedStanza("1", InstructionStanza(3, Seq("4"), None, false)),
+                        KeyedStanza("1", Instruction(Phrase("Hello", "Hello"), Seq("4"), None, false)),
                         KeyedStanza("4", Question(questionPhrase, answers, Seq("3","3","3"), None, false)),
                         KeyedStanza("3", ValueStanza(List(Value(ScalarType, "X", "9")), Seq("2"), true)),
                         KeyedStanza("2", ValueStanza(List(Value(ScalarType, "X", "0")), Seq("3"), true)),
@@ -115,7 +126,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson  {
       val unsupportedOpError = executionError(UnsupportedOperationError("AddOperation", "[label:input1]", "10", "[label:input1]", "10"), "3", Published)
 
       val stanzas: Seq[KeyedStanza] = Seq(KeyedStanza("start", PageStanza("/start", Seq("1"), false)),
-                        KeyedStanza("1", InstructionStanza(3, Seq("3"), None, false)),
+                        KeyedStanza("1", Instruction(Phrase("Hello", "Hello"), Seq("3"), None, false)),
                         KeyedStanza("4", Question(questionPhrase, answers, Seq("end","end","end"), None, false)),
                         KeyedStanza("3", Calculation(CalculationStanza(operations, Seq("4"), stack = false))),
                         KeyedStanza("end", EndStanza)
@@ -135,7 +146,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson  {
       val unsupportedOpError = executionError(UnsupportedOperationError("AddOperation", "[label:input1]", "10", "[label:input1]", "10"), "3", Published)
 
       val stanzas: Seq[KeyedStanza] = Seq(KeyedStanza("start", PageStanza("/start", Seq("1"), false)),
-                        KeyedStanza("1", InstructionStanza(3, Seq("4"), None, false)),
+                        KeyedStanza("1", Instruction(Phrase("Hello", "Hello"), Seq("4"), None, false)),
                         KeyedStanza("4", Question(questionPhrase, answers, Seq("3","3","3"), None, false)),
                         KeyedStanza("3", Calculation(CalculationStanza(operations, Seq("end"), stack = false))),
                         KeyedStanza("end", EndStanza)
@@ -149,20 +160,20 @@ class PageRendererSpec extends BaseSpec with ProcessJson  {
     }
 
     "Determine the correct sequence of stanzas within a page with no user input" in new Test {
-      val instructionStanza = InstructionStanza(3, Seq("5"), None, false)
+      val instruction = Instruction(Phrase("Hello", "Hello"), Seq("5"), None, false)
       val callout1 = ErrorCallout(Phrase(Vector("Some Text", "Welsh: Some Text")), Seq("3"), false)
       val callout2 = SectionCallout(Phrase(Vector("Some Text", "Welsh: Some Text")), Seq("4"), false)
 
       val stanzas: Seq[KeyedStanza] = Seq(KeyedStanza("start", PageStanza("/start", Seq("1"), false)),
                         KeyedStanza("1", callout1),
                         KeyedStanza("3", callout2),
-                        KeyedStanza("4", instructionStanza)
+                        KeyedStanza("4", instruction)
                       )
       val page = Page(Process.StartStanzaId, "/test-page", stanzas, Seq("5"))
 
       val (visualStanzas, labels, dataInput) = renderPage(page, LabelCache())
 
-      visualStanzas shouldBe List(callout1, callout2, instructionStanza)
+      visualStanzas shouldBe List(callout1, callout2, instruction)
 
       dataInput shouldBe None
 
@@ -170,7 +181,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson  {
     }
 
     "Determine the correct sequence of stanzas within the final page of guidance" in new Test {
-      val instructionStanza = InstructionStanza(3, Seq("5"), None, false)
+      val instructionStanza = Instruction(Phrase("Hello", "Hello"), Seq("5"), None, false)
       val callout1 = ErrorCallout(Phrase(Vector("Some Text", "Welsh: Some Text")), Seq("3"), false)
       val callout2 = SectionCallout(Phrase(Vector("Some Text", "Welsh: Some Text")), Seq("4"), false)
 
@@ -192,8 +203,11 @@ class PageRendererSpec extends BaseSpec with ProcessJson  {
     }
 
     "Determine the correct sequence of stanzas within a Question page" in new Test {
-      val instructionStanza = InstructionStanza(3, Seq("3"), None, false)
-      val questionStanza = Question(questionPhrase, answers, answerDestinations, None, false)
+      val instructionStanza = Instruction(Phrase("Hello", "Hello"), Seq("3"), None, false)
+      val qPhrase: Phrase = Phrase(Vector("Some Text [label:X]", "Welsh: Some Text [label:X]"))
+      val expQPhrase: Phrase = Phrase(Vector("Some Text 4", "Welsh: Some Text [label:X]"))
+      val questionStanza = Question(qPhrase, answers, answerDestinations, None, false)
+      val resultQuestion = Question(expQPhrase, answers, answerDestinations, None, false)
       val stanzas: Seq[KeyedStanza] = Seq(KeyedStanza("start", PageStanza("/start", Seq("1"), false)),
                         KeyedStanza("1", ValueStanza(List(Value(ScalarType, "X", "4")), Seq("22"), true)),
                         KeyedStanza("22", Choice(ChoiceStanza(Seq("2","3"), Seq(ChoiceStanzaTest("[label:X]", LessThanOrEquals, "8")), false))),
@@ -203,16 +217,20 @@ class PageRendererSpec extends BaseSpec with ProcessJson  {
       val page = Page(Process.StartStanzaId, "/test-page", stanzas, answerDestinations)
 
       val (visualStanzas, labels, dataInput) = renderPage(page, LabelCache())
-      visualStanzas shouldBe List(instructionStanza, questionStanza)
+      visualStanzas shouldBe List(instructionStanza, resultQuestion)
 
-      dataInput shouldBe Some(questionStanza)
+      dataInput shouldBe Some(resultQuestion)
 
       labels.updatedLabels.keys.toList.length shouldBe 1
     }
 
     "Determine the correct sequence of stanzas within a Question page involving Choice" in new Test {
-      val instructionStanza = InstructionStanza(3, Seq("3"), None, false)
-      val questionStanza = Question(questionPhrase, answers, answerDestinations, None, false)
+      val instructionStanza = Instruction(Phrase("Hello [label:X]", "Hello [label:X]"), Seq("3"), None, false)
+      val qPhrase: Phrase = Phrase(Vector("Some Text [label:X]", "Welsh: Some Text [label:X]"))
+      val expQPhrase: Phrase = Phrase(Vector("Some Text 9", "Welsh: Some Text [label:X]"))
+      val questionStanza = Question(qPhrase, answers, answerDestinations, None, false)
+      val resultQuestion = Question(expQPhrase, answers, answerDestinations, None, false)
+
       val stanzas: Seq[KeyedStanza] = Seq(KeyedStanza("start", PageStanza("/start", Seq("1"), false)),
                         KeyedStanza("1", ValueStanza(List(Value(ScalarType, "X", "9")), Seq("22"), true)),
                         KeyedStanza("22", Choice(ChoiceStanza(Seq("2","3"), Seq(ChoiceStanzaTest("[label:X]", LessThanOrEquals, "8")), false))),
@@ -222,14 +240,14 @@ class PageRendererSpec extends BaseSpec with ProcessJson  {
       val page = Page(Process.StartStanzaId, "/test-page", stanzas, answerDestinations)
 
       val (visualStanzas, labels, dataInput) = renderPage(page, LabelCache())
-      visualStanzas shouldBe List(questionStanza)
-      dataInput shouldBe Some(questionStanza)
+      visualStanzas shouldBe List(resultQuestion)
+      dataInput shouldBe Some(resultQuestion)
       labels.updatedLabels.keys.toList.length shouldBe 1
     }
 
     "Evaluate the user input stanza to determine the id of the next page" in new Test {
 
-      val instructionStanza = InstructionStanza(3, Seq("3"), None, false)
+      val instructionStanza = Instruction(Phrase("Hello", "Hello"), Seq("3"), None, false)
       val questionStanza = Question(questionPhrase, answers, answerDestinations, Some("TaxRefund"), false)
       val stanzas: Seq[KeyedStanza] = Seq(KeyedStanza("start", PageStanza("/start", Seq("1"), false)),
                         KeyedStanza("1", ValueStanza(List(Value(ScalarType, "X", "9")), Seq("22"), true)),
@@ -267,7 +285,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson  {
 
     "Evaluate the stanzas after user input stanza to determine the id of the next page" in new Test {
 
-      val instructionStanza = InstructionStanza(3, Seq("3"), None, false)
+      val instructionStanza = Instruction(Phrase("Hello", "Hello"), Seq("3"), None, false)
       val questionStanza = Question(questionPhrase, answers, Seq("23","23","23"), None, false)
       val stanzas: Seq[KeyedStanza] = Seq(KeyedStanza("start", PageStanza("/start", Seq("1"), false)),
                         KeyedStanza("1", ValueStanza(List(Value(ScalarType, "X", "9")), Seq("22"), true)),
@@ -288,7 +306,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson  {
     "Evaluate the stanzas after Question stanza and confirm setting of associated label" in new Test {
 
       val questionLabel = "ChosenAnswer"
-      val instructionStanza = InstructionStanza(3, Seq("3"), None, false)
+      val instructionStanza = Instruction(Phrase("Hello", "Hello"), Seq("3"), None, false)
       val questionStanza = Question(questionPhrase, answers, Seq("23","23","23"), Some(questionLabel), false)
       val stanzas: Seq[KeyedStanza] = Seq(KeyedStanza("start", PageStanza("/start", Seq("1"), false)),
                         KeyedStanza("1", ValueStanza(List(Value(ScalarType, "X", "9")), Seq("22"), true)),
@@ -311,7 +329,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson  {
 
     "Evaluate the stanzas after user input stanza when question answer is end" in new Test {
 
-      val instructionStanza = InstructionStanza(3, Seq("3"), None, false)
+      val instructionStanza = Instruction(Phrase("Hello", "Hello"), Seq("3"), None, false)
       val questionStanza = Question(questionPhrase, answers, Seq("23","23","23"), None, false)
       val stanzas: Seq[KeyedStanza] = Seq(KeyedStanza("start", PageStanza("/start", Seq("1"), false)),
                         KeyedStanza("1", ValueStanza(List(Value(ScalarType, "X", "9")), Seq("22"), true)),
@@ -332,7 +350,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson  {
 
     "Evaluate the stanzas after user input stanza when question which indicate a return to the same page (guidance deteceted error)" in new Test {
 
-      val instructionStanza = InstructionStanza(3, Seq("3"), None, false)
+      val instructionStanza = Instruction(Phrase("Hello", "Hello"), Seq("3"), None, false)
       val questionStanza = Question(questionPhrase, answers, Seq("23","23","23"), None, false)
       val stanzas: Seq[KeyedStanza] = Seq(KeyedStanza("start", PageStanza("/start", Seq("1"), false)),
                         KeyedStanza("1", ValueStanza(List(Value(ScalarType, "X", "9")), Seq("22"), true)),
@@ -354,7 +372,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson  {
 
     "Evaluate the stanzas after user input stanza when question which indicate a return to current page (identifying first stanza after the page stanza)" in new Test {
 
-      val instructionStanza = InstructionStanza(3, Seq("3"), None, false)
+      val instructionStanza = Instruction(Phrase("Hello", "Hello"), Seq("3"), None, false)
       val questionStanza = Question(questionPhrase, answers, Seq("23","23","23"), None, false)
       val stanzas: Seq[KeyedStanza] = Seq(KeyedStanza("start", PageStanza("/start", Seq("1"), false)),
                         KeyedStanza("1", ValueStanza(List(Value(ScalarType, "X", "9")), Seq("22"), true)),
@@ -376,7 +394,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson  {
 
     "Evaluate the stanzas after user input stanza when question which indicate the supplied answer index is invalid" in new Test {
 
-      val instructionStanza = InstructionStanza(3, Seq("3"), None, false)
+      val instructionStanza = Instruction(Phrase("Hello", "Hello"), Seq("3"), None, false)
       val questionStanza = Question(questionPhrase, answers, Seq("23","23","23"), None, false)
       val stanzas: Seq[KeyedStanza] = Seq(KeyedStanza("start", PageStanza("/start", Seq("1"), false)),
                         KeyedStanza("1", ValueStanza(List(Value(ScalarType, "X", "9")), Seq("22"), true)),
@@ -398,7 +416,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson  {
 
     "Return correct result when an attempt is made to renderPagePostSubmit on a page without any user input" in new Test {
 
-      val instructionStanza = InstructionStanza(3, Seq("23"), None, false)
+      val instructionStanza = Instruction(Phrase("Hello", "Hello"), Seq("23"), None, false)
 
       val stanzas: Seq[KeyedStanza] = Seq(KeyedStanza("start", PageStanza("/start", Seq("1"), false)),
                         KeyedStanza("1", ValueStanza(List(Value(ScalarType, "X", "9")), Seq("22"), true)),
@@ -418,32 +436,22 @@ class PageRendererSpec extends BaseSpec with ProcessJson  {
 
     "execute calculation stanza when rendering page" in new Test {
 
-      val callout: Callout = TitleCallout(
-        Phrase(Vector("Title", "Welsh - Title")),
-        Seq("2"),
-        stack = false
-      )
+      val p1: Phrase = Phrase(Vector("Title [label:input1]", "Welsh - Title [label:input1]"))
+      val callout: Callout = TitleCallout(p1,Seq("2"),stack = false)
+      val ep1: Phrase = Phrase(Vector("Title 60", "Welsh - Title [label:input1]"))
+      val expandedCallout = TitleCallout(ep1,Seq("2"),stack = false)
 
-      val instruction1: Instruction = Instruction(
-        Phrase(Vector("Example calculation", "Welsh - Example calculation")),
-        Seq("3"),
-        None,
-        stack = false)
+      val p2: Phrase = Phrase(Vector("Example calculation", "Welsh - Example calculation"))
+      val instruction1: Instruction = Instruction(p2,Seq("3"),None,stack = false)
 
-      val operations: Seq[CalcOperation] = Seq(
-        CalcOperation("[label:input1]", Addition, "10", "output1")
-      )
-
+      val operations: Seq[CalcOperation] = Seq(CalcOperation("[label:input1]", Addition, "10", "output1"))
       val calculationStanza: CalculationStanza = CalculationStanza(operations, Seq("4"), stack = false)
-
       val calculation: Calculation = Calculation(calculationStanza)
 
-      val instruction2: Instruction = Instruction(
-        Phrase(Vector("Sum of values : [label:output1]", "Welsh - Sum of values : [label:output1]")),
-        Seq("end"),
-        None,
-        stack = false
-      )
+      val p3: Phrase = Phrase(Vector("Sum of values : [label:output1]", "Welsh - Sum of values : [label:output1]"))
+      val instruction2: Instruction = Instruction(p3,Seq("end"),None,stack = false)
+      val ep3: Phrase = Phrase(Vector("Sum of values : 70", "Welsh - Sum of values : [label:output1]"))
+      val expandedInstruction2: Instruction = Instruction(ep3,Seq("end"),None,stack = false)
 
       val stanzas: Seq[KeyedStanza] = Seq(
         KeyedStanza("start", PageStanza("/start", Seq("1"), stack = false)),
@@ -462,7 +470,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson  {
 
       val (visualStanzas, labels, dataInput) = renderPage(page, LabelCache(labelMap))
 
-      visualStanzas shouldBe List(callout, instruction1, instruction2)
+      visualStanzas shouldBe List(expandedCallout, instruction1, expandedInstruction2)
 
       dataInput shouldBe None
 
@@ -537,4 +545,51 @@ class PageRendererSpec extends BaseSpec with ProcessJson  {
       newLabels.updatedLabels shouldBe expectedUpdatedLabels
     }
   }
+
+    "Build page with loop and display loop index" in new Test {
+
+      val p1: Phrase = Phrase("Title [label:input1]", "Welsh - Title [label:input1]")
+      val expP1: Phrase = Phrase("Title 56", "Welsh - Title [label:input1]")
+      val callout: Callout = TitleCallout(p1,Seq("2"),stack = false)
+      val expCallout: Callout = TitleCallout(expP1,Seq("2"),stack = false)
+
+      val valueStanza: ValueStanza = ValueStanza(List(Value(ScalarType, "X", "0")), Seq("3"), true)
+      val p2: Phrase = Phrase("X = [label:X]", "Welsh - X = [label:X]")
+      val instruction1: Instruction = Instruction(p2,Seq("4"),None,stack = false)
+
+      val operations: Seq[CalcOperation] = Seq(CalcOperation("[label:X]", Addition, "1", "X"))
+      val calculationStanza: CalculationStanza = CalculationStanza(operations, Seq("5"), stack = false)
+      val calculation: Calculation = Calculation(calculationStanza)
+
+      val choiceStanzaTest: ChoiceStanzaTest = ChoiceStanzaTest("[label:X]", LessThan, "10")
+
+      val choice: Choice = Choice(ChoiceStanza(Seq("3", "end"),Seq(choiceStanzaTest),stack = false))
+
+      val expandedInstructions: List[Instruction] = Range(0,10).toList.map(idx => Instruction(Phrase(s"X = $idx", "Welsh - X = [label:X]"),Seq("4"),None,stack = false))
+
+      val renderedVisualStanzas = expCallout :: expandedInstructions
+
+      val stanzas: Seq[KeyedStanza] = Seq(
+        KeyedStanza("start", PageStanza("/start", Seq("1"), stack = false)),
+        KeyedStanza("1", callout),
+        KeyedStanza("2", valueStanza),
+        KeyedStanza("3", instruction1),
+        KeyedStanza("4", calculation),
+        KeyedStanza("5", choice),
+        KeyedStanza("end", EndStanza)
+      )
+
+      val page: Page = Page(Process.StartStanzaId, "/render", stanzas, Seq("end"))
+
+      val (visualStanzas, labels, dataInput) = renderPage(page, LabelCache(List(ScalarLabel("input1", List("56")))))
+
+      visualStanzas.length shouldBe renderedVisualStanzas.length
+
+      visualStanzas shouldBe renderedVisualStanzas
+
+      dataInput shouldBe None
+
+      labels.updatedLabels shouldBe Map("X" -> ScalarLabel("X", List("10")))
+    }
+
 }
