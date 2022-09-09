@@ -16,9 +16,13 @@
 
 package models.ocelot.stanzas
 
-import core.models.ocelot.stanzas.{YourCallCallout, VisualStanza, Populated}
+import core.models.ocelot.stanzas.{YourCallCallout, VisualStanza}
+import core.models.ocelot.Phrase
 
-case class YourCallGroup(override val next: Seq[String], group: Seq[YourCallCallout], stack: Boolean) extends VisualStanza with Populated
+case class YourCallGroup(override val next: Seq[String], group: Seq[YourCallCallout], stack: Boolean) extends VisualStanza{
+  override def rendered(expand: Phrase => Phrase): VisualStanza =
+    YourCallGroup(next, group.map(_.rendered(expand)).collect{case yc: YourCallCallout => yc}, stack)
+}
 
 object YourCallGroup {
   def apply(group: Seq[YourCallCallout]): YourCallGroup =

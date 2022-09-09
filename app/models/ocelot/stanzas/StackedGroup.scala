@@ -16,9 +16,12 @@
 
 package models.ocelot.stanzas
 
-import core.models.ocelot.stanzas.{VisualStanza, Populated}
+import core.models.ocelot.stanzas.VisualStanza
+import core.models.ocelot.Phrase
 
-case class StackedGroup (override val next: Seq[String], group: Seq[VisualStanza], stack: Boolean) extends VisualStanza with Populated
+case class StackedGroup (override val next: Seq[String], group: Seq[VisualStanza], stack: Boolean) extends VisualStanza {
+  override def rendered(expand: Phrase => Phrase): VisualStanza = StackedGroup(next, group.map(_.rendered(expand)), stack)
+}
 
 object StackedGroup {
   def apply(group: Seq[VisualStanza]): StackedGroup = StackedGroup(group.last.next, group, group.head.stack)

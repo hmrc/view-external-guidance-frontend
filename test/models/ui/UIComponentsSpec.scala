@@ -46,6 +46,20 @@ class UIComponentsSpec extends BaseSpec with TestConstants {
       Text("").items.forall(_.isEmpty) shouldBe true
     }
 
+    "Detect numeric value" in {
+      Text("23").isNumeric shouldBe true
+
+      Text("2 3").isNumeric shouldBe true
+
+      Text("yes").isNumeric shouldBe false
+
+      Text("").isNumeric shouldBe false
+
+      Text(" ").isNumeric shouldBe false
+
+      Text("This is a sentence with 10 a number").isNumeric shouldBe false
+    }
+
     "Support text in HTML h1 elements" in {
       h1.text.items shouldBe Seq(Words(h1Str))
     }
@@ -215,22 +229,6 @@ class UIComponentsSpec extends BaseSpec with TestConstants {
       val link: Link = Link(destination, "See page 4", window = true, asButton = true, hint = Some("Hint"))
 
       link.getDest(None) shouldBe destination
-    }
-
-    "use LabelRef components which correctly support isEmpty" in {
-      LabelRef("Blah").isEmpty shouldBe false
-    }
-
-    "use LabelRef components which correctly support toString" in {
-      LabelRef("BLAH").toString shouldBe s"[label:BLAH:Txt]"
-    }
-
-    "use LabelRef components which correctly support toWords" in {
-      LabelRef("This is a label").toWords shouldBe List("This", "is", "a", "label")
-    }
-
-    "allow creation of Text object containing a simple LabelRef with labelRef() helper" in {
-      Text.labelRef("BLAH") shouldBe Text(Seq(LabelRef("BLAH")))
     }
 
     "build a complete page" in {

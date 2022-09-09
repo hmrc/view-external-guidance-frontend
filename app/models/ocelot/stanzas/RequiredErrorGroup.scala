@@ -16,9 +16,13 @@
 
 package models.ocelot.stanzas
 
-import core.models.ocelot.stanzas.{ErrorCallout, VisualStanza, Populated}
+import core.models.ocelot.stanzas.{ErrorCallout, VisualStanza}
+import core.models.ocelot.Phrase
 
-case class RequiredErrorGroup (override val next: Seq[String], group: Seq[ErrorCallout], stack: Boolean) extends VisualStanza with Populated
+case class RequiredErrorGroup (override val next: Seq[String], group: Seq[ErrorCallout], stack: Boolean) extends VisualStanza {
+  override def rendered(expand: Phrase => Phrase): VisualStanza =
+    RequiredErrorGroup(next, group.map(_.rendered(expand)).collect{case n: ErrorCallout => n}, stack)
+}
 
 object RequiredErrorGroup {
   def apply(group: Seq[ErrorCallout]): RequiredErrorGroup =

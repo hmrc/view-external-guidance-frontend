@@ -24,7 +24,7 @@ import play.api.Logger
 import uk.gov.hmrc.http.HeaderCarrier
 import core.models.errors._
 import core.models.RequestOutcome
-import play.api.i18n.{Lang, MessagesApi}
+import play.api.i18n.{MessagesApi, Messages}
 import scala.concurrent.{ExecutionContext, Future}
 import repositories.{SessionFSM, SessionRepository}
 import core.models.ocelot.{LabelCache, Labels, Process, Label}
@@ -56,22 +56,22 @@ class GuidanceService @Inject() (
 
   def deleteSession(processCode: String, sessionId: String): Future[RequestOutcome[Unit]] = sessionRepository.delete(sessionId, processCode)
 
-  def getSubmitPageContext(pec: PageEvaluationContext, errStrategy: ErrorStrategy = NoError)(implicit lang: Lang): RequestOutcome[PageContext] =
+  def getSubmitPageContext(pec: PageEvaluationContext, errStrategy: ErrorStrategy = NoError)(implicit messages: Messages): RequestOutcome[PageContext] =
     pageRenderer.renderPage(pec.page, pec.labels) match {
       case Left(err) =>
         logger.error(s"Execution error on page ${pec.page.id} of processCode ${pec.processCode}")
         Left(err)
       case Right((visualStanzas, labels, dataInput)) =>
-        uiBuilder.buildPage(pec.page.url, visualStanzas, errStrategy)(UIContext(labels, lang, pec.pageMapById, messagesApi)).fold(err => Left(err), uiPage =>
+        uiBuilder.buildPage(pec.page.url, visualStanzas, errStrategy)(UIContext(labels, pec.pageMapById, messages)).fold(err => Left(err), uiPage =>
           Right(PageContext(pec.copy(dataInput = dataInput), uiPage, labels))
         )
     }
 
   def getPageContext(processCode: String, url: String, previousPageByLink: Boolean, sessionId: String)
-                    (implicit hc: HeaderCarrier, context: ExecutionContext, lang: Lang): Future[RequestOutcome[PageContext]] =
+                    (implicit hc: HeaderCarrier, context: ExecutionContext, messages: Messages): Future[RequestOutcome[PageContext]] =
     getPageEvaluationContext(processCode, url, previousPageByLink, sessionId).map{
       case Right(ctx) =>
-        uiBuilder.buildPage(ctx.page.url, ctx.visualStanzas)(UIContext(ctx.labels, lang, ctx.pageMapById, messagesApi)).fold(err => Left(err), page =>
+        uiBuilder.buildPage(ctx.page.url, ctx.visualStanzas)(UIContext(ctx.labels, ctx.pageMapById, messages)).fold(err => Left(err), page =>
           Right(PageContext(ctx, page))
         )
       case Left(err) => Left(err)
@@ -84,7 +84,7 @@ class GuidanceService @Inject() (
     }
 
   def getPageEvaluationContext(processCode: String, url: String, previousPageByLink: Boolean, sessionId: String)
-                              (implicit hc: HeaderCarrier, context: ExecutionContext, lang: Lang): Future[RequestOutcome[PageEvaluationContext]] = {
+                              (implicit hc: HeaderCarrier, context: ExecutionContext, messages: Messages): Future[RequestOutcome[PageEvaluationContext]] = {
     val pageUrl: Option[String] = if (isAuthenticationUrl(url)) None else Some(s"$processCode$url")
     getPageGuidanceSession(sessionId, processCode, pageUrl, previousPageByLink).map{
       case Left(err) => Left(err)
@@ -130,7 +130,7 @@ class GuidanceService @Inject() (
     }
 
   def getSubmitEvaluationContext(processCode: String, url: String, sessionId: String)
-                                (implicit hc: HeaderCarrier, context: ExecutionContext, lang: Lang): Future[RequestOutcome[PageEvaluationContext]] = {
+                                (implicit hc: HeaderCarrier, context: ExecutionContext, messages: Messages): Future[RequestOutcome[PageEvaluationContext]] = {
     val pageUrl: Option[String] = if (isAuthenticationUrl(url)) None else Some(s"$processCode$url")
     getSubmitGuidanceSession(sessionId, processCode, pageUrl).map{
       case Left(err) => Left(err)
@@ -156,7 +156,7 @@ class GuidanceService @Inject() (
     }
 
   def submitPage(ctx: PageEvaluationContext, url: String, validatedAnswer: String, submittedAnswer: String)
-                (implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[(Option[String], Labels)]] =
+                (implicit hc: HeaderCarrier, context: ExecutionContext, messages: Messages): Future[RequestOutcome[(Option[String], Labels)]] =
     pageRenderer.renderPagePostSubmit(ctx.page, ctx.labels, validatedAnswer) match {
       case Left(err) => Future.successful(Left(err))
       case Right((optionalNext, labels)) =>
@@ -185,7 +185,7 @@ class GuidanceService @Inject() (
     }
 
   private def buildEvaluationContext(sessionId: String, processCode: String, url: String, gs: GuidanceSession)
-                                    (implicit lang: Lang): RequestOutcome[PageEvaluationContext] =
+                                    (implicit messages: Messages): RequestOutcome[PageEvaluationContext] =
     gs.pageMap.get(url).fold[RequestOutcome[PageEvaluationContext]]{
       logger.error(s"Unable to find url $url within cached process ${gs.process.meta.id} using sessionId $sessionId")
       Left(NotFoundError)
@@ -199,14 +199,15 @@ class GuidanceService @Inject() (
           val pageMapById: Map[String, PageDesc] =
             gs.pageMap.map{case (k, pn) => (pn.id, PageDesc(pn, s"${appConfig.baseUrl}/$processCode${k}"))}
           val labelCache: Labels =
-            LabelCache(gs.labels, Map(), gs.flowStack, gs.continuationPool, gs.process.timescales, messagesApi.preferred(Seq(lang)).apply, gs.runMode)
+            LabelCache(gs.labels, Map(), gs.flowStack, gs.continuationPool, gs.process.timescales, messages.apply, gs.runMode)
           pageRenderer.renderPage(page, labelCache) match {
             case Left(err) => Left(err)
             case Right((visualStanzas, labels, dataInput)) =>
+              val processTitle: models.ui.Text = TextBuilder.fromPhrase(gs.process.title)(UIContext(labels, pageMapById, messages))
               Right(
                 PageEvaluationContext(
                   page, visualStanzas, dataInput, sessionId, pageMapById, gs.process.startUrl.map(_ => s"${appConfig.baseUrl}/${processCode}/session-restart"),
-                  gs.process.title, gs.process.meta.id, processCode, labels, gs.backLink.map(bl => s"${appConfig.baseUrl}/$bl"), gs.answers.get(url),
+                  processTitle, gs.process.meta.id, processCode, labels, gs.backLink.map(bl => s"${appConfig.baseUrl}/$bl"), gs.answers.get(url),
                   gs.process.betaPhaseBanner
                 )
               )

@@ -17,10 +17,10 @@
 package models.ocelot.stanzas
 
 import core.models.ocelot.{isLinkOnlyPhrase, isBoldOnlyPhrase}
-import core.models.ocelot.stanzas.{Row, VisualStanza, Populated}
+import core.models.ocelot.stanzas.{Row, VisualStanza}
 import core.models.ocelot.Phrase
 
-case class RowGroup (override val next: Seq[String], group: Seq[Row], stack: Boolean) extends VisualStanza with Populated {
+case class RowGroup (override val next: Seq[String], group: Seq[Row], stack: Boolean) extends VisualStanza {
   lazy val columnCount:Int = group.headOption.fold(0)(_ => group.map(_.cells.length).max)
   lazy val paddedRows: Seq[Seq[Phrase]] = group.map(row => (row.cells ++ Seq.fill(columnCount - row.cells.size)(Phrase())))
   lazy val isTableCandidate: Boolean = columnCount > 0 &&                           // At least one column
@@ -30,6 +30,8 @@ case class RowGroup (override val next: Seq[String], group: Seq[Row], stack: Boo
                                        group.forall(r => !isBoldOnlyPhrase(r.cells(0)) && (r.cells.length < 3 || isLinkOnlyPhrase(r.cells(2))))
   lazy val isNameValueSummaryList: Boolean = columnCount == 2 &&                    // Two columns
                                              group.forall(r => !isBoldOnlyPhrase(r.cells(0))) // All the initial column cells are not bold
+
+  override def rendered(expand: Phrase => Phrase): VisualStanza = RowGroup(next, group.map(_.rendered(expand)).collect{case r: Row => r}, stack)
 }
 
 object RowGroup {
