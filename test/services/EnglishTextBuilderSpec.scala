@@ -383,6 +383,24 @@ class EnglishTextBuilderSpec extends BaseSpec with GuiceOneAppPerSuite {
       TextBuilder.expandLabels(phrase) shouldBe expectedPhrase
     }
 
+    "Convert a list index placeholder using first" in new ExpandTest {
+      val phrase = Phrase("""SomeList contains [list:SomeList:first]""", """Welsh: SomeList contains [list:SomeList:first]""")
+      val expectedPhrase = Phrase("""SomeList contains x""", """Welsh: SomeList contains x""")
+      TextBuilder.expandLabels(phrase) shouldBe expectedPhrase
+    }
+
+    "Convert a list index placeholder using last" in new ExpandTest {
+      val phrase = Phrase("""SomeList contains [list:SomeList:last]""", """Welsh: SomeList contains [list:SomeList:last]""")
+      val expectedPhrase = Phrase("""SomeList contains z""", """Welsh: SomeList contains z""")
+      TextBuilder.expandLabels(phrase) shouldBe expectedPhrase
+    }
+
+    "Convert a list index placeholder using number" in new ExpandTest {
+      val phrase = Phrase("""SomeList contains [list:SomeList:2]""", """Welsh: SomeList contains [list:SomeList:2]""")
+      val expectedPhrase = Phrase("""SomeList contains y""", """Welsh: SomeList contains y""")
+      TextBuilder.expandLabels(phrase) shouldBe expectedPhrase
+    }
+
     "Convert a dateplacholder inside a phrase into a date" in new ExpandTest {
       val phrase = Phrase("""Some sentence with a date [date:12/12/2021:dow_name]""", """Welsh: Some sentence with a date [date:12/12/2021:dow_name]""")
       val expectedPhrase = Phrase("""Some sentence with a date Sunday""", """Welsh: Some sentence with a date Sunday""")
