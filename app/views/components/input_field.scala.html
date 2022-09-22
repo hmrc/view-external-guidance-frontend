@@ -21,7 +21,8 @@
 @{input match {
     case _: NumberInput => components.input_number_field(input, name, form)
     case _: TextInput => components.input_text_field(input, name, form)
-    case _: CurrencyInput | _: CurrencyPoundsOnlyInput => components.input_currency_field(input, name, form)
+    case _: CurrencyInput => components.input_currency_field(input, name, "decimal", form)
+    case _: CurrencyPoundsOnlyInput => components.input_currency_field(input, name, "numeric", form)
   }
 }
 </div>
