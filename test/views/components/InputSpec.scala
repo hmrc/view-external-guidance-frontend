@@ -82,8 +82,11 @@ class InputSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite {
     val inputWithHintAndErrors: Input = CurrencyInput(Text(i1), Some(Text(i1Hint)), Seq(bpList, para1), Seq(errorMsg))
     implicit val labels: Labels = LabelCache()
     val currencyInput = models.ui.CurrencyInput(Text(), None, Seq.empty)
+    val currencyPoundsInput = models.ui.CurrencyPoundsOnlyInput(Text(), None, Seq.empty)
     val page = models.ui.FormPage("/url", currencyInput)
+    val pagePo = models.ui.FormPage("/url", currencyPoundsInput)
     val ctx = PageContext(page, Seq.empty, None, "sessionId", None, Text(), "processId", "processCode", labels)
+    val ctxPo = PageContext(page, Seq.empty, None, "sessionId", None, Text(), "processId", "processCode", labels)
   }
 
   "English Currency Input components" must {
@@ -115,6 +118,20 @@ class InputSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite {
       inputFields.size shouldBe 1
       private val attrs = elementAttrs(inputFields.first())
       attrs("class").contains("govuk-input--width-5") shouldBe true
+    }
+
+    "render input with correct mode" in new Test {
+      private val doc = asDocument(components.input(input, "test", textFormProvider("test" -> nonEmptyText))(fakeRequest, messages, ctx))
+      private val inputFields = doc.getElementsByTag("input")
+      inputFields.size shouldBe 1
+      private val attrs = elementAttrs(inputFields.first())
+      attrs("inputmode").contains("decimal") shouldBe true
+      private val docPo = asDocument(components.input(currencyPoundsInput, "test", textFormProvider("test" -> nonEmptyText))(fakeRequest, messages, ctxPo))
+      private val inputFieldsPo = docPo.getElementsByTag("input")
+      inputFieldsPo.size shouldBe 1
+      private val attrsPo = elementAttrs(inputFieldsPo.first())
+      attrsPo("inputmode").contains("numeric") shouldBe true
+
     }
 
     "render label for input when input component body is not empty" in new Test {

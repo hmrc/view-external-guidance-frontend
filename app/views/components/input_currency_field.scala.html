@@ -16,7 +16,7 @@
 
 @import views.html.components.fieldWidthClass
 
-@(input: models.ui.Input, name: String, form: Form[_])(implicit request: Request[_], messages: Messages, ctx: PageContext)
+@(input: models.ui.Input, name: String, mode: String, form: Form[_])(implicit request: Request[_], messages: Messages, ctx: PageContext)
 
 <div class="hmrc-currency-input__wrapper">
   <span class="hmrc-currency-input__unit" aria-hidden="true">£</span>
@@ -27,7 +27,7 @@
          value="@form(name).value"
          spellcheck="false"
          autocomplete="off"
-         inputmode="decimal"
+         inputmode="@mode"
          @optionalAria("input", input.hint,input.errorMsgs) />
 </div>
 @{
