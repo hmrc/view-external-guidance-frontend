@@ -20,10 +20,9 @@
 
 @(headerTitle: String,
   processCode: Option[String],
-  startUrl: Option[String],
   buttonTarget: String)(implicit request: Request[_], messages: Messages)
 
-@layout(messages("session.timeout.delete.your.answers"), headerTitle, processCode, startUrl, betaPhaseBanner = false, enableTimeout = false){
+@layout(messages("session.timeout.delete.your.answers"), headerTitle, processCode, None, betaPhaseBanner = false, enableTimeout = false){
 
     <h1 class="govuk-heading-xl">@messages("session.timeout.delete.your.answers")</h1>
 

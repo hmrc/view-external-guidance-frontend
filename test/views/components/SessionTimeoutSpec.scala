@@ -55,7 +55,6 @@ class SessionTimeoutSpec extends BaseSpec with ViewFns with ViewSpec with GuiceO
       val doc = asDocument(sessionTimeout(
         processTitle,
         Some(processCode),
-        Some(startUrl),
         buttonTarget)(fakeRequest, messages))
 
       val pageTitleElement: Element = getSingleElementByTag(doc, "title")
@@ -63,17 +62,6 @@ class SessionTimeoutSpec extends BaseSpec with ViewFns with ViewSpec with GuiceO
       pageTitleElement.text shouldBe s"${messages("session.timeout.session.has.expired")} – ${messages("service.name")} – ${messages("service.govuk")}"
 
       val htmlHeaderDivElement: Element = getSingleElementByClass(doc, "govuk-header__content")
-
-      val htmlHeaderLinks: Elements = htmlHeaderDivElement.getElementsByTag("a")
-
-      htmlHeaderLinks.size() shouldBe 1
-
-      htmlHeaderLinks.first.text shouldBe processTitle
-
-      val htmlHeaderLinkAttrs: Map[String, String] = elementAttrs(htmlHeaderLinks.first)
-
-      htmlHeaderLinkAttrs.contains("href") shouldBe true
-      htmlHeaderLinkAttrs("href") shouldBe startUrl
 
       val pageHeaderDivElement: Element = getSingleElementByClass(doc, "govuk-!-margin-bottom-6")
 
@@ -107,7 +95,6 @@ class SessionTimeoutSpec extends BaseSpec with ViewFns with ViewSpec with GuiceO
       val doc = asDocument(deleteYourAnswers(
         processTitle,
         Some(processCode),
-        Some(startUrl),
         buttonTarget)(fakeRequest, messages))
 
       val pageTitleElement: Element = getSingleElementByTag(doc, "title")
@@ -115,17 +102,6 @@ class SessionTimeoutSpec extends BaseSpec with ViewFns with ViewSpec with GuiceO
       pageTitleElement.text shouldBe s"${messages("session.timeout.delete.your.answers")} – ${messages("service.name")} – ${messages("service.govuk")}"
 
       val htmlHeaderDivElement: Element = getSingleElementByClass(doc, "govuk-header__content")
-
-      val htmlHeaderLinks: Elements = htmlHeaderDivElement.getElementsByTag("a")
-
-      htmlHeaderLinks.size() shouldBe 1
-
-      htmlHeaderLinks.first.text shouldBe processTitle
-
-      val htmlHeaderLinkAttrs: Map[String, String] = elementAttrs(htmlHeaderLinks.first)
-
-      htmlHeaderLinkAttrs.contains("href") shouldBe true
-      htmlHeaderLinkAttrs("href") shouldBe startUrl
 
       val pageHeaderDivElement: Element = getSingleElementByClass(doc, "govuk-!-margin-bottom-6")
 

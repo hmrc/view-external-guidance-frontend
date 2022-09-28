@@ -43,9 +43,21 @@
   enableTimeout: Boolean = true
 )(contentBlock: Html)(implicit request: Request[_], messages: Messages)
 
-@getSignOutUrl(processCode: Option[String]) = @{
+@signOutUrl(processCode: Option[String]) = @{
     processCode.fold(s"${appConfig.baseUrl}${appConfig.signOutUrl}"){ pc =>
         s"${appConfig.baseUrl}/$pc${appConfig.signOutUrl}"
+      }
+}
+
+@timeOutUrl(processCode: Option[String]) = @{
+    processCode.fold(s"${appConfig.baseUrl}${appConfig.timeOutUrl}"){ pc =>
+        s"${appConfig.baseUrl}/$pc${appConfig.timeOutUrl}"
+      }
+}
+
+@processCodeUrl(processCode: Option[String], url: String) = @{
+    processCode.fold[Option[String]](None){ pc =>
+        Some(s"${appConfig.baseUrl}/$pc$url")
       }
 }
 
@@ -85,8 +97,9 @@
               countdown = Some(appConfig.timeoutWarningInSeconds),
               keepAliveUrl = Some("#"),
               keepAliveButtonText = Some(messages("timeout.dialog.keep_alive_button.text")),
-              signOutUrl = Some(s"${getSignOutUrl(processCode)}"),
+              signOutUrl = processCodeUrl(processCode, appConfig.signOutUrl),
               signOutButtonText = Some(messages("timeout.dialog.sign_out_button.text")),
+              timeoutUrl = processCodeUrl(processCode, appConfig.timeOutUrl),
               title = Some(messages("timeout.dialog.title.text")),
               message = Some(messages("timeout.dialog.message.text"))
           )

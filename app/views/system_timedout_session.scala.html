@@ -20,10 +20,9 @@
 
 @(headerTitle: String,
   processCode: Option[String],
-  startUrl: Option[String],
   buttonTarget: String)(implicit request: Request[_], messages: Messages)
 
-@layout(messages("session.timeout.session.has.expired"), headerTitle, processCode, startUrl, betaPhaseBanner = false, enableTimeout = false){
+@layout(messages("session.timeout.session.has.expired"), headerTitle, processCode, None, betaPhaseBanner = false, enableTimeout = false){
 
     <h1 class="govuk-heading-xl">@messages("session.timeout.session.has.expired")</h1>
     <p>@messages("session.timeout.session.has.expired.info")</p>

@@ -9,6 +9,7 @@ GET   /language/:lang                    controllers.SwitchLanguageController.sw
 # If the session-timeout URL is changed, ensure the core.models.ocelot.Process.ReservedUrls constant is updated also
 #
 GET   /:processCode/session-timeout      controllers.SessionTimeoutPageController.sessionTimeout(processCode: String)
+GET   /:processCode/end-session          controllers.SessionTimeoutPageController.endSession(processCode: String)
 
 GET   /:processCode                      controllers.entry.StartGuidanceController.published(processCode: String)
 
