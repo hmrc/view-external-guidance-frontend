@@ -62,8 +62,6 @@ class SessionTimeoutPageController @Inject()(appConfig: AppConfig,
     hc.sessionId match {
       case Some(id) =>
         service.getCurrentGuidanceSession(processCode)(id.value).flatMap {
-          case Right(session) if sessionStillActive(request, appConfig) =>
-            Future.successful(Ok(view(session.process.title.value(messages.lang), processCode)))
           case Right(session) =>
             service.deleteSession(processCode, id.value).map(_ => Ok(view(session.process.title.value(messages.lang), processCode)))
           case Left(SessionNotFoundError) =>
