@@ -24,13 +24,11 @@ import play.api.Logger
 import play.api.i18n.{I18nSupport, Messages}
 import play.api.mvc._
 import services.GuidanceService
-import uk.gov.hmrc.http.SessionKeys._
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 import views.html.{user_deleted_session, system_timedout_session}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import core.models.errors.NotFoundError
 
 @Singleton
 class SessionTimeoutPageController @Inject()(appConfig: AppConfig,
@@ -40,49 +38,46 @@ class SessionTimeoutPageController @Inject()(appConfig: AppConfig,
                                              system_timedout_session_view: system_timedout_session,
                                              user_deleted_session_view: user_deleted_session
                                              )
-    extends FrontendController(mcc)
-    with I18nSupport {
+  extends FrontendController(mcc)
+  with I18nSupport {
 
-    val logger: Logger = Logger(getClass)
+  val logger: Logger = Logger(getClass)
 
-    def sessionTimeout(processCode: String): Action[AnyContent] = Action.async { implicit request =>
-      implicit val messages: Messages = mcc.messagesApi.preferred(request)
-      hc.sessionId match {
-        case Some(id) if !hasSessionExpired(request.session.get(lastRequestTimestamp), appConfig) =>
-          service.getCurrentGuidanceSession(processCode)(id.value).map {
-            case Right(session) if processCode != session.process.meta.processCode =>
-              logger.warn(s"Unexpected process code encountered when removing session ($id) after timeout warning. " +
-                s"Expected code $processCode; actual code ${session.process.meta.processCode}")
-              // Session not as expected, user must be running another piece of guidance, signal answers deleted
-              Ok(userDeletedSessionView(messages("session.timeout.header.title"), processCode))
-            case Right(session) =>
-              Ok(userDeletedSessionView(session.process.title.value(messages.lang), processCode))
-            case Left(SessionNotFoundError) =>
-              logger.warn(s"Session Timeout ($id) - retrieving processCode $processCode returned NotFound, displaying deleted your answers to user")
-              Ok(userDeletedSessionView(messages("session.timeout.header.title"), processCode))
-            case Left(err) =>
-              logger.error(s"Error $err occurred retrieving process context for process $processCode when removing session ($id)")
-              InternalServerError(errorHandler.internalServerErrorTemplateWithProcessCode(Some(processCode)))
-          }
-        case Some(id) =>
-          service.deleteSession(processCode, id.value).map{
-            case Right(()) =>
-              logger.warn(s"Session for $id and $processCode deleted successfully")
-              Ok(systemTimedoutSessionView(messages("session.timeout.header.title"), processCode)).withNewSession
-            case Left(NotFoundError) =>
-              Ok(systemTimedoutSessionView(messages("session.timeout.header.title"), processCode)).withNewSession
-            case Left(err) =>
-              logger.error(s"Error occurred attempting to delete session for $id and $processCode : $err")
-              InternalServerError(errorHandler.internalServerErrorTemplateWithProcessCode(Some(processCode)))
-          }
-        case _ =>
-          Future.successful(Ok(systemTimedoutSessionView(messages("session.timeout.header.title"), processCode)).withNewSession)
-      }
+  def endSession(processCode: String): Action[AnyContent] = Action.async { implicit request =>
+    logger.warn(s"User initiated end-session for $processCode")
+    endSessionResult(processCode, userDeletedSessionView).map{result =>
+      if (sessionStillActive(request, appConfig)) result else result.withNewSession
     }
+  }
+
+  def sessionTimeout(processCode: String): Action[AnyContent] = Action.async { implicit request =>
+    logger.warn(s"Session timed out for $processCode")
+    endSessionResult(processCode, systemTimedoutSessionView).map{result =>
+      if (sessionStillActive(request, appConfig)) result else result.withNewSession
+    }
+  }
+
+  def endSessionResult(processCode: String, view:(String, String) => Html)(implicit request: Request[_]): Future[Result] = {
+    implicit val messages: Messages = mcc.messagesApi.preferred(request)
+    hc.sessionId match {
+      case Some(id) =>
+        service.getCurrentGuidanceSession(processCode)(id.value).flatMap {
+          case Right(session) =>
+            service.deleteSession(processCode, id.value).map(_ => Ok(view(session.process.title.value(messages.lang), processCode)))
+          case Left(SessionNotFoundError) =>
+            logger.warn(s"Session end ($id) - retrieving session with processCode $processCode returned NotFound")
+            Future.successful(Ok(view(messages("session.timeout.header.title"), processCode)))
+          case Left(err) =>
+            logger.error(s"Error $err occurred retrieving process context for process $processCode when removing session ($id)")
+            Future.successful(InternalServerError(errorHandler.internalServerErrorTemplateWithProcessCode(Some(processCode))))
+        }
+      case _ => Future.successful(Ok(view(messages("session.timeout.header.title"), processCode)))
+    }
+  }
 
   def userDeletedSessionView(processTitle: String, processCode: String)(implicit request: Request[_]): Html =
-    user_deleted_session_view(processTitle, Some(processCode), None, s"${appConfig.baseUrl}/$processCode")
+    user_deleted_session_view(processTitle, Some(processCode), s"${appConfig.baseUrl}/$processCode")
 
   def systemTimedoutSessionView(processTitle: String, processCode: String)(implicit request: Request[_]): Html =
-    system_timedout_session_view(processTitle, Some(processCode), None, s"${appConfig.baseUrl}/$processCode")
+    system_timedout_session_view(processTitle, Some(processCode), s"${appConfig.baseUrl}/$processCode")
 }

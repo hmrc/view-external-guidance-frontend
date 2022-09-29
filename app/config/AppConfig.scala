@@ -40,7 +40,7 @@ trait AppConfig {
   val termsConditions: String
   val govukHelp: String
   val signOutUrl: String
-  val defaultSignOutUrl: String
+  val timeOutUrl: String
   val timeoutInSeconds: Int
   val timeoutWarningInSeconds: Int
   val expiryErrorMarginInMilliSeconds: Int
@@ -56,6 +56,8 @@ trait AppConfig {
 @Singleton
 class AppConfigImpl @Inject() (val config: Configuration, servicesConfig: ServicesConfig) extends AppConfig {
   val serviceIdentifier = "EGVWR"
+  val SessionTimeoutURL = "/session-timeout"
+  val EndSessionURL = "/end-session"
   val PageStanzaCountLimit = 1000
   private val contactBaseUrl = servicesConfig.baseUrl("contact-frontend")
   private val assetsUrl = config.get[String]("assets.url")
@@ -79,8 +81,8 @@ class AppConfigImpl @Inject() (val config: Configuration, servicesConfig: Servic
   lazy val termsConditions: String = config.get[String]("urls.footer.termsConditions")
   lazy val govukHelp: String = config.get[String]("urls.footer.govukHelp")
   lazy val accessibilityStatement: String = config.get[String]("urls.footer.accessibilityStatement")
-  lazy val signOutUrl: String = config.get[String]("session-timeout.signOutUrl")
-  lazy val defaultSignOutUrl: String = config.get[String]("session-timeout.defaultSignOutUrl")
+  lazy val signOutUrl: String = config.getOptional[String]("session-timeout.signOutUrl").getOrElse(EndSessionURL)
+  lazy val timeOutUrl: String = config.getOptional[String]("session-timeout.timeOutUrl").getOrElse(SessionTimeoutURL)
   lazy val timeoutInSeconds: Int = config.get[Int]("session-timeout.seconds")
   lazy val timeoutWarningInSeconds: Int = config.get[Int]("session-timeout.warning")
   lazy val expiryErrorMarginInMilliSeconds: Int = config.get[Int]("session-timeout.expiryErrorMarginInMilliSeconds")

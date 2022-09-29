@@ -18,15 +18,17 @@ import java.time.Instant
 import config.AppConfig
 import play.api.i18n.Messages
 import core.models.ocelot.errors._
+import uk.gov.hmrc.http.SessionKeys
+import play.api.mvc.Request
 
 package object controllers {
   val SessionIdPrefix: String = "session-"
 
-  def hasSessionExpired(sessionLastRequestTime: Option[String], appConfig: AppConfig, timeNow: Long = Instant.now.toEpochMilli): Boolean =
-    sessionLastRequestTime.fold(false){lastRequestTs =>
+  def sessionStillActive(request: Request[_], appConfig: AppConfig, timeNow: Long = Instant.now.toEpochMilli): Boolean =
+    request.session.get(SessionKeys.lastRequestTimestamp).fold(false){lastRequestTs =>
       val elapsedMilliseconds = timeNow - lastRequestTs.toLong  // How many millis since last request
       // Is the elapsed period greater than the timeout minus the grace period
-      elapsedMilliseconds >= (appConfig.timeoutInSeconds * 1000L -appConfig.expiryErrorMarginInMilliSeconds)
+      elapsedMilliseconds < (appConfig.timeoutInSeconds * 1000L -appConfig.expiryErrorMarginInMilliSeconds)
     }
 
   def fromRuntimeError(err: RuntimeError, stanzaId: String)(implicit messages: Messages): String = err match {

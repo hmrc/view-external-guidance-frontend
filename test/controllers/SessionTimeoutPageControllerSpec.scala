@@ -71,6 +71,7 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
         SessionKeys.lastRequestTimestamp -> now)
 
       MockGuidanceService.getCurrentGuidanceSession(processCode)(sessionId).returns(Future.successful(Right(session)))
+      MockGuidanceService.deleteSession(processCode, sessionId).returns(Future.successful(Right(())))
 
       val result: Future[Result] = target.sessionTimeout(processCode)(fakeRequest)
 
@@ -108,21 +109,6 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
       status(result) shouldBe Status.INTERNAL_SERVER_ERROR
     }
 
-    "return OK if the process code in the session data does not match value of input argument" in new Test {
-
-      val now: String = Instant.now.toEpochMilli.toString
-
-      val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("GET", "/").withSession(
-        SessionKeys.sessionId -> sessionId,
-        SessionKeys.lastRequestTimestamp -> now)
-
-      MockGuidanceService.getCurrentGuidanceSession(invalidProcessCode)(sessionId).returns(Future.successful(Right(session)))
-
-      val result: Future[Result] = target.sessionTimeout(invalidProcessCode)(fakeRequest)
-
-      status(result) shouldBe Status.OK
-    }
-
   }
 
   "SessionTimeoutPageController method sessionTimeout invoked after timeout dialog expires" should {
@@ -144,6 +130,7 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
         SessionKeys.lastRequestTimestamp -> ts.toString
       )
 
+      MockGuidanceService.getCurrentGuidanceSession(processCode)(sessionId).returns(Future.successful(Right(session)))
       MockGuidanceService.deleteSession(processCode, sessionId).returns(Future.successful(Right(())))
       val result: Future[Result] = target.sessionTimeout(processCode)(fakeRequest)
 
@@ -161,6 +148,7 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
         SessionKeys.lastRequestTimestamp -> ts.toString
       )
 
+      MockGuidanceService.getCurrentGuidanceSession(processCode)(sessionId).returns(Future.successful(Right(session)))
       MockGuidanceService.deleteSession(processCode, sessionId).returns(Future.successful(Right(())))
       val result: Future[Result] = target.sessionTimeout(processCode)(fakeRequest)
 
@@ -169,29 +157,46 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
   }
 
 
-  "hasSessionExpired" should {
+  "sessionStillActive" should {
     val now = 1657796066757L
     val lastRequestTime = 1657796057930L
-    "detect session has not expired" in {
-      hasSessionExpired(Some(lastRequestTime.toString), MockAppConfig, now) shouldBe false
+
+    "detect session has not expired" in new Test {
+      val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("GET", "/").withSession(
+        SessionKeys.sessionId -> sessionId,
+        SessionKeys.lastRequestTimestamp -> lastRequestTime.toString
+      )
+
+      sessionStillActive(fakeRequest, MockAppConfig, now) shouldBe true
     }
 
-    "detect session is acceptably close to expiry" in {
+    "detect session is acceptably close to expiry" in new Test {
+      val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("GET", "/").withSession(
+        SessionKeys.sessionId -> sessionId,
+        SessionKeys.lastRequestTimestamp -> lastRequestTime.toString
+      )
       val currentTime = lastRequestTime + MockAppConfig.timeoutInSeconds * 1000 - 50
-      hasSessionExpired(Some(lastRequestTime.toString), MockAppConfig, currentTime) shouldBe true
+
+      sessionStillActive(fakeRequest, MockAppConfig, currentTime) shouldBe false
     }
 
-    "detect session has expired" in {
+    "detect session has expired" in new Test {
+      val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("GET", "/").withSession(
+        SessionKeys.sessionId -> sessionId,
+        SessionKeys.lastRequestTimestamp -> lastRequestTime.toString
+      )
       val currentTime = lastRequestTime + MockAppConfig.timeoutInSeconds * 1000L + 20000L
-      hasSessionExpired(Some(lastRequestTime.toString), MockAppConfig, currentTime) shouldBe true
+
+      sessionStillActive(fakeRequest, MockAppConfig, currentTime) shouldBe false
     }
 
-    "Deem missing session lastRequest time as Session not expired" in {
-      hasSessionExpired(None, MockAppConfig, now) shouldBe false
-    }
+    "Return true with lastRequest times in the future" in new Test {
+      val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("GET", "/").withSession(
+        SessionKeys.sessionId -> sessionId,
+        SessionKeys.lastRequestTimestamp -> (now + 20000L).toString
+      )
 
-    "Return false with lastRequest times in the future" in {
-      hasSessionExpired(Some((now + 20000).toString), MockAppConfig, now) shouldBe false
+      sessionStillActive(fakeRequest, MockAppConfig, now) shouldBe true
     }
 
   }
