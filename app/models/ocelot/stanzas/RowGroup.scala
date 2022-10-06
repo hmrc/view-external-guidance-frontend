@@ -16,9 +16,8 @@
 
 package models.ocelot.stanzas
 
-import core.models.ocelot.{isLinkOnlyPhrase, isBoldOnlyPhrase}
+import core.models.ocelot._
 import core.models.ocelot.stanzas.{Row, VisualStanza}
-import core.models.ocelot.Phrase
 
 case class RowGroup (override val next: Seq[String], group: Seq[Row], stack: Boolean) extends VisualStanza {
   lazy val columnCount:Int = group.headOption.fold(0)(_ => group.map(_.cells.length).max)
@@ -26,8 +25,8 @@ case class RowGroup (override val next: Seq[String], group: Seq[Row], stack: Boo
   lazy val isTableCandidate: Boolean = columnCount > 0 &&                           // At least one column
                                        group.length > 1 &&                          // A row of column headings and at least one data row
                                        group.head.cells.forall(isBoldOnlyPhrase(_)) // Column headings are all bold
-  lazy val isCYASummaryList: Boolean = columnCount == 3 && // Considering some short columns, overall column count must be 3
-                                       group.forall(r => !isBoldOnlyPhrase(r.cells(0)) && (r.cells.length < 3 || isLinkOnlyPhrase(r.cells(2))))
+  lazy val isCYASummaryList: Boolean = columnCount == NumberOfCYAColumns && // Considering some short columns, overall column count must be 3
+                                       group.forall(r => !isBoldOnlyPhrase(r.cells(FirstColumn)) && (r.cells.length < NumberOfCYAColumns || isLinkOnlyPhrase(r.cells(ThirdColumn))))
   lazy val isNameValueSummaryList: Boolean = columnCount == 2 &&                    // Two columns
                                              group.forall(r => !isBoldOnlyPhrase(r.cells(0))) // All the initial column cells are not bold
 
