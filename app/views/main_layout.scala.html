@@ -43,18 +43,6 @@
   enableTimeout: Boolean = true
 )(contentBlock: Html)(implicit request: Request[_], messages: Messages)
 
-@signOutUrl(processCode: Option[String]) = @{
-    processCode.fold(s"${appConfig.baseUrl}${appConfig.signOutUrl}"){ pc =>
-        s"${appConfig.baseUrl}/$pc${appConfig.signOutUrl}"
-      }
-}
-
-@timeOutUrl(processCode: Option[String]) = @{
-    processCode.fold(s"${appConfig.baseUrl}${appConfig.timeOutUrl}"){ pc =>
-        s"${appConfig.baseUrl}/$pc${appConfig.timeOutUrl}"
-      }
-}
-
 @processCodeUrl(processCode: Option[String], url: String) = @{
     processCode.fold[Option[String]](None){ pc =>
         Some(s"${appConfig.baseUrl}/$pc$url")
