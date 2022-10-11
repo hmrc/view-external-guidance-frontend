@@ -43,7 +43,8 @@ class ChoiceStanzaSpec extends BaseSpec {
       |    "lastUpdate": 1500298931016,
       |    "version": 4,
       |    "filename": "oct90001.js",
-      |    "titlePhrase": 8
+      |    "titlePhrase": 8,
+      |    "processCode": "cup-of-tea"
       |  },
       |  "howto": [],
       |  "contacts": [],
