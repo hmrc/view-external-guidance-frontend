@@ -37,7 +37,8 @@ class TextBuilderSpec extends BaseSpec with GuiceOneAppPerSuite {
                       ScalarLabel("Y", List("L")),
                       ScalarLabel("Z", List("Today is Monday")),
                       ListLabel("L", List("1","2","3")),
-                      ScalarLabel("When", List("22/9/1973"))
+                      ScalarLabel("When", List("22/9/1973")),
+                      ScalarLabel("DollarValue", List("Hello$World$"))
                     ).map(l => (l.name -> l)).toMap
     val timescales = Map("RDelay" -> 23)
     val labels: Labels = LabelCache(labelsMap, Map(), Nil, Map(), timescales, messages.apply, runMode = Published)
@@ -88,6 +89,14 @@ class TextBuilderSpec extends BaseSpec with GuiceOneAppPerSuite {
       expandLabels("The dow is [date:[label:When]:dow]", labels) shouldBe "The dow is 6"
       expandLabels("The dow_name is [date:[label:When]:dow_name]", labels) shouldBe "The dow_name is Saturday"
       expandLabels("The day is [date:[label:When]:day]", labels) shouldBe "The day is 22"
+    }
+
+    "expand label values containing dollar symbols" in new Test {
+      expandLabels("This label values contains £ characters: [label:DollarValue]", labels) shouldBe "This label values contains £ characters: Hello$World$"
+    }
+
+    "expand label values containing dollar symbols within text containing dollar symbols" in new Test {
+      expandLabels("This label $ values \\$ contains £ characters: [label:DollarValue]", labels) shouldBe "This label $ values \\$ contains £ characters: Hello$World$"
     }
 
   }
