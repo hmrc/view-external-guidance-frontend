@@ -95,6 +95,10 @@ class TextBuilderSpec extends BaseSpec with GuiceOneAppPerSuite {
       expandLabels("This label values contains £ characters: [label:DollarValue]", labels) shouldBe "This label values contains £ characters: Hello$World$"
     }
 
+    "expand label values containing dollar symbols within text containing dollar symbols" in new Test {
+      expandLabels("This label $ values \\$ contains £ characters: [label:DollarValue]", labels) shouldBe "This label $ values \\$ contains £ characters: Hello$World$"
+    }
+
   }
 
   "fragment" must {

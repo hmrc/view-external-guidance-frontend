@@ -88,7 +88,7 @@ object TextBuilder {
 
   private [services] def expandLabels(text: String, labels: Labels)(implicit messages: Messages): String = {
     def labelValue(name: String): Option[String] = (labels.displayValue(name)(messages.lang)).map(escapeDollarSymbol)
-    def expand(s: String): String = unescapeDollarSymbol(UiExpansionRegex.replaceAllIn(s, {m =>
+    def expand(s: String): String = unescapeDollarSymbol(UiExpansionRegex.replaceAllIn(escapeDollarSymbol(s), {m =>
                                       OutputFormat(Option(m.group(LabelOutputFormatGroup))).asString(scalarMatch(matchGroup(m), labelValue)(labels), messages)
                                     }))
     expand(expand(text)) // Double expansion to allow for labels as arguments to lists and functions
