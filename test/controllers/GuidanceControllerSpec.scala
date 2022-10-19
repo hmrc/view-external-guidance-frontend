@@ -162,6 +162,9 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
     val dateInputPage = Page("start", "/test-page", stanzasWithDateInput, Seq("4"))
     val nonExclusiveSequenceInputPage: Page = Page("start", "/test-page", stanzasWithNonExclusiveSequence, Seq("4"))
     val exclusiveSequenceInputPage: Page = Page("start", "/test-page", stanzasWithExclusiveSequence, Seq("4"))
+    val meta = Meta(processId, "", None, 0, "", 1L, 0, None, None, processCode)
+    val pageMap = Map("/start" -> PageNext("1", List("2", "3")), path -> PageNext("2"))
+    val emptyProcess = Process(meta, Map(), Vector(), Vector())
 
     def renderPage(page: Page, labels: Labels):(Seq[VisualStanza], Labels, Option[DataInput]) =
       new PageRenderer(MockAppConfig).renderPage(page, labels).fold(_ => fail, result => result)
@@ -1163,9 +1166,6 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
           stubMessagesControllerComponents()
         )
 
-      val meta = Meta(processId, "", None, 0, "", 1L, 0, None, None, processCode)
-      val emptyProcess = Process(meta, Map(), Vector(), Vector())
-      val pageMap = Map("/start" -> PageNext("1", List("2", "3")), path -> PageNext("2"))
       val session: GuidanceSession =
         GuidanceSession(emptyProcess,Map("/start" -> "0"),Map(),Nil,Map(),pageMap,List("1","2"), None,None, Published)
     }
@@ -1344,6 +1344,43 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
     }
 
   }
+
+  "Calling a valid URL path for a page and encountering a TransactionFault error" should {
+    trait Test extends MockGuidanceService with TestBase {
+      lazy val fakeRequest = FakeRequest(GET, path).withSession(SessionKeys.sessionId -> processId).withCSRFToken
+
+      MockGuidanceService
+        .getPageContext(processCode, path, previousPageByLink = false, processId)
+        .returns(Future.successful(Right(PageContext(standardPage, Seq.empty, None, sessionId, Some("/hello"), Text(Nil), processId, processCode))))
+
+      MockGuidanceService
+        .savePageState(sessionId, processCode, LabelCache())
+        .returns(Future.successful(Left(TransactionFaultError)))
+
+      MockGuidanceService
+        .getCurrentGuidanceSession(processCode)(processId)
+        .returns(Future.successful(Right(GuidanceSession(emptyProcess,Map("/start" -> "0"),Map(),Nil,Map(),Map(),List("1"), None,None, Published))))
+
+
+      lazy val target =
+        new GuidanceController(
+          MockAppConfig,
+          fakeSessionIdAction,
+          errorHandler,
+          view,
+          formView,
+          mockGuidanceService,
+          stubMessagesControllerComponents()
+        )
+      lazy val result = target.getPage(processCode, relativePath, None)(fakeRequest)
+    }
+
+    "return an redirect response" in new Test {
+      redirectLocation(result).isDefined shouldBe true
+    }
+
+  }
+
 
   "Calling a valid URL path for a page and encountering a database error when saving labels" should {
 

@@ -86,11 +86,11 @@ class GuidanceController @Inject() (
       case Right(pageCtx) =>
         logger.info(s"Retrieved page: ${pageCtx.page.urlPath}, start: ${pageCtx.processStartUrl}, answer: ${pageCtx.answer}, backLink: ${pageCtx.backLink}")
         pageCtx.page match {
-          case page: StandardPage => service.savePageState(pageCtx.sessionId, processCode, pageCtx.labels).map {
+          case page: StandardPage => service.savePageState(pageCtx.sessionId, processCode, pageCtx.labels).flatMap {
             case Right(_) =>
               logger.warn(s"GSP=>V: sessionId: ${sId}, requestId: ${rId}, URI: ${uri}")
-              Ok(standardView(page, pageCtx))
-            case Left(_) => InternalServerError(errorHandler.internalServerErrorTemplate)
+              Future.successful(Ok(standardView(page, pageCtx)))
+            case Left(err) => translateGetPageError(err, processCode, path)
           }
           case page: FormPage => pageCtx.dataInput match {
             case Some(input) =>
@@ -109,6 +109,7 @@ class GuidanceController @Inject() (
     case ForbiddenError =>
       redirectToActiveSessionFallbackRestart(processCode, "ForbiddenError")
     case TransactionFaultError =>
+      logger.warn(s"Attempting to redirect to current session state after transaction fault")
       redirectToActiveSessionFallbackRestart(processCode, "TransactionFaultError")
     case AuthenticationError =>
       logger.warn(s"Request for PageContext at /$path returned AuthenticationError, redirecting to process passphrase page")
