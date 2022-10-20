@@ -111,13 +111,13 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
 
   }
 
-  "SessionTimeoutPageController method sessionTimeout invoked after timeout dialog expires" should {
+  "SessionTimeoutPageController method endSession invoked after timeout dialog expires" should {
 
     "return a successful response if the session has expired" in new Test {
 
       val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("GET", "/")
 
-      val result: Future[Result] = target.sessionTimeout(processCode)(fakeRequest)
+      val result: Future[Result] = target.endSession(processCode)(fakeRequest)
       status(result) shouldBe Status.OK
     }
 
@@ -132,7 +132,7 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
 
       MockGuidanceService.getCurrentGuidanceSession(processCode)(sessionId).returns(Future.successful(Right(session)))
       MockGuidanceService.deleteSession(processCode, sessionId).returns(Future.successful(Right(())))
-      val result: Future[Result] = target.sessionTimeout(processCode)(fakeRequest)
+      val result: Future[Result] = target.endSession(processCode)(fakeRequest)
 
       status(result) shouldBe Status.OK
     }
@@ -150,7 +150,7 @@ class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite
 
       MockGuidanceService.getCurrentGuidanceSession(processCode)(sessionId).returns(Future.successful(Right(session)))
       MockGuidanceService.deleteSession(processCode, sessionId).returns(Future.successful(Right(())))
-      val result: Future[Result] = target.sessionTimeout(processCode)(fakeRequest)
+      val result: Future[Result] = target.endSession(processCode)(fakeRequest)
 
       status(result) shouldBe Status.OK
     }
