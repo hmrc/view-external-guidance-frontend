@@ -102,7 +102,14 @@ class UIBuilder {
     }
 
   private def fromCYASummaryListRowGroup(rg: RowGroup)(implicit ctx: UIContext): UIComponent =
-    CyaSummaryList(rg.paddedRows.map(row => row.map(phrase => TextBuilder.fromPhrase(phrase))))
+    CyaSummaryList(rg.paddedRows.map{row =>
+      row.map(phrase => TextBuilder.fromPhrase(phrase)) match {
+        // If hint is missing, use firsd column text as hint
+        case Seq(label, value, Text(Seq(l: models.ui.Link))) if l.hint.isEmpty =>
+          Seq(label, value, Text(Seq(l.copy(hint = Some(label.asString)))))
+        case rowAsText => rowAsText
+      }
+    })
 
   private def fromNameValueSummaryListRowGroup(rg: RowGroup)(implicit ctx: UIContext): UIComponent =
     NameValueSummaryList(rg.paddedRows.map(row => row.map(phrase => TextBuilder.fromPhrase(phrase))))
