@@ -20,6 +20,7 @@ import play.api.mvc._
 import play.api.data.{Form, Mapping}
 import play.api.data.Forms.nonEmptyText
 import play.api.i18n.Messages
+import core.models.ocelot.splitInputDateString
 import core.models.ocelot.stanzas.{Input, DateInput, DataInput, Question, Sequence}
 import models.ui.{SubmittedAnswer, SubmittedDateAnswer, SubmittedListAnswer, SubmittedTextAnswer}
 import services.{ErrorStrategy, ValueMissingError, ValueMissingGroupError}
@@ -113,7 +114,7 @@ object FormsHelper {
     answer match {
       case Some(value) =>
 
-        val (day, month, year) = formProvider.splitInputString(value)
+        val (day, month, year) = splitInputDateString(value).fold(("", "", ""))(v => v)
 
         form.bind(
           Map(

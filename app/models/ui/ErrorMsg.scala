@@ -19,12 +19,13 @@ package models.ui
 sealed trait ErrorMsg {
   val id: String
   val text: Text
+  val fields: Seq[String] = Seq()
 }
 
 case class RequiredErrorMsg(text: Text) extends ErrorMsg with UIComponent {
   val id: String = "required"
 }
-case class TypeErrorMsg(text: Text) extends ErrorMsg with UIComponent {
+case class TypeErrorMsg(text: Text, override val fields: Seq[String] = Seq.empty) extends ErrorMsg with UIComponent {
   val id: String = "type"
 }
 case class ValueErrorMsg(text: Text) extends ErrorMsg with UIComponent {

@@ -16,7 +16,6 @@
 
 package forms
 
-import scala.util.matching.Regex
 import play.api.data.{Form, Mapping}
 import play.api.data.Forms._
 import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
@@ -33,14 +32,9 @@ class SubmittedTextAnswerFormProvider extends FormProvider {
         bindData._1 -> bindData._2
       )(SubmittedTextAnswer.apply)(SubmittedTextAnswer.unapply)
     )
-
 }
 
 class SubmittedDateAnswerFormProvider extends FormProvider {
-  private val inputDateRegex: Regex = "(.+?)\\/(.+?)\\/(.+?)$".r
-
-  def splitInputString(dateString: String): (String, String, String) =
-    inputDateRegex.findFirstMatchIn(dateString).fold(("","","")){m => (m.group(1), m.group(2), m.group(3))}
 
   def apply(): Form[SubmittedDateAnswer] =
 

@@ -442,15 +442,15 @@ class InputSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite {
 
       private val dayAttrs: Map[String, String] = getElementAttributes(doc, "day")
 
-      dayAttrs("class").contains("govuk-input--error") shouldBe false
+      dayAttrs("class").contains("govuk-input--error") shouldBe true
 
       private val monthAttrs: Map[String, String] = getElementAttributes(doc, "month")
 
-      monthAttrs("class").contains("govuk-input--error") shouldBe false
+      monthAttrs("class").contains("govuk-input--error") shouldBe true
 
       private val yearAttrs: Map[String, String] = getElementAttributes(doc, "year")
 
-      yearAttrs("class").contains("govuk-input--error") shouldBe false
+      yearAttrs("class").contains("govuk-input--error") shouldBe true
     }
 
     "render inputs with error class for value error messages on input component only" in new DateTest {
@@ -572,7 +572,7 @@ class InputSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite {
 
           val yearAttrs: Map[String, String] = getElementAttributes(doc, "year")
 
-          yearAttrs("class").contains("govuk-input--error") shouldBe true
+          yearAttrs("class").contains("govuk-input--error") shouldBe false
       }
 
     }

@@ -1773,7 +1773,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
             .returns(Future.successful(Right(pec)))
 
           MockGuidanceService
-            .getSubmitPageContext(pec, ValueTypeError)
+            .getSubmitPageContext(pec, ValueTypeGroupError(List("label.day"),List("day")))
             .returns(Right(PageContext(expectedPage, vStanzas, di, sessionId, Some("/"), Text(Nil), processId, processCode, initialLabels)))
 
           override val fakeRequest = FakeRequest("POST", path)

@@ -991,4 +991,139 @@ class AggregatorSpec extends BaseSpec {
 
   }
 
+  "TypeErrorCallout aggregation" must {
+
+    trait TypeErrorCalloutTest extends Test {
+      val phrase1 = Phrase(Vector("Error", "WelshError"))
+      val phrase2 = Phrase(Vector("Error {0}", "Welsh Error {0}"))
+      val phrase3 = Phrase(Vector("Error {0} {1}", "Welsh Error {0} {1}"))
+
+      val callout1: TypeErrorCallout = TypeErrorCallout(phrase1, Seq(""), false)
+      val callout2: TypeErrorCallout = TypeErrorCallout(phrase2, Seq(""), true)
+      val callout3: TypeErrorCallout = TypeErrorCallout(phrase3, Seq(""), true)
+      val callout4: TypeErrorCallout = TypeErrorCallout(phrase3, Seq(""), true)
+
+    }
+
+    "not create TypeErrorGroup of length 1 when encountering isolated Error co" in new TypeErrorCalloutTest {
+      val stanzas: Seq[VisualStanza] =
+        Seq(
+          callout,
+          callout1,
+          instruction)
+
+      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      aggregatedStanzas(0) shouldBe callout
+      aggregatedStanzas(1) shouldBe callout1
+    }
+
+    "leave two TypeErrorGroups with stack set to false" in new TypeErrorCalloutTest {
+
+      val stanzas: Seq[VisualStanza] = Seq(
+        callout,
+        callout1,
+        callout1,
+        instruction
+      )
+
+      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+
+      aggregatedStanzas(1) shouldBe callout1
+      aggregatedStanzas(2) shouldBe callout1
+    }
+
+    "create a TypeErrorGroup with two entries for two contiguous Error cos with stack set to true" in new TypeErrorCalloutTest {
+      val stanzas: Seq[VisualStanza] = Seq(
+        callout,
+        callout2,
+        callout3,
+        instruction
+      )
+
+      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      aggregatedStanzas(1) shouldBe TypeErrorGroup(Seq(callout2, callout3))
+    }
+
+    "create a TypeErrorGroup with two Error co with stack set to false and true respectively" in new TypeErrorCalloutTest {
+      val stanzas: Seq[VisualStanza] = Seq(
+        instruction,
+        callout1,
+        callout2,
+        instruction,
+        callout
+      )
+
+      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+
+      aggregatedStanzas(1) shouldBe TypeErrorGroup(Seq(callout1, callout2))
+    }
+
+    "create a TypeErrorGroup with multiple Error cos" in new TypeErrorCalloutTest {
+      val stanzas: Seq[VisualStanza] = Seq(
+        callout,
+        callout1,
+        callout2,
+        callout3,
+        callout4,
+        instruction
+      )
+
+      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      aggregatedStanzas(1) shouldBe TypeErrorGroup(Seq(callout1, callout2, callout3, callout4))
+    }
+
+    "create two TypeErrorGroup of size two from four contiguous elems where stack is false for the third elem" in new TypeErrorCalloutTest {
+      val stanzas: Seq[VisualStanza] = Seq(
+        callout2,
+        callout3,
+        callout1,
+        callout4
+      )
+
+      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      aggregatedStanzas(0) shouldBe TypeErrorGroup(Seq(callout2, callout3))
+      aggregatedStanzas(1) shouldBe TypeErrorGroup(Seq(callout1, callout4))
+    }
+
+    "leave two TypeErrorGroups in sequence of stanzas" in new TypeErrorCalloutTest {
+      val stanzas: Seq[VisualStanza] = Seq(
+        callout,
+        instruction,
+        callout1,
+        instruction1,
+        callout1,
+        instruction2
+      )
+
+      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      aggregatedStanzas(2) shouldBe callout1
+      aggregatedStanzas(four) shouldBe callout1
+    }
+
+    "create two TypeErrorGroup with multiple elems from a complex sequence of stanzas" in new TypeErrorCalloutTest {
+      val stanzas: Seq[VisualStanza] = Seq(
+        callout,
+        instruction,
+        instruction1,
+        callout1,
+        callout2,
+        callout3,
+        instructionGroup,
+        callout1,
+        callout2,
+        instruction2
+      )
+
+      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      aggregatedStanzas(3) shouldBe TypeErrorGroup(Seq(callout1, callout2, callout3))
+      aggregatedStanzas(five) shouldBe TypeErrorGroup(Seq(callout1, callout2))
+    }
+
+
+    "Create a valid empty TypeErrorGroup" in new TypeErrorCalloutTest {
+      TypeErrorGroup(Nil) shouldBe TypeErrorGroup(Seq.empty, Seq.empty, false)
+    }
+
+  }
+
 }
