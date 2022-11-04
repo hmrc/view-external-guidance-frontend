@@ -222,47 +222,6 @@ class UIBuilder {
             }
   }
 
-  // private def fromRequiredErrorGroup(eg: RequiredErrorGroup, errStrategy: ErrorStrategy)(implicit ctx: UIContext): Seq[UIComponent] =
-  //   errStrategy match {
-  //     case ValueMissingGroupError(Nil) => // Nil names => all values missing
-  //       eg.group.find(co => EmbeddedParameterRegex.findAllMatchIn(co.text.value(ctx.messages.lang)).isEmpty)
-  //               .fold[Seq[UIComponent]](Nil)(eco => Seq(RequiredErrorMsg(Text(StringTransform.transform(eco.text)))))
-  //     case e: ValueMissingGroupError =>   // Values missing by name
-  //       // Find message corresponding to the number of missing values
-  //       eg.group.find(co => EmbeddedParameterRegex.findAllMatchIn(co.text.value(ctx.messages.lang)).length == e.missingFieldNames.length)
-  //         .fold[Seq[UIComponent]](Nil){eco => {
-  //             // Substitute positional params with the supplied field names
-  //             val mapToFieldName: Match => Option[String] = m => Option(m.group(EmbeddedParameterGroup))
-  //                                                                 .map(_.toInt)
-  //                                                                 .fold[Option[String]](None)(idx => e.missingFieldNames.lift(idx))
-  //             val errorMsg = EmbeddedParameterRegex.replaceSomeIn(eco.text.value(ctx.messages.lang), mapToFieldName)
-  //             Seq(RequiredErrorMsg(Text(StringTransform.transform(errorMsg))))
-  //           }
-  //         }
-  //     case _ => Nil
-  //   }
-
-  // private def fromTypeErrorGroup(tg: TypeErrorGroup, errStrategy: ErrorStrategy)(implicit ctx: UIContext): Seq[UIComponent] =
-  //   errStrategy match {
-  //     case ValueTypeGroupError(Nil) => // Nil names => all values missing
-  //       tg.group.find(co => EmbeddedParameterRegex.findAllMatchIn(co.text.value(ctx.messages.lang)).isEmpty)
-  //               .fold[Seq[UIComponent]](Nil)(eco => Seq(TypeErrorMsg(Text(StringTransform.transform(eco.text)))))
-  //     case e: ValueTypeGroupError =>   // Values missing by name
-  //       // Find message corresponding to the number of missing values
-  //       tg.group.find(co => EmbeddedParameterRegex.findAllMatchIn(co.text.value(ctx.messages.lang)).length == e.missingFieldNames.length)
-  //         .fold[Seq[UIComponent]](Nil){eco => {
-  //             // Substitute positional params with the supplied field names
-  //             val mapToFieldName: Match => Option[String] = m => Option(m.group(EmbeddedParameterGroup))
-  //                                                                 .map(_.toInt)
-  //                                                                 .fold[Option[String]](None)(idx => e.missingFieldNames.lift(idx))
-  //             val errorMsg = EmbeddedParameterRegex.replaceSomeIn(eco.text.value(ctx.messages.lang), mapToFieldName)
-  //             Seq(TypeErrorMsg(Text(StringTransform.transform(errorMsg))))
-  //           }
-  //         }
-  //     case _ =>
-  //       Nil
-  //   }
-
   private def fromNoteGroup(ng: NoteGroup)(implicit ctx: UIContext): UIComponent =
     InsetText(ng.group.map(co => TextBuilder.fromPhrase(co.text)))
 
