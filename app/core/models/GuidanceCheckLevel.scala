@@ -1,4 +1,4 @@
-@*
+/*
  * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,11 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *@
+ */
 
-@import models.ui.{DateInput, ValueErrorMsg}
+package core.models
 
-@(input: DateInput, field: String, form: Form[_])
+trait GuidanceCheckLevel
 
-@{if((input.errorMsgs.nonEmpty && input.errorMsgs.collect{case r: ValueErrorMsg => r}.size > 0) ||
-     (form.errors.nonEmpty && form.errors.map(_.key).contains(field)) ||
-     (input.errorMsgs.nonEmpty && input.errorMsgs.head.fields.contains(field)) ||
-     (form.errors.isEmpty && input.errorMsgs.nonEmpty && input.errorMsgs.head.fields.isEmpty)) " govuk-input--error"}
-@{
-//$COVERAGE-OFF$
-}
+case object Tolerant extends GuidanceCheckLevel
+case object Strict extends GuidanceCheckLevel

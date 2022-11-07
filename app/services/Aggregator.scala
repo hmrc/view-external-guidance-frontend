@@ -50,6 +50,10 @@ object Aggregator {
         val (vs: VisualStanza, remainder) = aggregateYourCall(xs, Seq(x))
         aggregateStanzas(acc :+ vs)(remainder)
 
+      case (x: TypeErrorCallout) :: xs =>
+        val (vs: VisualStanza, remainder) = aggregateTypeError(xs, Seq(x))
+        aggregateStanzas(acc :+ vs)(remainder)
+
       case (x: ErrorCallout) :: xs =>
         val (vs: VisualStanza, remainder) = aggregateError(xs, Seq(x))
         aggregateStanzas(acc :+ vs)(remainder)
@@ -112,6 +116,14 @@ object Aggregator {
       case (x: ErrorCallout) :: xs if x.stack => aggregateError(xs, acc :+ x)
       case xs if acc.length == 1 => (acc.head, xs)
       case xs => (RequiredErrorGroup(acc), xs)
+    }
+
+  @tailrec
+  private def aggregateTypeError(inputSeq: Seq[VisualStanza], acc: Seq[TypeErrorCallout]): (VisualStanza, Seq[VisualStanza]) =
+    inputSeq match {
+      case (x: TypeErrorCallout) :: xs if x.stack => aggregateTypeError(xs, acc :+ x)
+      case xs if acc.length == 1 => (acc.head, xs)
+      case xs => (TypeErrorGroup(acc), xs)
     }
 
   @tailrec

@@ -22,11 +22,12 @@ import javax.inject.{Inject, Singleton}
 import play.api.i18n.Messages
 import play.api.mvc._
 import play.api.data.Form
-import services.{ErrorStrategy, GuidanceService, ValueTypeError}
+import services.{ErrorStrategy, GuidanceService, ValueTypeError, ValueTypeGroupError}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 import core.models.RequestOutcome
 import core.models.errors._
 import core.models.ocelot.errors.RuntimeError
+import core.models.ocelot.stanzas.DateInput
 import core.models.ocelot.{RunMode, Published, SecuredProcess}
 import models.{PageContext, PageEvaluationContext}
 import models.ui.{FormPage, StandardPage, SubmittedAnswer}
@@ -146,23 +147,29 @@ class GuidanceController @Inject() (
           val inputName: String = formInputName(path)
           bindFormData(input, inputName) match {
             case Left((formWithErrors: Form[_], errorStrategy: ErrorStrategy)) =>
-                Future.successful(BadRequest(createErrorView(service.getSubmitPageContext(ctx, errorStrategy), inputName, formWithErrors)))
+              Future.successful(BadRequest(createErrorView(service.getSubmitPageContext(ctx, errorStrategy), inputName, formWithErrors)))
             case Right((form: Form[_], submittedAnswer: SubmittedAnswer)) =>
-              ctx.dataInput.fold[Option[String]](None)(_.validInput(submittedAnswer.text)).fold{
-                // Answer didn't pass page DataInput stanza validation
-                Future.successful(BadRequest(createErrorView(service.getSubmitPageContext(ctx, ValueTypeError), inputName, form)))
-              }{ answer =>
-                service.submitPage(ctx, s"/$path", answer, submittedAnswer.text).flatMap {
-                  case Right((None, labels)) =>      // No valid next page id indicates page should be re-displayed
-                    logger.info(s"Post submit page evaluation indicates guidance detected input error")
-                    Future.successful(BadRequest(createErrorView(service.getSubmitPageContext(ctx.copy(labels = labels)), inputName, form)))
-                  case Right((Some(stanzaId), _)) => // Some(stanzaId) here indicates a redirect to the page with id "stanzaId"
-                    val url = ctx.pageMapById(stanzaId).url
-                    val pageUrl = url.drop(appConfig.baseUrl.length + processCode.length + 2)
-                    logger.info(s"SF=>V: sessionId: ${sId}, requestId: ${rId}, URI: ${uri}, page next: $stanzaId => $url")
-                    Future.successful(Redirect(routes.GuidanceController.getPage(processCode, pageUrl, previousPageQueryString(url, ctx.backLink))))
-                  case Left(err) => translateSubmitError(err, processCode, path)
-                }
+              (input.validInput(submittedAnswer.text), input) match {
+                case (Left(fieldErrors), dateInput: DateInput) =>
+                  val missingFieldNames = fieldErrors.map(id => messages(s"${dateInput.FieldMsgBase}.${dateInput.FieldNames(id)}"))
+                  val pageCtx = service.getSubmitPageContext(ctx, ValueTypeGroupError(missingFieldNames, fieldErrors.map(dateInput.FieldNames)))
+                  // Answer didn't pass DateInput stanza validation
+                  Future.successful(BadRequest(createErrorView(pageCtx, inputName, form)))
+                case (Left(fieldErrors), _) =>
+                  // Answer didn't pass other DataInput stanza validation
+                  Future.successful(BadRequest(createErrorView(service.getSubmitPageContext(ctx, ValueTypeError), inputName, form)))
+                case (Right(answer), _) =>
+                  service.submitPage(ctx, s"/$path", answer, submittedAnswer.text).flatMap {
+                    case Right((None, labels)) =>      // No valid next page id indicates page should be re-displayed
+                      logger.info(s"Post submit page evaluation indicates guidance detected input error")
+                      Future.successful(BadRequest(createErrorView(service.getSubmitPageContext(ctx.copy(labels = labels)), inputName, form)))
+                    case Right((Some(stanzaId), _)) => // Some(stanzaId) here indicates a redirect to the page with id "stanzaId"
+                      val url = ctx.pageMapById(stanzaId).url
+                      val pageUrl = url.drop(appConfig.baseUrl.length + processCode.length + 2)
+                      logger.info(s"SF=>V: sessionId: ${sId}, requestId: ${rId}, URI: ${uri}, page next: $stanzaId => $url")
+                      Future.successful(Redirect(routes.GuidanceController.getPage(processCode, pageUrl, previousPageQueryString(url, ctx.backLink))))
+                    case Left(err) => translateSubmitError(err, processCode, path)
+                  }
               }
           }
         }
