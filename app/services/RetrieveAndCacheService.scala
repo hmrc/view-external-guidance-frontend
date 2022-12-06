@@ -26,7 +26,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import scala.concurrent.{ExecutionContext, Future}
 import repositories.SessionRepository
 import models.PageNext
-import core.models.ocelot.{Process, RunMode, PageReview, Scratch, Approval, Published}
+import core.models.ocelot.{Process, RunMode, PageReview, Scratch, Approval, Published, Page}
 
 @Singleton
 class RetrieveAndCacheService @Inject() (
@@ -55,41 +55,60 @@ class RetrieveAndCacheService @Inject() (
                               (implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[(String,String)]] =
     retrieveAndCache(processId, docId, connector.approvalProcess, PageReview, Some(url))
 
-  private def retrieveAndCache(processIdentifier: String, docId: String, retrieveProcessById: Retrieve[Process], runMode: RunMode, url: Option[String] = None)(
+  def retrieveOnlyPublished(processCode: String)
+                               (implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[Seq[Page]]] =
+    retrieve(processCode, map(connector.publishedProcess)(spb.secureIfRequired)).map(_.fold(err => Left(err), res => Right(res._2)))
+
+  def retrieveOnlyApproval(processId: String)
+                              (implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[Seq[Page]]] =
+    retrieve(processId, map(connector.approvalProcess)(spb.secureIfRequired)).map(_.fold(err => Left(err), res => Right(res._2)))
+
+  private def retrieve(processIdentifier: String, retrieveProcessById: Retrieve[Process])(
     implicit context: ExecutionContext
-  ): Future[RequestOutcome[(String,String)]] =
-    retrieveProcessById(processIdentifier).flatMap {
+  ): Future[RequestOutcome[(Process, Seq[Page])]] =
+    retrieveProcessById(processIdentifier).map {
       case Left(err) =>
         logger.warn(s"Unable to find process using identifier $processIdentifier, received $err")
-        Future.successful(Left(err))
+        Left(err)
       case Right(process) =>
         logger.warn(s"Loaded process ${process.meta.id}, containing ${process.flow.keys.toList.length} stanzas, ${process.phrases.length} phrases")
         pageBuilder.pages(process, process.startPageId).fold(err => {
-          logger.warn(s"Failed to parse process with error $err")
-          Future.successful(Left(InvalidProcessError))
-        },
-        pages => {
-          if (logger.isDebugEnabled) {
-            val urlMap: Map[String, String] = pages.map(p => (p.id, p.url)).toMap
-            logger.debug(s"Process id: $processIdentifier, processCode: ${process.meta.processCode}, title: ${process.meta.title}")
-            logger.debug(s"PAGE MAP:")
-            pages.foreach{pge =>
-              logger.debug(s"PAGE: ${pge.id}, ${pge.url}")
-              pge.next.foreach(id => logger.debug(s"\tnxt:=> $id, ${urlMap(id)}"))
-              pge.linked.foreach(id => logger.debug(s"\tlnk:=> $id, ${urlMap(id)}"))
-            }
-          }
-          val pageMap: Map[String, PageNext] = pages.map(p => p.url -> PageNext(p.id, p.next.toList, p.linked.toList)).toMap
-          val startPageUrl: String = url.getOrElse(pages.head.url)
-          val startPageId: Option[String] = pageMap.get(startPageUrl).map(_.id)
-          sessionRepository.create(docId, runMode, process, pageMap, startPageId.toList).map{
-            case Right(_) => Right((startPageUrl, process.meta.processCode))
-            case Left(err) =>
-              logger.error(s"Failed to store new parsed process in session repository, $err")
-              Left(err)
-          }
-        })
+            logger.warn(s"Unable to parse process with identifier $processIdentifier, received $err")
+            Left(InvalidProcessError)
+          },
+          pages => Right((process, pages))
+        )
     }
+
+  private def retrieveAndCache(processIdentifier: String, docId: String, retrieveProcessById: Retrieve[Process], runMode: RunMode, url: Option[String] = None)(
+    implicit context: ExecutionContext
+  ): Future[RequestOutcome[(String,String)]] =
+    retrieve(processIdentifier, retrieveProcessById).flatMap {
+      case Left(err) =>
+        logger.warn(s"Unable to process using identifier $processIdentifier, received $err")
+        Future.successful(Left(err))
+      case Right((process, pages)) =>
+        if (logger.isDebugEnabled) {
+          val urlMap: Map[String, String] = pages.map(p => (p.id, p.url)).toMap
+          logger.debug(s"Process id: $processIdentifier, processCode: ${process.meta.processCode}, title: ${process.meta.title}")
+          logger.debug(s"PAGE MAP:")
+          pages.foreach{pge =>
+            logger.debug(s"PAGE: ${pge.id}, ${pge.url}")
+            pge.next.foreach(id => logger.debug(s"\tnxt:=> $id, ${urlMap(id)}"))
+            pge.linked.foreach(id => logger.debug(s"\tlnk:=> $id, ${urlMap(id)}"))
+          }
+        }
+
+        val pageMap: Map[String, PageNext] = pages.map(p => p.url -> PageNext(p.id, p.next.toList, p.linked.toList)).toMap
+        val startPageUrl: String = url.getOrElse(pages.head.url)
+        val startPageId: Option[String] = pageMap.get(startPageUrl).map(_.id)
+        sessionRepository.create(docId, runMode, process, pageMap, startPageId.toList).map{
+          case Right(_) => Right((startPageUrl, process.meta.processCode))
+          case Left(err) =>
+            logger.error(s"Failed to store new parsed process in session repository, $err")
+            Left(err)
+        }
+      }
 
   private def map[A, B](f: Retrieve[A])(g: A => B)(implicit ec: ExecutionContext): Retrieve[B] =
     id => f(id).map{
