@@ -23,15 +23,16 @@
 
 
 @this(layout: GovukLayout,
-        phaseBanner : GovukPhaseBanner,
-        govUkHeader: GovukHeader,
-        hmrcLanguageSelect: HmrcLanguageSelect,
-        appConfig: AppConfig,
-        footerLinks: FooterLinks,
-        footer: components.govukFooter,
-        timeoutDialog: HmrcTimeoutDialog,
-        govukBackLink : GovukBackLink,
-        hmrcTrackingConsentSnippet: HmrcTrackingConsentSnippet)
+  phaseBanner : GovukPhaseBanner,
+  govUkHeader: GovukHeader,
+  hmrcLanguageSelect: HmrcLanguageSelect,
+  appConfig: AppConfig,
+  footerLinks: FooterLinks,
+  footer: components.govukFooter,
+  timeoutDialog: HmrcTimeoutDialog,
+  govukBackLink : GovukBackLink,
+  hmrcTrackingConsentSnippet: HmrcTrackingConsentSnippet,
+  defaultLayout: TwoThirdsMainContent)
 
 @(
   pageTitle: String,
@@ -40,7 +41,9 @@
   startUrl: Option[String] = None,
   backUrl: Option[String] = None,
   betaPhaseBanner: Boolean = false,
-  enableTimeout: Boolean = true
+  enableTimeout: Boolean = true,
+  layoutFormat: Option[Html => Html] = Some(defaultLayout(_)),
+  enableLanguageSelect: Boolean = true
 )(contentBlock: Html)(implicit request: Request[_], messages: Messages)
 
 @processCodeUrl(processCode: Option[String], url: String) = @{
@@ -58,11 +61,13 @@
         content = HtmlContent(s"""${messages("feedback.before")} <a class='govuk-link' href="${appConfig.feedbackUrl}">${messages("feedback.linkLabel")}</a> ${messages("feedback.after")}""")
         ))
     }
-    @hmrcLanguageSelect(
-        LanguageSelect(if (messages.lang.language == "en") En else Cy,
-            En -> s"${appConfig.baseUrl}/language/english",
-            Cy -> s"${appConfig.baseUrl}/language/cymraeg")
-    )
+    @if(enableLanguageSelect){
+      @hmrcLanguageSelect(
+          LanguageSelect(if (messages.lang.language == "en") En else Cy,
+              En -> s"${appConfig.baseUrl}/language/english",
+              Cy -> s"${appConfig.baseUrl}/language/cymraeg")
+      )
+    }
     @backUrl.map(url =>
       govukBackLink(BackLink(href = url,
                              content = Text(messages("backlink.label")),
@@ -133,7 +138,8 @@
     beforeContentBlock = Some(beforeContentBlock),
     footerItems = Seq.empty,
     footerBlock = Some(footerBlock),
-    bodyEndBlock = Some(scripts))(content)
+    bodyEndBlock = Some(scripts),
+    mainContentLayout = layoutFormat)(content)
 
 @{
     //$COVERAGE-OFF$

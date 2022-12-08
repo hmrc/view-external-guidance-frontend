@@ -26,10 +26,11 @@ import play.api.Logger
 import scala.concurrent.ExecutionContext.Implicits.global
 import controllers.actions.SessionIdAction
 import models._
+import core.models.RequestOutcome
 import views.html.process_map
 import core.models.ocelot.{Process, Page}
 import core.models.ocelot.stanzas.{TitleCallout, Input, YourCallCallout, Question, Sequence}
-
+import scala.concurrent.Future
 
 @Singleton
 class StartAdminController @Inject() (
@@ -54,41 +55,24 @@ class StartAdminController @Inject() (
   }
 
   def publishedPageMap(processId: String): Action[AnyContent] = Action.async { implicit request =>
-    logger.info(s"Starting published pageMap")
-    service.retrieveOnlyPublished(processId).map{
-      case Right(pages) =>
-        val pageMap: Map[String, Page] = pages.map(p => (p.id, p)).toMap
-        val pageRows: List[Seq[ProcessMapRow]] = buildPageRows(pageMap(Process.StartStanzaId), pageMap) ::
-          (pageMap.keys.filterNot(_.equals(Process.StartStanzaId)).toList.map{ id => buildPageRows(pageMap(id), pageMap)})
-
-        pageRows.foreach(println)
-        Ok(view(pageRows))
-
-      case Left(err) =>
-        InternalServerError(errorHandler.internalServerErrorTemplate)
-     }
+    retrieveAndView(processId, service.retrieveOnlyPublished)
   }
 
   def approvalPageMap(processId: String): Action[AnyContent] = Action.async { implicit request =>
-    logger.info(s"Starting approval pageMap")
-    service.retrieveOnlyApproval(processId).map{
-      case Right(pages) =>
+   retrieveAndView(processId, service.retrieveOnlyApproval)
+  }
+
+  private def retrieveAndView(processCode: String, retrieve: String => Future[RequestOutcome[(Process, Seq[Page])]])(implicit request: Request[_]): Future[Result] =
+    retrieve(processCode).map{
+      case Right((process, pages)) =>
         val pageMap: Map[String, Page] = pages.map(p => (p.id, p)).toMap
         val pageRows: List[Seq[ProcessMapRow]] = buildPageRows(pageMap(Process.StartStanzaId), pageMap) ::
           (pageMap.keys.filterNot(_.equals(Process.StartStanzaId)).toList.map{ id => buildPageRows(pageMap(id), pageMap)})
-
-        pageRows.foreach{pr =>
-          println(pr)
-          pageMap.get(pr.head.id).map{p =>
-            p.keyedStanzas.foreach(println)
-          }
-        }
-        Ok(view(pageRows))
+        Ok(view(process.title.english, pageRows))
 
       case Left(err) =>
         InternalServerError(errorHandler.internalServerErrorTemplate)
      }
-  }
 
   private def pageTitle(page: Page): Option[String] =
     page.stanzas.collectFirst{

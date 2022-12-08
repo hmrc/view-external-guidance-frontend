@@ -18,11 +18,13 @@
 
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 
-@this(layout: main_layout, govukTable : GovukTable)
+@this(layout: main_layout, govukTable : GovukTable, wideLayout: components.FullWidthContentLayout)
 
-@(rows: List[Seq[ProcessMapRow]])(implicit request: Request[_], messages: Messages)
+@(title: String, rows: List[Seq[ProcessMapRow]])(implicit request: Request[_], messages: Messages)
 
-@layout("page.heading.asString", "ctx.processTitle.asString") {
+@layout(messages("guidance.internals.heading"),
+        messages("guidance.internals.heading"), None, None, None, false, true,
+        Some(wideLayout(_)), false) {
 
   @govukTable(Table(
     rows = rows.flatMap(p =>
@@ -41,7 +43,7 @@
       HeadCell(content = Text(messages("TITLE")))
       )
     ),
-    caption = Some("PAGES"),
+    caption = Some(title),
     captionClasses = "govuk-table__caption--l",
     firstCellIsHeader = true
   ))

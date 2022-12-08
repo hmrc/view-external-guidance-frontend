@@ -56,12 +56,14 @@ class RetrieveAndCacheService @Inject() (
     retrieveAndCache(processId, docId, connector.approvalProcess, PageReview, Some(url))
 
   def retrieveOnlyPublished(processCode: String)
-                               (implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[Seq[Page]]] =
-    retrieve(processCode, map(connector.publishedProcess)(spb.secureIfRequired)).map(_.fold(err => Left(err), res => Right(res._2)))
+                               (implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[(Process, Seq[Page])]] =
+    retrieve(processCode, map(connector.publishedProcess)(spb.secureIfRequired))
+//    retrieve(processCode, map(connector.publishedProcess)(spb.secureIfRequired)).map(_.fold(err => Left(err), res => Right(res)))
 
   def retrieveOnlyApproval(processId: String)
-                              (implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[Seq[Page]]] =
-    retrieve(processId, map(connector.approvalProcess)(spb.secureIfRequired)).map(_.fold(err => Left(err), res => Right(res._2)))
+                              (implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[(Process, Seq[Page])]] =
+    retrieve(processId, map(connector.approvalProcess)(spb.secureIfRequired))
+    // retrieve(processId, map(connector.approvalProcess)(spb.secureIfRequired)).map(_.fold(err => Left(err), res => Right(res)))
 
   private def retrieve(processIdentifier: String, retrieveProcessById: Retrieve[Process])(
     implicit context: ExecutionContext
