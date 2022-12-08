@@ -23,25 +23,12 @@ import play.api.mvc._
 import services.RetrieveAndCacheService
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 import play.api.Logger
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import controllers.actions.SessionIdAction
-
+import models._
 import views.html.process_map
 import core.models.ocelot.{Process, Page}
-import core.models.ocelot.stanzas.{TitleCallout, Input, YourCallCallout}
-
-sealed trait ProcessRowEntryType
-
-case object PageEntry extends ProcessRowEntryType {
-  override def toString(): String = "Page"
-}
-
-case object LinkEntry extends ProcessRowEntryType {
-  override def toString(): String = "=>"
-}
-
-case class ProcessMapRow(typ: ProcessRowEntryType, id: String, url: String, title: Option[String])
+import core.models.ocelot.stanzas.{TitleCallout, Input, YourCallCallout, Question, Sequence}
 
 
 @Singleton
@@ -58,27 +45,24 @@ class StartAdminController @Inject() (
   val logger: Logger = Logger(getClass)
 
   private def buildPageRows(p: Page, pageMap: Map[String, Page]): Seq[ProcessMapRow] = {
-    ProcessMapRow(PageEntry, p.id, p.url, pageTitle(p)) +: p.linked.map{ id =>
+    //println(p.stanzas)
+    ProcessMapRow(PageEntry, p.id, p.url, pageTitle(p)) +: (p.next.map{ id =>
+      ProcessMapRow(NextEntry, id, pageMap(id).url, pageTitle(pageMap(id)))
+    } ++ p.linked.map{ id =>
       ProcessMapRow(LinkEntry, id, pageMap(id).url, pageTitle(pageMap(id)))
-    }
+    })
   }
 
   def publishedPageMap(processId: String): Action[AnyContent] = Action.async { implicit request =>
     logger.info(s"Starting published pageMap")
-    service.retrieveOnlyApproval(processId).map{
+    service.retrieveOnlyPublished(processId).map{
       case Right(pages) =>
         val pageMap: Map[String, Page] = pages.map(p => (p.id, p)).toMap
-        val pageRows: Seq[ProcessMapRow] = buildPageRows(pageMap(Process.StartStanzaId), pageMap) ++
-          (pageMap.keys.filterNot(_.equals(Process.StartStanzaId)).toSeq.flatMap{ id =>
-            buildPageRows(pageMap(id), pageMap)
-          })
+        val pageRows: List[Seq[ProcessMapRow]] = buildPageRows(pageMap(Process.StartStanzaId), pageMap) ::
+          (pageMap.keys.filterNot(_.equals(Process.StartStanzaId)).toList.map{ id => buildPageRows(pageMap(id), pageMap)})
 
         pageRows.foreach(println)
-        // val startPageRows = pageMap(Process.StartStanzaId).stanzas
-        // // val urlMap: Map[String, ProcessMapRow] = pages.map{ p =>
-        //   (p.id, ProcessMapRow(PageEntry, p.id, p.url, pageTitle(p)))
-        // }.toMap
-        Ok(view())
+        Ok(view(pageRows))
 
       case Left(err) =>
         InternalServerError(errorHandler.internalServerErrorTemplate)
@@ -89,7 +73,18 @@ class StartAdminController @Inject() (
     logger.info(s"Starting approval pageMap")
     service.retrieveOnlyApproval(processId).map{
       case Right(pages) =>
-        Ok(view())
+        val pageMap: Map[String, Page] = pages.map(p => (p.id, p)).toMap
+        val pageRows: List[Seq[ProcessMapRow]] = buildPageRows(pageMap(Process.StartStanzaId), pageMap) ::
+          (pageMap.keys.filterNot(_.equals(Process.StartStanzaId)).toList.map{ id => buildPageRows(pageMap(id), pageMap)})
+
+        pageRows.foreach{pr =>
+          println(pr)
+          pageMap.get(pr.head.id).map{p =>
+            p.keyedStanzas.foreach(println)
+          }
+        }
+        Ok(view(pageRows))
+
       case Left(err) =>
         InternalServerError(errorHandler.internalServerErrorTemplate)
      }
@@ -97,8 +92,10 @@ class StartAdminController @Inject() (
 
   private def pageTitle(page: Page): Option[String] =
     page.stanzas.collectFirst{
-      case c: TitleCallout => c.text.english
       case i: Input => i.name.english
+      case i: Question => i.text.english
+      case i: Sequence => i.text.english
+      case c: TitleCallout => c.text.english
       case yc: YourCallCallout => yc.text.english
     }
 

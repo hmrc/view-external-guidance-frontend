@@ -14,15 +14,37 @@
  * limitations under the License.
  *@
 
-@import models.PageContext
-@import models.ui.{Text, StandardPage}
+@import models._
 
-@this(layout: main_layout)
+@import uk.gov.hmrc.govukfrontend.views.html.components._
 
-@()(implicit request: Request[_], messages: Messages)
+@this(layout: main_layout, govukTable : GovukTable)
+
+@(rows: List[Seq[ProcessMapRow]])(implicit request: Request[_], messages: Messages)
 
 @layout("page.heading.asString", "ctx.processTitle.asString") {
 
+  @govukTable(Table(
+    rows = rows.flatMap(p =>
+      p.map(r => Seq(
+        TableRow(content=Text(r.typ.toString)),
+        TableRow(content=Text(r.id)),
+        TableRow(content=Text(r.url)),
+        TableRow(content=Text(r.title.getOrElse("")))
+        )
+      )
+    ),
+    head = Some(Seq(
+      HeadCell(content = Text(messages(""))),
+      HeadCell(content = Text(messages("ID"))),
+      HeadCell(content = Text(messages("URL"))),
+      HeadCell(content = Text(messages("TITLE")))
+      )
+    ),
+    caption = Some("PAGES"),
+    captionClasses = "govuk-table__caption--l",
+    firstCellIsHeader = true
+  ))
 
 }
 @{
