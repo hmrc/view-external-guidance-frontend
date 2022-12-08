@@ -19,7 +19,6 @@ package services
 import models._
 import core.models.ocelot.{Link, Phrase, Labels, stringWithOptionalHint, fromPattern}
 import core.models.ocelot.{UiExpansionRegex, LabelOutputFormatGroup, matchGroup, scalarMatch, boldPattern, linkPattern}
-import core.models.{unescapeDollarSymbol, escapeDollarSymbol}
 import models.ui._
 import scala.util.matching.Regex
 import Regex._
@@ -87,10 +86,10 @@ object TextBuilder {
     }
 
   private [services] def expandLabels(text: String, labels: Labels)(implicit messages: Messages): String = {
-    def labelValue(name: String): Option[String] = (labels.displayValue(name)(messages.lang)).map(escapeDollarSymbol)
-    def expand(s: String): String = unescapeDollarSymbol(UiExpansionRegex.replaceAllIn(escapeDollarSymbol(s), {m =>
+    def labelValue(name: String): Option[String] = labels.displayValue(name)(messages.lang).map(Regex.quoteReplacement)
+    def expand(s: String): String = UiExpansionRegex.replaceAllIn(s, {m =>
                                       OutputFormat(Option(m.group(LabelOutputFormatGroup))).asString(scalarMatch(matchGroup(m), labelValue)(labels), messages)
-                                    }))
+                                    })
     expand(expand(text)) // Double expansion to allow for labels as arguments to lists and functions
   }
 
