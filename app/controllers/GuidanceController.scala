@@ -82,27 +82,32 @@ class GuidanceController @Inject() (
     val uri: String = request.target.uriString
     logger.warn(s"GP: sessionId: ${sId}, requestId: ${rId}, URI: ${uri}")
 
-    withExistingSession[PageContext](sId =>service.getPageContext(processCode, s"/$path", p.isDefined, sId)).flatMap {
-      case Left(err) => translateGetPageError(err, processCode, path)
-      case Right(pageCtx) =>
-        logger.info(s"Retrieved page: ${pageCtx.page.urlPath}, start: ${pageCtx.processStartUrl}, answer: ${pageCtx.answer}, backLink: ${pageCtx.backLink}")
-        pageCtx.page match {
-          case page: StandardPage => service.savePageState(pageCtx.sessionId, processCode, pageCtx.labels).flatMap {
-            case Right(_) =>
-              logger.warn(s"GSP=>V: sessionId: ${sId}, requestId: ${rId}, URI: ${uri}")
-              Future.successful(Ok(standardView(page, pageCtx)))
-            case Left(err) => translateGetPageError(err, processCode, path)
+    validateUrl(s"$processCode/$path").fold {
+      logger.warn(s"Request for PageContext at /$path returned NotFound, returning NotFound")
+      Future.successful(NotFound(errorHandler.notFoundTemplateWithProcessCode(None)))
+    } { _ =>
+      withExistingSession[PageContext](sId =>service.getPageContext(processCode, s"/$path", p.isDefined, sId)).flatMap {
+        case Left(err) => translateGetPageError(err, processCode, path)
+        case Right(pageCtx) =>
+          logger.info(s"Retrieved page: ${pageCtx.page.urlPath}, start: ${pageCtx.processStartUrl}, answer: ${pageCtx.answer}, backLink: ${pageCtx.backLink}")
+          pageCtx.page match {
+            case page: StandardPage => service.savePageState(pageCtx.sessionId, processCode, pageCtx.labels).flatMap {
+              case Right(_) =>
+                logger.warn(s"GSP=>V: sessionId: ${sId}, requestId: ${rId}, URI: ${uri}")
+                Future.successful(Ok(standardView(page, pageCtx)))
+              case Left(err) => translateGetPageError(err, processCode, path)
+            }
+            case page: FormPage => pageCtx.dataInput match {
+              case Some(input) =>
+                val inputName: String = formInputName(path)
+                logger.warn(s"GFP=>V: sessionId: ${sId}, requestId: ${rId}, URI: ${uri}")
+                Future.successful(Ok(formView(page, pageCtx, inputName, populatedForm(input, inputName, pageCtx.answer))))
+              case _ =>
+                logger.error(s"Unable to locate input stanza for process ${pageCtx.processCode} on page load")
+                Future.successful(BadRequest(errorHandler.badRequestTemplateWithProcessCode(Some(processCode))))
+            }
           }
-          case page: FormPage => pageCtx.dataInput match {
-            case Some(input) =>
-              val inputName: String = formInputName(path)
-              logger.warn(s"GFP=>V: sessionId: ${sId}, requestId: ${rId}, URI: ${uri}")
-              Future.successful(Ok(formView(page, pageCtx, inputName, populatedForm(input, inputName, pageCtx.answer))))
-            case _ =>
-              logger.error(s"Unable to locate input stanza for process ${pageCtx.processCode} on page load")
-              Future.successful(BadRequest(errorHandler.badRequestTemplateWithProcessCode(Some(processCode))))
-          }
-        }
+      }
     }
   }
 
