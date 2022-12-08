@@ -350,6 +350,24 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
 
   }
 
+  "Calling a URL which includes unsupported characters" should {
+
+    "return a NotFound response" in new QuestionTest {
+
+      override val fakeRequest = FakeRequest("GET", s"$path?$PreviousPageLinkQuery")
+        .withSession(SessionKeys.sessionId -> processId)
+        .withFormUrlEncodedBody()
+        .withCSRFToken
+
+      val invalidProcessCode = "check-what-inform%E2%80%A6n-to-give-your-new-employer"
+      val result = target.getPage(invalidProcessCode, "outcome-starter-checklist-only", Some("1"))(fakeRequest)
+
+      status(result) shouldBe Status.NOT_FOUND
+    }
+
+  }
+
+
   "Returning to a previously answered Question page in a process" should {
 
     "Show the original answer selected" in new QuestionTest {
