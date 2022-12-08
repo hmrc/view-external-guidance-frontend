@@ -46,7 +46,6 @@ class StartAdminController @Inject() (
   val logger: Logger = Logger(getClass)
 
   private def buildPageRows(p: Page, pageMap: Map[String, Page]): Seq[ProcessMapRow] = {
-    //println(p.stanzas)
     ProcessMapRow(PageEntry, p.id, p.url, pageTitle(p)) +: (p.next.map{ id =>
       ProcessMapRow(NextEntry, id, pageMap(id).url, pageTitle(pageMap(id)))
     } ++ p.linked.map{ id =>
