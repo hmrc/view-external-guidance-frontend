@@ -45,14 +45,6 @@ class StartAdminController @Inject() (
 
   val logger: Logger = Logger(getClass)
 
-  private def buildPageRows(p: Page, pageMap: Map[String, Page]): Seq[ProcessMapRow] = {
-    ProcessMapRow(PageEntry, p.id, p.url, pageTitle(p)) +: (p.next.map{ id =>
-      ProcessMapRow(NextEntry, id, pageMap(id).url, pageTitle(pageMap(id)))
-    } ++ p.linked.map{ id =>
-      ProcessMapRow(LinkEntry, id, pageMap(id).url, pageTitle(pageMap(id)))
-    })
-  }
-
   def publishedPageMap(processId: String): Action[AnyContent] = Action.async { implicit request =>
     retrieveAndView(processId, service.retrieveOnlyPublished)
   }
@@ -72,6 +64,14 @@ class StartAdminController @Inject() (
       case Left(err) =>
         InternalServerError(errorHandler.internalServerErrorTemplate)
      }
+
+  private def buildPageRows(p: Page, pageMap: Map[String, Page]): Seq[ProcessMapRow] = {
+    ProcessMapRow(PageEntry, p.id, p.url, pageTitle(p)) +: (p.next.map{ id =>
+      ProcessMapRow(NextEntry, id, pageMap(id).url, pageTitle(pageMap(id)))
+    } ++ p.linked.map{ id =>
+      ProcessMapRow(LinkEntry, id, pageMap(id).url, pageTitle(pageMap(id)))
+    })
+  }
 
   private def pageTitle(page: Page): Option[String] =
     page.stanzas.collectFirst{
