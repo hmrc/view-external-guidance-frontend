@@ -34,72 +34,67 @@ class RetrieveAndCacheService @Inject() (
     sessionRepository: SessionRepository,
     pageBuilder: PageBuilder,
     spb: SecuredProcessBuilder
-) {
+)(implicit ec: ExecutionContext) {
   type Retrieve[A] = String => Future[RequestOutcome[A]]
 
   val logger: Logger = Logger(getClass)
 
   def retrieveAndCacheScratch(uuid: String, docId: String)
-                             (implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[(String,String)]] =
+                             (implicit hc: HeaderCarrier): Future[RequestOutcome[(String,String)]] =
     retrieveAndCache(uuid, docId, map(connector.scratchProcess)(p => spb.secureIfRequired(p.copy(meta = p.meta.copy(id = uuid)))), Scratch)
 
   def retrieveAndCachePublished(processCode: String, docId: String)
-                               (implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[(String,String)]] =
+                               (implicit hc: HeaderCarrier): Future[RequestOutcome[(String,String)]] =
     retrieveAndCache(processCode, docId, map(connector.publishedProcess)(spb.secureIfRequired), Published)
 
   def retrieveAndCacheApproval(processId: String, docId: String)
-                              (implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[(String,String)]] =
+                              (implicit hc: HeaderCarrier): Future[RequestOutcome[(String,String)]] =
     retrieveAndCache(processId, docId, map(connector.approvalProcess)(spb.secureIfRequired), Approval)
 
   def retrieveAndCacheApprovalByPageUrl(url: String)(processId: String, docId: String)
-                              (implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[(String,String)]] =
+                              (implicit hc: HeaderCarrier): Future[RequestOutcome[(String,String)]] =
     retrieveAndCache(processId, docId, connector.approvalProcess, PageReview, Some(url))
 
-  def retrieveOnlyPublished(processCode: String)
-                               (implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[(Process, Seq[Page])]] =
+  def retrieveOnlyPublished(processCode: String)(implicit hc: HeaderCarrier): Future[RequestOutcome[(Process, Seq[Page])]] =
     retrieve(processCode, map(connector.publishedProcess)(spb.secureIfRequired))
-//    retrieve(processCode, map(connector.publishedProcess)(spb.secureIfRequired)).map(_.fold(err => Left(err), res => Right(res)))
 
-  def retrieveOnlyApproval(processId: String)
-                              (implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[(Process, Seq[Page])]] =
-    retrieve(processId, map(connector.approvalProcess)(spb.secureIfRequired))
-    // retrieve(processId, map(connector.approvalProcess)(spb.secureIfRequired)).map(_.fold(err => Left(err), res => Right(res)))
+  def retrieveOnlyApproval(processCode: String)(implicit hc: HeaderCarrier): Future[RequestOutcome[(Process, Seq[Page])]] =
+    retrieve(processCode, map(connector.approvalProcess)(spb.secureIfRequired))
 
-  private def retrieve(processIdentifier: String, retrieveProcessById: Retrieve[Process])(
-    implicit context: ExecutionContext
-  ): Future[RequestOutcome[(Process, Seq[Page])]] =
-    retrieveProcessById(processIdentifier).map {
+  private def retrieve(processCode: String, retrieveProcessById: Retrieve[Process]): Future[RequestOutcome[(Process, Seq[Page])]] =
+    retrieveProcessById(processCode).map {
       case Left(err) =>
-        logger.warn(s"Unable to find process using identifier $processIdentifier, received $err")
+        logger.warn(s"Unable to find process using identifier $processCode, received $err")
         Left(err)
       case Right(process) =>
         logger.warn(s"Loaded process ${process.meta.id}, containing ${process.flow.keys.toList.length} stanzas, ${process.phrases.length} phrases")
         pageBuilder.pages(process, process.startPageId).fold(err => {
-            logger.warn(s"Unable to parse process with identifier $processIdentifier, received $err")
+            logger.warn(s"Unable to parse process with identifier $processCode, received $err")
             Left(InvalidProcessError)
           },
           pages => Right((process, pages))
         )
     }
 
-  private def retrieveAndCache(processIdentifier: String, docId: String, retrieveProcessById: Retrieve[Process], runMode: RunMode, url: Option[String] = None)(
-    implicit context: ExecutionContext
-  ): Future[RequestOutcome[(String,String)]] =
-    retrieve(processIdentifier, retrieveProcessById).flatMap {
+  private def retrieveAndCache(processCode: String, docId: String, retrieveProcessById: Retrieve[Process], runMode: RunMode, url: Option[String] = None): Future[RequestOutcome[(String,String)]] =
+    retrieve(processCode, retrieveProcessById).flatMap {
       case Left(err) =>
-        logger.warn(s"Unable to process using identifier $processIdentifier, received $err")
+        logger.warn(s"Unable to process using identifier $processCode, received $err")
         Future.successful(Left(err))
       case Right((process, pages)) =>
-        if (logger.isDebugEnabled) {
-          val urlMap: Map[String, String] = pages.map(p => (p.id, p.url)).toMap
-          logger.debug(s"Process id: $processIdentifier, processCode: ${process.meta.processCode}, title: ${process.meta.title}")
-          logger.debug(s"PAGE MAP:")
-          pages.foreach{pge =>
-            logger.debug(s"PAGE: ${pge.id}, ${pge.url}")
-            pge.next.foreach(id => logger.debug(s"\tnxt:=> $id, ${urlMap(id)}"))
-            pge.linked.foreach(id => logger.debug(s"\tlnk:=> $id, ${urlMap(id)}"))
-          }
-        }
+        //
+        // Left intentially commented out
+        //
+        // if (logger.isDebugEnabled) {
+        //   val urlMap: Map[String, String] = pages.map(p => (p.id, p.url)).toMap
+        //   logger.debug(s"Process id: $processCode, processCode: ${process.meta.processCode}, title: ${process.meta.title}")
+        //   logger.debug(s"PAGE MAP:")
+        //   pages.foreach{pge =>
+        //     logger.debug(s"PAGE: ${pge.id}, ${pge.url}")
+        //     pge.next.foreach(id => logger.debug(s"\tnxt:=> $id, ${urlMap(id)}"))
+        //     pge.linked.foreach(id => logger.debug(s"\tlnk:=> $id, ${urlMap(id)}"))
+        //   }
+        // }
 
         val pageMap: Map[String, PageNext] = pages.map(p => p.url -> PageNext(p.id, p.next.toList, p.linked.toList)).toMap
         val startPageUrl: String = url.getOrElse(pages.head.url)

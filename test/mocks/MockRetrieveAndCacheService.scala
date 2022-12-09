@@ -21,7 +21,8 @@ import org.scalamock.handlers.CallHandler
 import org.scalamock.scalatest.MockFactory
 import services.RetrieveAndCacheService
 import uk.gov.hmrc.http.HeaderCarrier
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
+import core.models.ocelot.{Process, Page}
 
 trait MockRetrieveAndCacheService extends MockFactory {
 
@@ -31,23 +32,33 @@ trait MockRetrieveAndCacheService extends MockFactory {
 
     def retrieveAndCacheScratch(uuid: String, sessionRepoId: String): CallHandler[Future[RequestOutcome[(String,String)]]] =
       (mockRetrieveAndCacheService
-        .retrieveAndCacheScratch(_: String, _: String)(_: HeaderCarrier, _: ExecutionContext))
-        .expects(uuid, *, *, *)
+        .retrieveAndCacheScratch(_: String, _: String)(_: HeaderCarrier))
+        .expects(uuid, *, *)
 
     def retrieveAndCachePublished(processId: String, sessionRepoId: String): CallHandler[Future[RequestOutcome[(String,String)]]] =
       (mockRetrieveAndCacheService
-        .retrieveAndCachePublished(_: String, _: String)(_: HeaderCarrier, _: ExecutionContext))
-        .expects(processId, *, *, *)
+        .retrieveAndCachePublished(_: String, _: String)(_: HeaderCarrier))
+        .expects(processId, *, *)
 
     def retrieveAndCacheApproval(processId: String, sessionRepoId: String): CallHandler[Future[RequestOutcome[(String, String)]]] =
       (mockRetrieveAndCacheService
-        .retrieveAndCacheApproval(_: String, _: String)(_: HeaderCarrier, _: ExecutionContext))
-        .expects(processId, *, *, *)
+        .retrieveAndCacheApproval(_: String, _: String)(_: HeaderCarrier))
+        .expects(processId, *, *)
 
     def retrieveAndCacheApprovalByPageUrl(url: String)(processId: String, sessionRepoId: String): CallHandler[Future[RequestOutcome[(String, String)]]] =
       (mockRetrieveAndCacheService
-        .retrieveAndCacheApprovalByPageUrl(_: String)(_: String, _: String)(_: HeaderCarrier, _: ExecutionContext))
-        .expects(url, processId, *, *, *)
+        .retrieveAndCacheApprovalByPageUrl(_: String)(_: String, _: String)(_: HeaderCarrier))
+        .expects(url, processId, *, *)
+
+  def retrieveOnlyPublished(processCode: String): CallHandler[Future[RequestOutcome[(Process, Seq[Page])]]] =
+      (mockRetrieveAndCacheService
+        .retrieveOnlyPublished(_: String)(_: HeaderCarrier))
+        .expects(processCode, *)
+
+  def retrieveOnlyApproval(processCode: String): CallHandler[Future[RequestOutcome[(Process, Seq[Page])]]] =
+      (mockRetrieveAndCacheService
+        .retrieveOnlyApproval(_: String)(_: HeaderCarrier))
+        .expects(processCode, *)
 
   }
 }

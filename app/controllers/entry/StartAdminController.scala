@@ -28,6 +28,7 @@ import controllers.actions.SessionIdAction
 import models._
 import core.models.RequestOutcome
 import views.html.process_map
+import core.models.errors.NotFoundError
 import core.models.ocelot.{Process, Page}
 import core.models.ocelot.stanzas.{TitleCallout, Input, YourCallCallout, Question, Sequence}
 import scala.concurrent.Future
@@ -53,27 +54,31 @@ class StartAdminController @Inject() (
    retrieveAndView(processId, service.retrieveOnlyApproval)
   }
 
-  private def retrieveAndView(processCode: String, retrieve: String => Future[RequestOutcome[(Process, Seq[Page])]])(implicit request: Request[_]): Future[Result] =
+  private[entry] def retrieveAndView(processCode: String, retrieve: String => Future[RequestOutcome[(Process, Seq[Page])]])(implicit request: Request[_]): Future[Result] =
     retrieve(processCode).map{
       case Right((process, pages)) =>
         val pageMap: Map[String, Page] = pages.map(p => (p.id, p)).toMap
-        val pageRows: List[Seq[ProcessMapRow]] = buildPageRows(pageMap(Process.StartStanzaId), pageMap) ::
-          (pageMap.keys.filterNot(_.equals(Process.StartStanzaId)).toList.map{ id => buildPageRows(pageMap(id), pageMap)})
+        val pageRows: List[Seq[ProcessMapRow]] = buildPageRows(pageMap.get(Process.StartStanzaId), pageMap) ::
+          (pageMap.keys.filterNot(_.equals(Process.StartStanzaId)).toList.map{ id => buildPageRows(pageMap.get(id), pageMap)})
         Ok(view(process.title.english, pageRows))
+
+      case Left(NotFoundError) =>
+        NotFound(errorHandler.notFoundTemplate)
 
       case Left(err) =>
         InternalServerError(errorHandler.internalServerErrorTemplate)
      }
 
-  private def buildPageRows(p: Page, pageMap: Map[String, Page]): Seq[ProcessMapRow] = {
-    ProcessMapRow(PageEntry, p.id, p.url, pageTitle(p)) +: (p.next.map{ id =>
-      ProcessMapRow(NextEntry, id, pageMap(id).url, pageTitle(pageMap(id)))
-    } ++ p.linked.map{ id =>
-      ProcessMapRow(LinkEntry, id, pageMap(id).url, pageTitle(pageMap(id)))
-    })
-  }
+  private[entry] def buildPageRows(page: Option[Page], pageMap: Map[String, Page]): Seq[ProcessMapRow] =
+    page.fold[Seq[ProcessMapRow]](Seq.empty){p =>
+      ProcessMapRow(PageEntry, p.id, p.url, pageTitle(p)) +: (p.next.map{ id =>
+        ProcessMapRow(NextEntry, id, pageMap(id).url, pageTitle(pageMap(id)))
+      } ++ p.linked.map{ id =>
+        ProcessMapRow(LinkEntry, id, pageMap(id).url, pageTitle(pageMap(id)))
+      })
+    }
 
-  private def pageTitle(page: Page): Option[String] =
+  private[entry] def pageTitle(page: Page): Option[String] =
     page.stanzas.collectFirst{
       case i: Input => i.name.english
       case i: Question => i.text.english
