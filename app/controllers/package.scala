@@ -18,6 +18,7 @@ import java.time.Instant
 import config.AppConfig
 import play.api.i18n.Messages
 import core.models.ocelot.errors._
+import core.models.ocelot.UrlPathPattern
 import uk.gov.hmrc.http.SessionKeys
 import play.api.mvc.Request
 
@@ -50,4 +51,14 @@ package object controllers {
              messages("guidance.error.unsupported_ui_pattern.soln3"),
              messages("guidance.error.unsupported_ui_pattern.soln4"))
     }).collect{case Some(s) => s}
+
+  def decodeUrlPath(url: String): Option[String] =
+    try { Some(java.net.URLDecoder.decode(url, "UTF-8"))}
+    catch{case _: Throwable => None}
+
+  def validateUrl(url: String): Option[String] =
+    decodeUrlPath(url).flatMap{
+      case decodedUrl: String if decodedUrl.matches(UrlPathPattern) => Some(decodedUrl)
+      case _ => None
+    }
 }
