@@ -21,16 +21,31 @@
 @(s: PopulatedStanza)(implicit messages: Messages)
   @{s match {
     case p: PageStanza =>
-      <span><Strong>url</Strong>={p.url}, <Strong>next</Strong>={p.next}, <Strong>stack</Strong>={p.stack}</span>
+      <span><Strong>url</Strong>={p.url}, <Strong>next</Strong>={p.next.mkString(" ,")}, <Strong>stack</Strong>={p.stack}</span>
     case i: Instruction =>
-      <span><Strong>text</Strong>={i.text.english}, <Strong>links</Strong>={i.links}, <Strong>next</Strong>={i.next}, <Strong>stack</Strong>={i.stack}</span>
+      <span><Strong>text</Strong>={i.text.english}, <Strong>links</Strong>={i.links}, <Strong>next</Strong>={i.next.mkString(" ,")}, <Strong>stack</Strong>={i.stack}</span>
     case c: Callout =>
       <span><Strong>text</Strong>={c.text.english}, <Strong>next</Strong>={c.next}, <Strong>stack</Strong>={c.stack}</span>
     case c: Calculation => Html(
-      s"<span><strong>next</strong>=${c.next}</span>" + {c.calcs.map(op => s"<p><Strong>left</Strong>=${op.left}, <Strong>op</Strong>=${operationName(op)}, <Strong>right</Strong>=${op.right}, <Strong>label</Strong>=${op.label}").mkString})
+      s"<span><strong>next</strong>=${c.next.mkString(" ,")}</span>" + {c.calcs.map(op => s"<p><Strong>left</Strong>=${op.left}, <Strong>op</Strong>=${operationName(op)}, <Strong>right</Strong>=${op.right}, <Strong>label</Strong>=${op.label}").mkString})
+
+    case vs: ValueStanza => Html(
+      s"<span><strong>next</strong>=${vs.next.mkString(" ,")}, <Strong>stack</Strong>={vs.stack}</span>" + {vs.values.map(v => s"<p><Strong>type</Strong>=${v.valueType}, <Strong>label</Strong>=${v.label}, <Strong>value</Strong>=${v.value}").mkString})
+
+    case r: Row => Html(
+      s"<span><strong>next</strong>=${r.next.mkString(" ,")}, <Strong>stack</Strong>=${r.stack}</span><p>"+ {r.cells.map(c => c.english).mkString(" ,")})
+
+    case c: Choice => Html(
+      s"<span><strong>next</strong>=${c.next.mkString(" ,")}</span>" + {c.tests.map(t => s"<p><Strong>left</Strong>=${t.left}, <Strong>test</Strong>=${choiceTestName(t)}, <Strong>right</Strong>=${t.right}").mkString})
+
+    case q: Question => Html(
+      s"<span><strong>text</strong>=${q.text.english}, <strong>label</strong>=${q.label.getOrElse("")}, <strong>next</strong>=${q.next.mkString(" ,")}, <Strong>stack</Strong>=${q.stack}</span><p><strong>Answers</strong>=" + {q.answers.map(a => a.english).mkString(" ,")})
+
+   case s: Sequence => Html(
+      s"<span><strong>text</strong>=${s.text.english}, <strong>label</strong>=${s.label.getOrElse("")}, <strong>exclusive</strong>=${s.exclusive.getOrElse("")}, <strong>next</strong>=${s.next.mkString(" ,")}, <Strong>stack</Strong>=${s.stack}</span><p><strong>Options</strong>=" + {s.options.map(a => a.english).mkString(" ,")})
 
     case i: core.models.ocelot.stanzas.Input =>
-      <span><Strong>name</Strong>={i.name.english}, <Strong>help</Strong>={i.help.map(_.english).getOrElse("")}, <Strong>label</Strong>={i.label}, <Strong>dontRepeatName</Strong>={i.dontRepeatName}, <Strong>width</Strong>={i.width},<Strong>next</Strong>={i.next}, <Strong>stack</Strong>={i.stack}</span>
+      <span><Strong>name</Strong>={i.name.english}, <Strong>help</Strong>={i.help.map(_.english).getOrElse("")}, <Strong>label</Strong>={i.label}, <Strong>dontRepeatName</Strong>={i.dontRepeatName}, <Strong>width</Strong>={i.width},<Strong>next</Strong>={i.next.mkString(" ,")}, <Strong>stack</Strong>={i.stack}</span>
     case _ => s.toString
   }
 }

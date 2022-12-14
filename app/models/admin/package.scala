@@ -44,6 +44,9 @@ package object admin {
       case _: CurrencyPoundsOnlyInput => "CurrencyPoundsOnlyInput"
       case _: DateInput => "DateInput"
       case _: Calculation => "Calculation"
+      case _: Choice => "Choice"
+      case _: Row => "Row"
+      case _: ValueStanza => "Value"
 
       case _ => "Other"
     }
@@ -56,5 +59,16 @@ package object admin {
       case _: DivideOperation => "Divide"
       case _: CeilingOperation => "Ceiling"
       case _: FloorOperation => "Floor"
+    }
+
+  def choiceTestName(op: ChoiceTest): String =
+    op match {
+      case _: EqualsTest => "equals"
+      case _: NotEqualsTest => "not equals"
+      case _: MoreThanTest => "more than"
+      case _: MoreThanOrEqualsTest => "more than or equals"
+      case _: LessThanTest => "less than"
+      case _: LessThanOrEqualsTest => "less than or equals"
+      case _: ContainsTest => "contains"
     }
 }
