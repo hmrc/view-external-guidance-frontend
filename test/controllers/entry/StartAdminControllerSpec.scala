@@ -31,6 +31,7 @@ import controllers.actions.SessionIdAction
 import core.models.ocelot.stanzas._
 import core.models.ocelot._
 import core.models.ocelot.{Meta, Process}
+import views.html._
 
 class StartAdminControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
 
@@ -56,7 +57,7 @@ class StartAdminControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
     }
 
     lazy val errorHandler = app.injector.instanceOf[config.ErrorHandler]
-    lazy val view = app.injector.instanceOf[views.html.process_map]
+    lazy val view = app.injector.instanceOf[admin.process_map]
 
     val seq = Sequence(
       Phrase("Select a working day of the week", "Welsh: Select a working day of the week"),
@@ -120,60 +121,6 @@ class StartAdminControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
                         KeyedStanza("end",EndStanza)
                       ),List(),true)
 
-
-    // val instruction: Instruction = Instruction(Phrase("Instruction", "Instruction"), Seq("3"), None, false)
-    // val questionStanza: Question = Question(Phrase("Which?","Which?"), Seq(Phrase("yes","yes"),Phrase("no","no")), Seq("4","5"), None, false)
-    // val currencyInputStanza: CurrencyInput = CurrencyInput(Seq("4"),Phrase("",""), None, "PRICE", None, false)
-    // val nonExclusiveSequence: Sequence = Sequence(
-    //   Phrase("Select a working day of the week", "Welsh: Select a working day of the week"),
-    //   Seq("10", "20", "30", "40", "50", "end"),
-    //   Seq(
-    //     Phrase("Monday", "Welsh: Monday"),
-    //     Phrase("Tuesday", "Welsh: Tuesday"),
-    //     Phrase("Wednesday", "Welsh: Wednesday"),
-    //     Phrase("Thursday", "Welsh: Thursday"),
-    //     Phrase("Friday", "Welsh: Friday")
-    //   ),
-    //   None,
-    //   None,
-    //   stack = false
-    // )
-    // val exclusiveSequence: Sequence = Sequence(
-    //   Phrase("Select a holiday destination", "Welsh: Select a holiday destination"),
-    //   Seq("10", "20", "30", "40", "50", "60"),
-    //   Seq(
-    //     Phrase("Europe", "Welsh: Europe"),
-    //     Phrase("Africa", "Welsh: Africa"),
-    //     Phrase("Americas", "Welsh: Americas"),
-    //     Phrase("Asia", "Welsh: Asia"),
-    //   ),
-    //   Some(Phrase(
-    //     "Elsewhere [exclusive][hint:Selecting this checkbox will deselect the other checkboxes]",
-    //     "Welsh: Elsewhere [exclusive][hint:Welsh: Selecting this checkbox will deselect the other checkboxes]"
-    //   )),
-    //   None,
-    //   stack = false
-    // )
-    // val stanzas: Seq[KeyedStanza] = Seq(KeyedStanza("start", PageStanza("/start", Seq("1"), false)),
-    //                                     KeyedStanza("1", instruction),
-    //                                     KeyedStanza("3", questionStanza)
-    //                                   )
-    // val stanzasWithInput: Seq[KeyedStanza] = Seq(KeyedStanza("start", PageStanza("/start", Seq("1"), false)),
-    //                                     KeyedStanza("1", instruction),
-    //                                     KeyedStanza("3", currencyInputStanza)
-    //                                   )
-
-    // val stanzasWithNonExclusiveSequence: Seq[KeyedStanza] = Seq(
-    //   KeyedStanza("start", PageStanza("/start", Seq("1"), stack = false)),
-    //   KeyedStanza("1", instruction),
-    //   KeyedStanza("3", nonExclusiveSequence),
-    //   KeyedStanza("end", EndStanza)
-    // )
-
-    // val page = Page("start", "/test-page", stanzas, Seq("4","5"))
-    // val inputPage = Page("start", "/test-page", stanzasWithInput, Seq("4"))
-    // val nonQuestionPage = Page("start", "/test-page", stanzas.drop(1), Seq("3"))
-    // val nonExclusiveSequenceInputPage: Page = Page("start", "/test-page", stanzasWithNonExclusiveSequence, Seq("end"))
   }
 
   trait ProcessTest extends MockRetrieveAndCacheService with TestData {
@@ -271,9 +218,8 @@ class StartAdminControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
       val pageMap: Map[String, Page] = Seq(titlePage).map(p => (p.id, p)).toMap
 
 
-      val rows = target.buildPageRows(Some(titlePage), pageMap)
+      val rows = target.buildPageRows(Seq(titlePage.id), pageMap)
       rows.length shouldBe 1
-      rows.head.typ shouldBe models.PageEntry
       rows.head.id shouldBe "start"
       rows.head.url shouldBe "/bulletPoints"
       rows.head.title shouldBe Some("vtst Bullet Point List")
@@ -289,76 +235,5 @@ class StartAdminControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
       target.pageTitle(yourCallPage) shouldBe Some("vtst Bullet Point List")
     }
   }
-
-  // "Calling the approval endpoint with a valid process ID" should {
-
-  //   "redirect the caller to another page" in new ProcessTest {
-  //     MockRetrieveAndCacheService
-  //       .retrieveAndCacheApproval(processId, processId)
-  //       .returns(Future.successful(Right((expectedUrl, processId))))
-
-  //     val result = target.approval(processId)(fakeRequest)
-  //     status(result) shouldBe Status.SEE_OTHER
-  //   }
-
-  //   "redirect the caller to the start page of the process" in new ProcessTest {
-  //     MockRetrieveAndCacheService
-  //       .retrieveAndCacheApproval(processId, processId)
-  //       .returns(Future.successful(Right((expectedUrl,processId))))
-  //     val result = target.approval(processId)(fakeRequest)
-  //     redirectLocation(result) shouldBe Some(s"$pageViewBaseUrl/$processId$expectedUrl")
-  //   }
-  // }
-
-  // "Calling approval endpoint with a invalid process ID" should {
-
-  //   "return a NOT_FOUND error" in new ProcessTest {
-  //     val unknownProcessId = "ext90077"
-  //     MockRetrieveAndCacheService
-  //       .retrieveAndCacheApproval(unknownProcessId, unknownProcessId)
-  //       .returns(Future.successful(Left(NotFoundError)))
-  //     val result = target.approval(unknownProcessId)(fakeRequest)
-  //     status(result) shouldBe Status.NOT_FOUND
-  //   }
-
-  // }
-
-  // "Calling the approvalPage endpoint with a valid process ID and Url" should {
-
-  //   val url = "blah"
-
-  //   "redirect the caller to another page" in new ProcessTest {
-  //     MockRetrieveAndCacheService
-  //       .retrieveAndCacheApprovalByPageUrl(s"/$url")(processId, processId)
-  //       .returns(Future.successful(Right((s"/$url", processId))))
-
-  //     val result = target.approvalPage(processId, url)(fakeRequest)
-  //     status(result) shouldBe Status.SEE_OTHER
-  //   }
-
-  //   "redirect the caller to the start page of the process" in new ProcessTest {
-  //     MockRetrieveAndCacheService
-  //       .retrieveAndCacheApprovalByPageUrl(s"/$url")(processId, processId)
-  //       .returns(Future.successful(Right((s"/$url", processId))))
-  //     val result = target.approvalPage(processId, url)(fakeRequest)
-  //     redirectLocation(result) shouldBe Some(s"$pageViewBaseUrl/$processId/$url")
-  //   }
-
-  // }
-
-  // "Calling approvalPage endpoint with a invalid process ID" should {
-
-  //   val url = "blah"
-
-  //   "return a NOT_FOUND error" in new ProcessTest {
-  //     val unknownProcessId = "ext90077"
-  //     MockRetrieveAndCacheService
-  //       .retrieveAndCacheApprovalByPageUrl(s"/$url")(unknownProcessId, unknownProcessId)
-  //       .returns(Future.successful(Left(NotFoundError)))
-  //     val result = target.approvalPage(unknownProcessId, url)(fakeRequest)
-  //     status(result) shouldBe Status.NOT_FOUND
-  //   }
-
-  // }
 
 }

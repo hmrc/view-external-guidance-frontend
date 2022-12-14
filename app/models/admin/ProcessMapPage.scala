@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-package models
+package models.admin
 
-sealed trait RowType
-case object PageEntry extends RowType {override def toString(): String = "Page"}
-case object NextEntry extends RowType {override def toString(): String = "=>"}
-case object LinkEntry extends RowType {override def toString(): String = "->"}
+import core.models.ocelot._
 
-case class ProcessMapRow(typ: RowType, id: String, url: String, title: Option[String])
+case class LinkedPage(id: String, url: String, title: Option[String])
+case class ProcessMapPage(id: String, url: String, title: Option[String], keyedStanzas: Seq[KeyedStanza], nexts: Seq[LinkedPage], links: Seq[LinkedPage])

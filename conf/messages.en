@@ -92,4 +92,8 @@ guidance.error.unsupported_ui_pattern.soln3=2. Summary list. Two columns and col
 guidance.error.unsupported_ui_pattern.soln4=3. Table. At least one column and two rows. The cells of row 1 are headings, all of which must be bold. The Row stanzas which make up the table must be stacked to a Callout of type SubSection which will become the overall title of the table
 
 ## guidance internals
-guidance.internals.heading = Guidance structure
+guidance.internals.heading = Page structure
+guidance.internals.id = Id
+guidance.internals.title = Title
+guidance.internals.url = Url
+

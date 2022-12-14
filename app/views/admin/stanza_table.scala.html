@@ -14,41 +14,36 @@
  * limitations under the License.
  *@
 
-@import models._
+@import models.admin._
 
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 
-@this(layout: main_layout, govukTable : GovukTable, wideLayout: components.FullWidthContentLayout)
+@this(
+  govukTable : GovukTable
+)
 
-@(title: String, rows: List[Seq[ProcessMapRow]])(implicit request: Request[_], messages: Messages)
-
-@layout(messages("guidance.internals.heading"),
-        messages("guidance.internals.heading"), None, None, None, false, true,
-        Some(wideLayout(_)), false) {
+@(pmpage: ProcessMapPage)(implicit request: Request[_], messages: Messages)
 
   @govukTable(Table(
-    rows = rows.flatMap(p =>
-      p.map(r => Seq(
-        TableRow(content=Text(r.typ.toString)),
-        TableRow(content=Text(r.id)),
-        TableRow(content=Text(r.url)),
-        TableRow(content=Text(r.title.getOrElse("")))
+      pmpage.keyedStanzas.map(ks => Seq(
+        TableRow(content=Text(ks.key.toString)),
+        TableRow(content=Text(stanzaTypeName(ks.stanza))),
+        TableRow(content=HtmlContent(render_stanza(ks.stanza)))
         )
       )
-    ),
+    ,
     head = Some(Seq(
-      HeadCell(content = Text(messages(""))),
-      HeadCell(content = Text(messages("ID"))),
-      HeadCell(content = Text(messages("URL"))),
-      HeadCell(content = Text(messages("TITLE")))
+      HeadCell(content = Text("Id")),
+      HeadCell(content = Text("Type")),
+      HeadCell(content = Text("Properties"))
       )
     ),
-    caption = Some(title),
+    caption = Some(s"Page '${pmpage.id}' Stanzas"),
     captionClasses = "govuk-table__caption--l",
     firstCellIsHeader = true
   ))
 
-}
 @{
      //$COVERAGE-OFF$
 }
+

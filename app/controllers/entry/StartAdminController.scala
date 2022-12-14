@@ -25,19 +25,20 @@ import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 import play.api.Logger
 import scala.concurrent.ExecutionContext.Implicits.global
 import controllers.actions.SessionIdAction
-import models._
+import models.admin._
 import core.models.RequestOutcome
-import views.html.process_map
+import views.html._
 import core.models.errors.NotFoundError
 import core.models.ocelot.{Process, Page}
 import core.models.ocelot.stanzas.{TitleCallout, Input, YourCallCallout, Question, Sequence}
 import scala.concurrent.Future
+import scala.annotation.tailrec
 
 @Singleton
 class StartAdminController @Inject() (
     errorHandler: ErrorHandler,
     service: RetrieveAndCacheService,
-    view: process_map,
+    view: admin.process_map,
     sessionIdAction: SessionIdAction,
     mcc: MessagesControllerComponents,
     appConfig: AppConfig
@@ -54,12 +55,12 @@ class StartAdminController @Inject() (
    retrieveAndView(processId, service.retrieveOnlyApproval)
   }
 
-  private[entry] def retrieveAndView(processCode: String, retrieve: String => Future[RequestOutcome[(Process, Seq[Page])]])(implicit request: Request[_]): Future[Result] =
+  private[entry] def retrieveAndView(processCode: String,
+                                     retrieve: String => Future[RequestOutcome[(Process, Seq[Page])]])(implicit request: Request[_]): Future[Result] =
     retrieve(processCode).map{
       case Right((process, pages)) =>
         val pageMap: Map[String, Page] = pages.map(p => (p.id, p)).toMap
-        val pageRows: List[Seq[ProcessMapRow]] = buildPageRows(pageMap.get(Process.StartStanzaId), pageMap) ::
-          (pageMap.keys.filterNot(_.equals(Process.StartStanzaId)).toList.map{ id => buildPageRows(pageMap.get(id), pageMap)})
+        val pageRows: List[ProcessMapPage] = buildPageRows(Seq(Process.StartStanzaId), pageMap)
         Ok(view(process.title.english, pageRows))
 
       case Left(NotFoundError) =>
@@ -69,13 +70,25 @@ class StartAdminController @Inject() (
         InternalServerError(errorHandler.internalServerErrorTemplate)
      }
 
-  private[entry] def buildPageRows(page: Option[Page], pageMap: Map[String, Page]): Seq[ProcessMapRow] =
-    page.fold[Seq[ProcessMapRow]](Seq.empty){p =>
-      ProcessMapRow(PageEntry, p.id, p.url, pageTitle(p)) +: (p.next.map{ id =>
-        ProcessMapRow(NextEntry, id, pageMap(id).url, pageTitle(pageMap(id)))
-      } ++ p.linked.map{ id =>
-        ProcessMapRow(LinkEntry, id, pageMap(id).url, pageTitle(pageMap(id)))
-      })
+  @tailrec
+  final private[entry] def buildPageRows(pageIds: Seq[String],
+                                         pageMap: Map[String, Page],
+                                         seen: List[String] = Nil,
+                                         rows: List[ProcessMapPage] = Nil): List[ProcessMapPage] =
+    pageIds match {
+      case Nil => rows.reverse
+      case x :: xs if !seen.contains(x) =>
+        val page = pageMap(x)
+        val nexts = page.next.map(n => LinkedPage(n, pageMap(n).url, pageTitle(pageMap(n))))
+        val linked = page.linked.map(l => LinkedPage(l, pageMap(l).url, pageTitle(pageMap(l))))
+        buildPageRows(
+          xs ++ page.next ++ page.linked,
+          pageMap,
+          x :: seen,
+          ProcessMapPage(x, page.url, pageTitle(page), page.keyedStanzas, nexts, linked) :: rows
+        )
+      case x :: xs =>
+        buildPageRows(xs, pageMap, seen, rows)
     }
 
   private[entry] def pageTitle(page: Page): Option[String] =
