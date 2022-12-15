@@ -36,6 +36,9 @@ class GuidanceConnector @Inject() (httpClient: HttpClient, appConfig: AppConfig)
   def approvalProcess(processId: String)(implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[Process]] =
     retrieveProcess(appConfig.externalGuidanceBaseUrl + s"/external-guidance/approval/$processId")
 
+  def approvalProcessByProcessCode(processCode: String)(implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[Process]] =
+    retrieveProcess(appConfig.externalGuidanceBaseUrl + s"/external-guidance/approval/code/$processCode")
+
   private def retrieveProcess(endPoint: String)(implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[Process]] = {
     import connectors.httpParsers.GetProcessHttpParser.getProcessHttpReads
 

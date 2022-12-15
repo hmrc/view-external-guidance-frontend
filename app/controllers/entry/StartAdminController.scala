@@ -29,7 +29,7 @@ import models.admin._
 import core.models.RequestOutcome
 import views.html._
 import core.models.errors.NotFoundError
-import core.models.ocelot.{Process, Page}
+import core.models.ocelot.{Process, Page, SecuredProcess}
 import core.models.ocelot.stanzas.{TitleCallout, Input, YourCallCallout, Question, Sequence}
 import scala.concurrent.Future
 import scala.annotation.tailrec
@@ -80,7 +80,10 @@ class StartAdminController @Inject() (
         val page = pageMap(x)
         val nexts = page.next.map(n => LinkedPage(n, pageMap(n).url, pageTitle(pageMap(n))))
         val linked = page.linked.map(l => LinkedPage(l, pageMap(l).url, pageTitle(pageMap(l))))
-        val linkedFrom = pageMap.values.filter(p => p.linked.contains(x) || p.next.contains(x)).map(_.id).toSeq
+        val linkedFrom = pageMap.values
+                                .filter(p => p.linked.contains(x) || p.next.contains(x))
+                                .map(_.id)
+                                .filterNot(_.equals(SecuredProcess.PassPhrasePageId)).toSeq
         buildPageRows(
           xs ++ page.next ++ page.linked,
           pageMap,

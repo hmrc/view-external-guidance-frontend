@@ -59,7 +59,7 @@ class RetrieveAndCacheService @Inject() (
     retrieve(processCode, map(connector.publishedProcess)(spb.secureIfRequired))
 
   def retrieveOnlyApproval(processCode: String)(implicit hc: HeaderCarrier): Future[RequestOutcome[(Process, Seq[Page])]] =
-    retrieve(processCode, map(connector.approvalProcess)(spb.secureIfRequired))
+    retrieve(processCode, map(connector.approvalProcessByProcessCode)(spb.secureIfRequired))
 
   private def retrieve(processCode: String, retrieveProcessById: Retrieve[Process]): Future[RequestOutcome[(Process, Seq[Page])]] =
     retrieveProcessById(processCode).map {
