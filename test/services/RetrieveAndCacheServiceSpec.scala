@@ -264,7 +264,7 @@ class RetrieveAndCacheServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
     "return process and pages" in new Test {
 
       MockGuidanceConnector
-        .approvalProcess(processId)
+        .approvalProcessByProcessCode(processId)
         .returns(Future.successful(Right(processWithProcessCode)))
 
       MockPageBuilder
@@ -283,7 +283,7 @@ class RetrieveAndCacheServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
     "return not found when process doesnt exist" in new Test {
 
       MockGuidanceConnector
-        .approvalProcess(processId)
+        .approvalProcessByProcessCode(processId)
         .returns(Future.successful(Left(NotFoundError)))
 
       target.retrieveOnlyApproval(processId).map{
