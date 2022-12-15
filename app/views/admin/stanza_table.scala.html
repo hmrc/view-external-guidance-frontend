@@ -33,13 +33,13 @@
       )
     ,
     head = Some(Seq(
-      HeadCell(content = Text("Id")),
-      HeadCell(content = Text("Type")),
-      HeadCell(content = Text("Properties"))
+      HeadCell(content = Text(messages("guidance.internals.stanzas.id"))),
+      HeadCell(content = Text(messages("guidance.internals.stanzas.type"))),
+      HeadCell(content = Text(messages("guidance.internals.stanzas.properties")))
       )
     ),
-    caption = pmpage.title,
-    captionClasses = "govuk-table__caption--m",
+    caption = Some(messages("guidance.internals.pagestanzas_title", pmpage.id)),
+    captionClasses = "govuk-table__caption--s",
     firstCellIsHeader = true
   ))
 

@@ -33,26 +33,28 @@
         None, None, None, false, true,
         Some(wideLayout(_)), false) {
 
-  <h1 class="govuk-heading-l">@title</h1>
+  <h1 class="govuk-heading-l">@title @messages("guidance.internals.page_count", rows.size)</h1>
 
   @for(page <- rows) {
     @govukTable(Table(
       rows = (Seq(
         TableRow(content=Text("Page")),
         TableRow(content=Text(page.id)),
-        TableRow(content=Text(page.title.getOrElse(""))),
+        TableRow(content=HtmlContent(page.title.getOrElse("") +
+                                     s"<p>(${messages("guidance.internals.page_linked_from")} " +
+                                     s"${page.linkedFrom.map(id => s"<a href='#${id}'>${id}</a>").mkString(" ,")})")),
         TableRow(content=Text(page.url))
       ) +:
       page.nexts.map(r => Seq(
         TableRow(content=Text("=>")),
-        TableRow(content=Text(r.id)),
+        TableRow(content=HtmlContent(s"<a href='#${r.id}'>${r.id}</a>")),
         TableRow(content=Text(r.title.getOrElse(""))),
         TableRow(content=Text(r.url))
         )
       )) ++
       page.links.map(r => Seq(
         TableRow(content=Text("->")),
-        TableRow(content=Text(r.id)),
+        TableRow(content=HtmlContent(s"<a href='#${r.id}'>${r.id}</a>")),
         TableRow(content=Text(r.title.getOrElse(""))),
         TableRow(content=Text(r.url))
         )
@@ -64,9 +66,10 @@
         HeadCell(content = Text(messages("guidance.internals.url")))
         )
       ),
-      caption = page.title,
+      caption = page.title.map(t => messages("guidance.internals.page", page.id, t)),
       captionClasses = "govuk-table__caption--m",
-      firstCellIsHeader = true
+      firstCellIsHeader = true,
+      attributes = Map("id" -> page.id)
     ))
     <details class="govuk-details" data-module="govuk-details">
       <summary class="govuk-details__summary"><span class="govuk-details__summary-text">Stanzas</span></summary>

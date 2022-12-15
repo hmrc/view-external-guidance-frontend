@@ -58,16 +58,15 @@ class StartAdminController @Inject() (
   private[entry] def retrieveAndView(processCode: String,
                                      retrieve: String => Future[RequestOutcome[(Process, Seq[Page])]])(implicit request: Request[_]): Future[Result] =
     retrieve(processCode).map{
+      case Right((process, Nil)) => Ok(view(process.title.english, Nil))
       case Right((process, pages)) =>
         val pageMap: Map[String, Page] = pages.map(p => (p.id, p)).toMap
         val pageRows: List[ProcessMapPage] = buildPageRows(Seq(Process.StartStanzaId), pageMap)
         Ok(view(process.title.english, pageRows))
 
-      case Left(NotFoundError) =>
-        NotFound(errorHandler.notFoundTemplate)
+      case Left(NotFoundError) => NotFound(errorHandler.notFoundTemplate)
 
-      case Left(err) =>
-        InternalServerError(errorHandler.internalServerErrorTemplate)
+      case Left(err) => InternalServerError(errorHandler.internalServerErrorTemplate)
      }
 
   @tailrec
@@ -81,11 +80,12 @@ class StartAdminController @Inject() (
         val page = pageMap(x)
         val nexts = page.next.map(n => LinkedPage(n, pageMap(n).url, pageTitle(pageMap(n))))
         val linked = page.linked.map(l => LinkedPage(l, pageMap(l).url, pageTitle(pageMap(l))))
+        val linkedFrom = pageMap.values.filter(p => p.linked.contains(x) || p.next.contains(x)).map(_.id).toSeq
         buildPageRows(
           xs ++ page.next ++ page.linked,
           pageMap,
           x :: seen,
-          ProcessMapPage(x, page.url, pageTitle(page), page.keyedStanzas, nexts, linked) :: rows
+          ProcessMapPage(x, page.url, pageTitle(page), page.keyedStanzas, nexts, linked, linkedFrom) :: rows
         )
       case x :: xs =>
         buildPageRows(xs, pageMap, seen, rows)

@@ -18,6 +18,8 @@ package models
 
 import core.models.ocelot.stanzas._
 
+// $COVERAGE-OFF$
+
 package object admin {
   def stanzaTypeName(s: PopulatedStanza): String =
     s match {

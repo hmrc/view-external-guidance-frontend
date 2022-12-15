@@ -96,4 +96,12 @@ guidance.internals.heading = Page structure
 guidance.internals.id = Id
 guidance.internals.title = Title
 guidance.internals.url = Url
+guidance.internals.pagestanzas_title = Stanzas of page ''{0}''
+guidance.internals.page_count = [Page count: {0}]
+guidance.internals.page = Page ''{0}'': {1}
+guidance.internals.page_linked_from = Linked from:
+guidance.internals.stanzas.id = Id
+guidance.internals.stanzas.type = Type
+guidance.internals.stanzas.properties = Properties
+
 

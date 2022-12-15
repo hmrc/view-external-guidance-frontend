@@ -18,5 +18,15 @@ package models.admin
 
 import core.models.ocelot._
 
+// $COVERAGE-OFF$
+
 case class LinkedPage(id: String, url: String, title: Option[String])
-case class ProcessMapPage(id: String, url: String, title: Option[String], keyedStanzas: Seq[KeyedStanza], nexts: Seq[LinkedPage], links: Seq[LinkedPage])
+case class ProcessMapPage(
+  id: String,
+  url: String,
+  title: Option[String],
+  keyedStanzas: Seq[KeyedStanza],
+  nexts: Seq[LinkedPage],
+  links: Seq[LinkedPage],
+  linkedFrom: Seq[String]
+)
