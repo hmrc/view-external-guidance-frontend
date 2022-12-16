@@ -28,21 +28,16 @@
       <span><Strong>text</Strong>={c.text.english}, <Strong>next</Strong>={c.next}, <Strong>stack</Strong>={c.stack}</span>
     case c: Calculation => Html(
       s"<span><strong>next</strong>=${c.next.mkString(", ")}</span>" + {c.calcs.map(op => s"<p><Strong>left</Strong>=${op.left}, <Strong>op</Strong>=${operationName(op)}, <Strong>right</Strong>=${op.right}, <Strong>label</Strong>=${op.label}").mkString})
-
     case vs: ValueStanza => Html(
       s"<span><strong>next</strong>=${vs.next.mkString(", ")}, <Strong>stack</Strong>={vs.stack}</span>" + {vs.values.map(v => s"<p><Strong>type</Strong>=${v.valueType}, <Strong>label</Strong>=${v.label}, <Strong>value</Strong>=${v.value}").mkString})
-
     case r: Row => Html(
-      s"<span><strong>next</strong>=${r.next.mkString(", ")}, <Strong>stack</Strong>=${r.stack}</span><p>"+ {r.cells.map(c => c.english).mkString(", ")})
-
+      s"<span><strong>next</strong>=${r.next.mkString(", ")}, <Strong>stack</Strong>=${r.stack}</span><p>"+ {r.cells.map(c => c.english).mkString("<strong>,</strong> ")})
     case c: Choice => Html(
-      s"<span><strong>next</strong>=${c.next.mkString(", ")}</span>" + {c.tests.map(t => s"<p><Strong>left</Strong>=${t.left}, <Strong>test</Strong>=${choiceTestName(t)}, <Strong>right</Strong>=${t.right}").mkString})
-
+      s"<span><strong>next</strong>=${c.next.last}</span>" + {(c.tests zip c.next.init).map(t => s"<p><Strong>left</Strong>=${t._1.left}, <Strong>test</Strong>=${choiceTestName(t._1)}, <Strong>right</Strong>=${t._1.right} <strong>next</strong>=${t._2}").mkString})
     case q: Question => Html(
-      s"<span><strong>text</strong>=${q.text.english}, <strong>label</strong>=${q.label.getOrElse("")}, <strong>next</strong>=${q.next.mkString(", ")}, <Strong>stack</Strong>=${q.stack}</span><p><strong>Answers</strong>=" + {q.answers.map(a => a.english).mkString(", ")})
-
+        s"<span><strong>text</strong>=${q.text.english}, <strong>label</strong>=${q.label.getOrElse("")}, <Strong>stack</Strong>=${q.stack}</span>" + {(q.answers.map(_.english) zip q.next).map(a => s"<p><strong>Answer</strong>=${a._1}, <strong>next</strong>=${a._2}")}.mkString)
    case s: Sequence => Html(
-      s"<span><strong>text</strong>=${s.text.english}, <strong>label</strong>=${s.label.getOrElse("")}, <strong>exclusive</strong>=${s.exclusive.getOrElse("")}, <strong>next</strong>=${s.next.mkString(", ")}, <Strong>stack</Strong>=${s.stack}</span><p><strong>Options</strong>=" + {s.options.map(a => a.english).mkString(", ")})
+      s"<span><strong>text</strong>=${s.text.english}, <strong>label</strong>=${s.label.getOrElse("")}, <strong>exclusive</strong>=${s.exclusive.getOrElse("")}, <strong>next</strong>=${s.next.last}, <Strong>stack</Strong>=${s.stack}</span>" + {(s.options.map(_.english) zip s.next.init).map(o => s"<p><strong>Option</strong>=${o._1}, <strong>next</strong>=${o._2}")}.mkString)
 
     case i: core.models.ocelot.stanzas.Input =>
       <span><Strong>name</Strong>={i.name.english}, <Strong>help</Strong>={i.help.map(_.english).getOrElse("")}, <Strong>label</Strong>={i.label}, <Strong>dontRepeatName</Strong>={i.dontRepeatName}, <Strong>width</Strong>={i.width},<Strong>next</Strong>={i.next.mkString(", ")}, <Strong>stack</Strong>={i.stack}</span>
