@@ -213,8 +213,8 @@ class StartAdminControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
 
   }
 
-  "buildPageRows" should {
-    "Return sequence of ProcessMapRows" in new ProcessTest {
+  "toProcessMapPages" should {
+    "Return sequence of ProcessMapPages" in new ProcessTest {
       val pageMap: Map[String, Page] = Seq(titlePage).map(p => (p.id, p)).toMap
 
 
