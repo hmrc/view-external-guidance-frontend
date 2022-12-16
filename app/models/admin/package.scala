@@ -73,4 +73,6 @@ package object admin {
       case _: LessThanOrEqualsTest => "less than or equals"
       case _: ContainsTest => "contains"
     }
+
+  def renderId(id: String, pageIds: Seq[String]): String = if (pageIds.contains(id)) s"<a href='#$id'>$id</a>" else id
 }

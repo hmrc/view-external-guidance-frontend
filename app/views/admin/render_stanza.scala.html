@@ -18,7 +18,7 @@
 @import models.admin._
 @import core.models.ocelot.stanzas._
 
-@(s: PopulatedStanza)(implicit messages: Messages)
+@(s: PopulatedStanza, pageIds: Seq[String])(implicit messages: Messages)
   @{s match {
     case p: PageStanza =>
       <span><Strong>url</Strong>={p.url}, <Strong>next</Strong>={p.next.mkString(", ")}, <Strong>stack</Strong>={p.stack}</span>
@@ -33,11 +33,12 @@
     case r: Row => Html(
       s"<span><strong>next</strong>=${r.next.mkString(", ")}, <Strong>stack</Strong>=${r.stack}</span><p>"+ {r.cells.map(c => c.english).mkString("<strong>,</strong> ")})
     case c: Choice => Html(
-      s"<span><strong>next</strong>=${c.next.last}</span>" + {(c.tests zip c.next.init).map(t => s"<p><Strong>left</Strong>=${t._1.left}, <Strong>test</Strong>=${choiceTestName(t._1)}, <Strong>right</Strong>=${t._1.right} <strong>next</strong>=${t._2}").mkString})
-    case q: Question => Html(
-        s"<span><strong>text</strong>=${q.text.english}, <strong>label</strong>=${q.label.getOrElse("")}, <Strong>stack</Strong>=${q.stack}</span>" + {(q.answers.map(_.english) zip q.next).map(a => s"<p><strong>Answer</strong>=${a._1}, <strong>next</strong>=${a._2}")}.mkString)
+      s"<span><strong>next</strong>=${c.next.last}</span>" + {(c.tests zip c.next.init).map(t => s"<p><Strong>left</Strong>=${t._1.left}, <Strong>test</Strong>=${choiceTestName(t._1)}, <Strong>right</Strong>=${t._1.right} -> <strong>next</strong>=" + {renderId(t._2, pageIds)}).mkString})
+
+    case q: Question => Html(s"<span><strong>text</strong>=${q.text.english}, <strong>label</strong>=${q.label.getOrElse("")}, <Strong>stack</Strong>=${q.stack}</span>" + {(q.answers.map(_.english) zip q.next).map(a => s"<p><strong>Answer</strong>=${a._1} -> <strong>next</strong>=" + {renderId(a._2, pageIds)})}.mkString)
+
    case s: Sequence => Html(
-      s"<span><strong>text</strong>=${s.text.english}, <strong>label</strong>=${s.label.getOrElse("")}, <strong>exclusive</strong>=${s.exclusive.getOrElse("")}, <strong>next</strong>=${s.next.last}, <Strong>stack</Strong>=${s.stack}</span>" + {(s.options.map(_.english) zip s.next.init).map(o => s"<p><strong>Option</strong>=${o._1}, <strong>next</strong>=${o._2}")}.mkString)
+      s"<span><strong>text</strong>=${s.text.english}, <strong>label</strong>=${s.label.getOrElse("")}, <strong>exclusive</strong>=${s.exclusive.getOrElse("")}, <strong>next</strong>=${s.next.last}, <Strong>stack</Strong>=${s.stack}</span>" + {(s.options.map(_.english) zip s.next.init).map(o => s"<p><strong>Option</strong>=${o._1} -> <strong>next</strong>=" + {renderId(o._2, pageIds)})}.mkString)
 
     case i: core.models.ocelot.stanzas.Input =>
       <span><Strong>name</Strong>={i.name.english}, <Strong>help</Strong>={i.help.map(_.english).getOrElse("")}, <Strong>label</Strong>={i.label}, <Strong>dontRepeatName</Strong>={i.dontRepeatName}, <Strong>width</Strong>={i.width},<Strong>next</Strong>={i.next.mkString(", ")}, <Strong>stack</Strong>={i.stack}</span>

@@ -22,13 +22,13 @@
   govukTable : GovukTable
 )
 
-@(pmpage: ProcessMapPage)(implicit request: Request[_], messages: Messages)
+@(pmpage: ProcessMapPage, pageIds: Seq[String])(implicit request: Request[_], messages: Messages)
 
   @govukTable(Table(
       pmpage.keyedStanzas.map(ks => Seq(
         TableRow(content=Text(ks.key.toString)),
         TableRow(content=Text(stanzaTypeName(ks.stanza))),
-        TableRow(content=HtmlContent(render_stanza(ks.stanza)))
+        TableRow(content=HtmlContent(render_stanza(ks.stanza, pageIds)))
         )
       )
     ,
