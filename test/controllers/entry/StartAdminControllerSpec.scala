@@ -218,7 +218,7 @@ class StartAdminControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
       val pageMap: Map[String, Page] = Seq(titlePage).map(p => (p.id, p)).toMap
 
 
-      val rows = target.buildPageRows(Seq(titlePage.id), pageMap)
+      val rows = target.toProcessMapPages(Seq(titlePage), pageMap)
       rows.length shouldBe 1
       rows.head.id shouldBe "start"
       rows.head.url shouldBe "/bulletPoints"
