@@ -29,6 +29,7 @@ import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import controllers.SessionIdPrefix
 import controllers.actions.SessionIdAction
+import controllers.validateUrl
 
 @Singleton
 class StartGuidanceController @Inject() (
@@ -59,7 +60,7 @@ class StartGuidanceController @Inject() (
 
   def published(processCode: String): Action[AnyContent] = Action.async { implicit request =>
     logger.info(s"Starting publish journey for $processCode")
-    retrieveCacheAndRedirectToView(processCode, service.retrieveAndCachePublished, pushlishedErrorHandler)
+    retrieveCacheAndRedirectToView(processCode, service.retrieveAndCachePublished, publishedErrorHandler)
   }
 
   private def retrieveCacheAndRedirectToView(id: String,
@@ -69,16 +70,20 @@ class StartGuidanceController @Inject() (
   ): Future[Result] = {
     val (sessionId, egNewSessionId) = existingOrNewSessionId()
     logger.warn(s"Calling Retrieve and cache service for process $id using sessionId = $sessionId, EG = ${egNewSessionId}, request id: ${hc.requestId.map(_.value)}")
-    retrieveAndCache(id, sessionId).map {
-      case Right((url, processCode)) =>
-        val target = controllers.routes.GuidanceController.getPage(processCode, url.drop(1), None).url
-        logger.warn(s"Redirecting to begin viewing process $id/$processCode at ${target} using sessionId $sessionId, EG_NEW_SESSIONID = $egNewSessionId")
-        egNewSessionId.fold(Redirect(target))(newId => Redirect(target).addingToSession(sessionIdAction.EgNewSessionIdName -> newId))
-      case Left(err) => errHandler(err, id, sessionId)
+    validateUrl(id).fold {
+      logger.warn(s"Invalid process code $id, code contains unsupported characters. Returning NotFound")
+      Future.successful(NotFound(errorHandler.notFoundTemplateWithProcessCode(None)))
+    } { _ => retrieveAndCache(id, sessionId).map {
+        case Right((url, processCode)) =>
+          val target = controllers.routes.GuidanceController.getPage(processCode, url.drop(1), None).url
+          logger.warn(s"Redirecting to begin viewing process $id/$processCode at ${target} using sessionId $sessionId, EG_NEW_SESSIONID = $egNewSessionId")
+          egNewSessionId.fold(Redirect(target))(newId => Redirect(target).addingToSession(sessionIdAction.EgNewSessionIdName -> newId))
+        case Left(err) => errHandler(err, id, sessionId)
+      }
     }
   }
 
-  private def pushlishedErrorHandler(error: Error, id: String, sessionId: String)(implicit request: Request[_]): Result =
+  private def publishedErrorHandler(error: Error, id: String, sessionId: String)(implicit request: Request[_]): Result =
     error match {
       case DuplicateKeyError =>
         // Trigger to return to the start URL after highly unlikely duplicate key error generated when attempting to create sesssion
