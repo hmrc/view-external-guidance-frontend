@@ -60,7 +60,7 @@ class StartGuidanceController @Inject() (
 
   def published(processCode: String): Action[AnyContent] = Action.async { implicit request =>
     logger.info(s"Starting publish journey for $processCode")
-    retrieveCacheAndRedirectToView(processCode, service.retrieveAndCachePublished, pushlishedErrorHandler)
+    retrieveCacheAndRedirectToView(processCode, service.retrieveAndCachePublished, publishedErrorHandler)
   }
 
   private def retrieveCacheAndRedirectToView(id: String,
@@ -83,7 +83,7 @@ class StartGuidanceController @Inject() (
     }
   }
 
-  private def pushlishedErrorHandler(error: Error, id: String, sessionId: String)(implicit request: Request[_]): Result =
+  private def publishedErrorHandler(error: Error, id: String, sessionId: String)(implicit request: Request[_]): Result =
     error match {
       case DuplicateKeyError =>
         // Trigger to return to the start URL after highly unlikely duplicate key error generated when attempting to create sesssion
