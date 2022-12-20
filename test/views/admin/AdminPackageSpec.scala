@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package models.admin
+package views.admin
 
 import base.BaseSpec
 import core.models.ocelot.Phrase

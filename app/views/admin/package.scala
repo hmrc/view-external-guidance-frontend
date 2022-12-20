@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package models
+package views
 
 import core.models.ocelot.stanzas._
 
