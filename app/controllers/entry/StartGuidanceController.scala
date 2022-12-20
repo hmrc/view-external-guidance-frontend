@@ -30,6 +30,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import controllers.SessionIdPrefix
 import controllers.actions.SessionIdAction
 import controllers.validateUrl
+import uk.gov.hmrc.http.SessionKeys
+import uk.gov.hmrc.http.HeaderNames
 
 @Singleton
 class StartGuidanceController @Inject() (
@@ -77,7 +79,11 @@ class StartGuidanceController @Inject() (
         case Right((url, processCode)) =>
           val target = controllers.routes.GuidanceController.getPage(processCode, url.drop(1), None).url
           logger.warn(s"Redirecting to begin viewing process $id/$processCode at ${target} using sessionId $sessionId, EG_NEW_SESSIONID = $egNewSessionId")
-          egNewSessionId.fold(Redirect(target))(newId => Redirect(target).addingToSession(sessionIdAction.EgNewSessionIdName -> newId))
+          egNewSessionId.fold(Redirect(target))(newId =>
+            Redirect(target)
+              .addingToSession(sessionIdAction.EgNewSessionIdName -> newId, SessionKeys.sessionId -> sessionId)
+              .withHeaders(HeaderNames.xSessionId -> sessionId)
+          )
         case Left(err) => errHandler(err, id, sessionId)
       }
     }
