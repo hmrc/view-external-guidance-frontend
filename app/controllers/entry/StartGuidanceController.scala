@@ -51,17 +51,17 @@ class StartGuidanceController @Inject() (
   }
 
   def approval(processId: String): Action[AnyContent] = Action.async { implicit request =>
-    logger.info(s"Starting approval direct view journey")
+    logger.warn(s"ST: Starting approval direct view journey")
     retrieveCacheAndRedirectToView(processId, service.retrieveAndCacheApproval, defaultErrorHandler)
   }
 
   def approvalPage(processId: String, url: String): Action[AnyContent] = Action.async { implicit request =>
-    logger.info(s"Starting approval direct page view journey")
+    logger.warn(s"ST: Starting approval direct page view journey")
     retrieveCacheAndRedirectToView(processId, service.retrieveAndCacheApprovalByPageUrl(s"/$url"), defaultErrorHandler)
   }
 
   def published(processCode: String): Action[AnyContent] = Action.async { implicit request =>
-    logger.info(s"Starting publish journey for $processCode")
+    logger.warn(s"ST: Starting publish journey for $processCode")
     retrieveCacheAndRedirectToView(processCode, service.retrieveAndCachePublished, publishedErrorHandler)
   }
 
