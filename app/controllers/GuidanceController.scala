@@ -142,7 +142,7 @@ class GuidanceController @Inject() (
     val rId: Option[String] = hc.requestId.map(_.value)
     val uri: String = request.target.uriString
 
-    logger.info(s"SP: sessionId: ${sId}, requestId: ${rId}, URI: ${uri}")
+    logger.warn(s"SP: sessionId: ${sId}, requestId: ${rId}, URI: ${uri}")
     withExistingSession[PageEvaluationContext](service.getSubmitEvaluationContext(processCode, s"/$path", _)).flatMap {
       case Left(err) => translateSubmitError(err, processCode, path)
       case Right(ctx) => ctx.dataInput.fold{
