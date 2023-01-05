@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -721,13 +721,13 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
       val phrase1: Phrase = Phrase(
         Vector(
           "In some circumstances, you do not have to tell HMRC about extra income you've made. In each tax year you can earn up to £11,000, tax free, if you are: selling goods or services (trading)",
-          "Mewn rhai amgylchiadau, nid oes rhaid i chi ddweud wrth Gyllid a Thollau EM am incwm ychwanegol rydych wedi'i wneud. Ymhob blwyddyn dreth gallwch ennill hyd at £ 11,000, yn ddi-dreth, os ydych chi: gwerthu nwyddau neu wasanaethau (masnachu)"
+          "Mewn rhai amgylchiadau, nid oes rhaid i chi ddweud wrth Cyllid a Thollau EF am incwm ychwanegol rydych wedi'i wneud. Ymhob blwyddyn dreth gallwch ennill hyd at £ 11,000, yn ddi-dreth, os ydych chi: gwerthu nwyddau neu wasanaethau (masnachu)"
         )
       )
       val phrase2: Phrase = Phrase(
         Vector(
           "In some circumstances, you do not have to tell HMRC about extra income you've made. In each tax year you can earn up to £11,000, tax free, if you are: renting land or property",
-          "Mewn rhai amgylchiadau, nid oes rhaid i chi ddweud wrth Gyllid a Thollau EM am incwm ychwanegol rydych wedi'i wneud. Ymhob blwyddyn dreth gallwch ennill hyd at £ 11,000, yn ddi-dreth, os ydych chi: rhentu tir neu eiddo"
+          "Mewn rhai amgylchiadau, nid oes rhaid i chi ddweud wrth Cyllid a Thollau EF am incwm ychwanegol rydych wedi'i wneud. Ymhob blwyddyn dreth gallwch ennill hyd at £ 11,000, yn ddi-dreth, os ydych chi: rhentu tir neu eiddo"
         )
       )
 
@@ -748,7 +748,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage wi
       uiPage.fold(_ => fail, p => p).components.length shouldBe 1
 
       // Check contents of bullet point list
-      val leadingTextItems: Text = Text("Mewn rhai amgylchiadau, nid oes rhaid i chi ddweud wrth Gyllid a Thollau EM am incwm ychwanegol rydych wedi’i wneud. Ymhob blwyddyn dreth gallwch ennill hyd at £ 11,000, yn ddi-dreth, os ydych chi:")
+      val leadingTextItems: Text = Text("Mewn rhai amgylchiadau, nid oes rhaid i chi ddweud wrth Cyllid a Thollau EF am incwm ychwanegol rydych wedi’i wneud. Ymhob blwyddyn dreth gallwch ennill hyd at £ 11,000, yn ddi-dreth, os ydych chi:")
 
       val bulletPointOne: Text = Text("gwerthu nwyddau neu wasanaethau (masnachu)")
       val bulletPointTwo: Text = Text("rhentu tir neu eiddo")
