@@ -29,7 +29,6 @@ lazy val microservice = Project(appName, file("."))
     scalacOptions ++= Seq("-feature"),
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test
   )
-  .settings(publishingSettings: _*)
   .configs(IntegrationTest)
   .settings(CodeCoverageSettings.settings: _*)
   .settings(integrationTestSettings(): _*)
