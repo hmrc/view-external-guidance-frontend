@@ -20,7 +20,8 @@
 
 @errorLinkIdentifier(formComponent: FormComponent, inputFieldName: String, form: Form[_]) = @{
   formComponent match {
-    case DateInput(_,_,_,_,_,_) => if(form.errors.nonEmpty){form.errors.head.key} else {"day"}
+    case DateInput(_,_,_,errorMsgs,_,_) =>
+      if(form.errors.nonEmpty){form.errors.head.key} else {errorMsgs.headOption.flatMap(_.fields.headOption).getOrElse("day")}
     case _ => s"$inputFieldName-0"
   }
 }
