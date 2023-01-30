@@ -65,8 +65,8 @@ class StartAdminController @Inject() (
 
   private[entry] def toProcessMapPages(pages: Seq[Page], pageMap: Map[String, Page]): List[ProcessMapPage] =
     pages.map{page =>
-      val nexts = page.next.map(n => LinkedPage(n, pageMap(n).url, pageTitle(pageMap(n))))
-      val linked = page.linked.map(l => LinkedPage(l, pageMap(l).url, pageTitle(pageMap(l))))
+      val nexts = page.next.distinct.map(n => LinkedPage(n, pageMap(n).url, pageTitle(pageMap(n))))
+      val linked = page.linked.distinct.map(l => LinkedPage(l, pageMap(l).url, pageTitle(pageMap(l))))
       val linkedFrom = pageMap.values
                               .filter(p => p.linked.contains(page.id) || p.next.contains(page.id))
                               .map(_.id)
