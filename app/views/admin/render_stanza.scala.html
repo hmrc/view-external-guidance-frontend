@@ -20,16 +20,19 @@
 
 @(s: PopulatedStanza, pageIds: Seq[String])(implicit messages: Messages)
   @{s match {
-    case p: PageStanza =>
-      <span><Strong>url</Strong>={p.url}, <Strong>next</Strong>={renderNext(p.next, pageIds)}, <Strong>stack</Strong>={p.stack}</span>
-    case i: Instruction =>
-      <span><Strong>text</Strong>={i.text.english}, <Strong>links</Strong>={i.links}, <Strong>next</Strong>={renderNext(i.next, pageIds)}, <Strong>stack</Strong>={i.stack}</span>
-    case c: Callout =>
-      <span><Strong>text</Strong>={c.text.english}, <Strong>next</Strong>={renderNext(c.next, pageIds)}, <Strong>stack</Strong>={c.stack}</span>
+    case p: PageStanza => Html(
+      s"<span><Strong>url</Strong>=${p.url}, <Strong>next</Strong>=${renderNext(p.next, pageIds)}, <Strong>stack</Strong>=${p.stack}</span>"
+      )
+    case i: Instruction => Html(
+      s"<span><Strong>text</Strong>=${i.text.english}, <Strong>links</Strong>=${renderIds(i.links, pageIds)}, <Strong>next</Strong>=${renderNext(i.next, pageIds)}, <Strong>stack</Strong>=${i.stack}</span>"
+      )
+    case c: Callout => Html(
+      s"<span><Strong>text</Strong>=${c.text.english}, <Strong>next</Strong>=${renderNext(c.next, pageIds)}, <Strong>stack</Strong>=${c.stack}</span>"
+      )
     case c: Calculation => Html(
       s"<span><strong>next</strong>=${renderNext(c.next, pageIds)}</span>" + {c.calcs.map(op => s"<p><Strong>left</Strong>=${op.left}, <Strong>op</Strong>=${operationName(op)}, <Strong>right</Strong>=${op.right}, <Strong>label</Strong>=${op.label}").mkString})
     case vs: ValueStanza => Html(
-      s"<span><strong>next</strong>=${renderNext(vs.next, pageIds)}, <Strong>stack</Strong>={vs.stack}</span>" + {vs.values.map(v => s"<p><Strong>type</Strong>=${v.valueType}, <Strong>label</Strong>=${v.label}, <Strong>value</Strong>=${v.value}").mkString})
+      s"<span><strong>next</strong>=${renderNext(vs.next, pageIds)}, <Strong>stack</Strong>=${vs.stack}</span>" + {vs.values.map(v => s"<p><Strong>type</Strong>=${v.valueType}, <Strong>label</Strong>=${v.label}, <Strong>value</Strong>=${v.value}").mkString})
     case r: Row => Html(
       s"<span><strong>next</strong>=${renderNext(r.next, pageIds)}, <Strong>stack</Strong>=${r.stack}</span><p>"+ {r.cells.map(c => c.english).mkString("<strong>,</strong> ")})
     case c: Choice => Html(
@@ -40,9 +43,11 @@
    case s: Sequence => Html(
       s"<span><strong>text</strong>=${s.text.english}, <strong>label</strong>=${s.label.getOrElse("")}, <strong>exclusive</strong>=${s.exclusive.getOrElse("")}, <strong>next</strong>=${s.next.last}, <Strong>stack</Strong>=${s.stack}</span>" + {(s.options.map(_.english) zip s.next.init).map(o => s"<p><strong>Option</strong>=${o._1} -> <strong>next</strong>=" + {renderId(o._2, pageIds)})}.mkString)
 
-    case i: core.models.ocelot.stanzas.Input =>
-      <span><Strong>name</Strong>={i.name.english}, <Strong>help</Strong>={i.help.map(_.english).getOrElse("")}, <Strong>label</Strong>={i.label}, <Strong>dontRepeatName</Strong>={i.dontRepeatName}, <Strong>width</Strong>={i.width},<Strong>next</Strong>={renderNext(i.next, pageIds)}, <Strong>stack</Strong>={i.stack}</span>
+    case i: core.models.ocelot.stanzas.Input => Html(
+      s"<span><Strong>name</Strong>=${i.name.english}, <Strong>help</Strong>=${i.help.map(_.english).getOrElse("")}, <Strong>label</Strong>=${i.label}, <Strong>dontRepeatName</Strong>=${i.dontRepeatName}, <Strong>width</Strong>=${i.width},<Strong>next</Strong>=${renderNext(i.next, pageIds)}, <Strong>stack</Strong>=${i.stack}</span>"
+      )
     case _ => s.toString
+
   }
 }
 @{
