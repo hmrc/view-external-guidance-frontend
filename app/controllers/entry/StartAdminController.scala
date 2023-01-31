@@ -16,7 +16,7 @@
 
 package controllers.entry
 
-import config.{AppConfig, ErrorHandler}
+import config.ErrorHandler
 import javax.inject.{Inject, Singleton}
 import play.api.i18n.I18nSupport
 import play.api.mvc._
@@ -24,7 +24,6 @@ import services.RetrieveAndCacheService
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 import play.api.Logger
 import scala.concurrent.ExecutionContext.Implicits.global
-import controllers.actions.SessionIdAction
 import models.admin._
 import core.models.RequestOutcome
 import views.html._
@@ -38,9 +37,7 @@ class StartAdminController @Inject() (
     errorHandler: ErrorHandler,
     service: RetrieveAndCacheService,
     view: admin.process_map,
-    sessionIdAction: SessionIdAction,
-    mcc: MessagesControllerComponents,
-    appConfig: AppConfig
+    mcc: MessagesControllerComponents
 ) extends FrontendController(mcc)
     with I18nSupport {
 
@@ -65,8 +62,8 @@ class StartAdminController @Inject() (
 
   private[entry] def toProcessMapPages(pages: Seq[Page], pageMap: Map[String, Page]): List[ProcessMapPage] =
     pages.map{page =>
-      val nexts = page.next.map(n => LinkedPage(n, pageMap(n).url, pageTitle(pageMap(n))))
-      val linked = page.linked.map(l => LinkedPage(l, pageMap(l).url, pageTitle(pageMap(l))))
+      val nexts = page.next.distinct.map(n => LinkedPage(n, pageMap(n).url, pageTitle(pageMap(n))))
+      val linked = page.linked.distinct.map(l => LinkedPage(l, pageMap(l).url, pageTitle(pageMap(l))))
       val linkedFrom = pageMap.values
                               .filter(p => p.linked.contains(page.id) || p.next.contains(page.id))
                               .map(_.id)
