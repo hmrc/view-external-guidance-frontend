@@ -17,17 +17,16 @@
 package controllers.entry
 
 import base.BaseSpec
-import mocks.{MockAppConfig, MockRetrieveAndCacheService}
+import mocks.MockRetrieveAndCacheService
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.Status
 import play.api.mvc._
-import play.api.mvc.{BodyParsers,AnyContentAsEmpty}
+import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import play.api.test.Helpers.stubMessagesControllerComponents
 import core.models.errors._
-import scala.concurrent.{ExecutionContext, Future}
-import controllers.actions.SessionIdAction
+import scala.concurrent.Future
 import core.models.ocelot.stanzas._
 import core.models.ocelot._
 import core.models.ocelot.{Meta, Process}
@@ -49,12 +48,6 @@ class StartAdminControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
 
     val standardPagePath = "/std-page"
     val relativeStdPath = standardPagePath.drop(1)
-
-    val fakeSessionIdAction = new SessionIdAction {
-      def parser: BodyParsers.Default = app.injector.instanceOf[BodyParsers.Default]
-      implicit protected def executionContext: ExecutionContext = ExecutionContext.global
-      override def invokeBlock[A](request: Request[A], block: Request[A] => Future[Result]): Future[Result] = block(request)
-    }
 
     lazy val errorHandler = app.injector.instanceOf[config.ErrorHandler]
     lazy val view = app.injector.instanceOf[admin.process_map]
@@ -131,9 +124,7 @@ class StartAdminControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
         errorHandler,
         mockRetrieveAndCacheService,
         view,
-        fakeSessionIdAction,
-        stubMessagesControllerComponents(),
-        MockAppConfig
+        stubMessagesControllerComponents()
       )
   }
 

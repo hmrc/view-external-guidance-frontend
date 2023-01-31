@@ -16,7 +16,7 @@
 
 package controllers.entry
 
-import config.{AppConfig, ErrorHandler}
+import config.ErrorHandler
 import javax.inject.{Inject, Singleton}
 import play.api.i18n.I18nSupport
 import play.api.mvc._
@@ -24,7 +24,6 @@ import services.RetrieveAndCacheService
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 import play.api.Logger
 import scala.concurrent.ExecutionContext.Implicits.global
-import controllers.actions.SessionIdAction
 import models.admin._
 import core.models.RequestOutcome
 import views.html._
@@ -38,9 +37,7 @@ class StartAdminController @Inject() (
     errorHandler: ErrorHandler,
     service: RetrieveAndCacheService,
     view: admin.process_map,
-    sessionIdAction: SessionIdAction,
-    mcc: MessagesControllerComponents,
-    appConfig: AppConfig
+    mcc: MessagesControllerComponents
 ) extends FrontendController(mcc)
     with I18nSupport {
 
