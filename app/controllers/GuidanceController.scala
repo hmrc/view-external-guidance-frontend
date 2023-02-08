@@ -59,7 +59,7 @@ class GuidanceController @Inject() (
     withExistingSession[String](service.sessionRestart(processCode, _)).flatMap {
       case Right(url) =>
         logger.info(s"Redirecting to guidance start url $url after session reset")
-        Future.successful(Redirect(controllers.routes.GuidanceController.getPage(processCode, url.drop(1), None).url))
+        Future.successful(Redirect(controllers.routes.GuidanceController.getPage(processCode, url.drop(1)).url))
       case Left(SessionNotFoundError) =>
         logger.warn(s"SessionNotFoundError error on sessionRestart. Redirecting to start of processCode $processCode at ${appConfig.baseUrl}/$processCode")
         Future.successful(redirectToGuidanceStart(processCode))
@@ -75,7 +75,7 @@ class GuidanceController @Inject() (
     }
   }
 
-  def getPage(processCode: String, path: String, p: Option[String]): Action[AnyContent] = sessionIdAction.async { implicit request =>
+  def getPage(processCode: String, path: String, p: Option[String] = None, c: Option[String] = None): Action[AnyContent] = sessionIdAction.async { implicit request =>
     implicit val messages: Messages = mcc.messagesApi.preferred(request)
     val sId: Option[String] = hc.sessionId.map(_.value)
     val rId: Option[String] = hc.requestId.map(_.value)
@@ -87,7 +87,7 @@ class GuidanceController @Inject() (
       Future.successful(NotFound(errorHandler.notFoundTemplateWithProcessCode(None)))
     } { _ =>
       withExistingSession[PageContext](sId =>service.getPageContext(processCode, s"/$path", p.isDefined, sId)).flatMap {
-        case Left(err) => translateGetPageError(err, processCode, path)
+        case Left(err) => translateGetPageError(err, processCode, path, c)
         case Right(pageCtx) =>
           logger.info(s"Retrieved page: ${pageCtx.page.urlPath}, start: ${pageCtx.processStartUrl}, answer: ${pageCtx.answer}, backLink: ${pageCtx.backLink}")
           pageCtx.page match {
@@ -95,7 +95,7 @@ class GuidanceController @Inject() (
               case Right(_) =>
                 logger.warn(s"GSP=>V: sessionId: ${sId}, requestId: ${rId}, URI: ${uri}")
                 Future.successful(Ok(standardView(page, pageCtx)))
-              case Left(err) => translateGetPageError(err, processCode, path)
+              case Left(err) => translateGetPageError(err, processCode, path, c)
             }
             case page: FormPage => pageCtx.dataInput match {
               case Some(input) =>
@@ -111,7 +111,7 @@ class GuidanceController @Inject() (
     }
   }
 
-  private def translateGetPageError(err: Error, processCode: String, path: String)(implicit request: Request[_]): Future[Result] = err match {
+  private def translateGetPageError(err: Error, processCode: String, path: String, c: Option[String])(implicit request: Request[_]): Future[Result] = err match {
     case ForbiddenError =>
       redirectToActiveSessionFallbackRestart(processCode, "ForbiddenError")
     case TransactionFaultError =>
@@ -119,16 +119,19 @@ class GuidanceController @Inject() (
       redirectToActiveSessionFallbackRestart(processCode, "TransactionFaultError")
     case AuthenticationError =>
       logger.warn(s"Request for PageContext at /$path returned AuthenticationError, redirecting to process passphrase page")
-      Future.successful(Redirect(routes.GuidanceController.getPage(processCode, SecuredProcess.SecuredProcessStartUrl, None)))
+      Future.successful(Redirect(routes.GuidanceController.getPage(processCode, SecuredProcess.SecuredProcessStartUrl, None, c)))
     case SessionNotFoundError =>
       logger.warn(s"Request for page at /$path returned SessionNotFound. Redirect to ${appConfig.baseUrl}/$processCode")
       Future.successful(redirectToGuidanceStart(processCode))
     case NotFoundError =>
       logger.warn(s"Request for PageContext at /$path returned NotFound, returning NotFound")
       Future.successful(NotFound(errorHandler.notFoundTemplateWithProcessCode(Some(processCode))))
+    case ExpectationFailedError if c.isDefined =>
+      logger.warn(s"ExpectationFailed error on getPage after similar redirect to process start. Log ISE")
+      Future.successful(Redirect(s"${appConfig.baseUrl}/$processCode/session-timeout"))
     case ExpectationFailedError =>
       logger.warn(s"ExpectationFailed error on getPage. Redirecting to ${appConfig.baseUrl}/$processCode")
-      Future.successful(redirectToGuidanceStart(processCode))
+      Future.successful(redirectToGuidanceStartWhenNoSession(processCode))
     case Error(Error.ExecutionError, errs, Some(errorRunMode), stanzaId) =>
       Future.successful(translateExecutionError(err.errors.collect{case e: RuntimeError => e}, processCode, path, errorRunMode, stanzaId))
     case err =>
@@ -187,7 +190,7 @@ class GuidanceController @Inject() (
     case TransactionFaultError =>
       redirectToActiveSessionFallbackRestart(processCode, "TransactionFaultError")
     case AuthenticationError =>
-      Future.successful(Redirect(routes.GuidanceController.getPage(processCode, SecuredProcess.SecuredProcessStartUrl, None)))
+      Future.successful(Redirect(routes.GuidanceController.getPage(processCode, SecuredProcess.SecuredProcessStartUrl)))
     case NotFoundError =>
       logger.warn(s"Request for PageContext at /$path returned NotFound during form submission, returning NotFound")
       Future.successful(NotFound(errorHandler.notFoundTemplateWithProcessCode(Some(processCode))))
@@ -237,6 +240,7 @@ class GuidanceController @Inject() (
     }
 
   private def redirectToGuidanceStart(processCode: String): Result = Redirect(s"${appConfig.baseUrl}/$processCode")
+  private def redirectToGuidanceStartWhenNoSession(processCode: String): Result = Redirect(s"${appConfig.baseUrl}/$processCode?$RedirectWhenNoSessionUrlParam")
 
   private def createErrorView(ctxOutcome: RequestOutcome[PageContext], inputName: String, form: Form[_])
                                   (implicit request: Request[_], messages: Messages): Html =

@@ -1496,7 +1496,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
       status(result) shouldBe Status.SEE_OTHER
 
       redirectLocation(result).fold(fail("Should redirect to guidance entry point")){url =>
-        url shouldBe s"/guidance/otherProcessCode"
+        url shouldBe s"/guidance/otherProcessCode?$RedirectWhenNoSessionUrlParam"
       }
     }
 

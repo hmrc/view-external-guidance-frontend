@@ -60,14 +60,15 @@ class StartGuidanceController @Inject() (
     retrieveCacheAndRedirectToView(processId, service.retrieveAndCacheApprovalByPageUrl(s"/$url"), defaultErrorHandler)
   }
 
-  def published(processCode: String): Action[AnyContent] = Action.async { implicit request =>
+  def published(processCode: String, c: Option[String] = None): Action[AnyContent] = Action.async { implicit request =>
     logger.warn(s"ST: Starting publish journey for $processCode")
-    retrieveCacheAndRedirectToView(processCode, service.retrieveAndCachePublished, publishedErrorHandler)
+    retrieveCacheAndRedirectToView(processCode, service.retrieveAndCachePublished, publishedErrorHandler, c)
   }
 
   private def retrieveCacheAndRedirectToView(id: String,
                                              retrieveAndCache: (String, String) => Future[RequestOutcome[(String,String)]],
-                                             errHandler: (Error, String, String) => Result)(
+                                             errHandler: (Error, String, String) => Result,
+                                             c: Option[String] = None)(
       implicit request: Request[_]
   ): Future[Result] = {
     val (sessionId, egNewSessionId) = existingOrNewSessionId()
@@ -77,7 +78,7 @@ class StartGuidanceController @Inject() (
       Future.successful(NotFound(errorHandler.notFoundTemplateWithProcessCode(None)))
     } { _ => retrieveAndCache(id, sessionId).map {
         case Right((url, processCode)) =>
-          val target = controllers.routes.GuidanceController.getPage(processCode, url.drop(1), None).url
+          val target = controllers.routes.GuidanceController.getPage(processCode, url.drop(1), None, c).url
           logger.warn(s"Redirecting to begin viewing process $id/$processCode at ${target} using sessionId $sessionId, EG_NEW_SESSIONID = $egNewSessionId")
           egNewSessionId.fold(Redirect(target))(newId =>
             Redirect(target)

@@ -11,9 +11,9 @@ GET   /language/:lang                    controllers.SwitchLanguageController.sw
 GET   /:processCode/session-timeout      controllers.SessionTimeoutPageController.sessionTimeout(processCode: String)
 GET   /:processCode/end-session          controllers.SessionTimeoutPageController.endSession(processCode: String)
 
-GET   /:processCode                      controllers.entry.StartGuidanceController.published(processCode: String)
+GET   /:processCode                      controllers.entry.StartGuidanceController.published(processCode: String, c: Option[String] ?= None)
 
 GET   /:processCode/session-restart      controllers.GuidanceController.sessionRestart(processCode: String)
-GET   /:processCode/*path                controllers.GuidanceController.getPage(processCode: String, path: String, p: Option[String])
+GET   /:processCode/*path                controllers.GuidanceController.getPage(processCode: String, path: String, p: Option[String] ?= None, c: Option[String] ?= None)
 POST  /:processCode/*path                controllers.GuidanceController.submitPage(processCode: String, path: String)
 
