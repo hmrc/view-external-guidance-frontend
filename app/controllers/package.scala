@@ -24,6 +24,7 @@ import play.api.mvc.Request
 
 package object controllers {
   val SessionIdPrefix: String = "session-"
+  val RedirectWhenNoSessionUrlParam: String = "c=1"
 
   def sessionStillActive(request: Request[_], appConfig: AppConfig, timeNow: Long = Instant.now.toEpochMilli): Boolean =
     request.session.get(SessionKeys.lastRequestTimestamp).fold(false){lastRequestTs =>
