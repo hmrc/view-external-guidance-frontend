@@ -22,7 +22,7 @@ import java.util.Locale.UK
 
 import play.api.i18n.Messages
 
-import core.models.ocelot.{asCurrency, asDate}
+import core.models.ocelot.{asNumeric, asDate}
 
 trait Name {
   val name: String
@@ -38,7 +38,7 @@ case object Currency extends OutputFormat with Name {
   override def isNumeric: Boolean = true
   override def asString(optValue: Option[String], messages: Messages): String =
     optValue.fold("")(value =>
-      asCurrency(value) match {
+      asNumeric(value) match {
         case Some(x) => NumberFormat.getCurrencyInstance(UK).format(x)
         case None => value
       }
@@ -51,7 +51,7 @@ case object CurrencyPoundsOnly extends OutputFormat with Name {
   override def asString(optValue: Option[String], messages: Messages): String =
     optValue.fold("")(value =>
       // Extract as simple number, then format as pounds only
-      asCurrency(value) match {
+      asNumeric(value) match {
         case Some(x) =>
           val formatter = NumberFormat.getCurrencyInstance(UK)
           formatter.setMaximumFractionDigits(0)
