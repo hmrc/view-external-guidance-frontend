@@ -10,6 +10,7 @@ GET   /language/:lang                    controllers.SwitchLanguageController.sw
 #
 GET   /:processCode/session-timeout      controllers.SessionTimeoutPageController.sessionTimeout(processCode: String)
 GET   /:processCode/end-session          controllers.SessionTimeoutPageController.endSession(processCode: String)
+GET   /:processCode/session-blocked      controllers.SessionBlockedController.sessionBlocked(processCode: String)
 
 GET   /:processCode                      controllers.entry.StartGuidanceController.published(processCode: String, c: Option[String] ?= None)
 

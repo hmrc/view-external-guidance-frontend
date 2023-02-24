@@ -128,7 +128,7 @@ class GuidanceController @Inject() (
       Future.successful(NotFound(errorHandler.notFoundTemplateWithProcessCode(Some(processCode))))
     case ExpectationFailedError if c.isDefined =>
       logger.warn(s"ExpectationFailed error on getPage after similar redirect to process start. Log ISE")
-      Future.successful(Redirect(s"${appConfig.baseUrl}/$processCode/session-timeout"))
+      Future.successful(Redirect(s"${appConfig.baseUrl}/$processCode/session-blocked"))
     case ExpectationFailedError =>
       logger.warn(s"ExpectationFailed error on getPage. Redirecting to ${appConfig.baseUrl}/$processCode")
       Future.successful(redirectToGuidanceStartWhenNoSession(processCode))

@@ -74,6 +74,11 @@ footer.links.accessibility.text=Datganiad Hygyrchedd
 footer.links.privacy_policy.text=Polisi preifatrwydd
 footer.links.terms_and_conditions.text=Telerau ac Amodau
 
+## There has been a problem page (Block cookies)
+service.session-blocked-page.title = Mae problem wedi codi
+service.session-blocked-page.info = Mae angen i chi newid gosodiadau eich porwr i ganiatáu i gwcis gael eu defnyddio ac yna dechrau eto.
+service.session-blocked-page.continue = Dechrau eto
+
 ## guidance error page
 guidance.error.title=Execution of the current process has encountered a problem
 guidance.error.heading=Error: There is a guidance problem
