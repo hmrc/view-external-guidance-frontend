@@ -37,7 +37,6 @@ import models.GuidanceSession
 import scala.concurrent.ExecutionContext.Implicits.global
 import controllers.actions.SessionIdAction
 import play.twirl.api.Html
-
 import scala.concurrent.Future
 import forms.FormsHelper.{bindFormData, populatedForm}
 
@@ -75,19 +74,24 @@ class GuidanceController @Inject() (
     }
   }
 
-  def getPage(processCode: String, path: String, p: Option[String] = None, c: Option[String] = None): Action[AnyContent] = sessionIdAction.async { implicit request =>
+  def getPage(processCode: String,
+              path: String,
+              p: Option[String] = None,
+              c: Option[String] = None,
+              lang: Option[String] = None): Action[AnyContent] = sessionIdAction.async { implicit request =>
+
     implicit val messages: Messages = mcc.messagesApi.preferred(request)
     val sId: Option[String] = hc.sessionId.map(_.value)
     val rId: Option[String] = hc.requestId.map(_.value)
     val uri: String = request.target.uriString
-    logger.warn(s"GP: sessionId: ${sId}, requestId: ${rId}, URI: ${uri}")
+    logger.warn(s"GP: sessionId: ${sId}, requestId: ${rId}, URI: ${uri}, p: $p, c: $c, lang: $lang")
 
     validateUrl(s"$processCode/$path").fold {
       logger.warn(s"Request for PageContext at /$path returned NotFound, returning NotFound")
       Future.successful(NotFound(errorHandler.notFoundTemplateWithProcessCode(None)))
     } { _ =>
       withExistingSession[PageContext](sId =>service.getPageContext(processCode, s"/$path", p.isDefined, sId)).flatMap {
-        case Left(err) => translateGetPageError(err, processCode, path, c)
+        case Left(err) => translateGetPageError(err, processCode, path, c, lang)
         case Right(pageCtx) =>
           logger.info(s"Retrieved page: ${pageCtx.page.urlPath}, start: ${pageCtx.processStartUrl}, answer: ${pageCtx.answer}, backLink: ${pageCtx.backLink}")
           pageCtx.page match {
@@ -95,7 +99,7 @@ class GuidanceController @Inject() (
               case Right(_) =>
                 logger.warn(s"GSP=>V: sessionId: ${sId}, requestId: ${rId}, URI: ${uri}")
                 Future.successful(Ok(standardView(page, pageCtx)))
-              case Left(err) => translateGetPageError(err, processCode, path, c)
+              case Left(err) => translateGetPageError(err, processCode, path, c, lang)
             }
             case page: FormPage => pageCtx.dataInput match {
               case Some(input) =>
@@ -111,7 +115,8 @@ class GuidanceController @Inject() (
     }
   }
 
-  private def translateGetPageError(err: Error, processCode: String, path: String, c: Option[String])(implicit request: Request[_]): Future[Result] = err match {
+  private def translateGetPageError(err: Error, processCode: String, path: String, c: Option[String], lang: Option[String])
+                                   (implicit request: Request[_]): Future[Result] = err match {
     case ForbiddenError =>
       redirectToActiveSessionFallbackRestart(processCode, "ForbiddenError")
     case TransactionFaultError =>
@@ -128,10 +133,10 @@ class GuidanceController @Inject() (
       Future.successful(NotFound(errorHandler.notFoundTemplateWithProcessCode(Some(processCode))))
     case ExpectationFailedError if c.isDefined =>
       logger.warn(s"ExpectationFailed error on getPage after similar redirect to process start. Log ISE")
-      Future.successful(Redirect(s"${appConfig.baseUrl}/$processCode/session-blocked"))
+      Future.successful(Redirect(s"${appConfig.baseUrl}/$processCode/session-blocked${lang.fold("")(l => s"?lang=$l")}"))
     case ExpectationFailedError =>
       logger.warn(s"ExpectationFailed error on getPage. Redirecting to ${appConfig.baseUrl}/$processCode")
-      Future.successful(redirectToGuidanceStartWhenNoSession(processCode))
+      Future.successful(redirectToGuidanceStartWhenNoSession(processCode, lang))
     case Error(Error.ExecutionError, errs, Some(errorRunMode), stanzaId) =>
       Future.successful(translateExecutionError(err.errors.collect{case e: RuntimeError => e}, processCode, path, errorRunMode, stanzaId))
     case err =>
@@ -240,7 +245,8 @@ class GuidanceController @Inject() (
     }
 
   private def redirectToGuidanceStart(processCode: String): Result = Redirect(s"${appConfig.baseUrl}/$processCode")
-  private def redirectToGuidanceStartWhenNoSession(processCode: String): Result = Redirect(s"${appConfig.baseUrl}/$processCode?$RedirectWhenNoSessionUrlParam")
+  private def redirectToGuidanceStartWhenNoSession(processCode: String, lang: Option[String]): Result =
+    Redirect(s"${appConfig.baseUrl}/$processCode?$RedirectWhenNoSessionUrlParam${lang.fold("")(l => s"&lang=$l")}")
 
   private def createErrorView(ctxOutcome: RequestOutcome[PageContext], inputName: String, form: Form[_])
                                   (implicit request: Request[_], messages: Messages): Html =

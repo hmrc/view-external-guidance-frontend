@@ -15,17 +15,26 @@
  *@
 
 @import config.AppConfig
+@import services.TextBuilder
 
 @this(layout: main_layout, appConfig: AppConfig)
 
-@(processCode: Option[String], buttonTarget: String)(implicit request: Request[_], messages: Messages)
+@(processCode: String, buttonTarget: String, lang: Option[String])(implicit request: Request[_], messages: Messages)
 
-@layout(messages("service.name"), messages("service.name"), processCode, None, betaPhaseBanner = false, enableTimeout = false){
+@langParam = @{lang.fold("")(l => s"?lang=$l")}
 
-    <h1 class="govuk-heading-xl">@messages("service.session-blocked-page.title")</h1>
-    <p>@messages("service.session-blocked-page.info")</p>
+@langOrEnglishDefault = @{lang.fold(TextBuilder.English.code)(l => l)}
 
-    <a id="startAgain" href="@buttonTarget" role="button" class="govuk-button" data-module="govuk-button">@messages("service.session-blocked-page.continue")</a>
+@layout(messages("service.name"), messages("service.name"), Some(processCode), None, betaPhaseBanner = false, enableTimeout = false, enableLanguageSelect = false){
+
+  @components.sessionBlockedLangSwitch(langOrEnglishDefault, processCode)
+
+  <h1 class="govuk-heading-xl">@messages("service.session-blocked-page.title")</h1>
+  <p>@messages("service.session-blocked-page.info")</p>
+
+  <a id="startAgain" href="@buttonTarget@langParam" role="button" class="govuk-button" data-module="govuk-button">
+      @messages("service.session-blocked-page.continue")
+  </a>
 }
 @{
     //$COVERAGE-OFF$

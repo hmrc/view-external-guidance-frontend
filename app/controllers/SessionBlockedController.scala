@@ -23,17 +23,20 @@ import play.api.i18n.I18nSupport
 import play.api.mvc._
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 import views.html.session_blocked
+import services.TextBuilder
 
 @Singleton
 class SessionBlockedController @Inject()(appConfig: AppConfig,
                                          mcc: MessagesControllerComponents,
+
                                          view: session_blocked) extends FrontendController(mcc) with I18nSupport {
 
   val logger: Logger = Logger(getClass)
 
-  def sessionBlocked(processCode: String): Action[AnyContent] = Action{ implicit request =>
-    logger.warn(s"Session blocked (no cookies) for guidance $processCode")
-    Ok(view(Some(processCode), s"${appConfig.baseUrl}/$processCode"))
+  def sessionBlocked(processCode: String, lang: Option[String] = None): Action[AnyContent] = Action{ implicit request =>
+    logger.warn(s"Session blocked (no cookies) for guidance $processCode, language = $lang")
+    val messages = mcc.messagesApi.preferred(Seq(TextBuilder.languageMap(lang.getOrElse(TextBuilder.English.code))))
+    Ok(view(processCode, s"${appConfig.baseUrl}/$processCode", lang)(request, messages))
   }
 
 }
