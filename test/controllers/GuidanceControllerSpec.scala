@@ -1363,6 +1363,42 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
 
   }
 
+  "Calling a valid URL path for a page with no sessionId" should {
+
+    trait Test extends MockGuidanceService with TestBase {
+      lazy val fakeRequest = FakeRequest(GET, path)
+
+      lazy val target =
+        new GuidanceController(
+          MockAppConfig,
+          fakeSessionIdAction,
+          errorHandler,
+          view,
+          formView,
+          mockGuidanceService,
+          stubMessagesControllerComponents()
+        )
+
+    }
+
+    "return a SEE_OTHER to SessionBlocked controller response" in new Test {
+      lazy val result = target.getPage(processCode, relativePath, None, Some("1"))(fakeRequest)
+
+      status(result) shouldBe Status.SEE_OTHER
+
+      redirectLocation(result) shouldBe Some("/guidance/testExample/session-blocked")
+    }
+
+    "return a SEE_OTHER to SessionBlocked controller with Cy language url param" in new Test {
+      lazy val result = target.getPage(processCode, relativePath, None, Some("1"), Some("cy"))(fakeRequest)
+
+      status(result) shouldBe Status.SEE_OTHER
+
+      redirectLocation(result) shouldBe Some("/guidance/testExample/session-blocked?lang=cy")
+    }
+
+  }
+
   "Calling a valid URL path for a page and encountering a TransactionFault error" should {
     trait Test extends MockGuidanceService with TestBase {
       lazy val fakeRequest = FakeRequest(GET, path).withSession(SessionKeys.sessionId -> processId).withCSRFToken

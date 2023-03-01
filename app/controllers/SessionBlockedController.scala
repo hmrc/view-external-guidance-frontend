@@ -28,7 +28,6 @@ import services.TextBuilder
 @Singleton
 class SessionBlockedController @Inject()(appConfig: AppConfig,
                                          mcc: MessagesControllerComponents,
-
                                          view: session_blocked) extends FrontendController(mcc) with I18nSupport {
 
   val logger: Logger = Logger(getClass)

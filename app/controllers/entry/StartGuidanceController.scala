@@ -94,7 +94,7 @@ class StartGuidanceController @Inject() (
   private def publishedErrorHandler(error: Error, id: String, sessionId: String)(implicit request: Request[_]): Result =
     error match {
       case DuplicateKeyError =>
-        // Trigger to return to the start URL after highly unlikely duplicate key error generated when attempting to create sesssion
+        // Trigger return to the start URL after highly unlikely duplicate key error generated when attempting to create sesssion
         logger.warn(s"Unable to retrieve and cache due to  duplicate key error detected using sessionId $sessionId and id $id, restarting")
         Redirect(s"${appConfig.baseUrl}/$id")
       case err => defaultErrorHandler(err, id, sessionId)
