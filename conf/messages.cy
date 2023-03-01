@@ -78,6 +78,9 @@ footer.links.terms_and_conditions.text=Telerau ac Amodau
 service.session-blocked-page.title = Mae problem wedi codi
 service.session-blocked-page.info = Mae angen i chi newid gosodiadau eich porwr i ganiatáu i gwcis gael eu defnyddio ac yna dechrau eto.
 service.session-blocked-page.continue = Dechrau eto
+service.session-blocked-page.lang-switch-aria-label = Switcher iaith
+service.session-blocked-page.lang-switch-selectable = English
+service.session-blocked-page.lang-switch-hidden = Change the language to English
 
 ## guidance error page
 guidance.error.title=Execution of the current process has encountered a problem

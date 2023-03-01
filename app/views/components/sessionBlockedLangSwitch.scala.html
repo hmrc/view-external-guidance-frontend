@@ -16,53 +16,48 @@
 
 @import uk.gov.hmrc.hmrcfrontend.views.viewmodels.language.{En, Cy}
 
-@(lang: String, processCode: String)
+@(lang: String, processCode: String)(implicit request: Request[_], messages: Messages)
+
+@switchLanguage = @{if (lang == En.code) Cy.code else En.code}
+
+<nav class="hmrc-language-select" aria-label="@messages("service.session-blocked-page.lang-switch-aria-label")">
+  <ul class="hmrc-language-select__list">
 
 @if(lang == En.code) {
-  <nav class="hmrc-language-select" aria-label="Language switcher">
-    <ul class="hmrc-language-select__list">
-      
-      <li class="hmrc-language-select__list-item">
-        <span aria-current="true">English</span>
-      </li>
-    
-      <li class="hmrc-language-select__list-item">
-        <a href="@controllers.routes.SessionBlockedController.sessionBlocked(processCode, Some(Cy.code)).url"
-           hreflang="cy"
-           lang="cy"
-           rel="alternate"
-           class="govuk-link"
-           data-journey-click="link - click:lang-select:Cymraeg">
-          <span class="govuk-visually-hidden">Newid yr iaith ir Gymraeg</span>
-          <span aria-hidden="true">Cymraeg</span>
-        </a>
-      </li>
-                
-    </ul>
-  </nav>
-} else {
-  <nav class="hmrc-language-select" aria-label="Switcher iaith">
-  <ul class="hmrc-language-select__list">
-    
     <li class="hmrc-language-select__list-item">
-      <a href="@controllers.routes.SessionBlockedController.sessionBlocked(processCode).url"
-         hreflang="en"
-         lang="en"
+      <span aria-current="true">@messages("language.english")</span>
+    </li>
+
+    <li class="hmrc-language-select__list-item">
+      <a href="@controllers.routes.SessionBlockedController.sessionBlocked(processCode, Some(switchLanguage)).url"
+         hreflang="@switchLanguage"
+         lang="@switchLanguage"
          rel="alternate"
          class="govuk-link"
-         data-journey-click="link - click:lang-select:English">
-        <span class="govuk-visually-hidden">Change the language to English</span>
-        <span aria-hidden="true">English</span>
+         data-journey-click="link - click:lang-select:@messages("language.cymraeg")">
+        <span class="govuk-visually-hidden">@messages("service.session-blocked-page.lang-switch-hidden")</span>
+        <span aria-hidden="true">@messages("language.cymraeg")</span>
+      </a>
+    </li>
+} else {
+    <li class="hmrc-language-select__list-item">
+      <a href="@controllers.routes.SessionBlockedController.sessionBlocked(processCode).url"
+         hreflang="@switchLanguage"
+         lang="@switchLanguage"
+         rel="alternate"
+         class="govuk-link"
+         data-journey-click="link - click:lang-select:@messages("language.english")">
+        <span class="govuk-visually-hidden">@messages("service.session-blocked-page.lang-switch-hidden")</span>
+        <span aria-hidden="true">@messages("language.english")</span>
       </a>
     </li>
 
     <li class="hmrc-language-select__list-item">
-      <span aria-current="true">Cymraeg</span>
+      <span aria-current="true">@messages("language.cymraeg")</span>
     </li>
-        
-  </ul>
-  </nav>
 }
+  </ul>
+</nav>
 
 @{
      //$COVERAGE-OFF$
