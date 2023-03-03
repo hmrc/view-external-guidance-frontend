@@ -73,6 +73,14 @@ footer.links.accessibility.text=Accessibility Statement
 footer.links.privacy_policy.text=Privacy policy
 footer.links.terms_and_conditions.text=Terms and conditions
 
+## There has been a problem page (Block cookies)
+service.session-blocked-page.title = There has been a problem
+service.session-blocked-page.info = You need to change your browser settings to allow cookies to be used and then start again.
+service.session-blocked-page.continue = Start again
+service.session-blocked-page.lang-switch-aria-label = Language switcher
+service.session-blocked-page.lang-switch-selectable = Cymraeg
+service.session-blocked-page.lang-switch-hidden = Newid yr iaith ir Gymraeg
+
 ## guidance error page
 guidance.error.title=Execution of the current process has encountered a problem
 guidance.error.heading=Error: There is a guidance problem

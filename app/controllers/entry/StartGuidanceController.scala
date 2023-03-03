@@ -60,15 +60,16 @@ class StartGuidanceController @Inject() (
     retrieveCacheAndRedirectToView(processId, service.retrieveAndCacheApprovalByPageUrl(s"/$url"), defaultErrorHandler)
   }
 
-  def published(processCode: String, c: Option[String] = None): Action[AnyContent] = Action.async { implicit request =>
-    logger.warn(s"ST: Starting publish journey for $processCode")
-    retrieveCacheAndRedirectToView(processCode, service.retrieveAndCachePublished, publishedErrorHandler, c)
+  def published(processCode: String, c: Option[String] = None, lang: Option[String] = None): Action[AnyContent] = Action.async { implicit request =>
+    logger.warn(s"ST: Starting publish journey for $processCode, lang = $lang")
+    retrieveCacheAndRedirectToView(processCode, service.retrieveAndCachePublished, publishedErrorHandler, c, lang)
   }
 
   private def retrieveCacheAndRedirectToView(id: String,
                                              retrieveAndCache: (String, String) => Future[RequestOutcome[(String,String)]],
                                              errHandler: (Error, String, String) => Result,
-                                             c: Option[String] = None)(
+                                             c: Option[String] = None,
+                                             lang: Option[String] = None)(
       implicit request: Request[_]
   ): Future[Result] = {
     val (sessionId, egNewSessionId) = existingOrNewSessionId()
@@ -78,7 +79,7 @@ class StartGuidanceController @Inject() (
       Future.successful(NotFound(errorHandler.notFoundTemplateWithProcessCode(None)))
     } { _ => retrieveAndCache(id, sessionId).map {
         case Right((url, processCode)) =>
-          val target = controllers.routes.GuidanceController.getPage(processCode, url.drop(1), None, c).url
+          val target = controllers.routes.GuidanceController.getPage(processCode, url.drop(1), None, c, lang).url
           logger.warn(s"Redirecting to begin viewing process $id/$processCode at ${target} using sessionId $sessionId, EG_NEW_SESSIONID = $egNewSessionId")
           egNewSessionId.fold(Redirect(target))(newId =>
             Redirect(target)
@@ -93,7 +94,7 @@ class StartGuidanceController @Inject() (
   private def publishedErrorHandler(error: Error, id: String, sessionId: String)(implicit request: Request[_]): Result =
     error match {
       case DuplicateKeyError =>
-        // Trigger to return to the start URL after highly unlikely duplicate key error generated when attempting to create sesssion
+        // Trigger return to the start URL after highly unlikely duplicate key error generated when attempting to create sesssion
         logger.warn(s"Unable to retrieve and cache due to  duplicate key error detected using sessionId $sessionId and id $id, restarting")
         Redirect(s"${appConfig.baseUrl}/$id")
       case err => defaultErrorHandler(err, id, sessionId)

@@ -24,6 +24,7 @@ import scala.util.matching.Regex
 import Regex._
 import play.api.i18n.{Messages, Lang}
 import scala.annotation.tailrec
+import uk.gov.hmrc.hmrcfrontend.views.viewmodels.language.{En, Cy}
 
 object StringTransform {
   val OriginalCaptureIdx: Int = 0
@@ -45,8 +46,9 @@ object StringTransform {
 
 object TextBuilder {
   val NonWhitespaceRegex: Regex = "[^\\s]+".r
-  val English: Lang = Lang("en")
-  val Welsh: Lang = Lang("cy")
+  val English: Lang = Lang(En.code)
+  val Welsh: Lang = Lang(Cy.code)
+  val languageMap = Map(En.code -> services.TextBuilder.English, Cy.code -> services.TextBuilder.Welsh)
 
   private object TextPlaceholders {
     // Indexes into the Placeholder regex match groups
