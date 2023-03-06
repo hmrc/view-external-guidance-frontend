@@ -49,6 +49,7 @@ object TextBuilder {
   val English: Lang = Lang(En.code)
   val Welsh: Lang = Lang(Cy.code)
   val languageMap = Map(En.code -> services.TextBuilder.English, Cy.code -> services.TextBuilder.Welsh)
+  def language(languageCode: String): Lang = languageMap.get(languageCode).getOrElse(English)
 
   private object TextPlaceholders {
     // Indexes into the Placeholder regex match groups
