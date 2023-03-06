@@ -17,11 +17,11 @@
 package forms.providers
 
 import play.api.data.Form
-import models.ui.SubmittedListAnswer
+import models.ui.ListAnswer
 
 import base.BaseSpec
 
-class SubmittedListAnswerFormProviderSpec extends BaseSpec {
+class ListAnswerFormProviderSpec extends BaseSpec {
 
   val formProvider: StringListFormProvider = new StringListFormProvider()
 
@@ -29,13 +29,13 @@ class SubmittedListAnswerFormProviderSpec extends BaseSpec {
   val listItem1Value: String = "Tuesday"
   val listItem2Value: String = "Wednesday"
 
-  "Forms created by SubmittedListAnswerFormProvider" should {
+  "Forms created by ListAnswerFormProvider" should {
 
     "correctly bind submitted data" in {
 
-      val form: Form[SubmittedListAnswer] = formProvider("path")
+      val form: Form[ListAnswer] = formProvider("path")
 
-      val boundForm: Form[SubmittedListAnswer] = form.bind(
+      val boundForm: Form[ListAnswer] = form.bind(
         Map(
           "path[0]" -> listItem0Value,
           "path[1]" -> listItem1Value,
@@ -43,15 +43,15 @@ class SubmittedListAnswerFormProviderSpec extends BaseSpec {
         )
       )
 
-      boundForm.get shouldBe SubmittedListAnswer(List(listItem0Value, listItem1Value, listItem2Value))
+      boundForm.get shouldBe ListAnswer(List(listItem0Value, listItem1Value, listItem2Value))
     }
   }
 
   "be able to execute the unbind method held in mapping" in {
 
-    val form: Form[SubmittedListAnswer] = formProvider("path")
+    val form: Form[ListAnswer] = formProvider("path")
 
-    val map: Map[String, String] = form.mapping.unbind(SubmittedListAnswer(List(listItem0Value, listItem1Value, listItem2Value)))
+    val map: Map[String, String] = form.mapping.unbind(ListAnswer(List(listItem0Value, listItem1Value, listItem2Value)))
 
     map.keySet shouldBe Set("path[0]", "path[1]", "path[2]")
 

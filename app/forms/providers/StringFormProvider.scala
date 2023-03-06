@@ -20,19 +20,19 @@ import play.api.mvc._
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.Forms.nonEmptyText
-import models.ui.SubmittedTextAnswer
+import models.ui.StringAnswer
 import services.ValueMissingError
 import play.api.i18n.Messages
 import play.api.data.FormBinding.Implicits._
 import forms._
 
-class StringFormProvider extends FormProvider[SubmittedTextAnswer] {
+class StringFormProvider extends FormProvider[StringAnswer] {
   def bind(name: String)(implicit request: Request[_], messages: Messages): Binding =
     apply(name).bindFromRequest().fold(fe => Left((fe, ValueMissingError)), fd => Right((apply(name).fill(fd), fd)))
 
-  def populated(name: String, answer: Option[String]): Form[SubmittedTextAnswer] =
+  def populated(name: String, answer: Option[String]): Form[StringAnswer] =
     answer.fold(apply(name))(value => apply(name).bind(Map(name -> value)))
 
-  def apply(name: String): Form[SubmittedTextAnswer] =
-    Form(mapping(name -> nonEmptyText)(SubmittedTextAnswer.apply)(SubmittedTextAnswer.unapply))
+  def apply(name: String): Form[StringAnswer] =
+    Form(mapping(name -> nonEmptyText)(StringAnswer.apply)(StringAnswer.unapply))
 }

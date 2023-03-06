@@ -17,7 +17,7 @@
 package forms.providers
 
 import play.api.data.Form
-import models.ui.SubmittedTextAnswer
+import models.ui.StringAnswer
 
 import base.BaseSpec
 
@@ -27,22 +27,22 @@ class StringFormProviderSpec extends BaseSpec {
 
   val inputValue: String = "10.00"
 
-  "Forms created by SubmittedTextAnswerFormProvider" should {
+  "Forms created by StringAnswerFormProvider" should {
 
     "correctly bind a single text input value" in {
 
-      val form: Form[SubmittedTextAnswer] = formProvider("answer")
+      val form: Form[StringAnswer] = formProvider("answer")
 
-      val boundForm: Form[SubmittedTextAnswer] = form.bind(Map("answer" -> inputValue))
+      val boundForm: Form[StringAnswer] = form.bind(Map("answer" -> inputValue))
 
-      boundForm.get shouldBe SubmittedTextAnswer(inputValue)
+      boundForm.get shouldBe StringAnswer(inputValue)
     }
 
     "be able to be able to execute the unapply method held in mapping" in {
 
-      val form: Form[SubmittedTextAnswer] = formProvider("answer")
+      val form: Form[StringAnswer] = formProvider("answer")
 
-      val map: Map[String, String] = form.mapping.unbind(SubmittedTextAnswer(inputValue))
+      val map: Map[String, String] = form.mapping.unbind(StringAnswer(inputValue))
 
       map.keySet shouldBe Set("answer")
 

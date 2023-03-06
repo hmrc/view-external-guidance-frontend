@@ -21,7 +21,7 @@ import forms.FormProvider
 import forms.providers.{DateFormProvider, StringFormProvider}
 import models.PageContext
 import core.models.ocelot.{LabelCache, Labels}
-import models.ui.{Answer, CurrencyInput, CurrencyPoundsOnlyInput, DateInput, TextInput, FormPage, Question, Text, SubmittedDateAnswer, SubmittedTextAnswer}
+import models.ui.{Answer, CurrencyInput, CurrencyPoundsOnlyInput, DateInput, TextInput, FormPage, Question, Text, DateAnswer, StringAnswer}
 import org.jsoup.nodes.Element
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.data.Forms.nonEmptyText

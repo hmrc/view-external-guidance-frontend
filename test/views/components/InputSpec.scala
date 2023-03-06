@@ -20,7 +20,7 @@ import forms.FormProvider
 import forms.providers.{DateFormProvider, StringFormProvider}
 import core.models.ocelot.{Label, LabelCache, Labels, Phrase}
 import models.ui.{BulletPointList, CurrencyInput, DateInput, FormPage, H2, H3, H4, Input, NumberInput}
-import models.ui.{Paragraph, RequiredErrorMsg, SubmittedDateAnswer, Text, TextInput, ValueErrorMsg,SubmittedTextAnswer}
+import models.ui.{Paragraph, RequiredErrorMsg, DateAnswer, Text, TextInput, ValueErrorMsg,StringAnswer}
 import org.jsoup._
 import org.jsoup.nodes.{Document, Element}
 import org.jsoup.select.Elements
@@ -703,14 +703,14 @@ class InputSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite {
     }
   }
 
-  private def bindDateFormData(data: (String, String)*): Either[Form[_], SubmittedDateAnswer] = {
+  private def bindDateFormData(data: (String, String)*): Either[Form[_], DateAnswer] = {
 
     implicit val bindRequest: Request[_] = FakeRequest("POST", "/")
       .withFormUrlEncodedBody(data: _*)
 
     def formProvider: DateFormProvider = new DateFormProvider
 
-    val form: Form[SubmittedDateAnswer] = formProvider()
+    val form: Form[DateAnswer] = formProvider()
 
     form.bindFromRequest().fold(
       formWithErrors => Left(formWithErrors),

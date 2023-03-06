@@ -22,17 +22,17 @@ import play.api.data.Forms._
 import play.api.data.Forms.nonEmptyText
 import play.api.i18n.Messages
 import core.models.ocelot.splitInputDateString
-import models.ui.SubmittedDateAnswer
+import models.ui.DateAnswer
 import services.ValueMissingGroupError
 import play.api.data.FormBinding.Implicits._
 import forms._
 
-class DateFormProvider extends FormProvider[SubmittedDateAnswer] {
-  def apply(): Form[SubmittedDateAnswer] =
+class DateFormProvider extends FormProvider[DateAnswer] {
+  def apply(): Form[DateAnswer] =
     Form(mapping("day" -> nonEmptyText,
                  "month" -> nonEmptyText,
                  "year" -> nonEmptyText)
-        (SubmittedDateAnswer.apply)(SubmittedDateAnswer.unapply)
+        (DateAnswer.apply)(DateAnswer.unapply)
     )
 
   def bind(name: String)(implicit request: Request[_], messages: Messages): Binding =
@@ -46,7 +46,7 @@ class DateFormProvider extends FormProvider[SubmittedDateAnswer] {
   )
 
 
-  def populated(name: String, answer: Option[String]): Form[SubmittedDateAnswer] =
+  def populated(name: String, answer: Option[String]): Form[DateAnswer] =
     answer.fold(apply())(value => {
       val (day, month, year) = splitInputDateString(value).fold(("", "", ""))(v => v)
 

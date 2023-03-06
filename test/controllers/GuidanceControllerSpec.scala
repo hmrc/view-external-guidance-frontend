@@ -1695,8 +1695,8 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
         None
       )
 
-      val validSubmittedDateAnswer: String = "10/10/2020"
-      val invalidSubmittedDateAnswer: String = "xx/10/2012"
+      val validDateAnswer: String = "10/10/2020"
+      val invalidDateAnswer: String = "xx/10/2012"
     }
 
     "Calling a valid URL path to an Date Input page in a process" should {
@@ -1740,7 +1740,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
 
         MockGuidanceService
           .getPageContext(processId, path, previousPageByLink = false, processId)
-          .returns(Future.successful(Right(PageContext(expectedPage, vStanzas, di, sessionId, Some("/"), Text(Nil), processId, processCode, initialLabels, None, Some(validSubmittedDateAnswer)))))
+          .returns(Future.successful(Right(PageContext(expectedPage, vStanzas, di, sessionId, Some("/"), Text(Nil), processId, processCode, initialLabels, None, Some(validDateAnswer)))))
 
         val result = target.getPage(processId, relativePath, None)(fakeRequest)
 
@@ -1774,7 +1774,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
           .returns(Future.successful(Right(pec)))
 
         MockGuidanceService
-          .submitPage(pec, path, validSubmittedDateAnswer, validSubmittedDateAnswer)
+          .submitPage(pec, path, validDateAnswer, validDateAnswer)
           .returns(Future.successful(Right((Some("4"), LabelCache()))))
 
         override val fakeRequest = FakeRequest("POST", path)
