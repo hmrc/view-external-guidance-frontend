@@ -14,18 +14,16 @@
  * limitations under the License.
  */
 
-package forms
+package forms.providers
 
 import play.api.data.Form
-import play.api.data.Forms._
-
 import models.ui.SubmittedTextAnswer
 
 import base.BaseSpec
 
-class SubmittedTextAnswerFormProviderSpec extends BaseSpec {
+class StringFormProviderSpec extends BaseSpec {
 
-  val formProvider: SubmittedTextAnswerFormProvider = new SubmittedTextAnswerFormProvider()
+  val formProvider: StringFormProvider = new StringFormProvider()
 
   val inputValue: String = "10.00"
 
@@ -33,7 +31,7 @@ class SubmittedTextAnswerFormProviderSpec extends BaseSpec {
 
     "correctly bind a single text input value" in {
 
-      val form: Form[SubmittedTextAnswer] = formProvider("answer" -> nonEmptyText)
+      val form: Form[SubmittedTextAnswer] = formProvider("answer")
 
       val boundForm: Form[SubmittedTextAnswer] = form.bind(Map("answer" -> inputValue))
 
@@ -42,7 +40,7 @@ class SubmittedTextAnswerFormProviderSpec extends BaseSpec {
 
     "be able to be able to execute the unapply method held in mapping" in {
 
-      val form: Form[SubmittedTextAnswer] = formProvider("answer" -> nonEmptyText)
+      val form: Form[SubmittedTextAnswer] = formProvider("answer")
 
       val map: Map[String, String] = form.mapping.unbind(SubmittedTextAnswer(inputValue))
 

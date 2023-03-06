@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package forms
+package forms.providers
 
 import play.api.data.Form
 import models.ui.SubmittedListAnswer
@@ -23,7 +23,7 @@ import base.BaseSpec
 
 class SubmittedListAnswerFormProviderSpec extends BaseSpec {
 
-  val formProvider: SubmittedListAnswerFormProvider = new SubmittedListAnswerFormProvider()
+  val formProvider: StringListFormProvider = new StringListFormProvider()
 
   val listItem0Value: String = "Monday"
   val listItem1Value: String = "Tuesday"

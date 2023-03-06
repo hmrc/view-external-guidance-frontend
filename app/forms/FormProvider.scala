@@ -16,50 +16,22 @@
 
 package forms
 
-import play.api.data.{Form, Mapping}
-import play.api.data.Forms._
-import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
-import models.ui.{SubmittedDateAnswer, SubmittedListAnswer, SubmittedTextAnswer}
+import play.api.mvc.Request
+import play.api.data.Form
+import play.api.i18n.Messages
+import forms.providers._
+import core.models.ocelot.stanzas.{DataInput, DateInput, Input, Question, Sequence}
 
-trait FormProvider
-
-class SubmittedTextAnswerFormProvider extends FormProvider {
-
-  def apply(bindData: (String, Mapping[String])): Form[SubmittedTextAnswer] =
-
-    Form(
-      mapping(
-        bindData._1 -> bindData._2
-      )(SubmittedTextAnswer.apply)(SubmittedTextAnswer.unapply)
-    )
+trait FormProvider[T] {
+  def bind(name: String)(implicit request: Request[_], messages: Messages): Binding
+  def populated(name: String, answer: Option[String]): Form[T]
 }
 
-class SubmittedDateAnswerFormProvider extends FormProvider {
-
-  def apply(): Form[SubmittedDateAnswer] =
-
-    Form(
-      mapping(
-        "day" -> nonEmptyText,
-        "month" -> nonEmptyText,
-        "year" -> nonEmptyText
-      )(SubmittedDateAnswer.apply)(SubmittedDateAnswer.unapply)
-    )
-
+object FormProvider{
+  def apply(input: DataInput): FormProvider[_] = input match {
+      case _: DateInput => new DateFormProvider()
+      case _: Input | _: Question => new StringFormProvider()
+      case _: Sequence => new StringListFormProvider()
+    }
 }
-
-class SubmittedListAnswerFormProvider extends FormProvider {
-
-  def apply(name: String): Form[SubmittedListAnswer] =
-
-    Form(
-      mapping(name -> list(text).verifying(validateListIsPopulated))
-      (SubmittedListAnswer.apply)(SubmittedListAnswer.unapply)
-    )
-
-  private def validateListIsPopulated[T]: Constraint[List[T]] =
-    Constraint[List[T]]("constraint.required")
-      {list => if(list.nonEmpty) Valid else Invalid(ValidationError("error.required"))}
-}
-
 

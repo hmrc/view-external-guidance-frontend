@@ -38,7 +38,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import controllers.actions.SessionIdAction
 import play.twirl.api.Html
 import scala.concurrent.Future
-import forms.FormsHelper.{bindFormData, populatedForm}
+//import forms.FormsHelper.{bindFormData, populatedForm}
+import forms.FormProvider
 
 @Singleton
 class GuidanceController @Inject() (
@@ -105,7 +106,7 @@ class GuidanceController @Inject() (
               case Some(input) =>
                 val inputName: String = formInputName(path)
                 logger.warn(s"GFP=>V: sessionId: ${sId}, requestId: ${rId}, URI: ${uri}")
-                Future.successful(Ok(formView(page, pageCtx, inputName, populatedForm(input, inputName, pageCtx.answer))))
+                Future.successful(Ok(formView(page, pageCtx, inputName, FormProvider(input).populated(inputName, pageCtx.answer))))
               case _ =>
                 logger.error(s"Unable to locate input stanza for process ${pageCtx.processCode} on page load")
                 Future.successful(BadRequest(errorHandler.badRequestTemplateWithProcessCode(Some(processCode))))
@@ -158,7 +159,8 @@ class GuidanceController @Inject() (
           Future.successful(BadRequest(errorHandler.badRequestTemplateWithProcessCode(Some(processCode))))
         }{ input =>
           val inputName: String = formInputName(path)
-          bindFormData(input, inputName) match {
+
+          FormProvider(input).bind(inputName) match {
             case Left((formWithErrors: Form[_], errorStrategy: ErrorStrategy)) =>
               Future.successful(BadRequest(createErrorView(service.getSubmitPageContext(ctx, errorStrategy), inputName, formWithErrors)))
             case Right((form: Form[_], submittedAnswer: SubmittedAnswer)) =>

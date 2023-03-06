@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package forms
+package forms.providers
 
 import play.api.data.Form
 import models.ui.SubmittedDateAnswer
 import base.BaseSpec
 
 
-class SubmittedDateAnswerFormProviderSpec extends BaseSpec {
+class DateFormProviderSpec extends BaseSpec {
 
-  val formProvider: SubmittedDateAnswerFormProvider = new SubmittedDateAnswerFormProvider()
+  val formProvider: DateFormProvider = new DateFormProvider()
 
   val day: String = "21"
   val month: String = "12"
