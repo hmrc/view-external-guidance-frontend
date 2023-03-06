@@ -34,7 +34,7 @@ class SessionBlockedController @Inject()(appConfig: AppConfig,
 
   def sessionBlocked(processCode: String, lang: Option[String] = None): Action[AnyContent] = Action{ implicit request =>
     logger.warn(s"Session blocked (no cookies) for guidance $processCode, language = $lang")
-    val messages = mcc.messagesApi.preferred(Seq(TextBuilder.languageMap(lang.getOrElse(TextBuilder.English.code))))
+    val messages = mcc.messagesApi.preferred(Seq(lang.fold(TextBuilder.English)(l => TextBuilder.language(l))))
     Ok(view(processCode, s"${appConfig.baseUrl}/$processCode", lang)(request, messages))
   }
 
