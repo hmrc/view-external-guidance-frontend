@@ -28,7 +28,10 @@ import forms._
 
 class StringListFormProvider extends FormProvider[ListAnswer] {
   def bind(name: String)(implicit request: Request[_], messages: Messages): Binding =
-    apply(name).bindFromRequest().fold(fe => Left((fe, ValueMissingError)), fd => Right((apply(name).fill(fd), fd)))
+    apply(name).bindFromRequest().fold(
+      fe => Left((fe, ValueMissingError)),
+      fd => Right((apply(name).fill(fd), fd))
+    )
 
   def populated(name: String, answer: Option[String]): Form[ListAnswer] =
     answer match {
@@ -37,7 +40,8 @@ class StringListFormProvider extends FormProvider[ListAnswer] {
     }
 
   def apply(name: String): Form[ListAnswer] =
-    Form(mapping(name -> list(text).verifying(Constraint[List[String]]("constraint.required")
-                                             (l => if(l.nonEmpty) Valid else Invalid(ValidationError("error.required")))))
+    Form(mapping(
+      name -> list(text).verifying(Constraint[List[String]]("constraint.required")(l => if(l.nonEmpty) Valid else Invalid(ValidationError("error.required"))))
+    )
     (ListAnswer.apply)(ListAnswer.unapply))
 }

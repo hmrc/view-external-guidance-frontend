@@ -28,28 +28,23 @@ import play.api.data.FormBinding.Implicits._
 import forms._
 
 class DateFormProvider extends FormProvider[DateAnswer] {
+  def bind(name: String)(implicit request: Request[_], messages: Messages): Binding =
+   apply().bindFromRequest().fold(
+    fe => if (fe.errors.size == 3) Left((fe, ValueMissingGroupError(Nil)))
+          else Left((fe, ValueMissingGroupError(fe.errors.map(e => (messages(s"label.${e.key}")).toLowerCase).toList))),
+    formData => Right(( apply().fill(formData), formData))
+  )
+
+  def populated(name: String, answer: Option[String]): Form[DateAnswer] =
+    answer.fold(apply()){value =>
+      val (day, month, year) = splitInputDateString(value).fold(("", "", ""))(v => v)
+      apply().bind(Map("day" -> day, "month" -> month, "year" -> year))
+    }
+
   def apply(): Form[DateAnswer] =
     Form(mapping("day" -> nonEmptyText,
                  "month" -> nonEmptyText,
                  "year" -> nonEmptyText)
         (DateAnswer.apply)(DateAnswer.unapply)
     )
-
-  def bind(name: String)(implicit request: Request[_], messages: Messages): Binding =
-   apply().bindFromRequest().fold(fe =>
-    if (fe.errors.size == 3) { Left((fe, ValueMissingGroupError(Nil))) }
-    else {
-      val missingFieldNames: List[String] = fe.errors.map(e => (messages(s"label.${e.key}")).toLowerCase).toList
-      Left((fe, ValueMissingGroupError(missingFieldNames)))
-    },
-    formData => Right(( apply().fill(formData), formData))
-  )
-
-
-  def populated(name: String, answer: Option[String]): Form[DateAnswer] =
-    answer.fold(apply())(value => {
-      val (day, month, year) = splitInputDateString(value).fold(("", "", ""))(v => v)
-
-      apply().bind(Map("day" -> day, "month" -> month, "year" -> year))
-    })
 }

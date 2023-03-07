@@ -28,11 +28,16 @@ import forms._
 
 class StringFormProvider extends FormProvider[StringAnswer] {
   def bind(name: String)(implicit request: Request[_], messages: Messages): Binding =
-    apply(name).bindFromRequest().fold(fe => Left((fe, ValueMissingError)), fd => Right((apply(name).fill(fd), fd)))
+    apply(name).bindFromRequest().fold(
+      fe => Left((fe, ValueMissingError)),
+      fd => Right((apply(name).fill(fd), fd))
+    )
 
   def populated(name: String, answer: Option[String]): Form[StringAnswer] =
     answer.fold(apply(name))(value => apply(name).bind(Map(name -> value)))
 
   def apply(name: String): Form[StringAnswer] =
-    Form(mapping(name -> nonEmptyText)(StringAnswer.apply)(StringAnswer.unapply))
+    Form(mapping(
+      name -> nonEmptyText
+    )(StringAnswer.apply)(StringAnswer.unapply))
 }
