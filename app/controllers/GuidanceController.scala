@@ -38,7 +38,6 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import controllers.actions.SessionIdAction
 import play.twirl.api.Html
 import scala.concurrent.Future
-//import forms.FormsHelper.{bindFormData, populatedForm}
 import forms.FormProvider
 
 @Singleton
