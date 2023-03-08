@@ -16,6 +16,7 @@
 
 package forms
 
+import javax.inject.{Inject, Singleton}
 import play.api.mvc.Request
 import play.api.data.Form
 import play.api.i18n.Messages
@@ -27,11 +28,16 @@ trait FormProvider[T] {
   def populated(name: String, answer: Option[String]): Form[T]
 }
 
-object FormProvider{
+@Singleton
+class FormProviderFactory @Inject() (
+  dateFormProvider: DateFormProvider,
+  stringFormProvider: StringFormProvider,
+  stringListFormProvider: StringListFormProvider) {
+
   def apply(input: DataInput): FormProvider[_] = input match {
-      case _: DateInput => new DateFormProvider()
-      case _: Input | _: Question => new StringFormProvider()
-      case _: Sequence => new StringListFormProvider()
+      case _: DateInput => dateFormProvider
+      case _: Input | _: Question => stringFormProvider
+      case _: Sequence => stringListFormProvider
     }
 }
 

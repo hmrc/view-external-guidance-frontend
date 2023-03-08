@@ -50,6 +50,8 @@ import views.html._
 import services._
 import mocks.MockPageRenderer
 import uk.gov.hmrc.http.{RequestId, HeaderCarrier, HeaderNames}
+import forms.FormProviderFactory
+import forms.providers._
 
 class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSuite {
 
@@ -165,6 +167,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
     val meta = Meta(processId, "", None, 0, "", 1L, 0, None, None, processCode)
     val pageMap = Map("/start" -> PageNext("1", List("2", "3")), path -> PageNext("2"))
     val emptyProcess = Process(meta, Map(), Vector(), Vector())
+    val formProvider: FormProviderFactory = new FormProviderFactory(new DateFormProvider, new StringFormProvider, new StringListFormProvider)
 
     def renderPage(page: Page, labels: Labels):(Seq[VisualStanza], Labels, Option[DataInput]) =
       new PageRenderer(MockAppConfig).renderPage(page, labels).fold(_ => fail, result => result)
@@ -182,7 +185,8 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
       view,
       formView,
       mockGuidanceService,
-      stubMessagesControllerComponents()
+      stubMessagesControllerComponents(),
+      formProvider
     )
 
     val initialLabels = LabelCache()
@@ -228,7 +232,8 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
       view,
       formView,
       guidanceService,
-      stubMessagesControllerComponents()
+      stubMessagesControllerComponents(),
+      formProvider
     )
 
     val initialLabels = LabelCache()
@@ -404,7 +409,8 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
       view,
       formView,
       guidanceService,
-      stubMessagesControllerComponents()
+      stubMessagesControllerComponents(),
+      formProvider
     )
     val process = prototypeJson.as[Process]
   }
@@ -758,7 +764,8 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
       view,
       formView,
       mockGuidanceService,
-      stubMessagesControllerComponents()
+      stubMessagesControllerComponents(),
+      formProvider
     )
 
     val initialLabels = LabelCache()
@@ -1165,7 +1172,8 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
         view,
         formView,
         mockGuidanceService,
-        stubMessagesControllerComponents()
+        stubMessagesControllerComponents(),
+        formProvider
       )
   }
 
@@ -1181,7 +1189,8 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
           view,
           formView,
           mockGuidanceService,
-          stubMessagesControllerComponents()
+          stubMessagesControllerComponents(),
+          formProvider
         )
 
       val session: GuidanceSession =
@@ -1284,7 +1293,8 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
           view,
           formView,
           mockGuidanceService,
-          stubMessagesControllerComponents()
+          stubMessagesControllerComponents(),
+          formProvider
         )
       lazy val result = target.getPage(processCode, relativePath, None)(fakeRequest)
     }
@@ -1316,7 +1326,8 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
           view,
           formView,
           mockGuidanceService,
-          stubMessagesControllerComponents()
+          stubMessagesControllerComponents(),
+          formProvider
         )
       lazy val result = target.getPage(processCode, relativePath, None)(fakeRequest)
     }
@@ -1348,7 +1359,8 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
           view,
           formView,
           mockGuidanceService,
-          stubMessagesControllerComponents()
+          stubMessagesControllerComponents(),
+          formProvider
         )
       lazy val result = target.getPage(processCode, relativePath, None)(fakeRequest)
     }
@@ -1376,7 +1388,8 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
           view,
           formView,
           mockGuidanceService,
-          stubMessagesControllerComponents()
+          stubMessagesControllerComponents(),
+          formProvider
         )
 
     }
@@ -1424,7 +1437,8 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
           view,
           formView,
           mockGuidanceService,
-          stubMessagesControllerComponents()
+          stubMessagesControllerComponents(),
+          formProvider
         )
       lazy val result = target.getPage(processCode, relativePath, None)(fakeRequest)
     }
@@ -1457,7 +1471,8 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
           view,
           formView,
           mockGuidanceService,
-          stubMessagesControllerComponents()
+          stubMessagesControllerComponents(),
+          formProvider
         )
       lazy val result = target.getPage(processCode, relativePath, None)(fakeRequest)
     }
@@ -1490,7 +1505,8 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
           view,
           formView,
           mockGuidanceService,
-          stubMessagesControllerComponents()
+          stubMessagesControllerComponents(),
+          formProvider
         )
       lazy val result = target.getPage(processCode, unknownPath.drop(1), None)(fakeRequest)
     }
@@ -1522,7 +1538,8 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
           view,
           formView,
           mockGuidanceService,
-          stubMessagesControllerComponents()
+          stubMessagesControllerComponents(),
+          formProvider
         )
       lazy val result = target.getPage("otherProcessCode", "/path", None)(fakeRequest)
     }
@@ -1604,7 +1621,8 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
           view,
           formView,
           mockGuidanceService,
-          stubMessagesControllerComponents()
+          stubMessagesControllerComponents(),
+          formProvider
         )
     }
 
@@ -1643,7 +1661,8 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
           view,
           formView,
           mockGuidanceService,
-          stubMessagesControllerComponents()
+          stubMessagesControllerComponents(),
+          formProvider
         )
       lazy val result = target.getPage(processId, unknownPath, None)(fakeRequest)
     }
@@ -1675,7 +1694,8 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
         view,
         formView,
         mockGuidanceService,
-        stubMessagesControllerComponents()
+        stubMessagesControllerComponents(),
+        formProvider
       )
 
       val initialLabels = LabelCache()
@@ -1919,7 +1939,8 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
         view,
         formView,
         mockGuidanceService,
-        stubMessagesControllerComponents()
+        stubMessagesControllerComponents(),
+        formProvider
       )
 
       val initialLabels: Labels = LabelCache()
@@ -2111,7 +2132,8 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
         view,
         formView,
         mockGuidanceService,
-        stubMessagesControllerComponents()
+        stubMessagesControllerComponents(),
+        formProvider
       )
 
       val initialLabels: Labels = LabelCache()
