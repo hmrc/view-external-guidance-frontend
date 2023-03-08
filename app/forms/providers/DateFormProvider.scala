@@ -30,8 +30,10 @@ import forms._
 class DateFormProvider extends FormProvider[DateAnswer] {
   def bind(name: String)(implicit request: Request[_], messages: Messages): Binding =
    apply().bindFromRequest().fold(
-    fe => if (fe.errors.size == 3) Left((fe, ValueMissingGroupError(Nil)))
-          else Left((fe, ValueMissingGroupError(fe.errors.map(e => (messages(s"label.${e.key}")).toLowerCase).toList))),
+    fe => {
+      val fieldNames = if (fe.errors.size > 2) Nil else fe.errors.map(e => (messages(s"label.${e.key}")).toLowerCase).toList
+      Left((fe, ValueMissingGroupError(fieldNames)))
+    },
     formData => Right(( apply().fill(formData), formData))
   )
 
