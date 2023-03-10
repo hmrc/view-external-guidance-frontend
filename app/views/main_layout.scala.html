@@ -43,7 +43,8 @@
   betaPhaseBanner: Boolean = false,
   enableTimeout: Boolean = true,
   layoutFormat: Option[Html => Html] = Some(defaultLayout(_)),
-  enableLanguageSelect: Boolean = true
+  enableLanguageSelect: Boolean = true,
+  urlLangSwitch: Option[Html] = None
 )(contentBlock: Html)(implicit request: Request[_], messages: Messages)
 
 @processCodeUrl(processCode: Option[String], url: String) = @{
@@ -61,13 +62,17 @@
         content = HtmlContent(s"""${messages("feedback.before")} <a class='govuk-link' href="${appConfig.feedbackUrl}">${messages("feedback.linkLabel")}</a> ${messages("feedback.after")}""")
         ))
     }
-    @if(enableLanguageSelect){
-      @hmrcLanguageSelect(
-          LanguageSelect(if (messages.lang.language == "en") En else Cy,
-              En -> s"${appConfig.baseUrl}/language/english",
-              Cy -> s"${appConfig.baseUrl}/language/cymraeg")
-      )
-    }
+
+    @urlLangSwitch.fold{
+      @if(enableLanguageSelect) {
+        @hmrcLanguageSelect(
+            LanguageSelect(if (messages.lang.language == "en") En else Cy,
+                En -> s"${appConfig.baseUrl}/language/english",
+                Cy -> s"${appConfig.baseUrl}/language/cymraeg")
+        )
+      }
+    }{block => @block}
+
     @backUrl.map(url =>
       govukBackLink(BackLink(href = url,
                              content = Text(messages("backlink.label")),
