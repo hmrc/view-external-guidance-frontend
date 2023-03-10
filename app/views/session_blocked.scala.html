@@ -25,9 +25,13 @@
 
 @langOrEnglishDefault = @{lang.fold(TextBuilder.English.code)(l => l)}
 
-@layout(messages("service.name"), messages("service.name"), Some(processCode), None, betaPhaseBanner = false, enableTimeout = false, enableLanguageSelect = false){
-
-  @components.sessionBlockedLangSwitch(langOrEnglishDefault, processCode)
+@layout(messages("service.name"),
+        messages("service.name"),
+        Some(processCode),
+        None,
+        betaPhaseBanner = false,
+        enableTimeout = false,
+        urlLangSwitch = Some(components.sessionBlockedLangSwitch(langOrEnglishDefault, processCode))){
 
   <h1 class="govuk-heading-xl">@messages("service.session-blocked-page.title")</h1>
   <p>@messages("service.session-blocked-page.info")</p>
