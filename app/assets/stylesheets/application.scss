@@ -37,4 +37,8 @@ $govuk-global-styles: true;
   footer
   { display: none; }
 
+  .govuk-main-wrapper > .govuk-grid-row > div[class*='govuk-grid-column-'] {
+      width: 100%;
+  }
+
 }
