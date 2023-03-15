@@ -26,9 +26,10 @@ import play.api.i18n.{Lang, Messages, MessagesApi}
 import play.api.mvc.Request
 import play.api.test.FakeRequest
 import views.html._
-import forms.{SubmittedDateAnswerFormProvider, SubmittedListAnswerFormProvider, SubmittedTextAnswerFormProvider}
+import forms.FormProvider
+import forms.providers.{DateFormProvider, StringListFormProvider, StringFormProvider}
 import models.PageContext
-import models.ui.{CurrencyInput, DateInput, FormPage, RequiredErrorMsg, Sequence, SubmittedDateAnswer, SubmittedListAnswer, SubmittedTextAnswer, Text, TypeErrorMsg, ValueErrorMsg}
+import models.ui.{CurrencyInput, DateInput, FormPage, RequiredErrorMsg, Sequence, DateAnswer, ListAnswer, StringAnswer, Text, TypeErrorMsg, ValueErrorMsg}
 import base.ViewFns
 import org.jsoup.nodes.{Document, Element}
 import play.api.data.FormBinding.Implicits._
@@ -54,9 +55,9 @@ class ErrorSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with 
     val requiredDateComponentError: String = "Parts of the date are absent"
     val valueError: String = "Please enter a valid amount"
 
-    val dateAnswerFormProvider: SubmittedDateAnswerFormProvider = new SubmittedDateAnswerFormProvider()
-    val listAnswerFormProvider: SubmittedListAnswerFormProvider = new SubmittedListAnswerFormProvider()
-    val textAnswerFormProvider: SubmittedTextAnswerFormProvider = new SubmittedTextAnswerFormProvider()
+    val dateAnswerFormProvider: DateFormProvider = new DateFormProvider
+    val listAnswerFormProvider: StringListFormProvider = new StringListFormProvider
+    val textAnswerFormProvider: StringFormProvider = new StringFormProvider
     
     val currencyInput: CurrencyInput = CurrencyInput(Text(), None, Seq.empty)
     val page: FormPage = FormPage("/url", currencyInput)
@@ -93,7 +94,7 @@ class ErrorSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with 
 
     "render error header and list of messages for currency input with value error" in new Test {
 
-      val form: Form[SubmittedTextAnswer] = textAnswerFormProvider(relativePath -> nonEmptyText)
+      val form: Form[StringAnswer] = textAnswerFormProvider(relativePath)
 
       val doc: Document = asDocument(components.error_summary(currencyInputWithErrors, relativePath, form)
       (messages, currencyInputWithErrorsCtx))
@@ -125,7 +126,7 @@ class ErrorSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with 
       implicit val request: Request[_] = FakeRequest("POST", path)
         .withFormUrlEncodedBody()
 
-      val form:Form[SubmittedListAnswer] = listAnswerFormProvider(relativePath)
+      val form:Form[ListAnswer] = listAnswerFormProvider(relativePath)
 
       form.bindFromRequest().fold(
         formWithErrors => {
@@ -159,7 +160,7 @@ class ErrorSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with 
       implicit val request: Request[_] = FakeRequest("POST", path)
         .withFormUrlEncodedBody("month" -> monthAnswer, "year" -> yearAnswer)
 
-      val form: Form[SubmittedDateAnswer] = dateAnswerFormProvider()
+      val form: Form[DateAnswer] = dateAnswerFormProvider()
 
       form.bindFromRequest().fold(
         formWithErrors => {
@@ -195,7 +196,7 @@ class ErrorSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with 
       implicit val request: Request[_] = FakeRequest("POST", path)
         .withFormUrlEncodedBody("day" -> dayAnswer, "year" -> yearAnswer)
 
-      val form: Form[SubmittedDateAnswer] = dateAnswerFormProvider()
+      val form: Form[DateAnswer] = dateAnswerFormProvider()
 
       form.bindFromRequest().fold(
         formWithErrors => {
@@ -225,7 +226,7 @@ class ErrorSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with 
       implicit val request: Request[_] = FakeRequest("POST", path)
         .withFormUrlEncodedBody("day" -> dayAnswer, "month" -> monthAnswer)
 
-      val form: Form[SubmittedDateAnswer] = dateAnswerFormProvider()
+      val form: Form[DateAnswer] = dateAnswerFormProvider()
 
       form.bindFromRequest().fold(
         formWithErrors => {
@@ -255,7 +256,7 @@ class ErrorSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with 
       implicit val request: Request[_] = FakeRequest("POST", path)
         .withFormUrlEncodedBody("year" -> yearAnswer)
 
-      val form: Form[SubmittedDateAnswer] = dateAnswerFormProvider()
+      val form: Form[DateAnswer] = dateAnswerFormProvider()
 
       form.bindFromRequest().fold(
         formWithErrors => {
@@ -285,7 +286,7 @@ class ErrorSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with 
       implicit val request: Request[_] = FakeRequest("POST", path)
         .withFormUrlEncodedBody("day" -> dayAnswer)
 
-      val form: Form[SubmittedDateAnswer] = dateAnswerFormProvider()
+      val form: Form[DateAnswer] = dateAnswerFormProvider()
 
       form.bindFromRequest().fold(
         formWithErrors => {
@@ -315,7 +316,7 @@ class ErrorSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with 
       implicit val request: Request[_] = FakeRequest("POST", path)
         .withFormUrlEncodedBody("month" -> monthAnswer)
 
-      val form: Form[SubmittedDateAnswer] = dateAnswerFormProvider()
+      val form: Form[DateAnswer] = dateAnswerFormProvider()
 
       form.bindFromRequest().fold(
         formWithErrors => {
@@ -345,7 +346,7 @@ class ErrorSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with 
       implicit val request: Request[_] = FakeRequest("POST", path)
         .withFormUrlEncodedBody()
 
-      val form: Form[SubmittedDateAnswer] = dateAnswerFormProvider()
+      val form: Form[DateAnswer] = dateAnswerFormProvider()
 
       form.bindFromRequest().fold(
         formWithErrors => {
@@ -382,7 +383,7 @@ class ErrorSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with 
         dateInputWithInvalidDayPage, Seq.empty, None, "sessionId", None, Text(), "processId", "processCode"
       )
 
-      val form: Form[SubmittedDateAnswer] = dateAnswerFormProvider()
+      val form: Form[DateAnswer] = dateAnswerFormProvider()
 
       val doc: Document = asDocument(components.error_summary(dateInputWithInvalidDay, relativePath, form)
       (messages, dateInputWithInvalidDayCtx))

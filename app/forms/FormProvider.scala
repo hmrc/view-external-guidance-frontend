@@ -16,50 +16,28 @@
 
 package forms
 
-import play.api.data.{Form, Mapping}
-import play.api.data.Forms._
-import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
-import models.ui.{SubmittedDateAnswer, SubmittedListAnswer, SubmittedTextAnswer}
+import javax.inject.{Inject, Singleton}
+import play.api.mvc.Request
+import play.api.data.Form
+import play.api.i18n.Messages
+import forms.providers._
+import core.models.ocelot.stanzas.{DataInput, DateInput, Input, Question, Sequence}
 
-trait FormProvider
-
-class SubmittedTextAnswerFormProvider extends FormProvider {
-
-  def apply(bindData: (String, Mapping[String])): Form[SubmittedTextAnswer] =
-
-    Form(
-      mapping(
-        bindData._1 -> bindData._2
-      )(SubmittedTextAnswer.apply)(SubmittedTextAnswer.unapply)
-    )
+trait FormProvider[T] {
+  def bind(name: String)(implicit request: Request[_], messages: Messages): Binding
+  def populated(name: String, answer: Option[String]): Form[T]
 }
 
-class SubmittedDateAnswerFormProvider extends FormProvider {
+@Singleton
+class FormProviderFactory @Inject() (
+  dateFormProvider: DateFormProvider,
+  stringFormProvider: StringFormProvider,
+  stringListFormProvider: StringListFormProvider) {
 
-  def apply(): Form[SubmittedDateAnswer] =
-
-    Form(
-      mapping(
-        "day" -> nonEmptyText,
-        "month" -> nonEmptyText,
-        "year" -> nonEmptyText
-      )(SubmittedDateAnswer.apply)(SubmittedDateAnswer.unapply)
-    )
-
+  def apply(input: DataInput): FormProvider[_] = input match {
+      case _: DateInput => dateFormProvider
+      case _: Input | _: Question => stringFormProvider
+      case _: Sequence => stringListFormProvider
+    }
 }
-
-class SubmittedListAnswerFormProvider extends FormProvider {
-
-  def apply(name: String): Form[SubmittedListAnswer] =
-
-    Form(
-      mapping(name -> list(text).verifying(validateListIsPopulated))
-      (SubmittedListAnswer.apply)(SubmittedListAnswer.unapply)
-    )
-
-  private def validateListIsPopulated[T]: Constraint[List[T]] =
-    Constraint[List[T]]("constraint.required")
-      {list => if(list.nonEmpty) Valid else Invalid(ValidationError("error.required"))}
-}
-
 

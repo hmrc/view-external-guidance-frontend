@@ -23,15 +23,15 @@ import play.api.data.Form
 import play.api.inject.Injector
 import play.api.i18n.{Lang, Messages, MessagesApi}
 import play.api.test.FakeRequest
+import forms.FormProvider
+import forms.providers.StringListFormProvider
 import views.html._
-import forms.SubmittedListAnswerFormProvider
 import models.PageContext
-import models.ui.{FormPage, H2, Paragraph, RequiredErrorMsg, Sequence, SequenceAnswer, SubmittedListAnswer, Text}
+import models.ui.{FormPage, H2, Paragraph, RequiredErrorMsg, Sequence, SequenceAnswer, ListAnswer, Text}
 import core.models.ocelot.{LabelCache, Labels}
 import org.jsoup.nodes.{Document, Element}
 import org.jsoup.select.Elements
 import base.{ViewFns, ViewSpec}
-
 import scala.collection.JavaConverters._
 
 class SequenceSpec extends AnyWordSpec with Matchers with ViewSpec with ViewFns with GuiceOneAppPerSuite {
@@ -40,7 +40,7 @@ class SequenceSpec extends AnyWordSpec with Matchers with ViewSpec with ViewFns 
     private def injector: Injector = app.injector
 
     def messagesApi: MessagesApi = injector.instanceOf[MessagesApi]
-    def formProvider: SubmittedListAnswerFormProvider = injector.instanceOf[SubmittedListAnswerFormProvider]
+    val formProvider: StringListFormProvider = new StringListFormProvider
 
     implicit def messages: Messages = messagesApi.preferred(Seq(Lang("en")))
 
@@ -368,9 +368,9 @@ class SequenceSpec extends AnyWordSpec with Matchers with ViewSpec with ViewFns 
 
     "render checkboxes as 'checked' when they have been selected" in new Test {
 
-      val form: Form[SubmittedListAnswer] = formProvider(path)
+      val form: Form[ListAnswer] = formProvider(path)
 
-      val populatedForm: Form[SubmittedListAnswer] = form.fill(SubmittedListAnswer(List("0", "1")))
+      val populatedForm: Form[ListAnswer] = form.fill(ListAnswer(List("0", "1")))
 
       val doc: Document = asDocument(
         components.sequence(sequenceWithoutHint, path, populatedForm)
