@@ -24,7 +24,7 @@ import services.{ErrorStrategy, GuidanceService}
 import models.GuidanceSession
 import core.models.ocelot.Labels
 import scala.concurrent.{ExecutionContext, Future}
-import play.api.i18n.Lang
+import play.api.i18n.Messages
 import uk.gov.hmrc.http.HeaderCarrier
 
 trait MockGuidanceService extends MockFactory {
@@ -60,12 +60,12 @@ trait MockGuidanceService extends MockFactory {
 
     def getSubmitPageContext(pec: PageEvaluationContext, errStrategy: ErrorStrategy): CallHandler[RequestOutcome[PageContext]] =
       (mockGuidanceService
-        .getSubmitPageContext(_: PageEvaluationContext, _: ErrorStrategy)(_: Lang))
+        .getSubmitPageContext(_: PageEvaluationContext, _: ErrorStrategy)(_: Messages))
         .expects(pec, errStrategy, *)
 
     def getPageContext(processId: String, url: String, previousPageByLink: Boolean, sessionId: String): CallHandler[Future[RequestOutcome[PageContext]]] =
       (mockGuidanceService
-        .getPageContext(_: String, _: String, _: Boolean, _: String)(_: HeaderCarrier, _: ExecutionContext, _: Lang))
+        .getPageContext(_: String, _: String, _: Boolean, _: String)(_: HeaderCarrier, _: ExecutionContext, _: Messages))
         .expects(processId, url, previousPageByLink, sessionId, *, *, *)
 
     def getSubmitEvaluationContext(
@@ -73,7 +73,7 @@ trait MockGuidanceService extends MockFactory {
                                   url: String,
                                   sessionId: String): CallHandler[Future[RequestOutcome[PageEvaluationContext]]] =
       (mockGuidanceService
-        .getSubmitEvaluationContext(_: String, _: String, _: String)(_: HeaderCarrier, _: ExecutionContext, _: Lang))
+        .getSubmitEvaluationContext(_: String, _: String, _: String)(_: HeaderCarrier, _: ExecutionContext, _: Messages))
         .expects(processId, url, sessionId, *, *, *)
 
     def getPageEvaluationContext(
@@ -82,7 +82,7 @@ trait MockGuidanceService extends MockFactory {
                                   previousPageByLink: Boolean,
                                   sessionId: String): CallHandler[Future[RequestOutcome[PageEvaluationContext]]] =
       (mockGuidanceService
-        .getPageEvaluationContext(_: String, _: String, _: Boolean,  _: String)(_: HeaderCarrier, _: ExecutionContext, _: Lang))
+        .getPageEvaluationContext(_: String, _: String, _: Boolean,  _: String)(_: HeaderCarrier, _: ExecutionContext, _: Messages))
         .expects(processId, url, previousPageByLink, sessionId, *, *, *)
 
     def submitPage(
@@ -91,8 +91,8 @@ trait MockGuidanceService extends MockFactory {
                     validatedAnswer: String,
                     submittedAnswer: String): CallHandler[Future[RequestOutcome[(Option[String], Labels)]]] =
       (mockGuidanceService
-        .submitPage(_: PageEvaluationContext, _: String, _: String, _: String)(_: HeaderCarrier, _: ExecutionContext))
-        .expects(ctx, url, validatedAnswer, submittedAnswer, *, *)
+        .submitPage(_: PageEvaluationContext, _: String, _: String, _: String)(_: HeaderCarrier, _: ExecutionContext, _: Messages))
+        .expects(ctx, url, validatedAnswer, submittedAnswer, *, *, *)
 
     def savePageState(docId: String, processCode: String, labels: Labels): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockGuidanceService

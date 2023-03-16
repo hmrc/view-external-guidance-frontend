@@ -22,6 +22,7 @@ import core.models.ocelot.{Page, Labels}
 import services.PageRenderer
 import org.scalamock.handlers.CallHandler
 import org.scalamock.scalatest.MockFactory
+import play.api.i18n.Messages
 
 trait MockPageRenderer extends MockFactory {
   val mockPageRenderer: PageRenderer = mock[PageRenderer]
@@ -30,13 +31,13 @@ trait MockPageRenderer extends MockFactory {
 
     def renderPage(page: Page, labels: Labels): CallHandler[RequestOutcome[(Seq[VisualStanza], Labels, Option[DataInput])]] =
       (mockPageRenderer
-        .renderPage(_: Page, _: Labels))
-        .expects(page, *)
+        .renderPage(_: Page, _: Labels)(_: Messages))
+        .expects(page, *, *)
 
     def renderPagePostSubmit(page: Page, labels: Labels, answer: String): CallHandler[RequestOutcome[(Option[String], Labels)]] =
       (mockPageRenderer
-        .renderPagePostSubmit(_: Page, _: Labels, _: String))
-        .expects(page, *, answer)
+        .renderPagePostSubmit(_: Page, _: Labels, _: String)(_: Messages))
+        .expects(page, *, answer, *)
 
   }
 

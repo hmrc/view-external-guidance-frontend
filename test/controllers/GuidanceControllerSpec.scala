@@ -34,7 +34,7 @@ import models.{PageContext, PageDesc, PageNext, GuidanceSession, PageEvaluationC
 import models.errors._
 import core.models.ocelot.errors._
 import core.models.ocelot.{KeyedStanza, Labels, Page, Phrase, Process, Meta, ProcessJson, Published, Scratch}
-import core.models.ocelot.stanzas.{CurrencyInput, DateInput, Question, Sequence, InstructionStanza, PageStanza, VisualStanza, DataInput}
+import core.models.ocelot.stanzas.{CurrencyInput, DateInput, Question, Instruction, Sequence, PageStanza, VisualStanza, DataInput}
 import models.ui._
 import models.ui
 import play.api.test.CSRFTokenHelper._
@@ -97,7 +97,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
     lazy val view: standard_page = app.injector.instanceOf[views.html.standard_page]
     lazy val formView: form_page = app.injector.instanceOf[views.html.form_page]
 
-    val instructionStanza: InstructionStanza = InstructionStanza(3, Seq("3"), None, false)
+    val instruction: Instruction = Instruction(Phrase("Instruction", "Instruction"), Seq("3"), None, false)
     val questionStanza: Question = Question(Phrase("Which?","Which?"), Seq(Phrase("yes","yes"),Phrase("no","no")), Seq("4","5"), None, false)
     val currencyInputStanza: CurrencyInput = CurrencyInput(Seq("4"),Phrase("",""), None, "PRICE", None, false)
     val dateInputStanza: DateInput = DateInput(Seq("4"),Phrase("",""), None, "Date of birth?", None, false)
@@ -132,27 +132,27 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
       stack = false
     )
     val stanzas: Seq[KeyedStanza] = Seq(KeyedStanza("start", PageStanza("/start", Seq("1"), false)),
-                                        KeyedStanza("1", instructionStanza),
+                                        KeyedStanza("1", instruction),
                                         KeyedStanza("3", questionStanza)
                                       )
     val stanzasWithInput: Seq[KeyedStanza] = Seq(KeyedStanza("start", PageStanza("/start", Seq("1"), false)),
-                                        KeyedStanza("1", instructionStanza),
+                                        KeyedStanza("1", instruction),
                                         KeyedStanza("3", currencyInputStanza)
                                       )
     val stanzasWithDateInput: Seq[KeyedStanza] = Seq(KeyedStanza("start", PageStanza("/start", Seq("1"), false)),
-      KeyedStanza("1", instructionStanza),
+      KeyedStanza("1", instruction),
       KeyedStanza("3", dateInputStanza)
     )
 
     val stanzasWithNonExclusiveSequence: Seq[KeyedStanza] = Seq(
       KeyedStanza("start", PageStanza("/start", Seq("1"), stack = false)),
-      KeyedStanza("1", instructionStanza),
+      KeyedStanza("1", instruction),
       KeyedStanza("3", nonExclusiveSequence)
     )
 
     val stanzasWithExclusiveSequence: Seq[KeyedStanza] = Seq(
       KeyedStanza("start", PageStanza("/start", Seq("1"), stack = false)),
-      KeyedStanza("1", instructionStanza),
+      KeyedStanza("1", instruction),
       KeyedStanza("3", exclusiveSequence)
     )
 
@@ -163,7 +163,8 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSu
     val nonExclusiveSequenceInputPage: Page = Page("start", "/test-page", stanzasWithNonExclusiveSequence, Seq("4"))
     val exclusiveSequenceInputPage: Page = Page("start", "/test-page", stanzasWithExclusiveSequence, Seq("4"))
 
-    def renderPage(page: Page, labels: Labels):(Seq[VisualStanza], Labels, Option[DataInput]) = new PageRenderer(MockAppConfig).renderPage(page, labels).fold(_ => fail, result => result)
+    def renderPage(page: Page, labels: Labels):(Seq[VisualStanza], Labels, Option[DataInput]) =
+      new PageRenderer(MockAppConfig).renderPage(page, labels).fold(_ => fail, result => result)
   }
 
   trait QuestionTest extends MockGuidanceService with TestBase {

@@ -47,7 +47,7 @@ class SummaryListSpec extends ViewSpec with ViewFns with GuiceOneAppPerSuite {
     val dlRows = Seq.fill(3)(Seq(Text("HELLO"), Text("World"), Text("")))
     val expectedDl = CyaSummaryList(dlRows)
     val expectedNameValList = NameValueSummaryList(Seq.fill(3)(Seq(Text("HELLO"), Text("World"))))
-    val expectedNameValNumericList = NameValueSummaryList(Seq.fill(3)(Seq(Text("HELLO"), Text(LabelRef("B", Currency)))))
+    val expectedNameValNumericList = NameValueSummaryList(Seq.fill(3)(Seq(Text("HELLO"), Text("4.0"))))
     val dlRowsWithHint = Seq.fill(3)(Seq(Text("HELLO"), Text("World"), Text("Blah")))
     val expectedDlWithHint = CyaSummaryList(dlRowsWithHint)
     val sparseDlRows = Seq(dlRows(0), Seq(Text("HELLO"), Text(""), Text("")), dlRows(2))

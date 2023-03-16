@@ -19,7 +19,7 @@ package controllers
 import config.{AppConfig, ErrorHandler}
 
 import javax.inject.{Inject, Singleton}
-import play.api.i18n.{Lang, Messages}
+import play.api.i18n.Messages
 import play.api.mvc._
 import play.api.data.Form
 import services.{ErrorStrategy, GuidanceService, ValueTypeError}
@@ -76,7 +76,6 @@ class GuidanceController @Inject() (
 
   def getPage(processCode: String, path: String, p: Option[String]): Action[AnyContent] = sessionIdAction.async { implicit request =>
     implicit val messages: Messages = mcc.messagesApi.preferred(request)
-    implicit val lang: Lang = messages.lang
     val sId: Option[String] = hc.sessionId.map(_.value)
     val rId: Option[String] = hc.requestId.map(_.value)
     val uri: String = request.target.uriString
@@ -132,7 +131,6 @@ class GuidanceController @Inject() (
 
   def submitPage(processCode: String, path: String): Action[AnyContent] = Action.async { implicit request =>
     implicit val messages: Messages = mcc.messagesApi.preferred(request)
-    implicit val lang: Lang = messages.lang
     val sId: Option[String] = hc.sessionId.map(_.value)
     val rId: Option[String] = hc.requestId.map(_.value)
     val uri: String = request.target.uriString
