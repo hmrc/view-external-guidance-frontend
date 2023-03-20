@@ -1,0 +1,45 @@
+@*
+ * Copyright 2023 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import config.AppConfig
+@import services.TextBuilder
+
+@this(layout: main_layout, appConfig: AppConfig)
+
+@(processCode: String, buttonTarget: String, lang: Option[String])(implicit request: Request[_], messages: Messages)
+
+@langParam = @{lang.fold("")(l => s"?lang=$l")}
+
+@langOrEnglishDefault = @{lang.fold(TextBuilder.English.code)(l => l)}
+
+@layout(messages("service.name"),
+        messages("service.name"),
+        Some(processCode),
+        None,
+        betaPhaseBanner = false,
+        enableTimeout = false,
+        urlLangSwitch = Some(components.sessionBlockedLangSwitch(langOrEnglishDefault, processCode))){
+
+  <h1 class="govuk-heading-xl">@messages("service.session-blocked-page.title")</h1>
+  <p>@messages("service.session-blocked-page.info")</p>
+
+  <a id="startAgain" href="@buttonTarget@langParam" role="button" class="govuk-button" data-module="govuk-button">
+      @messages("service.session-blocked-page.continue")
+  </a>
+}
+@{
+    //$COVERAGE-OFF$
+}

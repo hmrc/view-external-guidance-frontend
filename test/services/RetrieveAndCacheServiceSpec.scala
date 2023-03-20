@@ -29,6 +29,7 @@ import scala.concurrent.Future
 import play.api.i18n.MessagesApi
 import play.api.inject.Injector
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import core.models.errors.NotFoundError
 
 class RetrieveAndCacheServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
 
@@ -93,6 +94,20 @@ class RetrieveAndCacheServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
         url shouldBe Right((firstPageUrl,"cup-of-tea"))
       }
     }
+
+    "return NotFound error when scratch process not found" in new Test {
+
+      MockGuidanceConnector
+        .scratchProcess(uuid)
+        .returns(Future.successful(Left(NotFoundError)))
+
+      target.retrieveAndCacheScratch(uuid, uuid).map{
+        case Left(err) => err shouldBe NotFoundError
+        case Right(_) => fail
+      }
+
+    }
+
   }
 
   "Calling retrieveAndCachePublished" should {
@@ -117,11 +132,25 @@ class RetrieveAndCacheServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
         url shouldBe Right((firstPageUrl, processCode))
       }
     }
+
+    "return NotFound error when published process not found" in new Test {
+
+      MockGuidanceConnector
+        .publishedProcess(processId)
+        .returns(Future.successful(Left(NotFoundError)))
+
+      target.retrieveAndCachePublished(processId, sessionRepoId).map{
+        case Left(err) => err shouldBe NotFoundError
+        case Right(_) => fail
+      }
+
+    }
+
   }
 
   "Calling retrieveAndCacheApproval" should {
 
-    "retrieve the url of the start page for the nominated published process" in new Test {
+    "retrieve the url of the start page for the nominated approval process" in new Test {
 
       MockGuidanceConnector
         .approvalProcess(processId)
@@ -141,11 +170,25 @@ class RetrieveAndCacheServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
         url shouldBe Right((firstPageUrl, processCode))
       }
     }
+
+    "return NotFound error when approval process not found" in new Test {
+
+      MockGuidanceConnector
+        .approvalProcess(processId)
+        .returns(Future.successful(Left(NotFoundError)))
+
+      target.retrieveAndCacheApproval(processId, sessionRepoId).map{
+        case Left(err) => err shouldBe NotFoundError
+        case Right(_) => fail
+      }
+
+    }
+
   }
 
   "Calling retrieveAndCacheApprovalByPageUrl" should {
 
-    "retrieve the url of the nominated page and published process" in new Test {
+    "retrieve the url of the nominated page and approval process" in new Test {
 
       MockGuidanceConnector
         .approvalProcess(processId)
@@ -164,6 +207,90 @@ class RetrieveAndCacheServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
       whenReady(result) { url =>
         url shouldBe Right(("/page-1", processCode))
       }
+    }
+
+    "return NotFound error when approval process not found" in new Test {
+
+      MockGuidanceConnector
+        .approvalProcess(processId)
+        .returns(Future.successful(Left(NotFoundError)))
+
+      target.retrieveAndCacheApprovalByPageUrl("/page-1")(processId, sessionRepoId).map{
+        case Left(err) => err shouldBe NotFoundError
+        case Right(_) => fail
+      }
+
+    }
+
+  }
+
+  "Calling retrieveOnlyPublished" should {
+
+    "return process and pages" in new Test {
+
+      MockGuidanceConnector
+        .publishedProcess(processId)
+        .returns(Future.successful(Right(processWithProcessCode)))
+
+      MockPageBuilder
+        .pages(processWithProcessCode)
+        .returns(Right(pages))
+
+      target.retrieveOnlyPublished(processId).map{
+        case Right((process, pges)) =>
+          process shouldBe processWithProcessCode
+          pges shouldBe pages
+        case Left(_) => fail
+      }
+    }
+
+    "return not found when process doesnt exist" in new Test {
+
+      MockGuidanceConnector
+        .publishedProcess(processId)
+        .returns(Future.successful(Left(NotFoundError)))
+
+      target.retrieveOnlyPublished(processId).map{
+        case Right((process, pges)) => fail
+        case Left(err) => err shouldBe NotFoundError
+      }
+
+    }
+
+  }
+
+  "Calling retrieveOnlyApproval" should {
+
+    "return process and pages" in new Test {
+
+      MockGuidanceConnector
+        .approvalProcessByProcessCode(processId)
+        .returns(Future.successful(Right(processWithProcessCode)))
+
+      MockPageBuilder
+        .pages(processWithProcessCode)
+        .returns(Right(pages))
+
+      target.retrieveOnlyApproval(processId).map{
+        case Right((process, pges)) =>
+          process shouldBe processWithProcessCode
+          pges shouldBe pages
+        case Left(_) => fail
+      }
+
+    }
+
+    "return not found when process doesnt exist" in new Test {
+
+      MockGuidanceConnector
+        .approvalProcessByProcessCode(processId)
+        .returns(Future.successful(Left(NotFoundError)))
+
+      target.retrieveOnlyApproval(processId).map{
+        case Right((process, pges)) => fail
+        case Left(err) => err shouldBe NotFoundError
+      }
+
     }
   }
 

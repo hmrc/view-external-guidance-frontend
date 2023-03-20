@@ -23,15 +23,16 @@
 
 
 @this(layout: GovukLayout,
-        phaseBanner : GovukPhaseBanner,
-        govUkHeader: GovukHeader,
-        hmrcLanguageSelect: HmrcLanguageSelect,
-        appConfig: AppConfig,
-        footerLinks: FooterLinks,
-        footer: components.govukFooter,
-        timeoutDialog: HmrcTimeoutDialog,
-        govukBackLink : GovukBackLink,
-        hmrcTrackingConsentSnippet: HmrcTrackingConsentSnippet)
+  phaseBanner : GovukPhaseBanner,
+  govUkHeader: GovukHeader,
+  hmrcLanguageSelect: HmrcLanguageSelect,
+  appConfig: AppConfig,
+  footerLinks: FooterLinks,
+  footer: components.govukFooter,
+  timeoutDialog: HmrcTimeoutDialog,
+  govukBackLink : GovukBackLink,
+  hmrcTrackingConsentSnippet: HmrcTrackingConsentSnippet,
+  defaultLayout: TwoThirdsMainContent)
 
 @(
   pageTitle: String,
@@ -40,12 +41,15 @@
   startUrl: Option[String] = None,
   backUrl: Option[String] = None,
   betaPhaseBanner: Boolean = false,
-  enableTimeout: Boolean = true
+  enableTimeout: Boolean = true,
+  layoutFormat: Option[Html => Html] = Some(defaultLayout(_)),
+  enableLanguageSelect: Boolean = true,
+  urlLangSwitch: Option[Html] = None
 )(contentBlock: Html)(implicit request: Request[_], messages: Messages)
 
-@getSignOutUrl(processCode: Option[String]) = @{
-    processCode.fold(s"${appConfig.baseUrl}${appConfig.signOutUrl}"){ pc =>
-        s"${appConfig.baseUrl}/$pc${appConfig.signOutUrl}"
+@processCodeUrl(processCode: Option[String], url: String) = @{
+    processCode.fold[Option[String]](None){ pc =>
+        Some(s"${appConfig.baseUrl}/$pc$url")
       }
 }
 
@@ -58,11 +62,17 @@
         content = HtmlContent(s"""${messages("feedback.before")} <a class='govuk-link' href="${appConfig.feedbackUrl}">${messages("feedback.linkLabel")}</a> ${messages("feedback.after")}""")
         ))
     }
-    @hmrcLanguageSelect(
-        LanguageSelect(if (messages.lang.language == "en") En else Cy,
-            En -> s"${appConfig.baseUrl}/language/english",
-            Cy -> s"${appConfig.baseUrl}/language/cymraeg")
-    )
+
+    @urlLangSwitch.fold{
+      @if(enableLanguageSelect) {
+        @hmrcLanguageSelect(
+            LanguageSelect(if (messages.lang.language == "en") En else Cy,
+                En -> s"${appConfig.baseUrl}/language/english",
+                Cy -> s"${appConfig.baseUrl}/language/cymraeg")
+        )
+      }
+    }{block => @block}
+
     @backUrl.map(url =>
       govukBackLink(BackLink(href = url,
                              content = Text(messages("backlink.label")),
@@ -85,8 +95,9 @@
               countdown = Some(appConfig.timeoutWarningInSeconds),
               keepAliveUrl = Some("#"),
               keepAliveButtonText = Some(messages("timeout.dialog.keep_alive_button.text")),
-              signOutUrl = Some(s"${getSignOutUrl(processCode)}"),
+              signOutUrl = processCodeUrl(processCode, appConfig.signOutUrl),
               signOutButtonText = Some(messages("timeout.dialog.sign_out_button.text")),
+              timeoutUrl = processCodeUrl(processCode, appConfig.timeOutUrl),
               title = Some(messages("timeout.dialog.title.text")),
               message = Some(messages("timeout.dialog.message.text"))
           )
@@ -132,7 +143,8 @@
     beforeContentBlock = Some(beforeContentBlock),
     footerItems = Seq.empty,
     footerBlock = Some(footerBlock),
-    bodyEndBlock = Some(scripts))(content)
+    bodyEndBlock = Some(scripts),
+    mainContentLayout = layoutFormat)(content)
 
 @{
     //$COVERAGE-OFF$

@@ -24,7 +24,8 @@ import play.api.data.Forms.nonEmptyText
 import play.api.i18n.{Lang, Messages, MessagesApi}
 import play.api.inject.Injector
 import play.api.test.FakeRequest
-import forms.{SubmittedListAnswerFormProvider, SubmittedTextAnswerFormProvider}
+import forms.FormProvider
+import forms.providers.{StringListFormProvider, StringFormProvider}
 import models.PageContext
 import models.ui.{Answer, BulletPointList, Details, ConfirmationPanel, CurrencyInput, CyaSummaryList}
 import models.ui.{FormPage, H1, InsetText, NumberedCircleList, NumberedList, Sequence, SequenceAnswer}
@@ -85,8 +86,8 @@ class PageSpec extends AnyWordSpec with Matchers with ViewSpec with ViewFns with
     val question = Question(questionText, None, Seq(para, bulletPointList), answers)
     val errorMsg = RequiredErrorMsg(Text("An error has occurred"))
     val questionWithErrors = Question(questionText, None, Seq(para, bulletPointList), answers, Seq(errorMsg))
-    val textFormProvider = new SubmittedTextAnswerFormProvider()
-    val listFormProvider = new SubmittedListAnswerFormProvider()
+    val textFormProvider = new StringFormProvider
+    val listFormProvider = new StringListFormProvider
     val questionPage = FormPage("root", question)
     val questionPageWithErrors = FormPage("root", questionWithErrors)
 
@@ -278,7 +279,7 @@ class PageSpec extends AnyWordSpec with Matchers with ViewSpec with ViewFns with
 
     "generate English html containing an H1, a text only paragraph and a text only bullet point list" in new Test {
 
-      val doc = asDocument(formPageView(questionPage, pageCtx, "question", textFormProvider("url" -> nonEmptyText) )(fakeRequest, messages))
+      val doc = asDocument(formPageView(questionPage, pageCtx, "question", textFormProvider("url") )(fakeRequest, messages))
 
       checkTitle(doc)
 
@@ -309,7 +310,7 @@ class PageSpec extends AnyWordSpec with Matchers with ViewSpec with ViewFns with
 
       val questionPageContextWithErrs = questionPageContext.copy(page = questionPageWithErrors)
 
-      val doc = asDocument(formPageView(questionPageWithErrors, questionPageContextWithErrs, "question", textFormProvider("url" -> nonEmptyText) )(fakeRequest, messages))
+      val doc = asDocument(formPageView(questionPageWithErrors, questionPageContextWithErrs, "question", textFormProvider("url") )(fakeRequest, messages))
 
       checkTitle(doc, None, Some(messages("error.browser.title.prefix")))
     }
@@ -318,7 +319,7 @@ class PageSpec extends AnyWordSpec with Matchers with ViewSpec with ViewFns with
 
       val questionPageContextWithErrs = questionPageContext.copy(page = questionPageWithErrors)
 
-      val doc = asDocument(formPageView(questionPageWithErrors, questionPageContextWithErrs, "question", textFormProvider("url" -> nonEmptyText) )(fakeRequest, messages))
+      val doc = asDocument(formPageView(questionPageWithErrors, questionPageContextWithErrs, "question", textFormProvider("url") )(fakeRequest, messages))
 
       val fieldset: Element = doc.getElementsByTag("fieldset").first
       Option(fieldset).fold(fail("Missing fieldset")){fset =>
@@ -332,7 +333,7 @@ class PageSpec extends AnyWordSpec with Matchers with ViewSpec with ViewFns with
 
     "generate English html containing an H1, a text only paragraph and a text only bullet point list" in new Test {
 
-      val doc = asDocument(formPageView(inputPage, pageCtx, "input",  textFormProvider("12000" -> nonEmptyText)) (fakeRequest, messages))
+      val doc = asDocument(formPageView(inputPage, pageCtx, "input",  textFormProvider("12000")) (fakeRequest, messages))
 
       checkTitle(doc)
 
@@ -363,7 +364,7 @@ class PageSpec extends AnyWordSpec with Matchers with ViewSpec with ViewFns with
 
       val inputPageContextWithErrs = inputPageContext.copy(page = inputPageWithErrors)
 
-      val doc = asDocument(formPageView(inputPageWithErrors, inputPageContextWithErrs, "input", textFormProvider("12000" -> nonEmptyText) )(fakeRequest, messages))
+      val doc = asDocument(formPageView(inputPageWithErrors, inputPageContextWithErrs, "input", textFormProvider("12000") )(fakeRequest, messages))
 
       checkTitle(doc, None, Some(messages("error.browser.title.prefix")))
     }
@@ -372,7 +373,7 @@ class PageSpec extends AnyWordSpec with Matchers with ViewSpec with ViewFns with
 
       val inputPageContextWithErrs = inputPageContext.copy(page = inputPageWithErrors)
 
-      val doc = asDocument(formPageView(inputPageWithErrors, inputPageContextWithErrs, "input", textFormProvider("12000" -> nonEmptyText) )(fakeRequest, messages))
+      val doc = asDocument(formPageView(inputPageWithErrors, inputPageContextWithErrs, "input", textFormProvider("12000") )(fakeRequest, messages))
 
       val inputField: Element = doc.getElementsByTag("input").first
       Option(inputField).fold(fail("Missing fieldset")){inp =>

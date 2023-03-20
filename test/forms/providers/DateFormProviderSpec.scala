@@ -14,28 +14,28 @@
  * limitations under the License.
  */
 
-package forms
+package forms.providers
 
 import play.api.data.Form
-import models.ui.SubmittedDateAnswer
+import models.ui.DateAnswer
 import base.BaseSpec
 
 
-class SubmittedDateAnswerFormProviderSpec extends BaseSpec {
+class DateFormProviderSpec extends BaseSpec {
 
-  val formProvider: SubmittedDateAnswerFormProvider = new SubmittedDateAnswerFormProvider()
+  val formProvider: DateFormProvider = new DateFormProvider()
 
   val day: String = "21"
   val month: String = "12"
   val year: String = "2020"
 
-  "Form created by SubmittedDateAnswerFormProvider" should {
+  "Form created by DateAnswerFormProvider" should {
 
     "correctly bind a submitted date" in {
 
-      val form: Form[SubmittedDateAnswer] = formProvider()
+      val form: Form[DateAnswer] = formProvider()
 
-      val boundForm: Form[SubmittedDateAnswer] = form.bind(
+      val boundForm: Form[DateAnswer] = form.bind(
         Map(
           "day" -> day,
           "month" -> month,
@@ -43,14 +43,14 @@ class SubmittedDateAnswerFormProviderSpec extends BaseSpec {
         )
       )
 
-      boundForm.get shouldBe SubmittedDateAnswer(day, month, year)
+      boundForm.get shouldBe DateAnswer(day, month, year)
     }
 
     "be able to execute the unbind method held in mapping" in {
 
-      val form: Form[SubmittedDateAnswer] = formProvider()
+      val form: Form[DateAnswer] = formProvider()
 
-      val map: Map[String, String] = form.mapping.unbind(SubmittedDateAnswer(day, month, year))
+      val map: Map[String, String] = form.mapping.unbind(DateAnswer(day, month, year))
 
       map.keySet shouldBe Set("day", "month", "year")
 

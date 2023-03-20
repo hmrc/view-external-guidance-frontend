@@ -20,6 +20,7 @@ import base.BaseSpec
 import core.models._
 import org.scalatest.Inspectors.forAll
 import play.api.i18n.Lang
+import java.time.LocalDate
 
 class OcelotPackageSpec extends BaseSpec with TestTimescaleDefnsDB {
   implicit val labels: Labels = new LabelCacheImpl(Map(), Map(), Nil, Map(), Map(), timescaleMap, message(Lang("en")))
@@ -421,6 +422,11 @@ class OcelotPackageSpec extends BaseSpec with TestTimescaleDefnsDB {
       val link = "[link:Next Page:someDestination]"
       link.matches(linkPattern) shouldBe false
     }
+
+    "match all valid link characters" in {
+      val link = "[link-tab:Customs Duty waiver form:https://public-online.hmrc.gov.uk/lc/content/xfaforms/profiles/forms.html?contentRoot=repository:///Applications/Customs_C/1.0/DEMAIDD&template=DeMAid.xdp]"
+      link.matches(linkPattern) shouldBe true
+    }
   }
 
   "datePlaceholder" must {
@@ -643,5 +649,32 @@ class OcelotPackageSpec extends BaseSpec with TestTimescaleDefnsDB {
     }
 
   }
+
+  "validDate" must {
+    "Detect a valid date and convert to a LocalDate" in {
+      validDate("4/5/1999") shouldBe Right(LocalDate.of(1999, 5, 4))
+      validDate("28/2/1999") shouldBe Right(LocalDate.of(1999, 2, 28))
+      validDate("29/2/2000") shouldBe Right(LocalDate.of(2000, 2, 29))
+    }
+
+    "Fail with a list invalid field ids when date fields are of the wrong type" in {
+      validDate("4/blah/1999") shouldBe Left(List(1))
+      validDate("4/blah/blah") shouldBe Left(List(1, 2))
+    }
+
+    "Fail with an empty list When all date fields are of the wrong type" in {
+      validDate("blah/blah/blah") shouldBe Left(Nil)
+    }
+
+    "Fail when resulting date is invalid when day month or year components do not form a valid date" in {
+      validDate("4/13/1999") shouldBe Left(List(1))
+      validDate("31/2/1999") shouldBe Left(List(0))
+      validDate("29/2/1999") shouldBe Left(List(0))
+      validDate("32/5/1999") shouldBe Left(List(0))
+      validDate("12/5/19999") shouldBe Left(List(2))
+    }
+
+  }
+
 
 }

@@ -37,6 +37,7 @@ object MockAppConfig extends AppConfig {
   val termsConditions: String = "someUrl"
   val govukHelp: String = "someUrl"
   val accessibilityStatement: String = "/accessibility-statement/interactive-guidance"
+  val timeOutUrl: String = "/guidance/endSession"
   val signOutUrl: String = "/guidance/sessionTimeout"
   val defaultSignOutUrl: String = "https://www.gov.uk"
   val timeoutInSeconds: Int = 1200

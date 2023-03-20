@@ -16,23 +16,34 @@
 
 package core.models
 
-import java.time.LocalDate
+import java.time.{YearMonth, LocalDate}
 import java.time.format.{DateTimeFormatter, ResolverStyle}
 import scala.util.Try
 import scala.util.matching.Regex
-import scala.util.matching.Regex._
+import scala.util.matching.Regex.Match
 
 package object ocelot {
+  type Validation[T] = Either[List[Int], T]
+
   val Twenty: String = "20"
   val Ten: String = "10"
   val Five: String = "5"
   val Four: String = "4"
   val Three: String = "3"
   val Two: String = "2"
+  val NumberOfCYAColumns: Int = 3
+  val FirstColumn: Int = 0
+  val SecondColumn: Int = 1
+  val ThirdColumn: Int = 2
+  val MaxDayNumber: Int = 31
+  val MaxMonthNumber: Int = 12
+  val MaxYearNumber: Int = 9999
+  val ExampleLeapYear: Int = 2000
 
   val TimescaleIdPattern: String = "[A-Za-z][a-zA-Z0-9_-]+"
   val DatePattern: String = "\\d{1,2}\\/\\d{1,2}\\/\\d{4}"
-  val HttpUriPattern: String = "https?:[a-zA-Z0-9\\/\\.\\-\\?_\\.=&#]+"
+  val HttpUriPattern: String = "https?:[a-zA-Z0-9\\/\\.\\-\\?_\\.=&#:]+"
+  val UrlPathPattern: String = "[a-zA-Z0-9\\/\\.\\-\\?_\\.=&#:]+"
   val JavascriptPattern: String = "javascript\\:.+?"
   val EmailPattern: String = "mailto\\:.+?"
   val StanzaIdPattern: String = s"\\d+|${Process.StartStanzaId}"
@@ -61,6 +72,7 @@ package object ocelot {
   val pageLinkRegex: Regex = pageLinkPattern.r
   val buttonLinkRegex: Regex = buttonLinkPattern.r
   val labelRefRegex: Regex = LabelPattern.r
+  val InputDateRegex: Regex = "(.+?)\\/(.+?)\\/(.+?)$".r
   val numericRegex: Regex = "^-?(\\d{1,3}(,\\d{3})*|\\d+)(\\.(\\d*)?)?$".r
   val inputCurrencyRegex: Regex = "^-?£?(\\d{1,3}(,\\d{3})*|\\d+)(\\.(\\d{1,2})?)?$".r
   val inputCurrencyPoundsRegex: Regex = "^-?£?(\\d{1,3}(,\\d{3})*|\\d+)$".r
@@ -176,11 +188,27 @@ package object ocelot {
     inputCurrencyRegex.findFirstIn(value.filterNot(c => c == ' ')).map(s => BigDecimal(s.filterNot(ignoredCurrencyChars.contains(_))))
   def asCurrencyPounds(value: String): Option[BigDecimal] =
     inputCurrencyPoundsRegex.findFirstIn(value.filterNot(c => c == ' ')).map(s => BigDecimal(s.filterNot(ignoredCurrencyChars.contains(_))))
+  def splitInputDateString(dateString: String): Option[(String, String, String)] =
+    InputDateRegex.findFirstMatchIn(dateString).fold[Option[(String, String, String)]](None){m => Some((m.group(1), m.group(2), m.group(3)))}
   def asDate(value: String): Option[LocalDate] = Try(LocalDate.parse(value.filterNot(_.equals(' ')), dateFormatter)).map(d => d).toOption
-  def asPositiveInt(value: String): Option[Int] = matchedInt(value, positiveIntRegex)
+  def validDate(value: String): Validation[LocalDate] =
+    splitInputDateString(value.filterNot(_.equals(' '))).fold[Validation[LocalDate]](Left(Nil)){d =>
+      (asPositiveInt(d._1, 1, MaxDayNumber), asPositiveInt(d._2, 1, MaxMonthNumber), asPositiveInt(d._3, 1, MaxYearNumber)) match {
+        case (Some(dy), Some(mn), Some(yr)) if YearMonth.of(yr, mn).isValidDay(dy) => asDate(value).fold[Validation[LocalDate]](Left(Nil))(Right(_))
+        case (Some(_), Some(_), Some(_)) => Left(List(0))
+        case (Some(dy), Some(mn), None) if YearMonth.of(ExampleLeapYear, mn).isValidDay(dy) => Left(List(2))
+        case (Some(_), Some(_), None) => Left(List(0, 2))
+        case (None, None, None) => Left(Nil)
+        case (dy, mn, yr) =>
+          Left(List(dy.fold[Option[Int]](Some(0))(_ => None), mn.fold[Option[Int]](Some(1))(_ => None), yr.fold[Option[Int]](Some(2))(_ => None)).flatten)
+      }
+    }
+
+  def asPositiveInt(value: String, min: Int = 0, max: Int = Int.MaxValue): Option[Int] =
+    matchedInt(value, positiveIntRegex).flatMap(x => if(x < min || x > max) None else Some(x))
   def asAnyInt(value: String): Option[Int] = matchedInt(value, anyIntegerRegex)
   def asListOfPositiveInt(value: String): Option[List[Int]] = listOfPositiveIntRegex.findFirstIn(value.filterNot(_.equals(' ')))
-    .flatMap(s => lOfOtoOofL(s.split(",").toList.map(asPositiveInt)))
+    .flatMap(s => lOfOtoOofL(s.split(",").toList.map(x => asPositiveInt(x))))
 
   def datePlaceholder(date: Option[String], applyFunction: String)(implicit labels: Labels): Option[String] =
     date.flatMap { someDate =>

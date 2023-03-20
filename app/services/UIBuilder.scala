@@ -37,13 +37,21 @@ case class UIContext(labels: Labels, pageMapById: Map[String, PageDesc], message
 
 sealed trait ErrorStrategy {
   def default(stanzas: Seq[VisualStanza]): ErrorStrategy = this
+  val missingFieldNames: List[String] = Nil
+  val missingFieldIds: List[String] = Nil
 }
 case object NoError extends ErrorStrategy
+
 case object ValueMissingError extends ErrorStrategy
-case class ValueMissingGroupError(missingFieldNames: List[String]) extends ErrorStrategy
+case class ValueMissingGroupError(override val missingFieldNames: List[String]) extends ErrorStrategy
+
 case object ValueTypeError extends ErrorStrategy {
   override def default(stanzas: Seq[VisualStanza]): ErrorStrategy =
     stanzas.collectFirst{case s:TypeErrorCallout => s}.fold[ErrorStrategy](ValueMissingError)(_ => this)
+}
+case class ValueTypeGroupError(override val missingFieldNames: List[String], override val missingFieldIds: List[String]) extends ErrorStrategy {
+  override def default(stanzas: Seq[VisualStanza]): ErrorStrategy =
+    if (stanzas.collect{case s:TypeErrorCallout => s}.size == 1) ValueTypeError else this
 }
 
 @Singleton
@@ -68,6 +76,7 @@ class UIBuilder {
           case Right(uiComponents) => fromStanzas(xs, acc ++ uiComponents, errStrategy)
         }
       case (eg: RequiredErrorGroup) :: xs => fromStanzas(xs, acc ++ fromRequiredErrorGroup(eg, errStrategy), errStrategy)
+      case (tg: TypeErrorGroup) :: xs => fromStanzas(xs, acc ++ fromTypeErrorGroup(tg, errStrategy), errStrategy)
       case (i: Instruction) :: xs => fromStanzas(xs, acc ++ Seq(fromInstruction(i)), errStrategy)
       case (ig: InstructionGroup) :: xs => fromStanzas(xs, acc ++ Seq(fromInstructionGroup(ig)), errStrategy)
       case (rg: RowGroup) :: xs if rg.isCYASummaryList => fromStanzas(xs, acc ++ Seq(fromCYASummaryListRowGroup(rg)), errStrategy)
@@ -102,7 +111,14 @@ class UIBuilder {
     }
 
   private def fromCYASummaryListRowGroup(rg: RowGroup)(implicit ctx: UIContext): UIComponent =
-    CyaSummaryList(rg.paddedRows.map(row => row.map(phrase => TextBuilder.fromPhrase(phrase))))
+    CyaSummaryList(rg.paddedRows.map{row =>
+      row.map(phrase => TextBuilder.fromPhrase(phrase)) match {
+        // If hint is missing, use firsd column text as hint
+        case Seq(label, value, Text(Seq(l: models.ui.Link))) if l.hint.isEmpty =>
+          Seq(label, value, Text(Seq(l.copy(hint = Some(label.asString)))))
+        case rowAsText => rowAsText
+      }
+    })
 
   private def fromNameValueSummaryListRowGroup(rg: RowGroup)(implicit ctx: UIContext): UIComponent =
     NameValueSummaryList(rg.paddedRows.map(row => row.map(phrase => TextBuilder.fromPhrase(phrase))))
@@ -185,23 +201,26 @@ class UIBuilder {
 
   private def fromRequiredErrorGroup(eg: RequiredErrorGroup, errStrategy: ErrorStrategy)(implicit ctx: UIContext): Seq[UIComponent] =
     errStrategy match {
-      case ValueMissingGroupError(Nil) => // Nil names => all values missing
-        eg.group.find(co => EmbeddedParameterRegex.findAllMatchIn(co.text.value(ctx.messages.lang)).isEmpty)
-                .fold[Seq[UIComponent]](Nil)(eco => Seq(RequiredErrorMsg(Text(StringTransform.transform(eco.text)))))
-      case e: ValueMissingGroupError =>   // Values missing by name
-        // Find message corresponding to the number of missing values
-        eg.group.find(co => EmbeddedParameterRegex.findAllMatchIn(co.text.value(ctx.messages.lang)).length == e.missingFieldNames.length)
-          .fold[Seq[UIComponent]](Nil){eco => {
-              // Substitute positional params with the supplied field names
-              val mapToFieldName: Match => Option[String] = m => Option(m.group(EmbeddedParameterGroup))
-                                                                  .map(_.toInt)
-                                                                  .fold[Option[String]](None)(idx => e.missingFieldNames.lift(idx))
-              val errorMsg = EmbeddedParameterRegex.replaceSomeIn(eco.text.value(ctx.messages.lang), mapToFieldName)
-              Seq(RequiredErrorMsg(Text(StringTransform.transform(errorMsg))))
-            }
-          }
-      case _ => Nil
+      case _: ValueMissingGroupError => errorGroupMsg(eg.group, errStrategy).map(RequiredErrorMsg)
+      case _ => Seq()
     }
+
+  private def fromTypeErrorGroup(tg: TypeErrorGroup, errStrategy: ErrorStrategy)(implicit ctx: UIContext): Seq[UIComponent] =
+    errStrategy match {
+      case _: ValueTypeGroupError => errorGroupMsg(tg.group, errStrategy).map(TypeErrorMsg(_, errStrategy.missingFieldIds))
+      case _ => Seq()
+    }
+
+  private[services] def errorGroupMsg(callouts: Seq[Callout], errStrategy: ErrorStrategy)(implicit ctx: UIContext): Seq[Text] = {
+    // Substitute positional params with the supplied field names
+    val mapToFieldName: Match => Option[String] =
+      m => Option(m.group(EmbeddedParameterGroup)).map(_.toInt).fold[Option[String]](None)(idx => errStrategy.missingFieldNames.lift(idx))
+
+    callouts.find(co => EmbeddedParameterRegex.findAllMatchIn(co.text.value(ctx.messages.lang)).length == errStrategy.missingFieldNames.length)
+            .fold[Seq[Text]](Nil){eco =>
+              Seq(Text(StringTransform.transform(EmbeddedParameterRegex.replaceSomeIn(eco.text.value(ctx.messages.lang), mapToFieldName))))
+            }
+  }
 
   private def fromNoteGroup(ng: NoteGroup)(implicit ctx: UIContext): UIComponent =
     InsetText(ng.group.map(co => TextBuilder.fromPhrase(co.text)))

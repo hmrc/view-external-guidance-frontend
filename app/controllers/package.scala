@@ -18,15 +18,19 @@ import java.time.Instant
 import config.AppConfig
 import play.api.i18n.Messages
 import core.models.ocelot.errors._
+import core.models.ocelot.UrlPathPattern
+import uk.gov.hmrc.http.SessionKeys
+import play.api.mvc.Request
 
 package object controllers {
   val SessionIdPrefix: String = "session-"
+  val RedirectWhenNoSessionUrlParam: String = "c=1"
 
-  def hasSessionExpired(sessionLastRequestTime: Option[String], appConfig: AppConfig, timeNow: Long = Instant.now.toEpochMilli): Boolean =
-    sessionLastRequestTime.fold(false){lastRequestTs =>
+  def sessionStillActive(request: Request[_], appConfig: AppConfig, timeNow: Long = Instant.now.toEpochMilli): Boolean =
+    request.session.get(SessionKeys.lastRequestTimestamp).fold(false){lastRequestTs =>
       val elapsedMilliseconds = timeNow - lastRequestTs.toLong  // How many millis since last request
       // Is the elapsed period greater than the timeout minus the grace period
-      elapsedMilliseconds >= (appConfig.timeoutInSeconds * 1000L -appConfig.expiryErrorMarginInMilliSeconds)
+      elapsedMilliseconds < (appConfig.timeoutInSeconds * 1000L -appConfig.expiryErrorMarginInMilliSeconds)
     }
 
   def fromRuntimeError(err: RuntimeError, stanzaId: String)(implicit messages: Messages): String = err match {
@@ -48,4 +52,14 @@ package object controllers {
              messages("guidance.error.unsupported_ui_pattern.soln3"),
              messages("guidance.error.unsupported_ui_pattern.soln4"))
     }).collect{case Some(s) => s}
+
+  def decodeUrlPath(url: String): Option[String] =
+    try { Some(java.net.URLDecoder.decode(url, "UTF-8"))}
+    catch{case _: Throwable => None}
+
+  def validateUrl(url: String): Option[String] =
+    decodeUrlPath(url).flatMap{
+      case decodedUrl: String if decodedUrl.matches(UrlPathPattern) => Some(decodedUrl)
+      case _ => None
+    }
 }

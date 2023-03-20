@@ -58,7 +58,6 @@ timeout.dialog.keep_alive_button.text=Continue using guidance
 timeout.dialog.sign_out_button.text=Delete your answers
 timeout.dialog.title.text=Your session is about to end
 timeout.dialog.message.text=For your security, we will delete your answers in
-timeout.dialog.signOutUrl=https://www.gov.uk/check-additional-income-tax
 
 session.timeout.header.title=Interactive Guidance
 session.timeout.delete.your.answers=You deleted your answers
@@ -74,77 +73,13 @@ footer.links.accessibility.text=Accessibility Statement
 footer.links.privacy_policy.text=Privacy policy
 footer.links.terms_and_conditions.text=Terms and conditions
 
-# Compliance statement
-# ----------------------------------------------------------
-accessibility.title=Accessibility statement for HMRC Interactive Guidance
-accessibility.defaultHeaderTitle = Interactive Guidance
-
-## section one
-compliant.one.heading=Accessibility statement for HMRC Interactive Guidance
-compliant.one.lede=This accessibility statement explains how accessible this service is, what to do if you have difficulty using it, and how to report accessibility problems with the service.
-compliant.one.p1.1=This service is part of the wider GOV.UK website. There is a separate
-compliant.one.p1.2=accessibility statement
-compliant.one.p1.3=for the main GOV.UK website.
-compliant.one.p2.1=This page only contains information about HMRC interactive guidance available at
-compliant.one.p2.2= https://www.tax.service.gov.uk/
-
-## section two
-compliant.two.heading=Using this service
-compliant.two.p1=HMRC interactive guidance gives users targeted information based on their answers to a series of questions.
-compliant.two.p2=This service is run by HM Revenue and Customs (HMRC). We want as many people as possible to be able to use this service. This means you should be able to:
-compliant.two.l1=change colours, contrast levels and fonts
-compliant.two.l2=zoom in up to 300% without the text spilling off the screen
-compliant.two.l3=get from the start of the service to the end using just a keyboard
-compliant.two.l4=get from the start of the service to the end using speech recognition software
-compliant.two.l5=listen to the service using a screen reader (including the most recent versions of JAWS, NVDA and VoiceOver)
-compliant.two.p3=We have also made the text in the service as simple as possible to understand.
-compliant.two.p4.0=
-compliant.two.p4.1=AbilityNet
-compliant.two.p4.2=has advice on making your device easier to use if you have a disability.
-
-## section three
-compliant.three.heading=How accessible this service is
-compliant.three.p1.1=This service is fully compliant with the
-compliant.three.p1.2=Web Content Accessibility Guidelines version 2.1 AA standard
-compliant.three.p1.3=There are no known accessibility issues within this service.
-
-## section five
-compliant.five.heading=Reporting accessibility problems with this service
-compliant.five.p.1=We are always looking to improve the accessibility of this service. If you find any problems that are not listed on this page or think we are not meeting accessibility requirements, report the
-compliant.five.p.2=accessibility problem (opens in new tab)
-
-## section six
-compliant.six.heading=What to do if you are not happy with how we respond to your complaint
-compliant.six.p.1=The Equality and Human Rights Commission (EHRC) is responsible for enforcing the Public Sector Bodies (Websites and Mobile Applications) (No. 2) Accessibility Regulations 2018 (the ‘accessibility regulations’). If you are not happy with how we respond to your complaint,
-compliant.six.p.2=contact the Equality Advisory and Support Service
-compliant.six.p.3=https://www.equalityadvisoryservice.com/
-compliant.six.p.4=(EASS), or the
-compliant.six.p.5=Equality Commission for Northern Ireland
-compliant.six.p.6=(ECNI) if you live in Northern Ireland.
-
-## section seven
-compliant.seven.heading=Contacting us by phone or getting a visit from us in person
-compliant.seven.p1=We provide a text relay service if you are deaf, hearing impaired or have a speech impediment.
-compliant.seven.p2=We can provide a British Sign Language (BSL) interpreter, or you can arrange a visit from an HMRC advisor to help you complete the service.
-compliant.seven.p3.1=Find out how to
-compliant.seven.p3.2=contact us
-compliant.seven.p3.3=https://www.gov.uk/dealing-hmrc-additional-needs
-
-## section eight
-compliant.eight.heading=Technical information about this service’s accessibility
-compliant.eight.p1=HMRC is committed to making this service accessible, in accordance with the Public Sector Bodies (Websites and Mobile Applications) (No. 2) Accessibility Regulations 2018.
-compliant.eight.p2.1=This service is fully compliant with the
-compliant.eight.p2.2=Web Content Accessibility Guidelines version 2.1 AA standard
-
-## section nine
-compliant.nine.heading=How we tested this service
-compliant.nine.p1=The service was last tested on 5 August 2020 and was checked for compliance with WCAG 2.1 AA.
-compliant.nine.p2.1=The service was built using parts that were tested by the
-compliant.nine.p2.2=Digital Accessibility Centre
-complaint.nine.p2.4=
-compliant.nine.p2.5=
-compliant.nine.p2.3=The full service was tested by HMRC and included disabled users.
-compliant.nine.p3=This page was prepared on 5 August 2020. It was last updated on 5 August 2020.
+## There has been a problem page (Block cookies)
+service.session-blocked-page.title = There has been a problem
+service.session-blocked-page.info = You need to change your browser settings to allow cookies to be used and then start again.
+service.session-blocked-page.continue = Start again
+service.session-blocked-page.lang-switch-aria-label = Language switcher
+service.session-blocked-page.lang-switch-selectable = Cymraeg
+service.session-blocked-page.lang-switch-hidden = Newid yr iaith ir Gymraeg
 
 ## guidance error page
 guidance.error.title=Execution of the current process has encountered a problem
@@ -163,3 +98,18 @@ guidance.error.unsupported_ui_pattern.soln1=Pattern rules :-
 guidance.error.unsupported_ui_pattern.soln2=1. Check your answers page. Three columns, column 1 cells must not be bold and every column 3 is a link.
 guidance.error.unsupported_ui_pattern.soln3=2. Summary list. Two columns and column 1 cells must not be bold
 guidance.error.unsupported_ui_pattern.soln4=3. Table. At least one column and two rows. The cells of row 1 are headings, all of which must be bold. The Row stanzas which make up the table must be stacked to a Callout of type SubSection which will become the overall title of the table
+
+## guidance internals
+guidance.internals.heading = Page structure
+guidance.internals.id = Id
+guidance.internals.title = Title
+guidance.internals.url = Url
+guidance.internals.pagestanzas_title = Stanzas of page ''{0}''
+guidance.internals.page_count = [Page count: {0}]
+guidance.internals.page = Page ''{0}'': {1}
+guidance.internals.page_linked_from = Linked from:
+guidance.internals.stanzas.id = Id
+guidance.internals.stanzas.type = Type
+guidance.internals.stanzas.properties = Properties
+
+

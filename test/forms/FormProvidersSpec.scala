@@ -26,14 +26,16 @@ import services.{ErrorStrategy, ValueMissingError, ValueMissingGroupError}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.test.FakeRequest
 import base.BaseSpec
+import forms.providers._
 
-class FormsHelperSpec extends BaseSpec with GuiceOneAppPerSuite {
+class FormProvidersSpec extends BaseSpec with GuiceOneAppPerSuite {
 
   private trait Test {
 
     val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
     implicit val messages: Messages = messagesApi.preferred(Seq(Lang("en")))
 
+    val formProvider: FormProviderFactory = new FormProviderFactory(new DateFormProvider, new StringFormProvider, new StringListFormProvider)
     val processId: String = "ext90000"
     val path: String = s"/guidance/$processId/question"
     val relativePath: String = path.drop(1)
@@ -139,7 +141,7 @@ class FormsHelperSpec extends BaseSpec with GuiceOneAppPerSuite {
       implicit val request: Request[_] = FakeRequest("POST", path)
         .withFormUrlEncodedBody(relativePath -> questionAnswer)
 
-      val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = FormsHelper.bindFormData(question, relativePath)
+      val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = formProvider(question).bind(relativePath)
 
       result match {
         case Right((form: Form[_], submittedAnswer: SubmittedAnswer)) =>
@@ -154,7 +156,7 @@ class FormsHelperSpec extends BaseSpec with GuiceOneAppPerSuite {
       implicit val request: Request[_] = FakeRequest("POST", path)
         .withFormUrlEncodedBody(relativePath -> currencyAnswer)
 
-      val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = FormsHelper.bindFormData(currencyInput, relativePath)
+      val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = formProvider(currencyInput).bind(relativePath)
 
       result match {
         case Right((form: Form[_], submittedAnswer: SubmittedAnswer)) =>
@@ -170,7 +172,7 @@ class FormsHelperSpec extends BaseSpec with GuiceOneAppPerSuite {
       implicit val request: Request[_] = FakeRequest("POST", path)
         .withFormUrlEncodedBody(relativePath -> currencyPoundsOnlyAnswer)
 
-      val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = FormsHelper.bindFormData(currencyPoundsOnlyInput, relativePath)
+      val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = formProvider(currencyPoundsOnlyInput).bind(relativePath)
 
       result match {
         case Right((form: Form[_], submittedAnswer: SubmittedAnswer)) =>
@@ -186,7 +188,7 @@ class FormsHelperSpec extends BaseSpec with GuiceOneAppPerSuite {
       implicit val request: Request[_] = FakeRequest("POST", path)
         .withFormUrlEncodedBody("day" -> dayAnswer, "month" -> monthAnswer, "year" -> yearAnswer)
 
-      val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = FormsHelper.bindFormData(dateInput, relativePath)
+      val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = formProvider(dateInput).bind(relativePath)
 
       result match {
         case Right((form: Form[_], submittedAnswer: SubmittedAnswer)) =>
@@ -208,7 +210,7 @@ class FormsHelperSpec extends BaseSpec with GuiceOneAppPerSuite {
           s"$relativePath[4]" -> "4"
         )
 
-      val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = FormsHelper.bindFormData(nonExclusiveSequence, relativePath)
+      val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = formProvider(nonExclusiveSequence).bind(relativePath)
 
       result match {
         case Right((form: Form[_], submittedAnswer: SubmittedAnswer)) =>
@@ -228,7 +230,7 @@ class FormsHelperSpec extends BaseSpec with GuiceOneAppPerSuite {
           s"$relativePath[2]" -> "2"
         )
 
-      val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = FormsHelper.bindFormData(exclusiveSequence, relativePath)
+      val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = formProvider(exclusiveSequence).bind(relativePath)
 
       result match {
         case Right((form: Form[_], submittedAnswer: SubmittedAnswer)) =>
@@ -245,7 +247,7 @@ class FormsHelperSpec extends BaseSpec with GuiceOneAppPerSuite {
       implicit val request: Request[_] = FakeRequest("POST", path)
         .withFormUrlEncodedBody(incorrectPath -> questionAnswer)
 
-      val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = FormsHelper.bindFormData(question, relativePath)
+      val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = formProvider(question).bind(relativePath)
 
       result match {
         case Left((formWithErrors: Form[_], errorStrategy: ErrorStrategy)) =>
@@ -262,7 +264,7 @@ class FormsHelperSpec extends BaseSpec with GuiceOneAppPerSuite {
       implicit val request: Request[_] = FakeRequest("POST", path)
         .withFormUrlEncodedBody(incorrectPath -> currencyAnswer)
 
-      val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = FormsHelper.bindFormData(currencyInput, relativePath)
+      val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = formProvider(currencyInput).bind(relativePath)
 
       result match {
         case Left((formWithErrors: Form[_], errorStrategy: ErrorStrategy)) =>
@@ -279,7 +281,7 @@ class FormsHelperSpec extends BaseSpec with GuiceOneAppPerSuite {
       implicit val request: Request[_] = FakeRequest("POST", path)
         .withFormUrlEncodedBody(incorrectPath -> currencyPoundsOnlyAnswer)
 
-      val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = FormsHelper.bindFormData(currencyPoundsOnlyInput, relativePath)
+      val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = formProvider(currencyPoundsOnlyInput).bind(relativePath)
 
       result match {
         case Left((formWithErrors: Form[_], errorStrategy: ErrorStrategy)) =>
@@ -295,7 +297,7 @@ class FormsHelperSpec extends BaseSpec with GuiceOneAppPerSuite {
       implicit val request: Request[_] = FakeRequest("POST", path)
         .withFormUrlEncodedBody("month" -> monthAnswer, "year" -> yearAnswer)
 
-      val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = FormsHelper.bindFormData(dateInput, relativePath)
+      val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = formProvider(dateInput).bind(relativePath)
 
       result match {
         case Left((formWithErrors: Form[_], errorStrategy: ErrorStrategy)) =>
@@ -312,7 +314,7 @@ class FormsHelperSpec extends BaseSpec with GuiceOneAppPerSuite {
       implicit val request: Request[_] = FakeRequest("POST", path)
         .withFormUrlEncodedBody("month" -> monthAnswer, "year" -> yearAnswer)
 
-      val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = FormsHelper.bindFormData(dateInput, relativePath)
+      val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = formProvider(dateInput).bind(relativePath)
 
       result match {
         case Left((formWithErrors: Form[_], errorStrategy: ErrorStrategy)) =>
@@ -327,7 +329,7 @@ class FormsHelperSpec extends BaseSpec with GuiceOneAppPerSuite {
       implicit val request: Request[_] = FakeRequest("POST", path)
         .withFormUrlEncodedBody("day" -> dayAnswer, "year" -> yearAnswer)
 
-      val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = FormsHelper.bindFormData(dateInput, relativePath)
+      val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = formProvider(dateInput).bind(relativePath)
 
       result match {
         case Left((formWithErrors: Form[_], errorStrategy: ErrorStrategy)) =>
@@ -344,7 +346,7 @@ class FormsHelperSpec extends BaseSpec with GuiceOneAppPerSuite {
       implicit val request: Request[_] = FakeRequest("POST", path)
         .withFormUrlEncodedBody("day" -> dayAnswer, "year" -> yearAnswer)
 
-      val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = FormsHelper.bindFormData(dateInput, relativePath)
+      val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = formProvider(dateInput).bind(relativePath)
 
       result match {
         case Left((formWithErrors: Form[_], errorStrategy: ErrorStrategy)) =>
@@ -359,7 +361,7 @@ class FormsHelperSpec extends BaseSpec with GuiceOneAppPerSuite {
       implicit val request: Request[_] = FakeRequest("POST", path)
         .withFormUrlEncodedBody("day" -> dayAnswer, "month" -> monthAnswer)
 
-      val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = FormsHelper.bindFormData(dateInput, relativePath)
+      val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = formProvider(dateInput).bind(relativePath)
 
       result match {
         case Left((formWithErrors: Form[_], errorStrategy: ErrorStrategy)) =>
@@ -376,7 +378,7 @@ class FormsHelperSpec extends BaseSpec with GuiceOneAppPerSuite {
       implicit val request: Request[_] = FakeRequest("POST", path)
         .withFormUrlEncodedBody("day" -> dayAnswer, "month" -> monthAnswer)
 
-      val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = FormsHelper.bindFormData(dateInput, relativePath)
+      val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = formProvider(dateInput).bind(relativePath)
 
       result match {
         case Left((formWithErrors: Form[_], errorStrategy: ErrorStrategy)) =>
@@ -391,7 +393,7 @@ class FormsHelperSpec extends BaseSpec with GuiceOneAppPerSuite {
       implicit val request: Request[_] = FakeRequest("POST", path)
         .withFormUrlEncodedBody("month" -> monthAnswer)
 
-      val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = FormsHelper.bindFormData(dateInput, relativePath)
+      val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = formProvider(dateInput).bind(relativePath)
 
       result match {
         case Left((formWithErrors: Form[_], errorStrategy: ErrorStrategy)) =>
@@ -410,7 +412,7 @@ class FormsHelperSpec extends BaseSpec with GuiceOneAppPerSuite {
       implicit val request: Request[_] = FakeRequest("POST", path)
         .withFormUrlEncodedBody("month" -> monthAnswer)
 
-      val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = FormsHelper.bindFormData(dateInput, relativePath)
+      val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = formProvider(dateInput).bind(relativePath)
 
       result match {
         case Left((formWithErrors: Form[_], errorStrategy: ErrorStrategy)) =>
@@ -425,7 +427,7 @@ class FormsHelperSpec extends BaseSpec with GuiceOneAppPerSuite {
       implicit val request: Request[_] = FakeRequest("POST", path)
         .withFormUrlEncodedBody()
 
-      val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = FormsHelper.bindFormData(dateInput, relativePath)
+      val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = formProvider(dateInput).bind(relativePath)
 
       result match {
         case Left((formWithErrors: Form[_], errorStrategy: ErrorStrategy)) =>
@@ -446,7 +448,7 @@ class FormsHelperSpec extends BaseSpec with GuiceOneAppPerSuite {
       implicit val request: Request[_] = FakeRequest("POST", path)
         .withFormUrlEncodedBody(s"$incorrectPath[0]" -> "0")
 
-      val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = FormsHelper.bindFormData(nonExclusiveSequence, relativePath)
+      val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = formProvider(nonExclusiveSequence).bind(relativePath)
 
       result match {
         case Left((formWithErrors: Form[_], errorStrategy: ErrorStrategy)) =>
@@ -461,7 +463,7 @@ class FormsHelperSpec extends BaseSpec with GuiceOneAppPerSuite {
       implicit val request: Request[_] = FakeRequest("POST", path)
         .withFormUrlEncodedBody(s"$incorrectPath[0]" -> "0")
 
-      val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = FormsHelper.bindFormData(exclusiveSequence, relativePath)
+      val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = formProvider(exclusiveSequence).bind(relativePath)
 
       result match {
         case Left((formWithErrors: Form[_], errorStrategy: ErrorStrategy)) =>
@@ -473,7 +475,7 @@ class FormsHelperSpec extends BaseSpec with GuiceOneAppPerSuite {
 
     "populate a form with the submitted answer for a question" in new Test {
 
-      val form: Form[_] = FormsHelper.populatedForm(question, relativePath, Some(questionAnswer))
+      val form: Form[_] = formProvider(question).populated(relativePath, Some(questionAnswer))
 
       form(relativePath).value shouldBe Some(questionAnswer)
 
@@ -481,7 +483,7 @@ class FormsHelperSpec extends BaseSpec with GuiceOneAppPerSuite {
 
     "populate a form with the submitted answer for a currency value" in new Test {
 
-      val form: Form[_] = FormsHelper.populatedForm(currencyInput, relativePath, Some(currencyAnswer))
+      val form: Form[_] = formProvider(currencyInput).populated(relativePath, Some(currencyAnswer))
 
       form(relativePath).value shouldBe Some(currencyAnswer)
 
@@ -489,7 +491,7 @@ class FormsHelperSpec extends BaseSpec with GuiceOneAppPerSuite {
 
     "populate a form with the submitted answer for a currency pounds only value" in new Test {
 
-      val form: Form[_] = FormsHelper.populatedForm(currencyPoundsOnlyInput, relativePath, Some(currencyPoundsOnlyAnswer))
+      val form: Form[_] = formProvider(currencyPoundsOnlyInput).populated(relativePath, Some(currencyPoundsOnlyAnswer))
 
       form(relativePath).value shouldBe Some(currencyPoundsOnlyAnswer)
 
@@ -497,7 +499,7 @@ class FormsHelperSpec extends BaseSpec with GuiceOneAppPerSuite {
 
     "populate a form with the submitted answer for a date" in new Test {
 
-      val form: Form[_] = FormsHelper.populatedForm(dateInput, relativePath, Some(dateAnswer))
+      val form: Form[_] = formProvider(dateInput).populated(relativePath, Some(dateAnswer))
 
       form("day").value shouldBe Some(dayAnswer)
       form("month").value shouldBe Some(monthAnswer)
@@ -506,7 +508,7 @@ class FormsHelperSpec extends BaseSpec with GuiceOneAppPerSuite {
 
     "populate a form with the submitted answer for a non-exclusive sequence" in new Test {
 
-      val form: Form[_] = FormsHelper.populatedForm(nonExclusiveSequence, relativePath, Some(nonExclusiveSequenceAnswer))
+      val form: Form[_] = formProvider(nonExclusiveSequence).populated(relativePath, Some(nonExclusiveSequenceAnswer))
 
       form(s"$relativePath[0]").value shouldBe Some("0")
       form(s"$relativePath[1]").value shouldBe Some("2")
@@ -516,7 +518,7 @@ class FormsHelperSpec extends BaseSpec with GuiceOneAppPerSuite {
 
     "populate a form with the submitted answer for an exclusive sequence" in new Test {
 
-      val form: Form[_] = FormsHelper.populatedForm(exclusiveSequence, relativePath, Some(exclusiveSequenceAnswer))
+      val form: Form[_] = formProvider(exclusiveSequence).populated(relativePath, Some(exclusiveSequenceAnswer))
 
       form(s"$relativePath[0]").value shouldBe Some("0")
       form(s"$relativePath[1]").value shouldBe Some("2")

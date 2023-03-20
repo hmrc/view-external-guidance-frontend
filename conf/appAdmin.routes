@@ -3,3 +3,5 @@
 GET   /scratch/$uuid<[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}>     controllers.entry.StartGuidanceController.scratch(uuid: String)
 GET   /approval/:processId/*url          controllers.entry.StartGuidanceController.approvalPage(processId: String, url: String)
 GET   /approval/:processId               controllers.entry.StartGuidanceController.approval(processId: String)
+GET   /map-approval/:processCode           controllers.entry.StartAdminController.approvalPageMap(processCode: String)
+GET   /map-published/:processCode          controllers.entry.StartAdminController.publishedPageMap(processCode: String)

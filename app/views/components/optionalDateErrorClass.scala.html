@@ -14,11 +14,14 @@
  * limitations under the License.
  *@
 
-@import models.ui.{DateInput, RequiredErrorMsg}
+@import models.ui.{DateInput, ValueErrorMsg}
 
 @(input: DateInput, field: String, form: Form[_])
-@{if((input.errorMsgs.nonEmpty && input.errorMsgs.collect{case r: RequiredErrorMsg => r}.size == 0) ||
-     (form.errors.size > 1 || (form.errors.size == 1 && form.errors.head.key == field))) " govuk-input--error"}
+
+@{if((input.errorMsgs.nonEmpty && input.errorMsgs.collect{case r: ValueErrorMsg => r}.size > 0) ||
+     (form.errors.nonEmpty && form.errors.map(_.key).contains(field)) ||
+     (input.errorMsgs.nonEmpty && input.errorMsgs.head.fields.contains(field)) ||
+     (form.errors.isEmpty && input.errorMsgs.nonEmpty && input.errorMsgs.head.fields.isEmpty)) " govuk-input--error"}
 @{
 //$COVERAGE-OFF$
 }

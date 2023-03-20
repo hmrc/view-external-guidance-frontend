@@ -203,6 +203,19 @@ class StartGuidanceControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
 
   }
 
+  "Calling published endpoint with a process ID containg invalid characters" should {
+
+    "return a NOT_FOUND error" in new ProcessTest {
+      val invalidProcessCode = "check-what-inform%E2%80%A6n-to-give-your-new-employer"
+      MockRetrieveAndCacheService
+        .retrieveAndCachePublished(invalidProcessCode, "sessionId")
+        .returns(Future.successful(Left(NotFoundError)))
+      val result = target.published(invalidProcessCode)(fakeRequest)
+      status(result) shouldBe Status.NOT_FOUND
+    }
+
+  }
+
   "Calling the approval endpoint with a valid process ID" should {
 
     "redirect the caller to another page" in new ProcessTest {
