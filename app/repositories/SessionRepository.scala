@@ -98,7 +98,7 @@ trait SessionRepository extends SessionRepositoryConstants {
   def updateForNewPage(key: String, processCode: String, pageHistory: Option[List[PageHistory]], flowStack: Option[List[FlowStage]],
                        labelUpdates: List[Label], legalPageIds: List[String], requestId: Option[String]): Future[RequestOutcome[Unit]]
   def updateAfterStandardPage(key: String, processCode: String, labels: Labels, requestId: Option[String]): Future[RequestOutcome[Unit]]
-  def updateAfterFormSubmission(key: String, processCode: String, url: String, answer: String, labels: Labels, nextLegalPageIds: List[String],
+  def updateAfterFormSubmission(key: String, processCode: String, answerId: String, answer: String, labels: Labels, nextLegalPageIds: List[String],
                                 requestId: Option[String]): Future[RequestOutcome[Unit]]
 }
 
@@ -219,7 +219,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
 
   def updateAfterFormSubmission( key: String,
                                  processCode: String,
-                                 url: String,
+                                 answerId: String,
                                  answer: String,
                                  labels: Labels,
                                  nextLegalPageIds: List[String],
@@ -229,7 +229,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
       combine((List(
         Updates.set(TtlExpiryFieldName, Instant.now()),
         Updates.set(FlowStackKey, Codecs.toBson(labels.flowStack)),
-        Updates.set(s"${AnswersKey}.$url", Codecs.toBson(answer)),
+        Updates.set(s"${AnswersKey}.$answerId", Codecs.toBson(answer)),
         Updates.set(LegalPageIdsKey, Codecs.toBson(nextLegalPageIds))) ++
         labels.poolUpdates.toList.map(l => Updates.set(s"${ContinuationPoolKey}.${l._1}", Codecs.toBson(l._2))) ++
         labels.updatedLabels.values.map(l => Updates.set(s"${LabelsKey}.${l.name}", Codecs.toBson(l)))).toArray: _*
@@ -241,7 +241,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
       case _ => Right({})
     }
     .recover{ case lastError =>
-      logger.error(s"Error $lastError while trying to update question answers and labels within session repo with _id=$key, url: $url, answer: $answer")
+      logger.error(s"Error $lastError while trying to update question answers and labels within session repo with _id=$key, answerId: $answerId, answer: $answer")
       Left(DatabaseError)
     }
 

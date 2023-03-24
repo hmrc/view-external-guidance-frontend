@@ -33,7 +33,7 @@ trait Flows {
   def flowStack: List[FlowStage]
   def poolUpdates: Map[String, Stanza]  // Changes to initial pool
 
-  val flowPath: List[String]
+  val flowPath: Option[String]
 }
 
 // Timescale defns
@@ -154,14 +154,18 @@ private[ocelot] class LabelCacheImpl(labels: Map[String, Label] = Map(),
   def activeFlow: Option[FlowStage] = stack.headOption
   def continuationPool: Map[String, Stanza] = pool ++ poolCache
 
-  lazy val flowPath: List[String] = {
+  lazy val flowPath: Option[String] = {
     def isNewLabel(l: List[Flow], labelValue: Option[LabelValue]): Boolean =
       labelValue.fold(false)(lv => !l.exists(_.labelValue.fold(false)(_.name.equals(lv.name))))
 
     stack.foldLeft[List[Flow]](Nil){
       case (acc, el: Flow) if isNewLabel(acc, el.labelValue) => el :: acc
       case (acc, _) => acc
-    }.map(_.labelValue.fold("")(_.value.english))
+    }.map(_.labelValue.fold("")(_.value.english)) match {
+      case Nil => None
+      case path => Some(path.mkString("|"))
+    }
+
   }
 
   // Persistence access
