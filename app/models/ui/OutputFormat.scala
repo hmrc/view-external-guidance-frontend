@@ -19,9 +19,7 @@ package models.ui
 import java.math.RoundingMode
 import java.text.NumberFormat
 import java.util.Locale.UK
-
 import play.api.i18n.Messages
-
 import core.models.ocelot.{asNumeric, asDate}
 
 trait Name {
