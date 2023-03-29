@@ -27,7 +27,7 @@ import core.models.RequestOutcome
 import play.api.i18n.{MessagesApi, Messages}
 import scala.concurrent.{ExecutionContext, Future}
 import repositories.{SessionFSM, SessionRepository}
-import core.models.ocelot.{LabelCache, Labels, Process, Label, flowPath}
+import core.models.ocelot.{LabelCache, Labels, Process, Label}
 import core.models.ocelot.SecuredProcess
 
 @Singleton
@@ -163,7 +163,7 @@ class GuidanceService @Inject() (
         val requestId: Option[String] = hc.requestId.map(_.value)
         optionalNext.fold[Future[RequestOutcome[(Option[String], Labels)]]](Future.successful(Right((None, labels)))){next =>
           logger.debug(s"Next page found at stanzaId: $next")
-          sessionRepository.updateAfterFormSubmission(ctx.sessionId, ctx.processCode, answerStorageId(ctx.labels, url), submittedAnswer, labels, List(next), requestId).map{
+          sessionRepository.updateAfterFormSubmission(ctx.sessionId, ctx.processCode, url, submittedAnswer, labels, List(next), requestId).map{
             case Left(NotFoundError) =>
               logger.warn(s"TRANSACTION FAULT(Recoverable): saveFormPageState _id=${ctx.sessionId}, url: $url, answer: $validatedAnswer, requestId: ${requestId}")
               Left(TransactionFaultError)
@@ -207,15 +207,13 @@ class GuidanceService @Inject() (
               Right(
                 PageEvaluationContext(
                   page, visualStanzas, dataInput, sessionId, pageMapById, gs.process.startUrl.map(_ => s"${appConfig.baseUrl}/${processCode}/session-restart"),
-                  processTitle, gs.process.meta.id, processCode, updatedLabels, gs.backLink.map(bl => s"${appConfig.baseUrl}/$bl"), gs.answers.get(answerStorageId(updatedLabels, url)),
+                  processTitle, gs.process.meta.id, processCode, updatedLabels, gs.backLink.map(bl => s"${appConfig.baseUrl}/$bl"), gs.answers.get(url),
                   gs.process.betaPhaseBanner
                 )
               )
           }
         })
     }
-
-  private def answerStorageId(labels: Labels, url: String): String = flowPath(labels.flowStack).fold(url)(fp => s"$fp-$url")
 
   private def isAuthenticationUrl(url: String): Boolean = url.drop(1).equals(SecuredProcess.SecuredProcessStartUrl)
 

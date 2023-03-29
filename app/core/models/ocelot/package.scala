@@ -250,6 +250,11 @@ package object ocelot {
     if (longValue < Int.MinValue || longValue > Int.MaxValue) None else Some(longValue.toInt)
   }
 
+  // Creates a path-like string from the current flow stack made up of the current Sequence label value for each Sequence stanza in the
+  // stack. E.g. Given a Sequence stanza within the parent Sequence stanza flow with labels "Child" and "Parent" respectively. If Child=March
+  // and Parent=2023 on the current page, the flow path will be Some("2023/March"). The floe path could be used (along with the page url) to
+  // key answers within the guidance session. Although care will be needed to prevent '.' characters causing issues when the data is persisted
+  // to Mongo as the user answer id is included in the persistence query (See DefaultSessionRepository.updateAfterFormSubmission()).
   def flowPath(stack: List[FlowStage]): Option[String] = {
     def isNewLabel(l: List[Flow], labelValue: Option[LabelValue]): Boolean =
       labelValue.fold(false)(lv => !l.exists(_.labelValue.fold(false)(_.name.equals(lv.name))))
