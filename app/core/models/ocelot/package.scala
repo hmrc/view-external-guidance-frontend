@@ -249,4 +249,18 @@ package object ocelot {
     val longValue: Long = value.filterNot(_ == ',').toLong
     if (longValue < Int.MinValue || longValue > Int.MaxValue) None else Some(longValue.toInt)
   }
+
+  def flowPath(stack: List[FlowStage]): Option[String] = {
+    def isNewLabel(l: List[Flow], labelValue: Option[LabelValue]): Boolean =
+      labelValue.fold(false)(lv => !l.exists(_.labelValue.fold(false)(_.name.equals(lv.name))))
+
+    stack.foldLeft[List[Flow]](Nil){
+      case (acc, el: Flow) if isNewLabel(acc, el.labelValue) => el :: acc
+      case (acc, _) => acc
+    }.map(_.labelValue.fold("")(_.value.english)) match {
+      case Nil => None
+      case path => Some(path.mkString("/"))
+    }
+  }
+
 }

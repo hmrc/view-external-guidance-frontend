@@ -378,19 +378,19 @@ class LabelSpec extends BaseSpec with ProcessJson {
 
       val (next0, labels0) = labels.pushFlows(List("1", "2"), "3", Some("Label0"), List(phraseOne, phraseTwo), Map())
       next0 shouldBe Some("1")
-      labels0.flowPath shouldBe Some("One")
+      flowPath(labels0.flowStack) shouldBe Some("One")
 
       val (next1, labels1) = labels0.pushFlows(List("4"), "6", Some("Label1"), List(phraseThree), Map())
       next1 shouldBe Some("4")
-      labels1.flowPath shouldBe Some("One|Three")
+      flowPath(labels1.flowStack) shouldBe Some("One/Three")
 
       val (next2, labels2) = labels1.pushFlows(List("5", "7", "8"), "9", Some("Label2"), List(phraseTwo, phraseThree, phraseOne), Map())
       next2 shouldBe Some("5")
-      labels2.flowPath shouldBe Some("One|Three|Two")
+      flowPath(labels2.flowStack) shouldBe Some("One/Three/Two")
 
       val (next3, labels3) = labels2.pushFlows(List("10", "11"), "3", Some("Label3"), List(phraseThree, phraseOne), Map())
       next3 shouldBe Some("10")
-      labels3.flowPath shouldBe Some("One|Three|Two|Three")
+      flowPath(labels3.flowStack) shouldBe Some("One/Three/Two/Three")
     }
 
     "Labels flowPath should contain Some() flow path when only some Sequence labels in use" in new Test {
@@ -398,19 +398,19 @@ class LabelSpec extends BaseSpec with ProcessJson {
 
       val (next0, labels0) = labels.pushFlows(List("1", "2"), "3", Some("Label0"), List(phraseOne, phraseTwo), Map())
       next0 shouldBe Some("1")
-      labels0.flowPath shouldBe Some("One")
+      flowPath(labels0.flowStack) shouldBe Some("One")
 
       val (next1, labels1) = labels0.pushFlows(List("4"), "6", None, Nil, Map())
       next1 shouldBe Some("4")
-      labels1.flowPath shouldBe Some("One")
+      flowPath(labels1.flowStack) shouldBe Some("One")
 
       val (next2, labels2) = labels1.pushFlows(List("5", "7", "8"), "9", Some("Label2"), List(phraseTwo, phraseThree, phraseOne), Map())
       next2 shouldBe Some("5")
-      labels2.flowPath shouldBe Some("One|Two")
+      flowPath(labels2.flowStack) shouldBe Some("One/Two")
 
       val (next3, labels3) = labels2.pushFlows(List("10", "11"), "3", None, Nil, Map())
       next3 shouldBe Some("10")
-      labels3.flowPath shouldBe Some("One|Two")
+      flowPath(labels3.flowStack) shouldBe Some("One/Two")
     }
 
     "Labels flowPath should equal None when no Sequence has a label in use" in new Test {
@@ -418,19 +418,19 @@ class LabelSpec extends BaseSpec with ProcessJson {
 
       val (next0, labels0) = labels.pushFlows(List("1", "2"), "3", None, Nil, Map())
       next0 shouldBe Some("1")
-      labels0.flowPath shouldBe None
+      flowPath(labels0.flowStack) shouldBe None
 
       val (next1, labels1) = labels0.pushFlows(List("4"), "6", None, Nil, Map())
       next1 shouldBe Some("4")
-      labels1.flowPath shouldBe None
+      flowPath(labels1.flowStack) shouldBe None
 
       val (next2, labels2) = labels1.pushFlows(List("5", "7", "8"), "9", None, Nil, Map())
       next2 shouldBe Some("5")
-      labels2.flowPath shouldBe None
+      flowPath(labels2.flowStack) shouldBe None
 
       val (next3, labels3) = labels2.pushFlows(List("10", "11"), "3", None, Nil, Map())
       next3 shouldBe Some("10")
-      labels3.flowPath shouldBe None
+      flowPath(labels3.flowStack) shouldBe None
     }
 
     "Return an empty string if label has no assigned value" in new Test {

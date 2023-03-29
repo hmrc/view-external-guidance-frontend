@@ -27,7 +27,7 @@ import core.models.RequestOutcome
 import play.api.i18n.{MessagesApi, Messages}
 import scala.concurrent.{ExecutionContext, Future}
 import repositories.{SessionFSM, SessionRepository}
-import core.models.ocelot.{LabelCache, Labels, Process, Label}
+import core.models.ocelot.{LabelCache, Labels, Process, Label, flowPath}
 import core.models.ocelot.SecuredProcess
 
 @Singleton
@@ -198,16 +198,16 @@ class GuidanceService @Inject() (
         page => {
           val pageMapById: Map[String, PageDesc] =
             gs.pageMap.map{case (k, pn) => (pn.id, PageDesc(pn, s"${appConfig.baseUrl}/$processCode${k}"))}
-          val labelCache: Labels =
+          val labels: Labels =
             LabelCache(gs.labels, Map(), gs.flowStack, gs.continuationPool, gs.process.timescales, messages.apply, gs.runMode)
-          pageRenderer.renderPage(page, labelCache) match {
+          pageRenderer.renderPage(page, labels) match {
             case Left(err) => Left(err)
-            case Right((visualStanzas, labels, dataInput)) =>
-              val processTitle: models.ui.Text = TextBuilder.fromPhrase(gs.process.title)(UIContext(labels, pageMapById, messages))
+            case Right((visualStanzas, updatedLabels, dataInput)) =>
+              val processTitle: models.ui.Text = TextBuilder.fromPhrase(gs.process.title)(UIContext(updatedLabels, pageMapById, messages))
               Right(
                 PageEvaluationContext(
                   page, visualStanzas, dataInput, sessionId, pageMapById, gs.process.startUrl.map(_ => s"${appConfig.baseUrl}/${processCode}/session-restart"),
-                  processTitle, gs.process.meta.id, processCode, labels, gs.backLink.map(bl => s"${appConfig.baseUrl}/$bl"), gs.answers.get(answerStorageId(labels, url)),
+                  processTitle, gs.process.meta.id, processCode, updatedLabels, gs.backLink.map(bl => s"${appConfig.baseUrl}/$bl"), gs.answers.get(answerStorageId(updatedLabels, url)),
                   gs.process.betaPhaseBanner
                 )
               )
@@ -215,7 +215,7 @@ class GuidanceService @Inject() (
         })
     }
 
-  private def answerStorageId(labels: Labels, url: String): String = labels.flowPath.fold(url)(fp => s"$fp|$url")
+  private def answerStorageId(labels: Labels, url: String): String = flowPath(labels.flowStack).fold(url)(fp => s"$fp-$url")
 
   private def isAuthenticationUrl(url: String): Boolean = url.drop(1).equals(SecuredProcess.SecuredProcessStartUrl)
 
