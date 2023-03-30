@@ -198,16 +198,16 @@ class GuidanceService @Inject() (
         page => {
           val pageMapById: Map[String, PageDesc] =
             gs.pageMap.map{case (k, pn) => (pn.id, PageDesc(pn, s"${appConfig.baseUrl}/$processCode${k}"))}
-          val labelCache: Labels =
+          val labels: Labels =
             LabelCache(gs.labels, Map(), gs.flowStack, gs.continuationPool, gs.process.timescales, messages.apply, gs.runMode)
-          pageRenderer.renderPage(page, labelCache) match {
+          pageRenderer.renderPage(page, labels) match {
             case Left(err) => Left(err)
-            case Right((visualStanzas, labels, dataInput)) =>
-              val processTitle: models.ui.Text = TextBuilder.fromPhrase(gs.process.title)(UIContext(labels, pageMapById, messages))
+            case Right((visualStanzas, updatedLabels, dataInput)) =>
+              val processTitle: models.ui.Text = TextBuilder.fromPhrase(gs.process.title)(UIContext(updatedLabels, pageMapById, messages))
               Right(
                 PageEvaluationContext(
                   page, visualStanzas, dataInput, sessionId, pageMapById, gs.process.startUrl.map(_ => s"${appConfig.baseUrl}/${processCode}/session-restart"),
-                  processTitle, gs.process.meta.id, processCode, labels, gs.backLink.map(bl => s"${appConfig.baseUrl}/$bl"), gs.answers.get(url),
+                  processTitle, gs.process.meta.id, processCode, updatedLabels, gs.backLink.map(bl => s"${appConfig.baseUrl}/$bl"), gs.answers.get(url),
                   gs.process.betaPhaseBanner
                 )
               )
