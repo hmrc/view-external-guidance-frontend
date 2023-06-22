@@ -34,8 +34,6 @@ class ConfirmationPanelSpec extends BaseSpec with ViewFns with GuiceOneAppPerSui
 
   private trait Test {
 
-    private def injector: Injector = app.injector
-
     def messagesApi: MessagesApi = injector.instanceOf[MessagesApi]
 
     val fakeRequest = FakeRequest("GET", "/confirmation")

@@ -16,25 +16,23 @@
 
 package controllers
 
-import java.time.Instant
-
 import base.BaseSpec
-import mocks.{MockAppConfig, MockGuidanceService}
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.http.Status
-import play.api.test.FakeRequest
-import play.api.test.Helpers._
 import config.ErrorHandler
 import core.models.errors._
 import core.models.ocelot.{Process, ProcessJson, Published}
+import mocks.{MockAppConfig, MockGuidanceService}
 import models.GuidanceSession
-import views.html.{user_deleted_session, system_timedout_session}
-import play.api.test.Helpers.stubMessagesControllerComponents
-import uk.gov.hmrc.http.SessionKeys
+import play.api.http.Status
 import play.api.mvc.{AnyContentAsEmpty, Result}
+import play.api.test.FakeRequest
+import play.api.test.Helpers._
+import uk.gov.hmrc.http.SessionKeys
+import views.html.{system_timedout_session, user_deleted_session}
+
+import java.time.Instant
 import scala.concurrent.Future
 
-class SessionTimeoutPageControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
+class SessionTimeoutPageControllerSpec extends BaseSpec {
 
   private trait Test extends MockGuidanceService with ProcessJson {
 

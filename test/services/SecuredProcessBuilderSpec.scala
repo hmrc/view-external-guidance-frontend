@@ -16,18 +16,14 @@
 
 package services
 
-import core.services.{Timescales, DefaultTodayProvider, PageBuilder}
 import base.BaseSpec
-
 import core.models.ocelot._
 import core.models.ocelot.stanzas.Stanza
-import play.api.libs.json._
+import core.services.{DefaultTodayProvider, PageBuilder, Timescales}
 import play.api.i18n.MessagesApi
-import play.api.inject.Injector
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.libs.json._
 
-class SecuredProcessBuilderSpec extends BaseSpec with ProcessJson with GuiceOneAppPerSuite {
-  def injector: Injector = app.injector
+class SecuredProcessBuilderSpec extends BaseSpec with ProcessJson {
   val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
 
   val meta: Meta = Json.parse(prototypeMetaSection).as[Meta]

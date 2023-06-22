@@ -31,11 +31,9 @@ import play.api.test.FakeRequest
 import views.html.components.details
 import scala.collection.JavaConverters._
 
-class DetailsSpec extends BaseSpec with ViewFns with ViewSpec with GuiceOneAppPerSuite {
+class DetailsSpec extends BaseSpec with ViewFns with ViewSpec {
 
   private trait Test {
-
-    private def injector: Injector = app.injector
 
     def messagesApi: MessagesApi = injector.instanceOf[MessagesApi]
     implicit val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("GET", "/confirmation")

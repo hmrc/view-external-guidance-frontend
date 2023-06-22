@@ -17,18 +17,17 @@
 package controllers
 
 import base.BaseSpec
+import config.ErrorHandler
 import mocks.MockAppConfig
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.Status
+import play.api.mvc.{AnyContentAsEmpty, Result}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import config.ErrorHandler
 import views.html.session_blocked
-import play.api.test.Helpers.stubMessagesControllerComponents
-import play.api.mvc.{AnyContentAsEmpty, Result}
+
 import scala.concurrent.Future
 
-class SessionBlockedControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
+class SessionBlockedControllerSpec extends BaseSpec {
 
   private trait Test {
 

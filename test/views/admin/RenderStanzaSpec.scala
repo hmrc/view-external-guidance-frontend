@@ -29,11 +29,10 @@ import views.html.admin.render_stanza
 
 import scala.collection.JavaConverters._
 
-class RenderStanzaSpec extends BaseSpec with ViewSpec with ViewFns with GuiceOneAppPerSuite {
+class RenderStanzaSpec extends BaseSpec with ViewSpec with ViewFns {
 
   private trait Test {
     implicit val labels: Labels = LabelCache()
-    private def injector: Injector = app.injector
     def messagesApi: MessagesApi = injector.instanceOf[MessagesApi]
 
     implicit val request = FakeRequest("GET", "/")

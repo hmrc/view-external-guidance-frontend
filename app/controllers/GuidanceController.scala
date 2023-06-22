@@ -17,28 +17,26 @@
 package controllers
 
 import config.{AppConfig, ErrorHandler}
-
-import javax.inject.{Inject, Singleton}
-import play.api.i18n.Messages
-import play.api.mvc._
-import play.api.data.Form
-import services.{ErrorStrategy, GuidanceService, ValueTypeError, ValueTypeGroupError}
-import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
+import controllers.actions.SessionIdAction
 import core.models.RequestOutcome
 import core.models.errors._
 import core.models.ocelot.errors.RuntimeError
 import core.models.ocelot.stanzas.DateInput
-import core.models.ocelot.{RunMode, Published, SecuredProcess}
-import models.{PageContext, PageEvaluationContext}
-import models.ui.{FormPage, StandardPage, SubmittedAnswer}
-import views.html.{form_page, standard_page}
-import play.api.Logger
-import models.GuidanceSession
-import scala.concurrent.ExecutionContext.Implicits.global
-import controllers.actions.SessionIdAction
-import play.twirl.api.Html
-import scala.concurrent.Future
+import core.models.ocelot.{Published, RunMode, SecuredProcess}
 import forms.FormProviderFactory
+import models.ui.{FormPage, StandardPage, SubmittedAnswer}
+import models.{GuidanceSession, PageContext, PageEvaluationContext}
+import play.api.Logger
+import play.api.data.Form
+import play.api.i18n.Messages
+import play.api.mvc._
+import play.twirl.api.Html
+import services.{ErrorStrategy, GuidanceService, ValueTypeError, ValueTypeGroupError}
+import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
+import views.html.{form_page, standard_page}
+
+import javax.inject.{Inject, Singleton}
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class GuidanceController @Inject() (
@@ -50,7 +48,7 @@ class GuidanceController @Inject() (
     service: GuidanceService,
     mcc: MessagesControllerComponents,
     formProvider: FormProviderFactory
-) extends FrontendController(mcc)
+)(implicit ec: ExecutionContext) extends FrontendController(mcc)
   with SessionFrontendController {
 
   val logger: Logger = Logger(getClass)

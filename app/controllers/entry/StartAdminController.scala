@@ -17,20 +17,20 @@
 package controllers.entry
 
 import config.ErrorHandler
-import javax.inject.{Inject, Singleton}
+import core.models.RequestOutcome
+import core.models.errors.NotFoundError
+import core.models.ocelot.stanzas._
+import core.models.ocelot.{Page, Process, SecuredProcess}
+import models.admin._
+import play.api.Logger
 import play.api.i18n.I18nSupport
 import play.api.mvc._
 import services.RetrieveAndCacheService
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
-import play.api.Logger
-import scala.concurrent.ExecutionContext.Implicits.global
-import models.admin._
-import core.models.RequestOutcome
 import views.html._
-import core.models.errors.NotFoundError
-import core.models.ocelot.{Process, Page, SecuredProcess}
-import core.models.ocelot.stanzas.{TitleCallout, Input, YourCallCallout, Question, Sequence}
-import scala.concurrent.Future
+
+import javax.inject.{Inject, Singleton}
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class StartAdminController @Inject() (
@@ -38,7 +38,7 @@ class StartAdminController @Inject() (
     service: RetrieveAndCacheService,
     view: admin.process_map,
     mcc: MessagesControllerComponents
-) extends FrontendController(mcc)
+)(implicit ec: ExecutionContext) extends FrontendController(mcc)
     with I18nSupport {
 
   val logger: Logger = Logger(getClass)

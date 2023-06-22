@@ -16,19 +16,18 @@
 
 package controllers
 
-import play.twirl.api.Html
 import config.{AppConfig, ErrorHandler}
-import javax.inject.{Inject, Singleton}
 import core.models.errors.SessionNotFoundError
 import play.api.Logger
 import play.api.i18n.{I18nSupport, Messages}
 import play.api.mvc._
+import play.twirl.api.Html
 import services.GuidanceService
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
-import views.html.{user_deleted_session, system_timedout_session}
+import views.html.{system_timedout_session, user_deleted_session}
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import javax.inject.{Inject, Singleton}
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class SessionTimeoutPageController @Inject()(appConfig: AppConfig,
@@ -37,7 +36,7 @@ class SessionTimeoutPageController @Inject()(appConfig: AppConfig,
                                              mcc: MessagesControllerComponents,
                                              system_timedout_session_view: system_timedout_session,
                                              user_deleted_session_view: user_deleted_session
-                                             )
+                                             )(implicit ec: ExecutionContext)
   extends FrontendController(mcc)
   with I18nSupport {
 

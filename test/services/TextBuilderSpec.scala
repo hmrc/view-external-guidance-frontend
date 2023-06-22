@@ -17,17 +17,14 @@
 package services
 
 import base.BaseSpec
-import play.api.inject.Injector
-import play.api.i18n.{Messages, MessagesApi}
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import core.models.ocelot._
+import play.api.i18n.{Messages, MessagesApi}
 
-class TextBuilderSpec extends BaseSpec with GuiceOneAppPerSuite {
+class TextBuilderSpec extends BaseSpec {
 
   import TextBuilder._
 
   trait Test {
-    private def injector: Injector = app.injector
     val messagesApi: MessagesApi = injector.instanceOf[MessagesApi]
     implicit val messages: Messages = messagesApi.preferred(Seq())
 

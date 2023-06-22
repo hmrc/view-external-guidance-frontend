@@ -17,21 +17,19 @@
 package controllers.entry
 
 import config.{AppConfig, ErrorHandler}
-import javax.inject.{Inject, Singleton}
+import controllers.actions.SessionIdAction
+import controllers.{SessionIdPrefix, validateUrl}
+import core.models.RequestOutcome
+import core.models.errors._
+import play.api.Logger
 import play.api.i18n.I18nSupport
 import play.api.mvc._
 import services.RetrieveAndCacheService
+import uk.gov.hmrc.http.{HeaderNames, SessionKeys}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
-import core.models.errors._
-import core.models.RequestOutcome
-import play.api.Logger
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
-import controllers.SessionIdPrefix
-import controllers.actions.SessionIdAction
-import controllers.validateUrl
-import uk.gov.hmrc.http.SessionKeys
-import uk.gov.hmrc.http.HeaderNames
+
+import javax.inject.{Inject, Singleton}
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class StartGuidanceController @Inject() (
@@ -40,7 +38,7 @@ class StartGuidanceController @Inject() (
     sessionIdAction: SessionIdAction,
     mcc: MessagesControllerComponents,
     appConfig: AppConfig
-) extends FrontendController(mcc)
+)(implicit ec: ExecutionContext) extends FrontendController(mcc)
     with I18nSupport {
 
   val logger: Logger = Logger(getClass)

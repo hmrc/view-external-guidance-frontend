@@ -16,20 +16,16 @@
 
 package services
 
-import play.api.inject.Injector
-import play.api.i18n.{Messages, MessagesApi}
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import base.{WelshLanguage, BaseSpec}
-
+import base.{BaseSpec, WelshLanguage}
 import core.models.ocelot._
 import models.PageDesc
 import models.ui.{Link, Text, Words}
+import play.api.i18n.{Messages, MessagesApi}
 
-class WelshTextBuilderSpec extends BaseSpec with WelshLanguage with GuiceOneAppPerSuite {
+class WelshTextBuilderSpec extends BaseSpec with WelshLanguage {
 
   trait Test extends ProcessJson {
 
-    private def injector: Injector = app.injector
     val messagesApi: MessagesApi = injector.instanceOf[MessagesApi]
     implicit val messages: Messages = messagesApi.preferred(Seq(TextBuilder.Welsh))
 

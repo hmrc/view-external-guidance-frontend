@@ -16,25 +16,20 @@
 
 package services
 
-import play.api.inject.Injector
-import play.api.i18n.{Messages, MessagesApi}
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import core.services._
 import base.{BaseSpec, WelshLanguage}
 import core.models.ocelot._
-import core.models.ocelot.stanzas._
 import core.models.ocelot.errors.UnsupportedUiPatternError
+import core.models.ocelot.stanzas._
+import core.services._
 import models.ocelot.stanzas._
-import models.PageDesc
-import models.ui
-import models.ui.{BulletPointList, ConfirmationPanel, CyaSummaryList, Details, ErrorMsg, FormPage, H1, H3, H4, Sequence => Sequence}
-import models.ui.{InsetText, Link, Paragraph, RequiredErrorMsg, Table, Text, WarningText, Words}
+import models.ui.{BulletPointList, ConfirmationPanel, CyaSummaryList, Details, ErrorMsg, FormPage, H1, H3, H4, InsetText, Link, Paragraph, RequiredErrorMsg, Sequence, Table, Text, WarningText, Words}
+import models.{PageDesc, ui}
+import play.api.i18n.{Messages, MessagesApi}
 
-class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage with GuiceOneAppPerSuite {
+class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
   implicit val labels: Labels = LabelCache()
 
   trait BaseTest {
-    private def injector: Injector = app.injector
     val messagesApi: MessagesApi = injector.instanceOf[MessagesApi]
     implicit val messages: Messages = messagesApi.preferred(Seq(TextBuilder.Welsh))
   }

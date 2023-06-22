@@ -16,17 +16,14 @@
 
 package models.ocelot.stanzas
 
-import base.{WelshLanguage, BaseSpec, EnglishLanguage}
+import base.{BaseSpec, EnglishLanguage, WelshLanguage}
 import core.models.ocelot._
 import core.models.ocelot.stanzas._
-import services._
-import play.api.inject.Injector
 import play.api.i18n.{Messages, MessagesApi}
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import services._
 
-class GroupRenderingSpec extends BaseSpec with GuiceOneAppPerSuite {
+class GroupRenderingSpec extends BaseSpec {
 
-  private def injector: Injector = app.injector
   val messagesApi: MessagesApi = injector.instanceOf[MessagesApi]
 
   trait EnglishTest extends EnglishLanguage{

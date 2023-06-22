@@ -16,48 +16,40 @@
 
 package controllers
 
-import java.time.Instant
 import akka.stream.Materializer
 import base.{BaseSpec, ViewFns}
 import config.ErrorHandler
-import play.api.i18n.{Messages, MessagesApi}
-import mocks.{MockAppConfig, MockGuidanceConnector, MockGuidanceService, MockSessionRepository}
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.http.Status
-import play.api.mvc._
-import play.api.mvc.{AnyContentAsEmpty, BodyParsers}
-import play.api.test.FakeRequest
-import play.api.test.Helpers._
-import play.api.test.Helpers.stubMessagesControllerComponents
-import uk.gov.hmrc.http.SessionKeys
-import models.{PageContext, PageDesc, PageNext, GuidanceSession, PageEvaluationContext}
-import models.errors._
-import core.models.ocelot.errors._
-import core.models.ocelot.{KeyedStanza, Labels, Page, Phrase, Process, Meta, ProcessJson, Published, Scratch}
-import core.models.ocelot.stanzas.{CurrencyInput, DateInput, Question, Instruction, Sequence, PageStanza, VisualStanza, DataInput}
-import models.ui._
-import models.ui
-import play.api.test.CSRFTokenHelper._
-import play.api.data.FormError
-import core.models.errors._
-import core.models.ocelot.LabelCache
-import core.services._
-import repositories.{Session, SessionFSM, SessionKey, PageHistory}
-import scala.concurrent.{ExecutionContext, Future}
 import controllers.actions.SessionIdAction
-import play.api.inject.Injector
-import views.html._
-import services._
-import mocks.MockPageRenderer
-import uk.gov.hmrc.http.{RequestId, HeaderCarrier, HeaderNames}
+import core.models.errors._
+import core.models.ocelot.errors._
+import core.models.ocelot.stanzas.{CurrencyInput, DateInput, Question, Sequence, _}
+import core.models.ocelot.{KeyedStanza, LabelCache, Labels, Meta, Page, Phrase, Process, ProcessJson, Published, Scratch}
+import core.services._
 import forms.FormProviderFactory
 import forms.providers._
+import mocks._
+import models.errors._
+import models.ui._
+import models._
+import play.api.data.FormError
+import play.api.http.Status
+import play.api.i18n.{Messages, MessagesApi}
+import play.api.mvc._
+import play.api.test.CSRFTokenHelper._
+import play.api.test.FakeRequest
+import play.api.test.Helpers._
+import repositories.{PageHistory, Session, SessionFSM, SessionKey}
+import services._
+import uk.gov.hmrc.http.{HeaderCarrier, HeaderNames, RequestId, SessionKeys}
+import views.html._
 
-class GuidanceControllerSpec extends BaseSpec with ViewFns with GuiceOneAppPerSuite {
+import java.time.Instant
+import scala.concurrent.{ExecutionContext, Future}
+
+class GuidanceControllerSpec extends BaseSpec with ViewFns {
 
   trait TestBase {
 
-    def injector: Injector = app.injector
     val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
     implicit val messages: Messages = messagesApi.preferred(Seq())
 
