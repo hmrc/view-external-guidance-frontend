@@ -17,30 +17,22 @@
 package services
 
 import base.BaseSpec
-
-import core.models.errors._
-import core.models.ocelot.errors._
-import models.errors._
-import core.models.ocelot.Scratch
-import mocks.{MockAppConfig, MockGuidanceConnector, MockPageBuilder, MockPageRenderer, MockSessionRepository, MockUIBuilder}
 import core.models.errors.{DatabaseError, NotFoundError}
-import core.models.ocelot.stanzas.{EndStanza, Instruction, Question, PageStanza, VisualStanza, DataInput}
-import core.models.ocelot.{Page, KeyedStanza, Process, SecuredProcess, ProcessJson, LabelCache, Labels, Phrase, Published}
-import models.ui
-import models.{PageDesc, PageNext, PageEvaluationContext}
-import uk.gov.hmrc.http.{RequestId, HeaderCarrier}
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
-import models.{GuidanceSession, PageContext}
-import play.api.i18n.{Messages, MessagesApi, Lang}
-import play.api.inject.Injector
-import repositories.{Session, SessionFSM, SessionKey, PageHistory}
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import core.models.ocelot.errors._
+import core.models.ocelot.stanzas._
+import core.models.ocelot.{KeyedStanza, LabelCache, Labels, Page, Phrase, Process, ProcessJson, Published, Scratch, SecuredProcess}
+import mocks._
+import models._
+import models.errors._
+import play.api.i18n.{Lang, Messages, MessagesApi}
+import repositories.{PageHistory, Session, SessionFSM, SessionKey}
+import uk.gov.hmrc.http.{HeaderCarrier, RequestId}
+
 import java.time.Instant
+import scala.concurrent.Future
 
-class GuidanceServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
+class GuidanceServiceSpec extends BaseSpec {
 
-  def injector: Injector = app.injector
   val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
   implicit val messages: Messages = messagesApi.preferred(Seq())
   val rId: String = "71dcc4a3-9d19-47f5-ad97-74bb6c2a15c4"

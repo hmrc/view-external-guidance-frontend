@@ -16,21 +16,17 @@
 
 package controllers
 
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.wordspec.AnyWordSpec
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.http.Status
+import base.BaseSpec
+import mocks.MockAppConfig
+import play.api._
+import play.api.http.{HeaderNames, Status}
+import play.api.i18n.{DefaultLangsProvider, MessagesApi}
+import play.api.mvc.Cookies
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import play.api._
-import play.api.mvc.Cookies
-import play.api.i18n.{MessagesApi, DefaultLangsProvider}
-import play.api.test.Helpers.stubMessagesControllerComponents
 import uk.gov.hmrc.play.language.LanguageUtils
-import play.api.http.HeaderNames
-import mocks.MockAppConfig
 
-class SwitchLanguageControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite {
+class SwitchLanguageControllerSpec extends BaseSpec {
   private val fakeRequest = FakeRequest("GET", "/")
   private val env = Environment.simple()
   private val configuration = Configuration.load(env)

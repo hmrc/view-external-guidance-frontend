@@ -26,11 +26,9 @@ import play.api.inject.Injector
 import play.api.test.FakeRequest
 import views.html.{user_deleted_session, system_timedout_session}
 
-class SessionTimeoutSpec extends BaseSpec with ViewFns with ViewSpec with GuiceOneAppPerSuite {
+class SessionTimeoutSpec extends BaseSpec with ViewFns with ViewSpec {
 
   trait Test {
-
-    private def injector: Injector = app.injector
 
     def messagesApi: MessagesApi = injector.instanceOf[MessagesApi]
 

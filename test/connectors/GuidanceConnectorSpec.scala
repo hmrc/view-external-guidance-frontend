@@ -17,14 +17,14 @@
 package connectors
 
 import base.BaseSpec
-import uk.gov.hmrc.http.HeaderCarrier
-import mocks.{MockAppConfig, MockHttpClient}
-import scala.concurrent.ExecutionContext.Implicits.global
-import play.api.test.{DefaultAwaitTimeout, FutureAwaits}
-import play.api.libs.json.Json
-import core.models.ocelot.Process
-import scala.concurrent.Future
 import core.models.RequestOutcome
+import core.models.ocelot.Process
+import mocks.{MockAppConfig, MockHttpClient}
+import play.api.libs.json.Json
+import play.api.test.{DefaultAwaitTimeout, FutureAwaits}
+import uk.gov.hmrc.http.HeaderCarrier
+
+import scala.concurrent.Future
 
 class GuidanceConnectorSpec extends BaseSpec with MockHttpClient {
 

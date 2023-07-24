@@ -16,25 +16,21 @@
 
 package services
 
-import core.services._
 import base.BaseSpec
+import core.models.ocelot._
 import core.models.ocelot.errors._
 import core.models.ocelot.stanzas._
-import core.models.ocelot._
-import models.errors._
-import play.api.libs.json._
-import play.api.i18n.{Messages, MessagesApi, Lang}
+import core.services._
 import mocks.MockAppConfig
-import play.api.inject.Injector
-import play.api.i18n.MessagesApi
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import models.errors._
+import play.api.i18n.{Lang, Messages, MessagesApi}
+import play.api.libs.json._
 
-class PageRendererSpec extends BaseSpec with ProcessJson with GuiceOneAppPerSuite {
+class PageRendererSpec extends BaseSpec with ProcessJson {
 
   // Define instance of class used in testing
   val pageBuilder = new PageBuilder(new Timescales(new DefaultTodayProvider))
   val renderer: PageRenderer = new PageRenderer(MockAppConfig)
-  private def injector: Injector = app.injector
   val messagesApi: MessagesApi = injector.instanceOf[MessagesApi]
   implicit val messages: Messages = messagesApi.preferred(Seq())
   val meta: Meta = Json.parse(prototypeMetaSection).as[Meta]

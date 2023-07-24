@@ -30,10 +30,9 @@ import views.html.admin.stanza_table
 
 import scala.collection.JavaConverters._
 
-class StanzaTableSpec extends BaseSpec with ViewSpec with ViewFns with GuiceOneAppPerSuite {
+class StanzaTableSpec extends BaseSpec with ViewSpec with ViewFns {
 
   private trait Test {
-    private def injector: Injector = app.injector
     def messagesApi: MessagesApi = injector.instanceOf[MessagesApi]
     val stable = injector.instanceOf[stanza_table]
     implicit val request = FakeRequest("GET", "/")

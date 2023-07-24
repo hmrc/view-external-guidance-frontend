@@ -17,23 +17,18 @@
 package services
 
 import base.BaseSpec
-
-import mocks.{MockGuidanceConnector, MockPageBuilder, MockSessionRepository}
-import core.models.ocelot.stanzas._
-import core.models.ocelot.{Page, KeyedStanza, Process, ProcessJson, Scratch, Published, Approval, PageReview}
-import models.ui
-import models.PageNext
-import uk.gov.hmrc.http.HeaderCarrier
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
-import play.api.i18n.MessagesApi
-import play.api.inject.Injector
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import core.models.errors.NotFoundError
+import core.models.ocelot.stanzas._
+import core.models.ocelot.{Approval, KeyedStanza, Page, PageReview, Process, ProcessJson, Published, Scratch}
+import mocks.{MockGuidanceConnector, MockPageBuilder, MockSessionRepository}
+import models.{PageNext, ui}
+import play.api.i18n.MessagesApi
+import uk.gov.hmrc.http.HeaderCarrier
 
-class RetrieveAndCacheServiceSpec extends BaseSpec  with GuiceOneAppPerSuite {
+import scala.concurrent.Future
 
-  def injector: Injector = app.injector
+class RetrieveAndCacheServiceSpec extends BaseSpec {
+
   val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
 
   trait Test extends MockGuidanceConnector with MockSessionRepository with MockPageBuilder with ProcessJson {

@@ -16,16 +16,14 @@
 
 package models
 
-import core.models.ocelot._
 import base.BaseSpec
-import play.api.i18n.MessagesApi
-import play.api.inject.Injector
+import core.models.ocelot._
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.i18n.MessagesApi
 import services.SecuredProcessBuilder
 
 class GuidanceSessionSpec extends BaseSpec with GuiceOneAppPerSuite {
 
-  def injector: Injector = app.injector
   val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
   val securedProcessBuilder = new SecuredProcessBuilder(messagesApi)
 

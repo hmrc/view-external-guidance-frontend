@@ -16,17 +16,12 @@
 
 package models.ui
 
-import play.api.inject.Injector
-import play.api.i18n.{Lang, Messages, MessagesApi}
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-
 import base.BaseSpec
+import play.api.i18n.{Lang, Messages, MessagesApi}
 
-class OutputFormatSpec extends BaseSpec with GuiceOneAppPerSuite {
+class OutputFormatSpec extends BaseSpec {
 
   trait Test {
-
-    private def injector: Injector = app.injector
 
     val messagesApi: MessagesApi = injector.instanceOf[MessagesApi]
   }

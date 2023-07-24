@@ -16,20 +16,17 @@
 
 package services
 
-import core.services._
 import base.BaseSpec
 import core.models.ocelot._
+import core.services._
 import mocks.MockAppConfig
-import play.api.inject.Injector
 import play.api.i18n.{Messages, MessagesApi}
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 
-class SequencePageRenderSpec extends BaseSpec with ProcessJson with GuiceOneAppPerSuite {
+class SequencePageRenderSpec extends BaseSpec with ProcessJson {
 
   // Define instance of class used in testing
   val pageBuilder = new PageBuilder(new Timescales(new DefaultTodayProvider))
   val renderer: PageRenderer = new PageRenderer(MockAppConfig)
-  private def injector: Injector = app.injector
   val messagesApi: MessagesApi = injector.instanceOf[MessagesApi]
   implicit val messages: Messages = messagesApi.preferred(Seq())
   implicit val ctx: UIContext = UIContext(LabelCache(), Map(), messages)

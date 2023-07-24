@@ -26,7 +26,6 @@ import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import scala.collection.immutable.ListMap
 
 trait AppConfig {
-  val assetsPrefix: String
   val analyticsToken: String
   val analyticsHost: String
   val reportAProblemPartialUrl: String
@@ -60,12 +59,10 @@ class AppConfigImpl @Inject() (val config: Configuration, servicesConfig: Servic
   val EndSessionURL = "/end-session"
   val PageStanzaCountLimit = 1000
   private val contactBaseUrl = servicesConfig.baseUrl("contact-frontend")
-  private val assetsUrl = config.get[String]("assets.url")
   lazy val host: String = servicesConfig.getString("host")
   lazy val adminHost: String = servicesConfig.getString("adminHost")
   lazy val betaFeedback: String = servicesConfig.getString("betafeedback")
 
-  val assetsPrefix: String = assetsUrl + config.get[String]("assets.version")
   val analyticsToken: String = config.get[String](s"google-analytics.token")
   val analyticsHost: String = config.get[String](s"google-analytics.host")
   val reportAProblemPartialUrl: String = s"$contactBaseUrl/contact/problem_reports_ajax?service=$serviceIdentifier"
