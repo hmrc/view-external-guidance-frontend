@@ -26,7 +26,11 @@ lazy val microservice = Project(appName, file("."))
   .settings(
     scalaVersion := "2.13.8",
     majorVersion := 0,
-    scalacOptions ++= Seq("-feature"),
+    scalacOptions ++= Seq(
+      "-feature",
+      "-Wconf:src=routes/.*:s",
+      "-Wconf:cat=unused-imports&src=html/.*:s"
+    ),
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test
   )
   .configs(IntegrationTest)
