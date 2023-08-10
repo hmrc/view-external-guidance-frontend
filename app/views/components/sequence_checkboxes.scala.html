@@ -17,7 +17,7 @@
 @import models.ui._
 @import uk.gov.hmrc.hmrcfrontend.views.html.components._
 
-@(name: String, options: Seq[SequenceAnswer], exclusiveOption: Option[SequenceAnswer], form: Form[_])(implicit request: Request[_], messages: Messages, ctx: PageContext)
+@(name: String, options: Seq[SequenceAnswer], exclusiveOption: Option[SequenceAnswer], form: Form[_])(implicit messages: Messages, ctx: PageContext)
 
 <div class="govuk-checkboxes">
     @{options.zipWithIndex.map{case (option, idx) => components.sequence_checkbox(name, option, idx, form)}}

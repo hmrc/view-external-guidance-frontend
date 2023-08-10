@@ -15,7 +15,7 @@
  *@
 
 @import models.ui.{TextInput, CurrencyInput, CurrencyPoundsOnlyInput, NumberInput}
-@(input: models.ui.Input, name: String, form: Form[_])(implicit request: Request[_], messages: Messages, ctx: PageContext)
+@(input: models.ui.Input, name: String, form: Form[_])
 
 <div class="govuk-form-group">
 @{input match {

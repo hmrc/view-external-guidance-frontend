@@ -17,7 +17,7 @@
 @import models.ui.Text
 @import controllers.routes._
 
-@(cell: Text)(implicit request: Request[_], messages: Messages, ctx: PageContext)
+@(cell: Text)(implicit ctx: PageContext)
 <dd class="govuk-summary-list__actions">@render_text(cell)</dd>
 @{
      //$COVERAGE-OFF$

@@ -16,7 +16,7 @@
 
 @import models.ui.{Paragraph, BulletPointList}
 
-@(bulletPointList: BulletPointList)( implicit messages: Messages, ctx: PageContext )
+@(bulletPointList: BulletPointList)(implicit ctx: PageContext)
 
 @components.paragraph(Paragraph(bulletPointList.text))
 <ul class="govuk-list--bullet govuk-list">

@@ -21,7 +21,7 @@
 
 @this(govukTable : GovukTable)
 
-@(pmpage: ProcessMapPage, pageIds: Seq[String])(implicit request: Request[_], messages: Messages)
+@(pmpage: ProcessMapPage, pageIds: Seq[String])(implicit messages: Messages)
 
   @govukTable(Table(
       pmpage.keyedStanzas.map(ks => Seq(

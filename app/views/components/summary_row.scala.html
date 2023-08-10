@@ -17,7 +17,7 @@
 @import controllers.routes._
 @import models.ui.Text
 
-@(row: Seq[Text], numericColumns: Seq[Boolean])(implicit request: Request[_], messages: Messages, ctx: PageContext)
+@(row: Seq[Text], numericColumns: Seq[Boolean])(implicit ctx: PageContext)
 <div class=@if(row.length > 2){"govuk-summary-list__row"} else {"govuk-summary-list__row govuk-summary-list__row--no-actions"}>
   <dt class=@if(numericColumns(1)){"govuk-summary-list__key govuk-!-width-three-quarters"} else {"govuk-summary-list__key"}>@render_text(row(0))</dt>
   <dd class=@if(numericColumns(1)){"govuk-summary-list__value govuk-!-width-one-quarter numeric"} else {"govuk-summary-list__value"}>@render_text(row(1))</dd>

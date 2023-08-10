@@ -16,7 +16,7 @@
 
 @import models.ui._
 
-@(lst: NumberedCircleList)(implicit request: Request[_], messages: Messages, ctx: PageContext)
+@(lst: NumberedCircleList)(implicit ctx: PageContext)
 <ol class="govuk-list govuk-list--number steps">
   @for(item <- lst.items){<li>@render_text(item)</li>}
 </ol>

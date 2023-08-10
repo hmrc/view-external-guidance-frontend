@@ -17,7 +17,7 @@
 @import models.ui.InsetText
 @import views.html.components.render_text
 
-@(lst: InsetText)(implicit request: Request[_], messages: Messages, ctx: PageContext)
+@(lst: InsetText)(implicit ctx: PageContext)
 <div class="govuk-inset-text">
  @for(item <- lst.items){<p>@render_text(item)</p>}
 </div>

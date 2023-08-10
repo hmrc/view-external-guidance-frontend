@@ -16,7 +16,7 @@
 
 @import models.ui.ConfirmationPanel
 
-@(cp: ConfirmationPanel)(implicit messages: Messages, ctx: PageContext)
+@(cp: ConfirmationPanel)(implicit ctx: PageContext)
 
 <div class="govuk-panel govuk-panel--confirmation">
     <h1 class="govuk-panel__title">@components.render_text(cp.text)</h1>

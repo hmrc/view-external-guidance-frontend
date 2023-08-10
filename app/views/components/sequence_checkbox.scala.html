@@ -18,7 +18,7 @@
 @import views.html.components.ariaDescribedBy
 @import uk.gov.hmrc.hmrcfrontend.views.html.components._
 
-@(name: String, option: SequenceAnswer, idx: Int, form: Form[_], isExclusive: Boolean = false)(implicit request: Request[_], messages: Messages, ctx: PageContext)
+@(name: String, option: SequenceAnswer, idx: Int, form: Form[_], isExclusive: Boolean = false)(implicit ctx: PageContext)
 
 @checkboxIdentifier(name:String, idx: Int) = @{s"$name-$idx"}
 @checkboxName(name:String, idx: Int) = @{s"$name[$idx]"}

@@ -17,7 +17,7 @@
 @import ui.H4
 @import core.models.ocelot.Labels
 
-@( h4: H4 )( implicit messages: Messages, ctx: PageContext )
+@(h4: H4)(implicit ctx: PageContext)
 
 <h4 class="govuk-heading-s">@components.render_text(h4.text)</h4>
 

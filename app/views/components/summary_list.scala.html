@@ -18,7 +18,7 @@
 @import controllers.routes._
 @import models.ui.SummaryList
 
-@(sl: SummaryList)(implicit request: Request[_], messages: Messages, ctx: PageContext)
+@(sl: SummaryList)(implicit ctx: PageContext)
 <dl class="govuk-summary-list govuk-!-margin-bottom-9">
   @for(row <- sl.rows){@summary_row(row, sl.numericColumns)}
 </dl>
