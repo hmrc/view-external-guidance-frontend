@@ -285,11 +285,11 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
     val brokenLinkPhrase = Phrase(Vector("Hello [link:Blah Blah:htts://www.bbc.co.uk]", "Welsh: Hello [link:Blah Blah:htts://www.bbc.co.uk]"))
     // for multi page testing
     val pageBuilder: PageBuilder = new PageBuilder(new Timescales(new DefaultTodayProvider))
-    val stanzaPages = pageBuilder.pages(prototypeJson.as[Process]).right.get
+    val stanzaPages = pageBuilder.pages(prototypeJson.as[Process]).getOrElse(Seq.empty)
     val prototypeUrlMap = stanzaPages.map(p => (p.id, p.url)).toMap
 
     // Create pages for extra income V6 process
-    val extraIncomeStanzaPages = pageBuilder.pages(prototypeExtraIncomeV6Json.as[Process]).right.get
+    val extraIncomeStanzaPages = pageBuilder.pages(prototypeExtraIncomeV6Json.as[Process]).getOrElse(Seq.empty)
     val extraIncomeUrlMap = extraIncomeStanzaPages.map(p => (p.id, PageDesc(p.id, p.url))).toMap
 
     // Define instance of class to be used in tests
@@ -393,14 +393,14 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
             case Seq(_: H1, _: ui.NumberedList) => succeed
             case x => fail(s"Found $x")
           }
-        case Left(_) => fail
+        case Left(_) => fail()
       }
     }
 
     "Convert a empty numbered circle list into a NumberList" in new NumberListTest {
       val p = uiBuilder.buildPage("/start", Seq(TitleCallout(headingPhrase, Seq.empty, false),
                                                 emptyNumberedCircleList))
-      p.fold(_ => fail, p => p).components match {
+      p.fold(_ => fail(), p => p).components match {
         case Seq(_: H1, _: ui.NumberedCircleList) => succeed
         case x => fail(s"Found $x")
       }
@@ -413,7 +413,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
                                                 num3ListCo,
                                                 num4ListCo
                                               ))
-      p.fold(_ => fail, p => p).components match {
+      p.fold(_ => fail(), p => p).components match {
         case Seq(_: H1, _: ui.NumberedList) => succeed
         case x => fail(s"Found $x")
       }
@@ -426,7 +426,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
                                                 num3CircListCo,
                                                 num4CircListCo
                                               ))
-      p.fold(_ => fail, p => p).components match {
+      p.fold(_ => fail(), p => p).components match {
         case Seq(_: H1, _: ui.NumberedCircleList) => succeed
         case x => fail(s"Found $x")
       }
@@ -436,7 +436,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
       val p = uiBuilder.buildPage("/start", Seq(TitleCallout(headingPhrase, Seq.empty, false),
                                                 num1ListCo
                                               ))
-      p.fold(_ => fail, p => p).components match {
+      p.fold(_ => fail(), p => p).components match {
         case Seq(_: H1, _: ui.NumberedList) => succeed
         case x => fail(s"Found $x")
       }
@@ -448,7 +448,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
                                                 num1ListCo,
                                                 num1ListCo
                                               ))
-      p.fold(_ => fail, p => p).components match {
+      p.fold(_ => fail(), p => p).components match {
         case Seq(_: H1, _: ui.NumberedList, _: ui.NumberedList, _: ui.NumberedList) => succeed
         case x => fail(s"Found $x")
       }
@@ -460,7 +460,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
                                                 num1CircListCo,
                                                 num1CircListCo
                                               ))
-      p.fold(_ => fail, p => p).components match {
+      p.fold(_ => fail(), p => p).components match {
         case Seq(_: H1, _: ui.NumberedCircleList, _: ui.NumberedCircleList, _: ui.NumberedCircleList) => succeed
         case x => fail(s"Found $x")
       }
@@ -469,14 +469,14 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
     "Empty RowGroup generates an UnsupportedUiPatternError error" in new TableTest {
       uiBuilder.buildPage("/start", Seq(TitleCallout(headingPhrase, Seq.empty, false), emptyRowGroup)) match {
         case Left(err) if err.errors == List(UnsupportedUiPatternError) => succeed
-        case _ => fail
+        case _ => fail()
       }
     }
 
     "Convert a simple RowGroup into a NameValueSummaryList" in new TableTest {
       val p = uiBuilder.buildPage("/start", Seq(TitleCallout(headingPhrase, Seq.empty, false),
                                                 simpleRowGroup))
-      p.fold(_ => fail, p => p).components match {
+      p.fold(_ => fail(), p => p).components match {
         case Seq(_: H1, _: ui.NameValueSummaryList) => succeed
         case x => fail(s"Found $x")
       }
@@ -485,7 +485,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
     "Convert a non-summarylist RowGroup into a table with a heading line" in new TableTest {
       val p = uiBuilder.buildPage("/start", Seq(SubSectionCallout(headingPhrase, Seq.empty, false),
                                                 tableRowGroup))
-      p.fold(_ => fail, p => p).components match {
+      p.fold(_ => fail(), p => p).components match {
         case Seq(Table(Text(h), th, _)) if h.headOption == Some(Words(headingPhrase.value(lang))) => succeed
         case x =>
           fail(s"Found $x")
@@ -495,7 +495,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
     "convert a non-summarylist RowGroup stacked to a SubSection into a table with caption and a heading" in new TableTest {
       val p = uiBuilder.buildPage("/start", Seq(SubSectionCallout(headingPhrase, Seq.empty, false),
                                                 tableRowGroup))
-      p.fold(_ => fail, p => p).components match {
+      p.fold(_ => fail(), p => p).components match {
         case Seq(Table(Text(h), _, rows)) if h.headOption == Some(Words(headingPhrase.value(lang))) => succeed
         case x => fail(s"Found $x")
       }
@@ -504,7 +504,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
     "convert a summarylist RowGroup stacked to a SubSection into an H4 and a NameValueSummaryList" in new TableTest {
       val p = uiBuilder.buildPage("/start", Seq(SubSectionCallout(headingPhrase, Seq.empty, false),
                                                 stackedRowGroup))
-      p.fold(_ => fail, p => p).components match {
+      p.fold(_ => fail(), p => p).components match {
         case Seq(_: H4, _: ui.NameValueSummaryList) => succeed
         case x => fail(s"Found $x")
       }
@@ -512,7 +512,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
 
     "convert a summarylist RowGroup into a NameValueSummaryList with a right aligned numeric column" in new TableTest {
       val p = uiBuilder.buildPage("/start", Seq(TitleCallout(headingPhrase, Seq.empty, false), numericRowGroup))
-      p.fold(_ => fail, p => p).components match {
+      p.fold(_ => fail(), p => p).components match {
         case Seq(_: H1, nvsl: ui.NameValueSummaryList) if nvsl.rows.size == 4 => succeed
         case x => fail(s"Found $x")
       }
@@ -521,7 +521,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
     "convert a RowGroup with three sparse columns including a link and hint into a SummaryList" in new SLTest {
       val p = uiBuilder.buildPage("/start", Seq(TitleCallout(headingPhrase, Seq.empty, false),
                                                 RowGroup(Seq("2"), sparseRowsWithLinkAndHint, true)))
-      p.fold(_ => fail, p => p).components match {
+      p.fold(_ => fail(), p => p).components match {
         case Seq(_: H1, _: CyaSummaryList) => succeed
         case x => fail(s"Found $x")
       }
@@ -531,7 +531,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
     "convert a RowGroup with three columns including a link and hint into a SummaryList" in new SLTest {
       val p = uiBuilder.buildPage("/start", Seq(TitleCallout(headingPhrase, Seq.empty, false),
                                                 RowGroup(Seq("2"), rowsWithLinkAndHint, true)))
-      p.fold(_ => fail, p => p).components match {
+      p.fold(_ => fail(), p => p).components match {
         case Seq(_: H1, _: CyaSummaryList) => succeed
         case x => fail(s"Found $x")
       }
@@ -541,7 +541,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
     "convert a RowGroup with three columns into a SummaryList and faked welsh link" in new SLTest {
       val p = uiBuilder.buildPage("/start", Seq(TitleCallout(headingPhrase, Seq.empty, false),
                                                 RowGroup(Seq("2"), rowsWithFakedWelshLinK, true)))
-      p.fold(_ => fail, p => p).components match {
+      p.fold(_ => fail(), p => p).components match {
         case Seq(_: H1, _: CyaSummaryList) => succeed
         case x => fail(s"Found $x")
       }
@@ -561,97 +561,97 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
       val visual = Seq(UnsupportedVisualStanza(Seq("end"), false))
       uiBuilder.buildPage(page.url, visual) match {
         case Left(err) if err.errors == List(UnsupportedUiPatternError) => succeed
-        case _ => fail
+        case _ => fail()
       }
     }
 
     "convert 1st Callout type Title to H1" in new Test {
       val uiPage = uiBuilder.buildPage(page.url, page.stanzas.collect{case s: VisualStanza => s})
-      uiPage.fold(_ => fail, p => p).components(1) shouldBe models.ui.H1(Text(Phrase(lang0).value(lang)))
+      uiPage.fold(_ => fail(), p => p).components(1) shouldBe models.ui.H1(Text(Phrase(lang0).value(lang)))
     }
 
     "convert 2nd Callout type SubTitle to H2" in new Test {
 
       val uiPage = uiBuilder.buildPage(page.url, page.stanzas.collect{case s: VisualStanza => s})
-      uiPage.fold(_ => fail, p => p).components(2) shouldBe models.ui.H2(Text(Phrase(lang1).value(lang)))
+      uiPage.fold(_ => fail(), p => p).components(2) shouldBe models.ui.H2(Text(Phrase(lang1).value(lang)))
     }
 
     "convert Callout type Lede to lede Paragraph" in new Test {
 
       val uiPage = uiBuilder.buildPage(page.url, page.stanzas.collect{case s: VisualStanza => s})
-      uiPage.fold(_ => fail, p => p).components(3) shouldBe models.ui.Paragraph(Text(Phrase(lang2).value(lang)), true)
+      uiPage.fold(_ => fail(), p => p).components(3) shouldBe models.ui.Paragraph(Text(Phrase(lang2).value(lang)), true)
     }
 
     "Dont convert Callout type Important into an ErrorMsg" in new Test {
       val uiPage = uiBuilder.buildPage(page.url, page.stanzas.collect{case s: VisualStanza => s})
-      val errs: Seq[ErrorMsg] = uiPage.fold(_ => fail, p => p).components.collect{case err: ErrorMsg => err}
+      val errs: Seq[ErrorMsg] = uiPage.fold(_ => fail(), p => p).components.collect{case err: ErrorMsg => err}
 
       errs.exists{e => e.id == "ID"} shouldBe false
     }
 
     "convert Callout type ValueError to an ErrorMsg" in new Test {
       val uiPage = uiBuilder.buildPage(page.url, page.stanzas.collect{case s: VisualStanza => s})
-      uiPage.fold(_ => fail, p => p).components(7) shouldBe models.ui.ValueErrorMsg(Text(Phrase(lang0).value(lang)))
+      uiPage.fold(_ => fail(), p => p).components(7) shouldBe models.ui.ValueErrorMsg(Text(Phrase(lang0).value(lang)))
     }
 
     "convert Callout type TypeError to an ErrorMsg" in new Test {
       val uiPage = uiBuilder.buildPage(page.url, page.stanzas.collect{case s: VisualStanza => s}, ValueTypeError)
-      uiPage.fold(_ => fail, p => p).components(8) shouldBe models.ui.TypeErrorMsg(Text(Phrase(lang0).value(lang)))
+      uiPage.fold(_ => fail(), p => p).components(8) shouldBe models.ui.TypeErrorMsg(Text(Phrase(lang0).value(lang)))
     }
 
     "convert Simple instruction to Paragraph" in new Test {
 
       val uiPage = uiBuilder.buildPage(page.url, page.stanzas.collect{case s: VisualStanza => s})
-      uiPage.fold(_ => fail, p => p).components(four) shouldBe models.ui.Paragraph(Text(Phrase(lang3).value(lang)), false)
+      uiPage.fold(_ => fail(), p => p).components(four) shouldBe models.ui.Paragraph(Text(Phrase(lang3).value(lang)), false)
     }
 
     "convert Link instruction to Paragraph" in new Test {
 
       val uiPage = uiBuilder.buildPage(page.url, page.stanzas.collect{case s: VisualStanza => s})
-      uiPage.fold(_ => fail, p => p).components(five) shouldBe models.ui.Paragraph(Text(Link("dummy-path/blah", Phrase(lang4).value(lang))))
+      uiPage.fold(_ => fail(), p => p).components(five) shouldBe models.ui.Paragraph(Text(Link("dummy-path/blah", Phrase(lang4).value(lang))))
     }
 
     "convert page with instruction stanza containing a sequence of Text and Link items" in new Test {
       val uiPage = uiBuilder.buildPage(pageWithEmbeddLinks.url, pageWithEmbeddLinks.stanzas.collect{case s: VisualStanza => s})
-      uiPage.fold(_ => fail, p => p).components(five) shouldBe models.ui.Paragraph(textItems, false)
+      uiPage.fold(_ => fail(), p => p).components(five) shouldBe models.ui.Paragraph(textItems, false)
     }
 
     "convert page with instruction stanza containing a sequence of TextItems beginning and ending with HyperLinks" in new Test {
       val uiPage = uiBuilder.buildPage(pageWithEmbeddLinks2.url, pageWithEmbeddLinks2.stanzas.collect{case s: VisualStanza => s})
-      uiPage.fold(_ => fail, p => p).components(5) shouldBe models.ui.Paragraph(textItems2, false)
+      uiPage.fold(_ => fail(), p => p).components(5) shouldBe models.ui.Paragraph(textItems2, false)
     }
 
     "convert page with instruction stanza text containing PageLinks and Text" in new Test {
       val uiPage = uiBuilder.buildPage(pageWithEmbeddPageLinks.url, pageWithEmbeddPageLinks.stanzas.collect{case s: VisualStanza => s})
-      uiPage.fold(_ => fail, p => p).components(5) shouldBe models.ui.Paragraph(pageLinkTextItems, false)
+      uiPage.fold(_ => fail(), p => p).components(5) shouldBe models.ui.Paragraph(pageLinkTextItems, false)
     }
 
     "convert Callout type SubSection to H4" in new Test {
       val uiPage = uiBuilder.buildPage(pageWithEmbeddH4.url, pageWithEmbeddH4.stanzas.collect{case s: VisualStanza => s})
-      uiPage.fold(_ => fail, p => p).components(five) shouldBe models.ui.H4(Text(Phrase(lang5).value(lang)))
+      uiPage.fold(_ => fail(), p => p).components(five) shouldBe models.ui.H4(Text(Phrase(lang5).value(lang)))
     }
 
     "convert page with instruction stanza text containing PageLinks, HyperLinks and Text" in new Test {
       val uiPage = uiBuilder.buildPage(pageWithEmbeddAllLinks.url, pageWithEmbeddAllLinks.stanzas.collect{case s: VisualStanza => s})
-      uiPage.fold(_ => fail, p => p).components(five) shouldBe models.ui.Paragraph(allLinksTextItems, false)
+      uiPage.fold(_ => fail(), p => p).components(five) shouldBe models.ui.Paragraph(allLinksTextItems, false)
     }
 
     "convert page including a PageLink instruction stanza" in new Test {
       val uiPage = uiBuilder.buildPage(page.url, page.stanzas.collect{case s: VisualStanza => s})
-      uiPage.fold(_ => fail, p => p).components(five) shouldBe models.ui.Paragraph(Text(link3), false)
+      uiPage.fold(_ => fail(), p => p).components(five) shouldBe models.ui.Paragraph(Text(link3), false)
     }
 
     "convert page including a Link instruction stanza" in new Test {
       val uiPage = uiBuilder.buildPage(hyperLinkPage.url, hyperLinkPage.stanzas.collect{case s: VisualStanza => s})
-      uiPage.fold(_ => fail, p => p).components(five) shouldBe models.ui.Paragraph(Text(link4), false)
+      uiPage.fold(_ => fail(), p => p).components(five) shouldBe models.ui.Paragraph(Text(link4), false)
     }
 
     "convert a question page into a Seq of a single Question UI object" in new Test {
       val uiPage = uiBuilder.buildPage(questionPage.url, questionPage.stanzas.collect{case s: VisualStanza => s})
 
-      uiPage.fold(_ => fail, p => p).components.length shouldBe 1
+      uiPage.fold(_ => fail(), p => p).components.length shouldBe 1
 
-      uiPage.fold(_ => fail, p => p).components.head match {
+      uiPage.fold(_ => fail(), p => p).components.head match {
         case q: models.ui.Question =>
           q.answers.length shouldBe 3
           q.body.length shouldBe 2
@@ -665,9 +665,9 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
     "convert a question page including answer hints into a Seq of a single Question UI object" in new Test {
       val uiPage = uiBuilder.buildPage(questionPageWithHints.url, questionPageWithHints.stanzas.collect{case s: VisualStanza => s})
 
-      uiPage.fold(_ => fail, p => p).components.length shouldBe 1
+      uiPage.fold(_ => fail(), p => p).components.length shouldBe 1
 
-      uiPage.fold(_ => fail, p => p).components.head match {
+      uiPage.fold(_ => fail(), p => p).components.head match {
         case q: models.ui.Question =>
           q.answers.length shouldBe 3
           q.body.length shouldBe 2
@@ -691,14 +691,14 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
       val bulletPointListPage = Page(Process.StartStanzaId, "/blah", bulletPointListStanzas, Seq.empty)
       val uiPage = uiBuilder.buildPage(bulletPointListPage.url, bulletPointListPage.stanzas.collect{case s: VisualStanza => s})
 
-      uiPage.fold(_ => fail, p => p).components.length shouldBe 1
+      uiPage.fold(_ => fail(), p => p).components.length shouldBe 1
 
       // Check contents of bullet point list
       val leadingTextItems: Text = Text(Words("My favourite sweets are"))
       val bulletPointOne: Text = Text("wine gums")
       val bulletPointTwo: Text = Text("humbugs")
 
-      uiPage.fold(_ => fail, p => p).components.head match {
+      uiPage.fold(_ => fail(), p => p).components.head match {
         case b: BulletPointList =>
 
           b.text shouldBe leadingTextItems
@@ -740,7 +740,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
 
       val uiPage = uiBuilder.buildPage(bulletPointListPage.url, bulletPointListPage.stanzas.collect{case s: VisualStanza => s})
 
-      uiPage.fold(_ => fail, p => p).components.length shouldBe 1
+      uiPage.fold(_ => fail(), p => p).components.length shouldBe 1
 
       // Check contents of bullet point list
       val leadingTextItems: Text = Text("In some circumstances, you do not have to tell HMRC about extra income you’ve made. In each tax year you can earn up to £11,000, tax free, if you are:")
@@ -748,7 +748,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
       val bulletPointOne: Text = Text("selling goods or services (trading)")
       val bulletPointTwo: Text = Text("renting land or property")
 
-      uiPage.fold(_ => fail, p => p).components.head match {
+      uiPage.fold(_ => fail(), p => p).components.head match {
         case b: BulletPointList =>
           b.text shouldBe leadingTextItems
           b.listItems.size shouldBe 2
@@ -797,7 +797,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
 
       val complexUiPage = uiBuilder.buildPage(complexPage.url, complexPage.stanzas.collect{case s: VisualStanza => s})
 
-      complexUiPage.fold(_ => fail, p => p).components.size shouldBe 6
+      complexUiPage.fold(_ => fail(), p => p).components.size shouldBe 6
 
       // Check contents of bullet point list
       val leadingTextItems: Text = Text("Today we have special")
@@ -806,7 +806,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
       val bulletPointTwo: Text = Text("purple carrots for sale")
       val bulletPointThree: Text = Text("brussels sprouts for sale")
 
-      complexUiPage.fold(_ => fail, p => p).components(four) match {
+      complexUiPage.fold(_ => fail(), p => p).components(four) match {
         case b: BulletPointList =>
 
           b.text shouldBe leadingTextItems
@@ -821,7 +821,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
 
       val finalParagraph: Paragraph = Paragraph(Text("Thank you"))
 
-      complexUiPage.fold(_ => fail, p => p).components(five) match {
+      complexUiPage.fold(_ => fail(), p => p).components(five) match {
         case p: Paragraph =>
           p shouldBe finalParagraph
         case _ => fail("The last components is not an instruction")
@@ -862,7 +862,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
 
       val uiPage = uiBuilder.buildPage(bulletPointListPage.url, bulletPointListPage.stanzas.collect{case s: VisualStanza => s})
 
-      uiPage.fold(_ => fail, p => p).components.length shouldBe 1
+      uiPage.fold(_ => fail(), p => p).components.length shouldBe 1
 
       val leadingTextItems: Text = Text("You must have")
 
@@ -873,7 +873,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
       val bulletPointFive: Text = Text("an electric kettle")
       val bulletPointSix: Text = Text("an electricity supply")
 
-      uiPage.fold(_ => fail, p => p).components.head match {
+      uiPage.fold(_ => fail(), p => p).components.head match {
 
         case b: BulletPointList =>
 
@@ -903,7 +903,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
       val bulletPointThree: Text = Text("your employer (for example for freelance services outside your normal contract hours)")
       val bulletPointFour: Text = Text("the employer of your spouse or civil partner")
 
-      uiPage.fold(_ => fail, p => p).components.head match {
+      uiPage.fold(_ => fail(), p => p).components.head match {
         case b: BulletPointList =>
 
           b.text shouldBe leadingTextItems
@@ -936,14 +936,14 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
       val bulletPointListPage = Page(Process.StartStanzaId, "/blah", bulletPointListStanzas, Seq.empty)
       val uiPage = uiBuilder.buildPage(bulletPointListPage.url, bulletPointListPage.stanzas.collect{case s: VisualStanza => s})
 
-      uiPage.fold(_ => fail, p => p).components.length shouldBe 1
+      uiPage.fold(_ => fail(), p => p).components.length shouldBe 1
 
       // Check contents of bullet point list
       val leadingTextItems: Text = Text(Words("My favourite sweets are"))
       val bulletPointOne: Text = Text("wine gums")
       val bulletPointTwo: Text = Text("humbugs")
 
-      uiPage.fold(_ => fail, p => p).components.head match {
+      uiPage.fold(_ => fail(), p => p).components.head match {
         case b: BulletPointList =>
 
           b.text shouldBe leadingTextItems
@@ -971,14 +971,14 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
       val bulletPointListPage = Page(Process.StartStanzaId, "/blah", bulletPointListStanzas, Seq.empty)
       val uiPage = uiBuilder.buildPage(bulletPointListPage.url, bulletPointListPage.stanzas.collect{case s: VisualStanza => s})
 
-      uiPage.fold(_ => fail, p => p).components.length shouldBe 1
+      uiPage.fold(_ => fail(), p => p).components.length shouldBe 1
 
       // Check contents of bullet point list
       val leadingTextItems: Text = Text(Words("You can also find out about:"))
       val bulletPointOne: Text = Text(Link("https://www.gov.uk/tax-overpayments-and-underpayments", "tax overpayments and underpayments"))
       val bulletPointTwo: Text = Text(Link("https://www.gov.uk/tax-codes", "tax codes"))
 
-      uiPage.fold(_ => fail, p => p).components.head match {
+      uiPage.fold(_ => fail(), p => p).components.head match {
         case b: BulletPointList =>
 
           b.text shouldBe leadingTextItems
@@ -1034,7 +1034,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
 
       val complexUiPage = uiBuilder.buildPage(complexPage.url, complexPage.stanzas.collect{case s: VisualStanza => s})
 
-      complexUiPage.fold(_ => fail, p => p).components.size shouldBe 6
+      complexUiPage.fold(_ => fail(), p => p).components.size shouldBe 6
 
       // Check contents of bullet point list
       val leadingTextItems: Text = Text("Today we have special")
@@ -1043,7 +1043,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
       val bulletPointTwo: Text = Text("purple carrots for sale")
       val bulletPointThree: Text = Text("brussels sprouts for sale")
 
-      complexUiPage.fold(_ => fail, p => p).components(four) match {
+      complexUiPage.fold(_ => fail(), p => p).components(four) match {
         case b: BulletPointList =>
 
           b.text shouldBe leadingTextItems
@@ -1058,7 +1058,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
 
       val finalParagraph: Paragraph = Paragraph(Text("Thank you"))
 
-      complexUiPage.fold(_ => fail, p => p).components(five) match {
+      complexUiPage.fold(_ => fail(), p => p).components(five) match {
         case p: Paragraph =>
           p shouldBe finalParagraph
         case _ => fail("The last components is not an instruction")
@@ -1099,7 +1099,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
 
       val uiPage = uiBuilder.buildPage(bulletPointListPage.url, bulletPointListPage.stanzas.collect{case s: VisualStanza => s})
 
-      uiPage.fold(_ => fail, p => p).components.length shouldBe 1
+      uiPage.fold(_ => fail(), p => p).components.length shouldBe 1
 
       val leadingTextItems: Text = Text("You must have")
 
@@ -1110,7 +1110,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
       val bulletPointFive: Text = Text("an electric kettle")
       val bulletPointSix: Text = Text("an electricity supply")
 
-      uiPage.fold(_ => fail, p => p).components.head match {
+      uiPage.fold(_ => fail(), p => p).components.head match {
 
         case b: BulletPointList =>
 
@@ -1131,7 +1131,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
 
     "Convert a empty note list into a InsetText" in new NoteTest {
       val p = uiBuilder.buildPage("/start", Seq(emptyNoteGroup))
-      p.fold(_ => fail, p => p).components match {
+      p.fold(_ => fail(), p => p).components match {
         case Seq(_: InsetText) => succeed
         case x => fail(s"Found $x")
       }
@@ -1139,7 +1139,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
 
     "Convert sequence of note callouts into a single inset text" in new NoteTest {
       val p = uiBuilder.buildPage("/start", Seq(note1Co, note2Co, note3Co, note4Co))
-      p.fold(_ => fail, p => p).components match {
+      p.fold(_ => fail(), p => p).components match {
         case Seq(_: InsetText) => succeed
         case x => fail(s"Found $x")
       }
@@ -1147,7 +1147,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
 
     "Convert single unstacked note callout into separate inset text" in new NoteTest {
       val p = uiBuilder.buildPage("/start", Seq(note1Co))
-      p.fold(_ => fail, p => p).components match {
+      p.fold(_ => fail(), p => p).components match {
         case Seq(_: InsetText) => succeed
         case x => fail(s"Found $x")
       }
@@ -1155,7 +1155,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
 
     "Convert sequence of unstacked note callouts into separate inset texts" in new NoteTest {
       val p = uiBuilder.buildPage("/start", Seq(note1Co, note1Co, note1Co))
-      p.fold(_ => fail, p => p).components match {
+      p.fold(_ => fail(), p => p).components match {
         case Seq(_: InsetText, _: InsetText, _: InsetText) => succeed
         case x => fail(s"Found $x")
       }
@@ -1426,9 +1426,9 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
 
       val page = uiBuilder.buildPage("/page-1", stanzas)
 
-      page.fold(_ => fail, p => p).components.head shouldBe ConfirmationPanel(TextBuilder.fromPhrase(confirmationPanelHeaderPhrase))
-      page.fold(_ => fail, p => p).components(1) shouldBe Paragraph(instruction1Text)
-      page.fold(_ => fail, p => p).components.last shouldBe Paragraph(instruction2Text)
+      page.fold(_ => fail(), p => p).components.head shouldBe ConfirmationPanel(TextBuilder.fromPhrase(confirmationPanelHeaderPhrase))
+      page.fold(_ => fail(), p => p).components(1) shouldBe Paragraph(instruction1Text)
+      page.fold(_ => fail(), p => p).components.last shouldBe Paragraph(instruction2Text)
     }
 
     "create a full confirmation panel from three stacked your call callouts" in new ConfirmationPanelTest {
@@ -1451,9 +1451,9 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
 
       val page = uiBuilder.buildPage("/page-1", stanzas)
 
-      page.fold(_ => fail, p => p).components.head shouldBe expectedConfirmationPanel
-      page.fold(_ => fail, p => p).components(1) shouldBe Paragraph(instruction1Text)
-      page.fold(_ => fail, p => p).components.last shouldBe Paragraph(instruction2Text)
+      page.fold(_ => fail(), p => p).components.head shouldBe expectedConfirmationPanel
+      page.fold(_ => fail(), p => p).components(1) shouldBe Paragraph(instruction1Text)
+      page.fold(_ => fail(), p => p).components.last shouldBe Paragraph(instruction2Text)
     }
 
     "create a full confirmation panel from 2 YourCall callouts with extra stacked after an instruction" in new ConfirmationPanelTest {
@@ -1474,7 +1474,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
 
       val page = uiBuilder.buildPage("/page-1", stanzas)
 
-      page.fold(_ => fail, p => p).components.head shouldBe expectedConfirmationPanel
+      page.fold(_ => fail(), p => p).components.head shouldBe expectedConfirmationPanel
     }
 
     "create a two text items confirmation panel followed by an instruction from two stacked your call callouts and an instruction" in new ConfirmationPanelTest {
@@ -1492,9 +1492,9 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
         Seq(confirmationPanelAdditional1Text)
       )
 
-      page.fold(_ => fail, p => p).components.head shouldBe expectedConfirmationPanel
+      page.fold(_ => fail(), p => p).components.head shouldBe expectedConfirmationPanel
 
-      page.fold(_ => fail, p => p).components(1) shouldBe Paragraph(instruction1Text)
+      page.fold(_ => fail(), p => p).components(1) shouldBe Paragraph(instruction1Text)
     }
 
     "create single text item confirmation panel from stacked your call and section callouts" in new ConfirmationPanelTest {
@@ -1506,8 +1506,8 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
 
       val page = uiBuilder.buildPage("/page-1", stanzas)
 
-      page.fold(_ => fail, p => p).components.head shouldBe ConfirmationPanel(confirmationPanelHeaderText)
-      page.fold(_ => fail, p => p).components.last shouldBe H3(sectionCalloutText)
+      page.fold(_ => fail(), p => p).components.head shouldBe ConfirmationPanel(confirmationPanelHeaderText)
+      page.fold(_ => fail(), p => p).components.last shouldBe H3(sectionCalloutText)
     }
 
     "create paragraph and single item confirmation panel from stacked instruction and your call callout" in new ConfirmationPanelTest {
@@ -1519,8 +1519,8 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
 
       val page = uiBuilder.buildPage("/page-1", stanzas)
 
-      page.fold(_ => fail, p => p).components.head shouldBe Paragraph(instruction2Text)
-      page.fold(_ => fail, p => p).components.last shouldBe ConfirmationPanel(confirmationPanelHeaderText)
+      page.fold(_ => fail(), p => p).components.head shouldBe Paragraph(instruction2Text)
+      page.fold(_ => fail(), p => p).components.last shouldBe ConfirmationPanel(confirmationPanelHeaderText)
     }
 
     "process stacked group with two your call callouts followed by two other visual stanzas" in new ConfirmationPanelTest {
@@ -1539,9 +1539,9 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
         Seq(confirmationPanelAdditional2Text)
       )
 
-      page.fold(_ => fail, p => p).components.head shouldBe expectedConfirmationPanel
-      page.fold(_ => fail, p => p).components(1) shouldBe H3(sectionCalloutText)
-      page.fold(_ => fail, p => p).components.last shouldBe Paragraph(instruction1Text)
+      page.fold(_ => fail(), p => p).components.head shouldBe expectedConfirmationPanel
+      page.fold(_ => fail(), p => p).components(1) shouldBe H3(sectionCalloutText)
+      page.fold(_ => fail(), p => p).components.last shouldBe Paragraph(instruction1Text)
     }
 
     "process stacked group with three your call callouts sandwiched within other visual stanza types" in new ConfirmationPanelTest {
@@ -1564,9 +1564,9 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
         )
       )
 
-      page.fold(_ => fail, p => p).components.head shouldBe Paragraph(instruction2Text)
-      page.fold(_ => fail, p => p).components(1) shouldBe expectedConfirmationPanel
-      page.fold(_ => fail, p => p).components.last shouldBe Paragraph(instruction1Text)
+      page.fold(_ => fail(), p => p).components.head shouldBe Paragraph(instruction2Text)
+      page.fold(_ => fail(), p => p).components(1) shouldBe expectedConfirmationPanel
+      page.fold(_ => fail(), p => p).components.last shouldBe Paragraph(instruction1Text)
     }
 
     "process stacked group with three your call callouts preceded by two other visual stanza types" in new ConfirmationPanelTest {
@@ -1585,9 +1585,9 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
           confirmationPanelAdditional2Text)
       )
 
-      page.fold(_ => fail, p => p).components.head shouldBe Paragraph(instruction1Text)
-      page.fold(_ => fail, p => p).components(1) shouldBe H4(subSectionCalloutText)
-      page.fold(_ => fail, p => p).components.last shouldBe expectedConfirmationPanel
+      page.fold(_ => fail(), p => p).components.head shouldBe Paragraph(instruction1Text)
+      page.fold(_ => fail(), p => p).components(1) shouldBe H4(subSectionCalloutText)
+      page.fold(_ => fail(), p => p).components.last shouldBe expectedConfirmationPanel
     }
   }
 
@@ -1801,14 +1801,14 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
 
     "Convert a subSection callout and single stacked note callout into a single Details component" in new DetailsTest {
       val p = uiBuilder.buildPage("/start", Seq(subSectionCallout, stackedNote1))
-      p.fold(_ => fail, p => p).components match {
+      p.fold(_ => fail(), p => p).components match {
         case Seq(_: Details) => succeed
         case x => fail(s"Found $x")
       }
     }
     "Convert a subSection callout and two stacked note callouts into a single Details component" in new DetailsTest {
       val p = uiBuilder.buildPage("/start", Seq(subSectionCallout, stackedNote1, stackedNote2))
-      p.fold(_ => fail, p => p).components match {
+      p.fold(_ => fail(), p => p).components match {
         case Seq(_: Details) => succeed
         case x => fail(s"Found $x")
       }
@@ -1816,7 +1816,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
 
     "Convert a subSection callout and an unstacked note callout into an H3 and InsetText" in new DetailsTest {
       val p = uiBuilder.buildPage("/start", Seq(subSectionCallout, unstackedNote))
-      p.fold(_ => fail, p => p).components match {
+      p.fold(_ => fail(), p => p).components match {
         case Seq(_: H4, _: InsetText) => succeed
         case x => fail(s"Found $x")
       }
@@ -1824,7 +1824,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
 
     "Convert a subSection callout, two stacked note callouts and one unstacked note into a single Details component and an InsetText" in new DetailsTest {
       val p = uiBuilder.buildPage("/start", Seq(subSectionCallout, stackedNote1, stackedNote2, unstackedNote))
-      p.fold(_ => fail, p => p).components match {
+      p.fold(_ => fail(), p => p).components match {
         case Seq(_: Details, _: InsetText) => succeed
         case x => fail(s"Found $x")
       }
@@ -1842,7 +1842,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
         )
       )
 
-      p.fold(_ => fail, p => p).components match {
+      p.fold(_ => fail(), p => p).components match {
         case Seq(details: Details) =>
           details.disclosure.size shouldBe 1
           details.disclosure.map {
@@ -1852,7 +1852,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
               bp.listItems(0).asString shouldBe "Monday"
               bp.listItems(1).asString shouldBe "Tuesday"
               bp.listItems(2).asString shouldBe "Wednesday"
-            case _ => fail
+            case _ => fail()
           }
 
         case err => fail(s"UIBuilder created page with components $err")
@@ -1872,14 +1872,14 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
         )
       )
 
-      p.fold(_ => fail, p => p).components match {
+      p.fold(_ => fail(), p => p).components match {
         case Seq(details: Details) =>
           details.disclosure.size shouldBe 2
 
           details.disclosure.map {
             case bp: BulletPointList => bp.listItems.size shouldBe 3
             case p: Paragraph => p.text.asString shouldBe "Start"
-            case _ => fail
+            case _ => fail()
           }
         case err => fail(s"UIBuilder created page with components $err")
       }
@@ -1898,14 +1898,14 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
         )
       )
 
-      p.fold(_ => fail, p => p).components match {
+      p.fold(_ => fail(), p => p).components match {
         case Seq(details: Details) =>
           details.disclosure.size shouldBe 2
 
           details.disclosure.zipWithIndex.map {
             case (bp: BulletPointList, 0) => bp.listItems.size shouldBe 3
             case (p: Paragraph, 1) => p.text.asString shouldBe "End"
-            case _ => fail
+            case _ => fail()
           }
 
         case err => fail(s"UIBuilder created page with components $err")
@@ -1929,7 +1929,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
         )
       )
 
-      p.fold(_ => fail, p => p).components match {
+      p.fold(_ => fail(), p => p).components match {
         case Seq(details: Details) =>
           details.disclosure.size shouldBe 5
 
@@ -1939,7 +1939,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
             case (p: Paragraph, 2) =>
             case (bp: BulletPointList, 3) => bp.listItems.size shouldBe 2
             case (p: Paragraph, 4) =>
-            case _ => fail
+            case _ => fail()
           }
 
         case err => fail(s"UIBuilder created page with components $err")
@@ -1958,13 +1958,13 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
         )
       )
 
-      p.fold(_ => fail, p => p).components match {
+      p.fold(_ => fail(), p => p).components match {
         case Seq(details: Details) =>
           details.disclosure.size shouldBe 1
 
           details.disclosure.zipWithIndex.map {
             case (bp: BulletPointList, 0) => bp.text.asString shouldBe "The days of the week include"
-            case _ => fail
+            case _ => fail()
           }
 
         case err => fail(s"UIBuilder created page with components $err")
@@ -1983,7 +1983,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
         )
       )
 
-      p.fold(_ => fail, p => p).components match {
+      p.fold(_ => fail(), p => p).components match {
         case Seq(details: Details) =>
           details.disclosure.size shouldBe 1
 
@@ -1993,7 +1993,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
               bp.text.asString shouldBe "I like to go on holiday to the following:"
               bp.listItems(0).asString shouldBe "Switzerland"
               bp.listItems(1).asString shouldBe "Jamaica"
-            case _ => fail
+            case _ => fail()
           }
 
         case err => fail(s"UIBuilder created page with components $err")
@@ -2017,7 +2017,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
         )
       )
 
-      p.fold(_ => fail, p => p).components match {
+      p.fold(_ => fail(), p => p).components match {
         case Seq(details: Details) =>
           details.disclosure.size shouldBe 4
 
@@ -2046,7 +2046,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
               bp.listItems(0).asString shouldBe "Bognor Regis"
               bp.listItems(1).asString shouldBe "Prestatyn"
 
-            case _ => fail
+            case _ => fail()
           }
 
         case err => fail(s"UIBuilder created page with components $err")
@@ -2075,7 +2075,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
 
     "Convert a empty important list into a ImportantGroup" in new ImportantTest {
       val p = uiBuilder.buildPage("/start", Seq(emptyImportantGroup))
-      p.fold(_ => fail, p => p).components match {
+      p.fold(_ => fail(), p => p).components match {
       case Seq(_: WarningText) => succeed
       case x => fail(s"Found $x")
       }
@@ -2083,7 +2083,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
 
     "Convert sequence of important callouts into a single ImportantGroup" in new ImportantTest {
       val p = uiBuilder.buildPage("/start", Seq(important1Co, important2Co, important3Co, important4Co))
-      p.fold(_ => fail, p => p).components match {
+      p.fold(_ => fail(), p => p).components match {
       case Seq(_: WarningText) => succeed
       case x => fail(s"Found $x")
       }
@@ -2091,14 +2091,14 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
 
     "Convert single unstacked important callout into separate ImportantGroup" in new ImportantTest {
       val p = uiBuilder.buildPage("/start", Seq(important1Co))
-      p.fold(_ => fail, p => p).components match {
+      p.fold(_ => fail(), p => p).components match {
       case Seq(_: WarningText) => succeed
       case x => fail(s"Found $x")
       }
     }
     "Convert sequence of unstacked Important callouts into separate importantGroup" in new ImportantTest {
       val p = uiBuilder.buildPage("/start", Seq(important1Co, important1Co, important1Co))
-      p.fold(_ => fail, p => p).components match {
+      p.fold(_ => fail(), p => p).components match {
       case Seq(_: WarningText, _: WarningText, _: WarningText) => succeed
       case x => fail(s"Found $x")
       }

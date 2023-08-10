@@ -107,7 +107,7 @@ class GuidanceServiceSpec extends BaseSpec {
       messagesApi)
 
     def renderPage(p: Page, labels: Labels)(implicit messages: Messages): (Seq[VisualStanza], Labels, Option[DataInput]) = {
-      new PageRenderer(MockAppConfig).renderPage(p, labels).fold(_ => fail, res => res)
+      new PageRenderer(MockAppConfig).renderPage(p, labels).fold(_ => fail(), res => res)
     }
   }
 
@@ -159,7 +159,7 @@ class GuidanceServiceSpec extends BaseSpec {
 
       target.getSubmitPageContext(pec, NoError) match {
         case Right(pageCtx) => pageCtx.page.urlPath shouldBe page.url
-        case Left(_) => fail
+        case Left(_) => fail()
       }
     }
 
@@ -183,7 +183,7 @@ class GuidanceServiceSpec extends BaseSpec {
 
       target.getSubmitPageContext(pec, NoError) match {
         case Left(err) if err == NtpError => succeed
-        case _ => fail
+        case _ => fail()
       }
     }
   }
@@ -258,7 +258,7 @@ class GuidanceServiceSpec extends BaseSpec {
 
       whenReady(result) {
         case Left(error) if error == nonTerminatingPageError => succeed
-        case _ => fail
+        case _ => fail()
       }
     }
   }
@@ -414,9 +414,9 @@ class GuidanceServiceSpec extends BaseSpec {
         .returns(Future.successful(Right({})))
 
       target.submitPage(pec, "/test-page", "yes", "yes").map{
-        case Left(err) => fail
+        case Left(err) => fail()
         case Right((nxt, lbls)) if nxt.isEmpty => succeed
-        case Right(_) => fail
+        case Right(_) => fail()
       }
     }
 
@@ -430,9 +430,9 @@ class GuidanceServiceSpec extends BaseSpec {
         .returns(Future.successful(Right({})))
 
       target.submitPage(pec, "/last-page", "yes", "yes").map{
-        case Left(err) => fail
+        case Left(err) => fail()
         case Right((Some("4"), _)) => succeed
-        case Right(_) => fail
+        case Right(_) => fail()
       }
     }
 
@@ -448,7 +448,7 @@ class GuidanceServiceSpec extends BaseSpec {
 
       target.submitPage(pec, "/test-page", "yes", "yes").map{
         case Left(error) if error == nonTerminatingPageError => succeed
-        case _ => fail
+        case _ => fail()
       }
     }
 
@@ -460,9 +460,11 @@ class GuidanceServiceSpec extends BaseSpec {
         .updateAfterStandardPage(processId, processCode, labels, requestId)
         .returns(Future.successful(Right({})))
 
-      target.savePageState(processId, processCode, LabelCache()).map{
-        case Right(x) if x == Unit => succeed
-        case Left(_) => fail()
+      target.savePageState(processId, processCode, LabelCache()).map { outcome =>
+        (outcome: @unchecked) match {
+          case Right(x) if x.equals(()) => succeed
+          case Left(_) => fail()
+        }
       }
     }
 

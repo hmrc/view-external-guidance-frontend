@@ -60,20 +60,20 @@ class PageRendererSpec extends BaseSpec with ProcessJson {
     implicit val ctx: UIContext = UIContext(LabelCache(), Map(), messages)
 
     def renderPagePostSubmit(p: Page, l: Labels, a: String): (Option[String], Labels) = {
-      renderer.renderPagePostSubmit(p, l, a).fold(_ => fail, res => res)
+      renderer.renderPagePostSubmit(p, l, a).fold(_ => fail(), res => res)
     }
     def renderPage(p: Page, l: Labels): (Seq[VisualStanza], Labels, Option[DataInput]) = {
-      renderer.renderPage(p, l).fold(_ => fail, res => res)
+      renderer.renderPage(p, l).fold(_ => fail(), res => res)
     }
 
     def testRender(pge: Page, id: String, lbls: Labels): Unit = {
       renderer.renderPagePostSubmit(pge, lbls, id) match {
         case Right((nxt, newLabels)) =>
-          nxt.fold(fail){ next =>
+          nxt.fold(fail()){ next =>
             next shouldBe answerDestinations(id.toInt)
             newLabels.updatedLabels shouldBe lbls.updatedLabels
           }
-        case Left(_) => fail
+        case Left(_) => fail()
       }
     }
 
@@ -94,7 +94,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson {
 
       renderer.renderPage(page, LabelCache()) match {
         case Left(err) if err == nonTerminatingPageError => succeed
-        case _ => fail
+        case _ => fail()
       }
     }
 
@@ -111,7 +111,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson {
 
       renderer.renderPagePostSubmit(page, LabelCache(), "0") match {
         case Left(err) if err == nonTerminatingPageError => succeed
-        case _ => fail
+        case _ => fail()
       }
     }
 
@@ -131,7 +131,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson {
 
       renderer.renderPage(page, LabelCache()) match {
         case Left(err) if err == unsupportedOpError => succeed
-        case res => fail
+        case res => fail()
       }
     }
 
@@ -151,7 +151,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson {
 
       renderer.renderPagePostSubmit(page, LabelCache(), "0") match {
         case Left(err) if err == unsupportedOpError => succeed
-        case res => fail
+        case res => fail()
       }
     }
 

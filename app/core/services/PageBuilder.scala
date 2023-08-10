@@ -36,7 +36,7 @@ class PageBuilder @Inject() (val timescales: Timescales) extends ProcessPopulati
                        stanzas: Seq[PopulatedStanza] = Nil,
                        next: Seq[String] = Nil,
                        endFound: Boolean = false): Either[GuidanceError, (Option[PageStanza], Seq[String], Seq[PopulatedStanza], Seq[String], Boolean)] =
-      keys match {
+      (keys: @unchecked) match {
         case Nil => Right((pageStanza, ids, stanzas, next, endFound))                                        // End Page
         case key +: xs if ids.contains(key) => collectStanzas(xs, pageStanza, ids, stanzas, next, endFound)  // Already encountered, possibly more paths
         case key +: xs =>
@@ -67,7 +67,7 @@ class PageBuilder @Inject() (val timescales: Timescales) extends ProcessPopulati
 
   @tailrec
   private def pagesByKeys(keys: Seq[String], acc: Seq[Page])(implicit process: Process): Either[GuidanceError, Seq[Page]] =
-    keys match {
+    (keys: @unchecked) match {
       case Nil => Right(acc)
       case key +: xs if !acc.exists(_.id == key) =>
         buildPage(key, process) match {

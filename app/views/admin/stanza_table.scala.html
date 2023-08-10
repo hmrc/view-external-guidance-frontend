@@ -17,6 +17,7 @@
 @import models.admin.ProcessMapPage
 @import views.admin.stanzaTypeName
 @import uk.gov.hmrc.govukfrontend.views.html.components._
+@import views.html.admin.render_stanza
 
 @this(govukTable : GovukTable)
 
@@ -24,7 +25,7 @@
 
   @govukTable(Table(
       pmpage.keyedStanzas.map(ks => Seq(
-        TableRow(content=Text(ks.key.toString)),
+        TableRow(content=Text(ks.key)),
         TableRow(content=Text(stanzaTypeName(ks.stanza))),
         TableRow(content=HtmlContent(render_stanza(ks.stanza, pageIds)))
         )

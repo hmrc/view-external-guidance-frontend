@@ -30,7 +30,7 @@ package object ui {
 
   @tailrec
   def stackStanzas(acc: Seq[Seq[VisualStanza]])(stanzas: Seq[VisualStanza]): Seq[VisualStanza] =
-    stanzas match {
+    (stanzas: @unchecked) match {
       case Nil => acc.collect{
         case s if s.length > 1 => StackedGroup(s)
         case s => s.head

@@ -17,19 +17,18 @@
 package views.components
 
 import base.{ViewFns, ViewSpec}
-import models.PageContext
 import core.models.ocelot.{LabelCache, Labels}
+import models.PageContext
 import models.ui._
 import org.jsoup.nodes.Element
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.i18n.{Lang, Messages, MessagesApi}
+import play.api.i18n.{Messages, MessagesApi}
 import play.api.inject.Injector
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import play.twirl.api.Html
 import views.html._
-
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class RenderComponentsSpec extends ViewSpec with ViewFns with GuiceOneAppPerSuite {
   private trait Test {
@@ -51,7 +50,7 @@ class RenderComponentsSpec extends ViewSpec with ViewFns with GuiceOneAppPerSuit
     "Encode table missing caption, with initial row/cell as table caption" in new Test {
       val html: Html = components.render_components(Seq(expectedTable))
       val table: Element = getSingleElementByTag(html, "Table")
-      table.getElementsByTag("caption").asScala.toList.headOption.fold(fail){ caption =>
+      table.getElementsByTag("caption").asScala.toList.headOption.fold(fail()){ caption =>
         caption.text shouldBe "HELLO"
 
         table.hasClass("govuk-table") shouldBe true

@@ -16,20 +16,16 @@
 
 package views.components
 
+import base.ViewSpec
+import core.models.ocelot.{LabelCache, Labels}
+import models.ui.{CyaSummaryList, H3, Text}
 import org.jsoup.nodes.Element
-
-import play.api.i18n.{Lang, Messages, MessagesApi}
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.i18n.{Messages, MessagesApi}
 import play.api.inject.Injector
 import play.api.test.FakeRequest
-
 import play.twirl.api.Html
-
-import models.ui.{H3, Text, CyaSummaryList}
 import views.html.components.h3_heading
-
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import core.models.ocelot.{Labels, LabelCache}
-import base.ViewSpec
 
 class H3HeadingSpec extends ViewSpec with GuiceOneAppPerSuite {
 

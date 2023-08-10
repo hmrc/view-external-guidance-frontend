@@ -162,7 +162,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
     val formProvider: FormProviderFactory = new FormProviderFactory(new DateFormProvider, new StringFormProvider, new StringListFormProvider)
 
     def renderPage(page: Page, labels: Labels):(Seq[VisualStanza], Labels, Option[DataInput]) =
-      new PageRenderer(MockAppConfig).renderPage(page, labels).fold(_ => fail, result => result)
+      new PageRenderer(MockAppConfig).renderPage(page, labels).fold(_ => fail(), result => result)
   }
 
   trait QuestionTest extends MockGuidanceService with TestBase {

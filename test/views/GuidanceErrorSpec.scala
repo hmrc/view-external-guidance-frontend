@@ -18,13 +18,13 @@ package views
 
 import base.{ViewFns, ViewSpec}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.i18n.{Lang, Messages, MessagesApi}
+import play.api.i18n.{Messages, MessagesApi}
 import play.api.inject.Injector
 import play.api.test.FakeRequest
 import play.twirl.api.Html
 import views.html.runtime_error_template
-import org.jsoup.nodes.Element
-import scala.collection.JavaConverters._
+
+import scala.jdk.CollectionConverters._
 
 class GuidanceErrorSpec extends ViewSpec with ViewFns with GuiceOneAppPerSuite {
 

@@ -38,13 +38,13 @@ class SecuredProcessBuilderSpec extends BaseSpec with ProcessJson {
 
   "SecuredProcessBuilder" must {
     "create a secured process with an additional passphrase page" in {
-      pageBuilder.pages(passphraseProcess, passphraseProcess.startPageId).fold(_ => fail, pages =>
+      pageBuilder.pages(passphraseProcess, passphraseProcess.startPageId).fold(_ => fail(), pages =>
         pages.length shouldBe 1
       )
       val securedProcess = securedProcessBuilder.secureIfRequired(passphraseProcess)
-      pageBuilder.pages(securedProcess, securedProcess.startPageId).fold(_ => fail, pages => {
+      pageBuilder.pages(securedProcess, securedProcess.startPageId).fold(_ => fail(), pages => {
         pages.length shouldBe 2
-        pages.find(_.id == SecuredProcess.PassPhrasePageId).fold(fail){ page =>
+        pages.find(_.id == SecuredProcess.PassPhrasePageId).fold(fail()){ page =>
           page.url.drop(1) shouldBe SecuredProcess.SecuredProcessStartUrl
           page.next.contains(Process.StartStanzaId) shouldBe true
         }

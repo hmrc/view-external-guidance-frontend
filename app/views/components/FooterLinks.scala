@@ -50,10 +50,10 @@ class FooterLinks @Inject() (implicit appConfig: AppConfig) {
   )
 
   def items(implicit messages: Messages, request:Request[_]): Seq[FooterItem] = Seq(
-    cookieLink,
-    accecssibilityLink,
-    privacyLink,
-    termsConditionsLink,
-    govukHelpLink
+    cookieLink(),
+    accecssibilityLink(),
+    privacyLink(),
+    termsConditionsLink(),
+    govukHelpLink()
   )
 }

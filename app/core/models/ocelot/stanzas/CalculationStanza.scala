@@ -77,7 +77,7 @@ case class Calculation(override val next: Seq[String], calcs: Seq[Operation]) ex
 
   @tailrec
   private def evalOps(ops: Seq[Operation], labels: Labels, errs: List[RuntimeError]): (Labels, List[RuntimeError]) =
-    ops match {
+    (ops: @unchecked) match {
       case Nil => (labels, errs)
       case op +: xs => op.eval(labels) match {
         case Left(err) => evalOps(xs, labels, err :: errs)

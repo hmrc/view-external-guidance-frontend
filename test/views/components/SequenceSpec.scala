@@ -16,23 +16,22 @@
 
 package views.components
 
+import base.{ViewFns, ViewSpec}
+import core.models.ocelot.{LabelCache, Labels}
+import forms.providers.StringListFormProvider
+import models.PageContext
+import models.ui.{FormPage, H2, ListAnswer, Paragraph, RequiredErrorMsg, Sequence, SequenceAnswer, Text}
+import org.jsoup.nodes.{Document, Element}
+import org.jsoup.select.Elements
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.data.Form
-import play.api.inject.Injector
 import play.api.i18n.{Lang, Messages, MessagesApi}
+import play.api.inject.Injector
 import play.api.test.FakeRequest
-import forms.FormProvider
-import forms.providers.StringListFormProvider
 import views.html._
-import models.PageContext
-import models.ui.{FormPage, H2, Paragraph, RequiredErrorMsg, Sequence, SequenceAnswer, ListAnswer, Text}
-import core.models.ocelot.{LabelCache, Labels}
-import org.jsoup.nodes.{Document, Element}
-import org.jsoup.select.Elements
-import base.{ViewFns, ViewSpec}
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class SequenceSpec extends AnyWordSpec with Matchers with ViewSpec with ViewFns with GuiceOneAppPerSuite {
 

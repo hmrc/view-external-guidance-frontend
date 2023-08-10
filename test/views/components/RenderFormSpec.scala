@@ -17,15 +17,13 @@
 package views.components
 
 import base.{ViewFns, ViewSpec}
-import forms.FormProvider
+import core.models.ocelot.{LabelCache, Labels}
 import forms.providers.{DateFormProvider, StringFormProvider}
 import models.PageContext
-import core.models.ocelot.{LabelCache, Labels}
-import models.ui.{Answer, CurrencyInput, CurrencyPoundsOnlyInput, DateInput, TextInput, FormPage, Question, Text, DateAnswer, StringAnswer}
+import models.ui.{Answer, CurrencyInput, CurrencyPoundsOnlyInput, DateInput, FormPage, Question, Text, TextInput}
 import org.jsoup.nodes.Element
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.data.Forms.nonEmptyText
-import play.api.i18n.{Lang, Messages, MessagesApi}
+import play.api.i18n.{Messages, MessagesApi}
 import play.api.inject.Injector
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest

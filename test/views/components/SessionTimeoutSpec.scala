@@ -20,11 +20,9 @@ import base.{BaseSpec, ViewFns, ViewSpec}
 import mocks.MockAppConfig
 import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.i18n.{Lang, Messages, MessagesApi}
-import play.api.inject.Injector
 import play.api.test.FakeRequest
-import views.html.{user_deleted_session, system_timedout_session}
+import views.html.{system_timedout_session, user_deleted_session}
 
 class SessionTimeoutSpec extends BaseSpec with ViewFns with ViewSpec {
 
@@ -58,8 +56,6 @@ class SessionTimeoutSpec extends BaseSpec with ViewFns with ViewSpec {
       val pageTitleElement: Element = getSingleElementByTag(doc, "title")
 
       pageTitleElement.text shouldBe s"${messages("session.timeout.session.has.expired")} – ${messages("service.name")} – ${messages("service.govuk")}"
-
-      val htmlHeaderDivElement: Element = getSingleElementByClass(doc, "govuk-header__content")
 
       val pageHeaderDivElement: Element = getSingleElementByClass(doc, "govuk-!-margin-bottom-6")
 
@@ -98,8 +94,6 @@ class SessionTimeoutSpec extends BaseSpec with ViewFns with ViewSpec {
       val pageTitleElement: Element = getSingleElementByTag(doc, "title")
 
       pageTitleElement.text shouldBe s"${messages("session.timeout.delete.your.answers")} – ${messages("service.name")} – ${messages("service.govuk")}"
-
-      val htmlHeaderDivElement: Element = getSingleElementByClass(doc, "govuk-header__content")
 
       val pageHeaderDivElement: Element = getSingleElementByClass(doc, "govuk-!-margin-bottom-6")
 

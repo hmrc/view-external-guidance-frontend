@@ -34,7 +34,7 @@ class FormProviderFactory @Inject() (
   stringFormProvider: StringFormProvider,
   stringListFormProvider: StringListFormProvider) {
 
-  def apply(input: DataInput): FormProvider[_] = input match {
+  def apply(input: DataInput): FormProvider[_] = (input: @unchecked) match {
       case _: DateInput => dateFormProvider
       case _: Input | _: Question => stringFormProvider
       case _: Sequence => stringListFormProvider

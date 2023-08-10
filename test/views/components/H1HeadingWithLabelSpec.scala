@@ -21,11 +21,11 @@ import core.models.ocelot.{LabelCache, Labels}
 import models.ui._
 import org.jsoup.nodes.Element
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.i18n.{Lang, Messages, MessagesApi}
+import play.api.i18n.{Messages, MessagesApi}
 import play.api.inject.Injector
 import play.api.test.FakeRequest
 import play.twirl.api.Html
-import views.html.components.{h1_heading, h1_heading_with_label}
+import views.html.components.h1_heading_with_label
 
 class H1HeadingWithLabelSpec extends ViewSpec with GuiceOneAppPerSuite {
 

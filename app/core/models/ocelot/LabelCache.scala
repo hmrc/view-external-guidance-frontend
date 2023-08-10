@@ -47,6 +47,7 @@ trait Mode {
   val runMode: RunMode
 }
 
+@FunctionalInterface
 trait MessageFunction {
   def apply(key: String, args: Any*): String
 }

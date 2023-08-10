@@ -124,7 +124,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
     collection.findOneAndReplace(equal("_id", SessionKey(key, process.meta.processCode)),
                                  Session(SessionKey(key, process.meta.processCode), runMode, process.meta.id, process, legalPageIds, pageMap, Instant.now),
                                  FindOneAndReplaceOptions().upsert(true))
-    .toFutureOption
+    .toFutureOption()
     .map{
       case _ =>
       logger.warn(s"Session repo creation (key $key) complete for ${process.meta.id}, ${process.meta.processCode}, page count ${pageMap.size}")
@@ -143,7 +143,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
   def delete(key: String, processCode: String): Future[RequestOutcome[Unit]] =
     collection
       .deleteOne(equal("_id", SessionKey(key, processCode)))
-      .toFutureOption
+      .toFutureOption()
       .map {
         case Some(result: DeleteResult) if result.getDeletedCount > 0 => Right(())
         case Some(result: DeleteResult) =>
@@ -204,7 +204,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
         Updates.set(PageHistoryKey, List[PageHistory]()),
         Updates.set(ContinuationPoolKey, Map[String, PopulatedStanza]()),
         Updates.set(s"${AnswersKey}./${SecuredProcess.SecuredProcessStartUrl}", ""),
-        Updates.set(LabelsKey, Map[String, Label]())) ++ requestId.toList.map(rId => Updates.set(RequestId, rId))).toArray: _*)
+        Updates.set(LabelsKey, Map[String, Label]())) ++ requestId.toList.map(rId => Updates.set(RequestId, rId))).toIndexedSeq: _*)
     )
     .toFutureOption()
     .map{
@@ -232,7 +232,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
         Updates.set(s"${AnswersKey}.$answerId", Codecs.toBson(answer)),
         Updates.set(LegalPageIdsKey, Codecs.toBson(nextLegalPageIds))) ++
         labels.poolUpdates.toList.map(l => Updates.set(s"${ContinuationPoolKey}.${l._1}", Codecs.toBson(l._2))) ++
-        labels.updatedLabels.values.map(l => Updates.set(s"${LabelsKey}.${l.name}", Codecs.toBson(l)))).toArray: _*
+        labels.updatedLabels.values.map(l => Updates.set(s"${LabelsKey}.${l.name}", Codecs.toBson(l)))).toIndexedSeq: _*
       )
     )
     .toFutureOption()
@@ -250,7 +250,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
       requestId.fold(equal("_id", SessionKey(key, processCode)))(rId => and(equal("_id", SessionKey(key, processCode)), equal(RequestId, rId))),
       combine((
         (labels.poolUpdates.toList.map(l => Updates.set(s"${ContinuationPoolKey}.${l._1}", Codecs.toBson(l._2))) ++
-         labels.updatedLabels.values.map(l => Updates.set(s"${LabelsKey}.${l.name}", Codecs.toBson(l)))).toArray :+
+         labels.updatedLabels.values.map(l => Updates.set(s"${LabelsKey}.${l.name}", Codecs.toBson(l)))).toIndexedSeq :+
          Updates.set(FlowStackKey, Codecs.toBson(labels.flowStack)) : _*)
       )
     )
@@ -277,7 +277,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
         Updates.set(TtlExpiryFieldName, Instant.now()), Updates.set(LegalPageIdsKey, Codecs.toBson(legalPageIds))) ++
         pageHistory.fold[List[Bson]](Nil)(ph => List(Updates.set(PageHistoryKey, Codecs.toBson(ph)))) ++
         labelUpdates.map(l => Updates.set(s"${LabelsKey}.${l.name}", Codecs.toBson(l))) ++
-        flowStack.fold[List[Bson]](Nil)(stack => List(Updates.set(FlowStackKey, Codecs.toBson(stack))))).toArray: _*
+        flowStack.fold[List[Bson]](Nil)(stack => List(Updates.set(FlowStackKey, Codecs.toBson(stack))))).toIndexedSeq: _*
       )
     )
     .toFutureOption()

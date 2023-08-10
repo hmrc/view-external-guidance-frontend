@@ -16,19 +16,16 @@
 
 package views.components
 
-import org.jsoup.nodes.Node
-import org.jsoup.nodes.{Attributes, Document}
-import org.jsoup.select.Elements
-import play.api.i18n.{Lang, Messages, MessagesApi}
-import play.api.inject.Injector
-import play.api.test.FakeRequest
-import models.ui._
-import core.models.ocelot.{LabelCache, Labels}
-import views.html.components.confirmation_panel
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import base.{BaseSpec, ViewFns}
-
+import core.models.ocelot.{LabelCache, Labels}
 import models.PageContext
+import models.ui._
+import org.jsoup.nodes.{Attributes, Document, Node}
+import org.jsoup.select.Elements
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.i18n.{Messages, MessagesApi}
+import play.api.test.FakeRequest
+import views.html.components.confirmation_panel
 
 class ConfirmationPanelSpec extends BaseSpec with ViewFns with GuiceOneAppPerSuite {
 

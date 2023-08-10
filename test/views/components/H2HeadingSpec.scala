@@ -16,16 +16,16 @@
 
 package views.components
 
+import base.ViewSpec
+import core.models.ocelot.{LabelCache, Labels}
+import models.ui._
 import org.jsoup.nodes.Element
-import play.api.i18n.{Lang, Messages, MessagesApi}
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.i18n.{Messages, MessagesApi}
 import play.api.inject.Injector
 import play.api.test.FakeRequest
 import play.twirl.api.Html
-import core.models.ocelot.{Labels, LabelCache}
-import models.ui._
 import views.html.components.h2_heading
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import base.ViewSpec
 
 class H2HeadingSpec extends ViewSpec with GuiceOneAppPerSuite {
 

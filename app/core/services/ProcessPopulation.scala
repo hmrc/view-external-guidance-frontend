@@ -82,7 +82,7 @@ abstract class ProcessPopulation(timescaleExpansion: TimescaleExpansion) {
     def link(linkIndex: Int): Either[LinkNotFound, Link] =
       process.linkOption(linkIndex).map(Right(_)).getOrElse(Left(LinkNotFound(id, linkIndex)))
 
-    stanza match {
+    (stanza: @unchecked) match {
       case q: QuestionStanza => populateQuestion(q)
       case r: RowStanza => populateRow(r)
       case i: InstructionStanza => populateInstruction(i)
@@ -116,7 +116,7 @@ abstract class ProcessPopulation(timescaleExpansion: TimescaleExpansion) {
 
   @tailrec
   private def phrases(indexes: Seq[Int], acc: Seq[Phrase], stanzaId: String, process: Process): Either[GuidanceError, Seq[Phrase]] =
-    indexes match {
+    (indexes: @unchecked) match {
       case Nil => Right(acc)
       case index +: xs =>
         phrase(index, stanzaId, process) match {
