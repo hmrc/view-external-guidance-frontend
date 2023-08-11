@@ -18,7 +18,7 @@ package core.models.ocelot
 
 import java.time.LocalDate
 
-trait TimeUnit
+sealed trait TimeUnit
 
 case object Day extends TimeUnit
 case object Week extends TimeUnit
@@ -36,14 +36,14 @@ object TimePeriodArithmetic {
   implicit val dateArithmetic: TimePeriodArithmetic[LocalDate] =
     new TimePeriodArithmetic[LocalDate]{
       def add(tp: TimePeriod)(value: LocalDate): LocalDate =
-        (tp.unit: @unchecked) match {
+        tp.unit match {
           case Day => value.plusDays(tp.value)
           case Week => value.plusWeeks(tp.value)
           case Month => value.plusMonths(tp.value)
           case Year => value.plusYears(tp.value)
         }
       def minus(tp: TimePeriod)(value: LocalDate): LocalDate =
-        (tp.unit: @unchecked) match {
+        tp.unit match {
           case Day => value.minusDays(tp.value)
           case Week => value.minusWeeks(tp.value)
           case Month => value.minusMonths(tp.value)

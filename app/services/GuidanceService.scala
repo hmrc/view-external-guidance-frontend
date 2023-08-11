@@ -184,6 +184,8 @@ class GuidanceService @Inject() (
       case result => result
     }
 
+  private def messagesFn(k: String, args: Seq[Any])(implicit messages: Messages): String = messages(k, args: _*)
+
   private def buildEvaluationContext(sessionId: String, processCode: String, url: String, gs: GuidanceSession)
                                     (implicit messages: Messages): RequestOutcome[PageEvaluationContext] =
     gs.pageMap.get(url).fold[RequestOutcome[PageEvaluationContext]]{
@@ -199,7 +201,7 @@ class GuidanceService @Inject() (
           val pageMapById: Map[String, PageDesc] =
             gs.pageMap.map{case (k, pn) => (pn.id, PageDesc(pn, s"${appConfig.baseUrl}/$processCode${k}"))}
           val labels: Labels =
-            LabelCache(gs.labels, Map(), gs.flowStack, gs.continuationPool, gs.process.timescales, messages.apply, gs.runMode)
+            LabelCache(gs.labels, Map(), gs.flowStack, gs.continuationPool, gs.process.timescales, messagesFn, gs.runMode)
           pageRenderer.renderPage(page, labels) match {
             case Left(err) => Left(err)
             case Right((visualStanzas, updatedLabels, dataInput)) =>

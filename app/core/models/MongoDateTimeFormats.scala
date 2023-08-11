@@ -48,6 +48,8 @@ trait MongoDateTimeFormats {
   final val tolerantLocalDateFormat: Format[LocalDate] =
     Format(tolerantLocalDateReads, MongoJavatimeFormats.localDateWrites)
 
+  // LocalDateTime
+
   final val localDateTimeReads: Reads[LocalDateTime] =
     Reads.at[String](__ \ "$date" \ "$numberLong")
       .map(dateTime => Instant.ofEpochMilli(dateTime.toLong).atZone(ZoneOffset.UTC).toLocalDateTime)
@@ -58,6 +60,7 @@ trait MongoDateTimeFormats {
 
   final val localDateTimeFormat: Format[LocalDateTime] =
     Format(localDateTimeReads, localDateTimeWrites)
+
 
   trait Implicits {
     implicit val mdInstantFormat: Format[Instant] = MongoJavatimeFormats.instantFormat

@@ -40,16 +40,11 @@ trait TimescaleDefns {
 }
 
 trait Messages {
-  def msg(id: String, param: Any*): String
+  def msg(id: String, param: Seq[Any] = Seq.empty[Any]): String
 }
 
 trait Mode {
   val runMode: RunMode
-}
-
-@FunctionalInterface
-trait MessageFunction {
-  def apply(key: String, args: Any*): String
 }
 
 trait Labels extends Flows with TimescaleDefns with Messages with Mode {
@@ -73,7 +68,7 @@ private[ocelot] class LabelCacheImpl(labels: Map[String, Label] = Map(),
                                      pool: Map[String, Stanza] = Map(),
                                      poolCache: Map[String, Stanza] = Map(),
                                      timescales: Map[String, Int] = Map(),
-                                     messages: MessageFunction = (_,_) => "",
+                                     messages: (String, Seq[Any]) => String = (_,_) => "",
                                      val runMode: RunMode = Published) extends Labels {
 
   // Labels
@@ -165,7 +160,7 @@ private[ocelot] class LabelCacheImpl(labels: Map[String, Label] = Map(),
   def timescaleDays(id: String): Option[Int] = timescales.get(id)
 
   // Messages
-  def msg(id: String, param: Any*): String = messages(id, param)
+  def msg(id: String, param: Seq[Any]): String = messages(id, param)
 }
 
 object LabelCache {
@@ -178,6 +173,6 @@ object LabelCache {
             stack: List[FlowStage],
             pool: Map[String, Stanza],
             timescales: Map[String, Int],
-            messages: MessageFunction,
+            messages: (String, Seq[Any]) => String,
             runMode: RunMode): Labels = new LabelCacheImpl(labels, cache, stack, pool, Map(), timescales, messages, runMode)
 }
