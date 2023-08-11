@@ -47,21 +47,21 @@ class H2HeadingSpec extends ViewSpec with GuiceOneAppPerSuite {
 
   "Creating a level 2 heading with some content" must {
     "Define the correct GDS standard class" in new Test {
-      val markUp: Html = h2_heading(h2)(messages, ctx)
+      val markUp: Html = h2_heading(h2)(ctx)
       val h2Element: Element = getSingleElementByTag(markUp, "h2")
 
       h2Element.hasClass("govuk-heading-l") shouldBe true
     }
 
     "Define the correct GDS reduced class" in new Test {
-      val markUp: Html = h2_heading(h2)(messages, ctxReduced)
+      val markUp: Html = h2_heading(h2)(ctxReduced)
       val h2Element: Element = getSingleElementByTag(markUp, "h2")
 
       h2Element.hasClass("govuk-heading-m") shouldBe true
     }
 
     "display text" in new Test {
-      val markUp: Html = h2_heading(h2)(messages, ctx)
+      val markUp: Html = h2_heading(h2)(ctx)
       val h2Element: Element = getSingleElementByTag(markUp, "h2")
 
       h2Element.text() shouldBe h2Str

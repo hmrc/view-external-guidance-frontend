@@ -45,7 +45,7 @@ class RetrieveAndCacheServiceSpec extends BaseSpec {
     val lastPageUrl = "/last-page"
     val lastUiPage: ui.Page = ui.Page(lastPageUrl, Seq())
 
-    val pages: Seq[Page] = Seq(
+    val pages: List[Page] = List(
       pageWithUrl(Process.StartStanzaId, firstPageUrl),
       pageWithUrl("1", "/page-1"),
       pageWithUrl("2", lastPageUrl)

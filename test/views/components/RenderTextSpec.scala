@@ -58,7 +58,7 @@ class RenderTextSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite 
   "render_text component" should {
 
     "generate English html containing bold text with default output formatting" in new Test {
-      val doc: Document = asDocument(paragraph(Paragraph(textWithBold))(messages, ctx))
+      val doc: Document = asDocument(paragraph(Paragraph(textWithBold))(ctx))
       val p: Element = doc.getElementsByTag("p").first
       val boldElement: Element = p.getElementsByTag("strong").first
       boldElement.text shouldBe "Blah"

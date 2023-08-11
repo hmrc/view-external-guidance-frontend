@@ -52,7 +52,7 @@ class H1HeadingWithLabelSpec extends ViewSpec with GuiceOneAppPerSuite {
 
     "Define the correct GDS standard class" in new Test {
 
-      val markUp: Html = h1_heading_with_label(h1, "field")(messages, ctx)
+      val markUp: Html = h1_heading_with_label(h1, "field")(ctx)
 
       val h1Element: Element = getSingleElementByTag(markUp, "h1")
       h1Element.hasClass("govuk-label-wrapper") shouldBe true
@@ -63,7 +63,7 @@ class H1HeadingWithLabelSpec extends ViewSpec with GuiceOneAppPerSuite {
 
     "Define the correct GDS reduced class" in new Test {
 
-      val markUp: Html = h1_heading_with_label(h1, "field")(messages, ctxReduced)
+      val markUp: Html = h1_heading_with_label(h1, "field")(ctxReduced)
 
       val h1Element: Element = getSingleElementByTag(markUp, "h1")
       h1Element.hasClass("govuk-label-wrapper") shouldBe true
@@ -74,7 +74,7 @@ class H1HeadingWithLabelSpec extends ViewSpec with GuiceOneAppPerSuite {
 
     "display text in English" in new Test {
 
-      val markUp: Html = h1_heading_with_label(h1, "field")(messages, ctx)
+      val markUp: Html = h1_heading_with_label(h1, "field")(ctx)
 
       val labelElement: Element = getSingleElementByTag(markUp, "label")
       labelElement.text() shouldBe h1Str

@@ -49,7 +49,7 @@ class H3HeadingSpec extends ViewSpec with GuiceOneAppPerSuite {
 
     "Define the correct GDS standard class" in new Test {
 
-      val markUp: Html = h3_heading(h3)(messages, ctx)
+      val markUp: Html = h3_heading(h3)(ctx)
 
       val h3Element: Element = getSingleElementByTag(markUp, "h3")
 
@@ -58,7 +58,7 @@ class H3HeadingSpec extends ViewSpec with GuiceOneAppPerSuite {
 
     "Define the correct GDS reduced class" in new Test {
 
-      val markUp: Html = h3_heading(h3)(messages, ctxReduced)
+      val markUp: Html = h3_heading(h3)(ctxReduced)
 
       val h3Element: Element = getSingleElementByTag(markUp, "h3")
 
@@ -67,7 +67,7 @@ class H3HeadingSpec extends ViewSpec with GuiceOneAppPerSuite {
 
     "display text" in new Test {
 
-      val markUp: Html = h3_heading(h3)(messages, ctx)
+      val markUp: Html = h3_heading(h3)(ctx)
 
       val h3Element: Element = getSingleElementByTag(markUp, "h3")
 
