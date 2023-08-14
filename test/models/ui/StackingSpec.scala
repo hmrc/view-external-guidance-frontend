@@ -31,7 +31,7 @@ class StackingSpec extends BaseSpec {
 
   "Stacking" should {
     "Group stacked stanzas together" in new Test {
-      val stanzas = Seq(stackedTitle(false), stackedTitle(false), stackedTitle(true), stackedTitle(false), stackedRowGroup(true))
+      val stanzas = List(stackedTitle(false), stackedTitle(false), stackedTitle(true), stackedTitle(false), stackedRowGroup(true))
 
       val stacked = stackStanzas(Nil)(stanzas)
 
@@ -42,7 +42,7 @@ class StackingSpec extends BaseSpec {
     }
 
     "Group stacked stanzas including initial isolated unstackable stanza marked stack" in new Test {
-      val stanzas = Seq(stackedTitle(true), stackedTitle(false), stackedTitle(true), stackedTitle(false), stackedRowGroup(true))
+      val stanzas = List(stackedTitle(true), stackedTitle(false), stackedTitle(true), stackedTitle(false), stackedRowGroup(true))
 
       val stacked = stackStanzas(Nil)(stanzas)
 
@@ -53,7 +53,7 @@ class StackingSpec extends BaseSpec {
     }
 
     "Group stacked stanzas including embedded isolated unstackable stanza marked stack" in new Test {
-      val stanzas = Seq(stackedTitle(true), stackedTitle(false), stackedError(false), stackedTitle(false), stackedRowGroup(true))
+      val stanzas = List(stackedTitle(true), stackedTitle(false), stackedError(false), stackedTitle(false), stackedRowGroup(true))
 
       val stacked = stackStanzas(Nil)(stanzas)
 
@@ -66,7 +66,7 @@ class StackingSpec extends BaseSpec {
 
 
     "Group stacked stanzas in alternate group" in new Test {
-      val stanzas = Seq(stackedTitle(true), stackedTitle(true), stackedError(false), stackedTitle(false), stackedRowGroup(true))
+      val stanzas = List(stackedTitle(true), stackedTitle(true), stackedError(false), stackedTitle(false), stackedRowGroup(true))
 
       val stacked = stackStanzas(Nil)(stanzas)
       stacked.length shouldBe 3
@@ -76,7 +76,7 @@ class StackingSpec extends BaseSpec {
     }
 
     "Group stacked stanzas in alternate group 2" in new Test {
-      val stanzas = Seq(stackedTitle(true), stackedTitle(true), stackedError(true), stackedTitle(true), stackedRowGroup(false))
+      val stanzas = List(stackedTitle(true), stackedTitle(true), stackedError(true), stackedTitle(true), stackedRowGroup(false))
 
       val stacked = stackStanzas(Nil)(stanzas)
       stacked.length shouldBe 2

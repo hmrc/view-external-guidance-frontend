@@ -74,7 +74,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
   "UIBulider Question processing" must {
 
     "Ignore Error Callouts when there are no errors" in new QuestionTest {
-      uiBuilder.buildPage(page.url, page.stanzas.collect{case s: VisualStanza => s}, NoError) match {
+      uiBuilder.buildPage(page.url, page.stanzas.toList.collect{case s: VisualStanza => s}, NoError) match {
         case Right(s: FormPage) if s.formComponent.errorMsgs.isEmpty => succeed
         case Right(s: FormPage) => fail("No error messages should be included on page")
         case _ => fail("Should return FormPage")
@@ -83,7 +83,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
 
     "Include Error messages when there are errors" in new QuestionTest {
 
-      uiBuilder.buildPage(page.url, page.stanzas.collect { case s: VisualStanza => s }, ValueMissingError) match {
+      uiBuilder.buildPage(page.url, page.stanzas.toList.collect { case s: VisualStanza => s }, ValueMissingError) match {
         case Right(s: FormPage) if s.formComponent.errorMsgs.isEmpty => fail("No error messages found on page")
         case Right(s: FormPage) => succeed
         case _ => fail("Should return FormPage")
@@ -91,7 +91,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
 
     "Maintain order of components within a Question" in new QuestionTest {
-      uiBuilder.buildPage(page.url, page.stanzas.collect { case s: VisualStanza => s }, NoError) match {
+      uiBuilder.buildPage(page.url, page.stanzas.toList.collect { case s: VisualStanza => s }, NoError) match {
         case Right(q: FormPage) =>
           q.formComponent.body(0) match {
             case h: H3 => succeed
@@ -111,7 +111,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
 
     "Include a question hint appended to the question text" in new QuestionTest {
-      uiBuilder.buildPage(pageWithQuestionHint.url, pageWithQuestionHint.stanzas.collect { case s: VisualStanza => s }) match {
+      uiBuilder.buildPage(pageWithQuestionHint.url, pageWithQuestionHint.stanzas.toList.collect { case s: VisualStanza => s }) match {
         case Right(s: FormPage) if s.formComponent.hint == Some(Text(questionHintString)) => succeed
         case Right(s: FormPage) => fail("No hint found within Question")
         case _ => fail("Should return FormPage")
@@ -387,7 +387,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
 
   "UIBuilder" must {
     "Convert a empty number list into a NumberList" in new NumberListTest {
-      val p = uiBuilder.buildPage("/start", Seq(TitleCallout(headingPhrase, Seq.empty, false),
+      val p = uiBuilder.buildPage("/start", List(TitleCallout(headingPhrase, Seq.empty, false),
         emptyNumberedList))
       p.fold(_ => fail(), p => p).components match {
         case Seq(_: H1, _: ui.NumberedList) => succeed
@@ -396,7 +396,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
 
     "Convert a empty numbered circle list into a NumberList" in new NumberListTest {
-      val p = uiBuilder.buildPage("/start", Seq(TitleCallout(headingPhrase, Seq.empty, false),
+      val p = uiBuilder.buildPage("/start", List(TitleCallout(headingPhrase, Seq.empty, false),
         emptyNumberedCircleList))
       p.fold(_ => fail(), p => p).components match {
         case Seq(_: H1, _: ui.NumberedCircleList) => succeed
@@ -405,7 +405,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
 
     "Convert sequence of num list callouts into a numbered list" in new NumberListTest {
-      val p = uiBuilder.buildPage("/start", Seq(TitleCallout(headingPhrase, Seq.empty, false),
+      val p = uiBuilder.buildPage("/start", List(TitleCallout(headingPhrase, Seq.empty, false),
         num1ListCo,
         num2ListCo,
         num3ListCo,
@@ -418,7 +418,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
 
     "Convert sequence of num circ list callouts into a numbered circle list" in new NumberListTest {
-      val p = uiBuilder.buildPage("/start", Seq(TitleCallout(headingPhrase, Seq.empty, false),
+      val p = uiBuilder.buildPage("/start", List(TitleCallout(headingPhrase, Seq.empty, false),
         num1CircListCo,
         num2CircListCo,
         num3CircListCo,
@@ -431,7 +431,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
 
     "Convert single of unstacked num list callouts into separate a numbered lists" in new NumberListTest {
-      val p = uiBuilder.buildPage("/start", Seq(TitleCallout(headingPhrase, Seq.empty, false),
+      val p = uiBuilder.buildPage("/start", List(TitleCallout(headingPhrase, Seq.empty, false),
         num1ListCo
       ))
       p.fold(_ => fail(), p => p).components match {
@@ -441,7 +441,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
 
     "Convert sequence of unstacked num list callouts into separate a numbered lists" in new NumberListTest {
-      val p = uiBuilder.buildPage("/start", Seq(TitleCallout(headingPhrase, Seq.empty, false),
+      val p = uiBuilder.buildPage("/start", List(TitleCallout(headingPhrase, Seq.empty, false),
         num1ListCo,
         num1ListCo,
         num1ListCo
@@ -453,7 +453,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
 
     "Convert sequence of unstacked num circ list callouts into separate a numbered circle lists" in new NumberListTest {
-      val p = uiBuilder.buildPage("/start", Seq(TitleCallout(headingPhrase, Seq.empty, false),
+      val p = uiBuilder.buildPage("/start", List(TitleCallout(headingPhrase, Seq.empty, false),
         num1CircListCo,
         num1CircListCo,
         num1CircListCo
@@ -465,14 +465,14 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
 
     "Empty RowGroup generates an UnsupportedUiPatternError error" in new TableTest {
-      uiBuilder.buildPage("/start", Seq(TitleCallout(headingPhrase, Seq.empty, false), emptyRowGroup)) match {
+      uiBuilder.buildPage("/start", List(TitleCallout(headingPhrase, Seq.empty, false), emptyRowGroup)) match {
         case Left(err) if err.errors == List(UnsupportedUiPatternError) => succeed
         case _ => fail()
       }
     }
 
     "Convert a simple RowGroup into a NameValueSummaryList" in new TableTest {
-      val p = uiBuilder.buildPage("/start", Seq(TitleCallout(headingPhrase, Seq.empty, false),
+      val p = uiBuilder.buildPage("/start", List(TitleCallout(headingPhrase, Seq.empty, false),
                                                 simpleRowGroup))
       p.fold(_ => fail(), p => p).components match {
         case Seq(_: H1, _: ui.NameValueSummaryList) => succeed
@@ -481,7 +481,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
 
     "Convert a non-summarylist RowGroup into a table with a heading line" in new TableTest {
-      val p = uiBuilder.buildPage("/start", Seq(SubSectionCallout(headingPhrase, Seq.empty, false),
+      val p = uiBuilder.buildPage("/start", List(SubSectionCallout(headingPhrase, Seq.empty, false),
         tableRowGroup))
       p.fold(_ => fail(), p => p).components match {
         case Seq(Table(Text(h), th, _)) if h.headOption == Some(Words(headingPhrase.value(lang))) => succeed
@@ -491,7 +491,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
 
     "convert a non-summarylist RowGroup stacked to a SubSection into a table with caption and a heading" in new TableTest {
-      val p = uiBuilder.buildPage("/start", Seq(SubSectionCallout(headingPhrase, Seq.empty, false),
+      val p = uiBuilder.buildPage("/start", List(SubSectionCallout(headingPhrase, Seq.empty, false),
         tableRowGroup))
       p.fold(_ => fail(), p => p).components match {
         case Seq(Table(Text(h), _, rows)) if h.headOption == Some(Words(headingPhrase.value(lang))) => succeed
@@ -500,7 +500,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
 
     "convert a summarylist RowGroup stacked to a SubSection into an H4 and a NameValueSummaryList" in new TableTest {
-      val p = uiBuilder.buildPage("/start", Seq(SubSectionCallout(headingPhrase, Seq.empty, false),
+      val p = uiBuilder.buildPage("/start", List(SubSectionCallout(headingPhrase, Seq.empty, false),
         stackedRowGroup))
       p.fold(_ => fail(), p => p).components match {
         case Seq(_: H4, _: ui.NameValueSummaryList) => succeed
@@ -509,7 +509,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
 
     "convert a summarylist RowGroup into a NameValueSummaryList with a right aligned numeric column" in new TableTest {
-      val p = uiBuilder.buildPage("/start", Seq(TitleCallout(headingPhrase, Seq.empty, false),
+      val p = uiBuilder.buildPage("/start", List(TitleCallout(headingPhrase, Seq.empty, false),
         numericRowGroup))
       p.fold(_ => fail(), p => p).components match {
         case Seq(_: H1, nvsl: ui.NameValueSummaryList) if nvsl.rows.size == 4 => succeed
@@ -519,7 +519,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
 
     "convert a RowGroup with three sparse columns including a link and hint into a SummaryList" in new SLTest {
-      val p = uiBuilder.buildPage("/start", Seq(TitleCallout(headingPhrase, Seq.empty, false),
+      val p = uiBuilder.buildPage("/start", List(TitleCallout(headingPhrase, Seq.empty, false),
         RowGroup(Seq("2"), sparseRowsWithLinkAndHint, true)))
       p.fold(_ => fail(), p => p).components match {
         case Seq(_: H1, _: CyaSummaryList) => succeed
@@ -529,7 +529,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
 
     "convert a RowGroup with three columns including a link and hint into a SummaryList" in new SLTest {
-      val p = uiBuilder.buildPage("/start", Seq(TitleCallout(headingPhrase, Seq.empty, false),
+      val p = uiBuilder.buildPage("/start", List(TitleCallout(headingPhrase, Seq.empty, false),
         RowGroup(Seq("2"), rowsWithLinkAndHint, true)))
       p.fold(_ => fail(), p => p).components match {
         case Seq(_: H1, _: CyaSummaryList) => succeed
@@ -539,7 +539,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
 
     "convert a RowGroup with three columns into a SummaryList and faked welsh link" in new SLTest {
-      val p = uiBuilder.buildPage("/start", Seq(TitleCallout(headingPhrase, Seq.empty, false),
+      val p = uiBuilder.buildPage("/start", List(TitleCallout(headingPhrase, Seq.empty, false),
         RowGroup(Seq("2"), rowsWithFakedWelshLinK, true)))
       p.fold(_ => fail(), p => p).components match {
         case Seq(_: H1, _: CyaSummaryList) => succeed
@@ -550,7 +550,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
 
     "convert and Ocelot page into a UI page with the same url" in new Test {
 
-      uiBuilder.buildPage(page.url, page.stanzas.collect { case s: VisualStanza => s }) match {
+      uiBuilder.buildPage(page.url, page.stanzas.toList.collect { case s: VisualStanza => s }) match {
         case Right(p) if p.urlPath == page.url => succeed
         case Right(p) => fail(s"UI page urlPath set incorrectly to ${p.urlPath}")
         case Left(err) => fail(s"Error $err")
@@ -558,7 +558,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
 
     "Unsupported VisualStanzas generates UnsupportedUiPatternError" in new Test {
-      val visual = Seq(UnsupportedVisualStanza(Seq("end"), false))
+      val visual = List(UnsupportedVisualStanza(Seq("end"), false))
       uiBuilder.buildPage(page.url, visual) match {
         case Left(err) if err.errors == List(UnsupportedUiPatternError) => succeed
         case _ => fail()
@@ -566,88 +566,88 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
 
     "convert 1st Callout type Title to H1" in new Test {
-      val uiPage = uiBuilder.buildPage(page.url, page.stanzas.collect { case s: VisualStanza => s })
+      val uiPage = uiBuilder.buildPage(page.url, page.stanzas.toList.collect { case s: VisualStanza => s })
       uiPage.fold(_ => fail(), p => p).components(1) shouldBe models.ui.H1(Text(Phrase(lang0).value(lang)))
     }
 
     "convert 2nd Callout type SubTitle to H2" in new Test {
 
-      val uiPage = uiBuilder.buildPage(page.url, page.stanzas.collect { case s: VisualStanza => s })
+      val uiPage = uiBuilder.buildPage(page.url, page.stanzas.toList.collect { case s: VisualStanza => s })
       uiPage.fold(_ => fail(), p => p).components(2) shouldBe models.ui.H2(Text(Phrase(lang1).value(lang)))
     }
 
     "convert Callout type Lede to lede Paragraph" in new Test {
 
-      val uiPage = uiBuilder.buildPage(page.url, page.stanzas.collect { case s: VisualStanza => s })
+      val uiPage = uiBuilder.buildPage(page.url, page.stanzas.toList.collect { case s: VisualStanza => s })
       uiPage.fold(_ => fail(), p => p).components(3) shouldBe models.ui.Paragraph(Text(Phrase(lang2).value(lang)), true)
     }
 
     "Dont convert Callout type Important into an ErrorMsg" in new Test {
-      val uiPage = uiBuilder.buildPage(page.url, page.stanzas.collect { case s: VisualStanza => s })
+      val uiPage = uiBuilder.buildPage(page.url, page.stanzas.toList.collect { case s: VisualStanza => s })
       val errs: Seq[ErrorMsg] = uiPage.fold(_ => fail(), p => p).components.collect { case err: ErrorMsg => err }
 
       errs.exists { e => e.id == "ID" } shouldBe false
     }
 
     "convert Callout type ValueError to an ErrorMsg" in new Test {
-      val uiPage = uiBuilder.buildPage(page.url, page.stanzas.collect { case s: VisualStanza => s })
+      val uiPage = uiBuilder.buildPage(page.url, page.stanzas.toList.collect { case s: VisualStanza => s })
       uiPage.fold(_ => fail(), p => p).components(7) shouldBe models.ui.ValueErrorMsg(Text(Phrase(lang0).value(lang)))
     }
 
     "convert Callout type TypeError to an ErrorMsg" in new Test {
-      val uiPage = uiBuilder.buildPage(page.url, page.stanzas.collect { case s: VisualStanza => s }, ValueTypeError)
+      val uiPage = uiBuilder.buildPage(page.url, page.stanzas.toList.collect { case s: VisualStanza => s }, ValueTypeError)
       uiPage.fold(_ => fail(), p => p).components(8) shouldBe models.ui.TypeErrorMsg(Text(Phrase(lang0).value(lang)))
     }
 
     "convert Simple instruction to Paragraph" in new Test {
 
-      val uiPage = uiBuilder.buildPage(page.url, page.stanzas.collect { case s: VisualStanza => s })
+      val uiPage = uiBuilder.buildPage(page.url, page.stanzas.toList.collect { case s: VisualStanza => s })
       uiPage.fold(_ => fail(), p => p).components(four) shouldBe models.ui.Paragraph(Text(Phrase(lang3).value(lang)), false)
     }
 
     "convert Link instruction to Paragraph" in new Test {
 
-      val uiPage = uiBuilder.buildPage(page.url, page.stanzas.collect { case s: VisualStanza => s })
+      val uiPage = uiBuilder.buildPage(page.url, page.stanzas.toList.collect { case s: VisualStanza => s })
       uiPage.fold(_ => fail(), p => p).components(five) shouldBe models.ui.Paragraph(Text(Link("dummy-path/blah", Phrase(lang4).value(lang))))
     }
 
     "convert page with instruction stanza containing a sequence of Text and Link items" in new Test {
-      val uiPage = uiBuilder.buildPage(pageWithEmbeddLinks.url, pageWithEmbeddLinks.stanzas.collect { case s: VisualStanza => s })
+      val uiPage = uiBuilder.buildPage(pageWithEmbeddLinks.url, pageWithEmbeddLinks.stanzas.toList.collect { case s: VisualStanza => s })
       uiPage.fold(_ => fail(), p => p).components(five) shouldBe models.ui.Paragraph(textItems, false)
     }
 
     "convert page with instruction stanza containing a sequence of TextItems beginning and ending with HyperLinks" in new Test {
-      val uiPage = uiBuilder.buildPage(pageWithEmbeddLinks2.url, pageWithEmbeddLinks2.stanzas.collect { case s: VisualStanza => s })
+      val uiPage = uiBuilder.buildPage(pageWithEmbeddLinks2.url, pageWithEmbeddLinks2.stanzas.toList.collect { case s: VisualStanza => s })
       uiPage.fold(_ => fail(), p => p).components(5) shouldBe models.ui.Paragraph(textItems2, false)
     }
 
     "convert page with instruction stanza text containing PageLinks and Text" in new Test {
-      val uiPage = uiBuilder.buildPage(pageWithEmbeddPageLinks.url, pageWithEmbeddPageLinks.stanzas.collect { case s: VisualStanza => s })
+      val uiPage = uiBuilder.buildPage(pageWithEmbeddPageLinks.url, pageWithEmbeddPageLinks.stanzas.toList.collect { case s: VisualStanza => s })
       uiPage.fold(_ => fail(), p => p).components(5) shouldBe models.ui.Paragraph(pageLinkTextItems, false)
     }
 
     "convert Callout type SubSection to H4" in new Test {
-      val uiPage = uiBuilder.buildPage(pageWithEmbeddH4.url, pageWithEmbeddH4.stanzas.collect { case s: VisualStanza => s })
+      val uiPage = uiBuilder.buildPage(pageWithEmbeddH4.url, pageWithEmbeddH4.stanzas.toList.collect { case s: VisualStanza => s })
       uiPage.fold(_ => fail(), p => p).components(five) shouldBe models.ui.H4(Text(Phrase(lang5).value(lang)))
     }
 
     "convert page with instruction stanza text containing PageLinks, HyperLinks and Text" in new Test {
-      val uiPage = uiBuilder.buildPage(pageWithEmbeddAllLinks.url, pageWithEmbeddAllLinks.stanzas.collect { case s: VisualStanza => s })
+      val uiPage = uiBuilder.buildPage(pageWithEmbeddAllLinks.url, pageWithEmbeddAllLinks.stanzas.toList.collect { case s: VisualStanza => s })
       uiPage.fold(_ => fail(), p => p).components(five) shouldBe models.ui.Paragraph(allLinksTextItems, false)
     }
 
     "convert page including a PageLink instruction stanza" in new Test {
-      val uiPage = uiBuilder.buildPage(page.url, page.stanzas.collect { case s: VisualStanza => s })
+      val uiPage = uiBuilder.buildPage(page.url, page.stanzas.toList.collect { case s: VisualStanza => s })
       uiPage.fold(_ => fail(), p => p).components(five) shouldBe models.ui.Paragraph(Text(link3), false)
     }
 
     "convert page including a Link instruction stanza" in new Test {
-      val uiPage = uiBuilder.buildPage(hyperLinkPage.url, hyperLinkPage.stanzas.collect { case s: VisualStanza => s })
+      val uiPage = uiBuilder.buildPage(hyperLinkPage.url, hyperLinkPage.stanzas.toList.collect { case s: VisualStanza => s })
       uiPage.fold(_ => fail(), p => p).components(five) shouldBe models.ui.Paragraph(Text(link4), false)
     }
 
     "convert a question page into a Seq of a single Question UI object" in new Test {
-      val uiPage = uiBuilder.buildPage(questionPage.url, questionPage.stanzas.collect { case s: VisualStanza => s })
+      val uiPage = uiBuilder.buildPage(questionPage.url, questionPage.stanzas.toList.collect { case s: VisualStanza => s })
 
       uiPage.fold(_ => fail(), p => p).components.length shouldBe 1
 
@@ -663,7 +663,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
 
     "convert a question page including answer hints into a Seq of a single Question UI object" in new Test {
-      val uiPage = uiBuilder.buildPage(questionPageWithHints.url, questionPageWithHints.stanzas.collect { case s: VisualStanza => s })
+      val uiPage = uiBuilder.buildPage(questionPageWithHints.url, questionPageWithHints.stanzas.toList.collect { case s: VisualStanza => s })
 
       uiPage.fold(_ => fail(), p => p).components.length shouldBe 1
 
@@ -689,7 +689,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
         KeyedStanza("1", instructionGroup)
       )
       val bulletPointListPage = Page(Process.StartStanzaId, "/blah", bulletPointListStanzas, Seq.empty)
-      val uiPage = uiBuilder.buildPage(bulletPointListPage.url, bulletPointListPage.stanzas.collect { case s: VisualStanza => s })
+      val uiPage = uiBuilder.buildPage(bulletPointListPage.url, bulletPointListPage.stanzas.toList.collect { case s: VisualStanza => s })
 
       uiPage.fold(_ => fail(), p => p).components.length shouldBe 1
 
@@ -738,7 +738,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
 
       val bulletPointListPage = Page(Process.StartStanzaId, "/blah", bulletPointListStanzas, Seq.empty)
 
-      val uiPage = uiBuilder.buildPage(bulletPointListPage.url, bulletPointListPage.stanzas.collect { case s: VisualStanza => s })
+      val uiPage = uiBuilder.buildPage(bulletPointListPage.url, bulletPointListPage.stanzas.toList.collect { case s: VisualStanza => s })
 
       uiPage.fold(_ => fail(), p => p).components.length shouldBe 1
 
@@ -795,7 +795,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
 
       val complexPage = Page(Process.StartStanzaId, "/blah", stanzaSeq, Seq.empty)
 
-      val complexUiPage = uiBuilder.buildPage(complexPage.url, complexPage.stanzas.collect { case s: VisualStanza => s })
+      val complexUiPage = uiBuilder.buildPage(complexPage.url, complexPage.stanzas.toList.collect { case s: VisualStanza => s })
 
       complexUiPage.fold(_ => fail(), p => p).components.size shouldBe 6
 
@@ -860,7 +860,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
 
       val bulletPointListPage = Page(Process.StartStanzaId, "/page-1", bulletPointStanzas, Seq.empty)
 
-      val uiPage = uiBuilder.buildPage(bulletPointListPage.url, bulletPointListPage.stanzas.collect { case s: VisualStanza => s })
+      val uiPage = uiBuilder.buildPage(bulletPointListPage.url, bulletPointListPage.stanzas.toList.collect { case s: VisualStanza => s })
 
       uiPage.fold(_ => fail(), p => p).components.length shouldBe 1
 
@@ -894,7 +894,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
 
     "Process bullet point list in do you need to tell HMRC about extra income V6" in new Test {
       val ocelotPage = extraIncomeStanzaPages.head
-      val visualStanzas: Seq[VisualStanza] = ocelotPage.stanzas.collect { case s: VisualStanza => s }
+      val visualStanzas: List[VisualStanza] = ocelotPage.stanzas.toList.collect { case s: VisualStanza => s }
       implicit override val ctx: UIContext = UIContext(labels, extraIncomeUrlMap, messages)
       val uiPage = uiBuilder.buildPage(ocelotPage.url, visualStanzas)
 
@@ -935,7 +935,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
         KeyedStanza("1", instructionGroup)
       )
       val bulletPointListPage = Page(Process.StartStanzaId, "/blah", bulletPointListStanzas, Seq.empty)
-      val uiPage = uiBuilder.buildPage(bulletPointListPage.url, bulletPointListPage.stanzas.collect { case s: VisualStanza => s })
+      val uiPage = uiBuilder.buildPage(bulletPointListPage.url, bulletPointListPage.stanzas.toList.collect { case s: VisualStanza => s })
 
       uiPage.fold(_ => fail(), p => p).components.length shouldBe 1
 
@@ -970,7 +970,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
         KeyedStanza("1", instructionGroup)
       )
       val bulletPointListPage = Page(Process.StartStanzaId, "/blah", bulletPointListStanzas, Seq.empty)
-      val uiPage = uiBuilder.buildPage(bulletPointListPage.url, bulletPointListPage.stanzas.collect{case s: VisualStanza => s})
+      val uiPage = uiBuilder.buildPage(bulletPointListPage.url, bulletPointListPage.stanzas.toList.collect{case s: VisualStanza => s})
 
       uiPage.fold(_ => fail(), p => p).components.length shouldBe 1
 
@@ -1033,7 +1033,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
 
       val complexPage = Page(Process.StartStanzaId, "/blah", stanzaSeq, Seq.empty)
 
-      val complexUiPage = uiBuilder.buildPage(complexPage.url, complexPage.stanzas.collect{case s: VisualStanza => s})
+      val complexUiPage = uiBuilder.buildPage(complexPage.url, complexPage.stanzas.toList.collect{case s: VisualStanza => s})
 
       complexUiPage.fold(_ => fail(), p => p).components.size shouldBe 6
 
@@ -1098,7 +1098,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
 
       val bulletPointListPage = Page(Process.StartStanzaId, "/page-1", bulletPointStanzas, Seq.empty)
 
-      val uiPage = uiBuilder.buildPage(bulletPointListPage.url, bulletPointListPage.stanzas.collect{case s: VisualStanza => s})
+      val uiPage = uiBuilder.buildPage(bulletPointListPage.url, bulletPointListPage.stanzas.toList.collect{case s: VisualStanza => s})
 
       uiPage.fold(_ => fail(), p => p).components.length shouldBe 1
 
@@ -1131,7 +1131,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
 
     "Convert a empty note list into a InsetText" in new NoteTest {
-      val p = uiBuilder.buildPage("/start", Seq(emptyNoteGroup))
+      val p = uiBuilder.buildPage("/start", List(emptyNoteGroup))
       p.fold(_ => fail(), p => p).components match {
         case Seq(_: InsetText) => succeed
         case x => fail(s"Found $x")
@@ -1139,7 +1139,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
 
     "Convert sequence of note callouts into a single inset text" in new NoteTest {
-      val p = uiBuilder.buildPage("/start", Seq(note1Co, note2Co, note3Co, note4Co))
+      val p = uiBuilder.buildPage("/start", List(note1Co, note2Co, note3Co, note4Co))
       p.fold(_ => fail(), p => p).components match {
         case Seq(_: InsetText) => succeed
         case x => fail(s"Found $x")
@@ -1147,7 +1147,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
 
     "Convert single unstacked note callout into separate inset text" in new NoteTest {
-      val p = uiBuilder.buildPage("/start", Seq(note1Co))
+      val p = uiBuilder.buildPage("/start", List(note1Co))
       p.fold(_ => fail(), p => p).components match {
         case Seq(_: InsetText) => succeed
         case x => fail(s"Found $x")
@@ -1155,7 +1155,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
 
     "Convert sequence of unstacked note callouts into separate inset texts" in new NoteTest {
-      val p = uiBuilder.buildPage("/start", Seq(note1Co, note1Co, note1Co))
+      val p = uiBuilder.buildPage("/start", List(note1Co, note1Co, note1Co))
       p.fold(_ => fail(), p => p).components match {
         case Seq(_: InsetText, _: InsetText, _: InsetText) => succeed
         case x => fail(s"Found $x")
@@ -1200,7 +1200,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
   "UIBuilder TextInput Input processing" must {
 
     "Ignore Error Callouts when there are no errors" in new InputTest {
-      uiBuilder.buildPage(pageText.url, pageText.stanzas.collect { case s: VisualStanza => s }) match {
+      uiBuilder.buildPage(pageText.url, pageText.stanzas.toList.collect { case s: VisualStanza => s }) match {
         case Right(s: FormPage) if s.formComponent.errorMsgs.isEmpty => succeed
         case Right(_: FormPage) => fail("No error messages should be included on page")
         case x => fail(s"Should return FormPage: found $x")
@@ -1209,7 +1209,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
 
     "Include Error messages when there are errors" in new InputTest {
 
-      uiBuilder.buildPage(pageText.url, pageText.stanzas.collect { case s: VisualStanza => s }, ValueMissingError) match {
+      uiBuilder.buildPage(pageText.url, pageText.stanzas.toList.collect { case s: VisualStanza => s }, ValueMissingError) match {
         case Right(s: FormPage) if s.formComponent.errorMsgs.isEmpty => fail("No error messages found on page")
         case Right(_: FormPage) => succeed
         case x => fail(s"Should return FormPage: found $x")
@@ -1217,7 +1217,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
 
     "Maintain order of components within an Input" in new InputTest {
-      uiBuilder.buildPage(pageText.url, pageText.stanzas.collect { case s: VisualStanza => s }) match {
+      uiBuilder.buildPage(pageText.url, pageText.stanzas.toList.collect { case s: VisualStanza => s }) match {
         case Right(i: FormPage) =>
           i.formComponent.body(0) match {
             case _: H3 => succeed
@@ -1233,7 +1233,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
 
     "Include a page hint appended to the input text" in new InputTest {
-      uiBuilder.buildPage(pageText.url, pageText.stanzas.collect { case s: VisualStanza => s }) match {
+      uiBuilder.buildPage(pageText.url, pageText.stanzas.toList.collect { case s: VisualStanza => s }) match {
         case Right(i: FormPage) if i.formComponent.hint == Some(Text("Welsh: Help text")) => succeed
         case Right(_: FormPage) => fail("No hint found within Input")
         case x => fail(s"Should return FormPage: found $x")
@@ -1244,7 +1244,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
   "UIBuilder NumberInput Input processing" must {
 
     "Ignore Error Callouts when there are no errors" in new InputTest {
-      uiBuilder.buildPage(pageNumber.url, pageNumber.stanzas.collect { case s: VisualStanza => s }) match {
+      uiBuilder.buildPage(pageNumber.url, pageNumber.stanzas.toList.collect { case s: VisualStanza => s }) match {
         case Right(s: FormPage) if s.formComponent.errorMsgs.isEmpty => succeed
         case Right(_: FormPage) => fail("No error messages should be included on page")
         case x => fail(s"Should return FormPage: found $x")
@@ -1253,7 +1253,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
 
     "Include Error messages when there are errors" in new InputTest {
 
-      uiBuilder.buildPage(pageNumber.url, pageNumber.stanzas.collect { case s: VisualStanza => s }, ValueMissingError) match {
+      uiBuilder.buildPage(pageNumber.url, pageNumber.stanzas.toList.collect { case s: VisualStanza => s }, ValueMissingError) match {
         case Right(s: FormPage) if s.formComponent.errorMsgs.isEmpty => fail("No error messages found on page")
         case Right(_: FormPage) => succeed
         case x => fail(s"Should return FormPage: found $x")
@@ -1261,7 +1261,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
 
     "Maintain order of components within an Input" in new InputTest {
-      uiBuilder.buildPage(pageNumber.url, pageNumber.stanzas.collect { case s: VisualStanza => s }) match {
+      uiBuilder.buildPage(pageNumber.url, pageNumber.stanzas.toList.collect { case s: VisualStanza => s }) match {
         case Right(i: FormPage) =>
           i.formComponent.body(0) match {
             case _: H3 => succeed
@@ -1277,7 +1277,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
 
     "Include a page hint appended to the input text" in new InputTest {
-      uiBuilder.buildPage(pageNumber.url, pageNumber.stanzas.collect { case s: VisualStanza => s }) match {
+      uiBuilder.buildPage(pageNumber.url, pageNumber.stanzas.toList.collect { case s: VisualStanza => s }) match {
         case Right(i: FormPage) if i.formComponent.hint == Some(Text("Welsh: Help text")) => succeed
         case Right(_: FormPage) => fail("No hint found within Input")
         case x => fail(s"Should return FormPage: found $x")
@@ -1288,7 +1288,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
   "UIBuilder Currency Input processing" must {
 
     "Ignore Error Callouts when there are no errors" in new InputTest {
-      uiBuilder.buildPage(page.url, page.stanzas.collect { case s: VisualStanza => s }) match {
+      uiBuilder.buildPage(page.url, page.stanzas.toList.collect { case s: VisualStanza => s }) match {
         case Right(s: FormPage) if s.formComponent.errorMsgs.isEmpty => succeed
         case Right(_: FormPage) => fail("No error messages should be included on page")
         case x => fail(s"Should return FormPage: found $x")
@@ -1297,7 +1297,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
 
     "Include Error messages when there are errors" in new InputTest {
 
-      uiBuilder.buildPage(page.url, page.stanzas.collect { case s: VisualStanza => s }, ValueMissingError) match {
+      uiBuilder.buildPage(page.url, page.stanzas.toList.collect { case s: VisualStanza => s }, ValueMissingError) match {
         case Right(s: FormPage) if s.formComponent.errorMsgs.isEmpty => fail("No error messages found on page")
         case Right(_: FormPage) => succeed
         case x => fail(s"Should return FormPage: found $x")
@@ -1305,7 +1305,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
 
     "Maintain order of components within an Input" in new InputTest {
-      uiBuilder.buildPage(page.url, page.stanzas.collect { case s: VisualStanza => s }) match {
+      uiBuilder.buildPage(page.url, page.stanzas.toList.collect { case s: VisualStanza => s }) match {
         case Right(i: FormPage) =>
           i.formComponent.body(0) match {
             case _: H3 => succeed
@@ -1321,7 +1321,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
 
     "Include a page hint appended to the input text" in new InputTest {
-      uiBuilder.buildPage(page.url, page.stanzas.collect { case s: VisualStanza => s }) match {
+      uiBuilder.buildPage(page.url, page.stanzas.toList.collect { case s: VisualStanza => s }) match {
         case Right(i: FormPage) if i.formComponent.hint == Some(Text("Welsh: Help text")) => succeed
         case Right(_: FormPage) => fail("No hint found within Input")
         case x => fail(s"Should return FormPage: found $x")
@@ -1331,7 +1331,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
 
   "UIBuilder CurrencyPoundsOnly Input processing" must {
     "Ignore Error Callouts when there are no errors" in new InputTest {
-      uiBuilder.buildPage(pagePoundsOnly.url, pagePoundsOnly.stanzas.collect { case s: VisualStanza => s }) match {
+      uiBuilder.buildPage(pagePoundsOnly.url, pagePoundsOnly.stanzas.toList.collect { case s: VisualStanza => s }) match {
         case Right(s: FormPage) if s.formComponent.errorMsgs.isEmpty => succeed
         case Right(_: FormPage) => fail("No error messages should be included on page")
         case x => fail(s"Should return FormPage: found $x")
@@ -1339,7 +1339,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
 
     "Include Error messages when there are errors" in new InputTest {
-      uiBuilder.buildPage(pagePoundsOnly.url, pagePoundsOnly.stanzas.collect { case s: VisualStanza => s }, ValueMissingError) match {
+      uiBuilder.buildPage(pagePoundsOnly.url, pagePoundsOnly.stanzas.toList.collect { case s: VisualStanza => s }, ValueMissingError) match {
         case Right(s: FormPage) if s.formComponent.errorMsgs.isEmpty => fail("No error messages found on page")
         case Right(_: FormPage) => succeed
         case x => fail(s"Should return FormPage: found $x")
@@ -1347,7 +1347,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
 
     "Maintain order of components within an Input" in new InputTest {
-      uiBuilder.buildPage(pagePoundsOnly.url, pagePoundsOnly.stanzas.collect { case s: VisualStanza => s }) match {
+      uiBuilder.buildPage(pagePoundsOnly.url, pagePoundsOnly.stanzas.toList.collect { case s: VisualStanza => s }) match {
         case Right(i: FormPage) =>
           i.formComponent.body(0) match {
             case _: H3 => succeed
@@ -1364,7 +1364,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
 
     "Include a page hint appended to the input text" in new InputTest {
-      uiBuilder.buildPage(pagePoundsOnly.url, pagePoundsOnly.stanzas.collect { case s: VisualStanza => s }) match {
+      uiBuilder.buildPage(pagePoundsOnly.url, pagePoundsOnly.stanzas.toList.collect { case s: VisualStanza => s }) match {
         case Right(i: FormPage) if i.formComponent.hint == Some(Text("Welsh: Help text")) => succeed
         case Right(_: FormPage) => fail("No hint found within Input")
         case x => fail(s"Should return FormPage: found $x")
@@ -1419,7 +1419,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
 
     "create a title only confirmation panel for a single unstacked your call callout" in new ConfirmationPanelTest {
 
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         confirmationPanelHeader,
         instruction1,
         instruction2
@@ -1434,7 +1434,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
 
     "create a full confirmation panel from three stacked your call callouts" in new ConfirmationPanelTest {
 
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         confirmationPanelHeader,
         confirmationPanelAdditional1,
         confirmationPanelAdditional2,
@@ -1459,7 +1459,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
 
     "create a full confirmation panel from 2 YourCall callouts with extra stacked after an instruction" in new ConfirmationPanelTest {
 
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         confirmationPanelHeader,
         confirmationPanelAdditional1,
         instruction1.copy(stack = true),
@@ -1480,7 +1480,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
 
     "create a two text items confirmation panel followed by an instruction from two stacked your call callouts and an instruction" in new ConfirmationPanelTest {
 
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         confirmationPanelHeader,
         confirmationPanelAdditional1,
         instruction1
@@ -1500,7 +1500,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
 
     "create single text item confirmation panel from stacked your call and section callouts" in new ConfirmationPanelTest {
 
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         confirmationPanelHeader,
         sectionCallout
       )
@@ -1513,7 +1513,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
 
     "create paragraph and single item confirmation panel from stacked instruction and your call callout" in new ConfirmationPanelTest {
 
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         instruction2,
         stackedConfirmationPanelHeader
       )
@@ -1526,7 +1526,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
 
     "process stacked group with two your call callouts followed by two other visual stanzas" in new ConfirmationPanelTest {
 
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         confirmationPanelHeader,
         confirmationPanelAdditional2,
         sectionCallout,
@@ -1547,7 +1547,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
 
     "process stacked group with three your call callouts sandwiched within other visual stanza types" in new ConfirmationPanelTest {
 
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         instruction2,
         stackedConfirmationPanelHeader,
         confirmationPanelAdditional1,
@@ -1571,7 +1571,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
 
     "process stacked group with three your call callouts preceded by two other visual stanza types" in new ConfirmationPanelTest {
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         instruction1,
         subSectionCallout,
         stackedConfirmationPanelHeader,
@@ -1623,7 +1623,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
 
     "Ignore Error Callouts when there are no errors" in new DateInputTest {
-      uiBuilder.buildPage(datePage.url, datePage.stanzas.collect { case s: VisualStanza => s }) match {
+      uiBuilder.buildPage(datePage.url, datePage.stanzas.toList.collect { case s: VisualStanza => s }) match {
         case Right(s: FormPage) if s.formComponent.errorMsgs.isEmpty => succeed
         case Right(_: FormPage) => fail("No error messages should be included on page")
         case x => fail(s"Should return FormPage: found $x")
@@ -1631,7 +1631,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
 
     "Include correct Error messages when all fields missing" in new DateInputTest {
-      uiBuilder.buildPage(datePage.url, datePage.stanzas.collect{case s: VisualStanza => s}, ValueMissingGroupError(Nil)) match {
+      uiBuilder.buildPage(datePage.url, datePage.stanzas.toList.collect{case s: VisualStanza => s}, ValueMissingGroupError(Nil)) match {
         case Right(s: FormPage) if s.formComponent.errorMsgs.isEmpty => fail("No error messages found on page")
         case Right(s: FormPage) => succeed
         case x => fail(s"Should return FormPage: found $x")
@@ -1639,7 +1639,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
 
     "Include correct Error message for one missing field" in new DateInputTest {
-      uiBuilder.buildPage(datePage.url, datePage.stanzas.collect{case s: VisualStanza => s}, ValueMissingGroupError(List("Blwyddyn"))) match {
+      uiBuilder.buildPage(datePage.url, datePage.stanzas.toList.collect{case s: VisualStanza => s}, ValueMissingGroupError(List("Blwyddyn"))) match {
         case Right(s: FormPage) if s.formComponent.errorMsgs.isEmpty => fail("No error messages found on page")
         case Right(s: FormPage) => s.formComponent.errorMsgs.headOption shouldBe Some(RequiredErrorMsg(Text("Welsh: Some Error Text Blwyddyn")))
         case x => fail(s"Should return FormPage: found $x")
@@ -1647,7 +1647,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
 
     "Include correct Error message for two missing fields" in new DateInputTest {
-      uiBuilder.buildPage(datePage.url, datePage.stanzas.collect{case s: VisualStanza => s}, ValueMissingGroupError(List("Dydd", "Blwyddyn"))) match {
+      uiBuilder.buildPage(datePage.url, datePage.stanzas.toList.collect{case s: VisualStanza => s}, ValueMissingGroupError(List("Dydd", "Blwyddyn"))) match {
         case Right(s: FormPage) if s.formComponent.errorMsgs.isEmpty => fail("No error messages found on page")
         case Right(s: FormPage) => s.formComponent.errorMsgs.headOption shouldBe Some(RequiredErrorMsg(Text("Welsh: Some Error Text Dydd and Blwyddyn")))
         case x => fail(s"Should return FormPage: found $x")
@@ -1655,7 +1655,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
 
     "Maintain order of components within an Input" in new DateInputTest {
-      uiBuilder.buildPage(datePage.url, datePage.stanzas.collect { case s: VisualStanza => s }) match {
+      uiBuilder.buildPage(datePage.url, datePage.stanzas.toList.collect { case s: VisualStanza => s }) match {
         case Right(i: FormPage) =>
           i.formComponent.body(0) match {
             case _: H3 => succeed
@@ -1671,7 +1671,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
 
     "Include a page hint appended to the input text" in new DateInputTest {
-      uiBuilder.buildPage(datePage.url, datePage.stanzas.collect { case s: VisualStanza => s }) match {
+      uiBuilder.buildPage(datePage.url, datePage.stanzas.toList.collect { case s: VisualStanza => s }) match {
         case Right(i: FormPage) if i.formComponent.hint == Some(Text("Welsh: Help text")) => succeed
         case Right(_: FormPage) => fail("No hint found within Input")
         case x => fail(s"Should return FormPage: found $x")
@@ -1802,14 +1802,14 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
 
     "Convert a subSection callout and single stacked note callout into a single Details component" in new DetailsTest {
-      val p = uiBuilder.buildPage("/start", Seq(subSectionCallout, stackedNote1))
+      val p = uiBuilder.buildPage("/start", List(subSectionCallout, stackedNote1))
       p.fold(_ => fail(), p => p).components match {
         case Seq(_: Details) => succeed
         case x => fail(s"Found $x")
       }
     }
     "Convert a subSection callout and two stacked note callouts into a single Details component" in new DetailsTest {
-      val p = uiBuilder.buildPage("/start", Seq(subSectionCallout, stackedNote1, stackedNote2))
+      val p = uiBuilder.buildPage("/start", List(subSectionCallout, stackedNote1, stackedNote2))
       p.fold(_ => fail(), p => p).components match {
         case Seq(_: Details) => succeed
         case x => fail(s"Found $x")
@@ -1817,7 +1817,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
 
     "Convert a subSection callout and an unstacked note callout into an H3 and InsetText" in new DetailsTest {
-      val p = uiBuilder.buildPage("/start", Seq(subSectionCallout, unstackedNote))
+      val p = uiBuilder.buildPage("/start", List(subSectionCallout, unstackedNote))
       p.fold(_ => fail(), p => p).components match {
         case Seq(_: H4, _: InsetText) => succeed
         case x => fail(s"Found $x")
@@ -1825,7 +1825,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
 
     "Convert a subSection callout, two stacked note callouts and one unstacked note into a single Details component and an InsetText" in new DetailsTest {
-      val p = uiBuilder.buildPage("/start", Seq(subSectionCallout, stackedNote1, stackedNote2, unstackedNote))
+      val p = uiBuilder.buildPage("/start", List(subSectionCallout, stackedNote1, stackedNote2, unstackedNote))
       p.fold(_ => fail(), p => p).components match {
         case Seq(_: Details, _: InsetText) => succeed
         case x => fail(s"Found $x")
@@ -1836,7 +1836,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
 
       val p = uiBuilder.buildPage(
         "/start",
-        Seq(
+        List(
           detailSectionCallout,
           detailStackedNote3,
           detailStackedNote4,
@@ -1865,7 +1865,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
 
       val p = uiBuilder.buildPage(
         "/start",
-        Seq(
+        List(
           detailSectionCallout,
           detailStackedNote1,
           detailStackedNote3,
@@ -1891,7 +1891,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
 
       val p = uiBuilder.buildPage(
         "/start",
-        Seq(
+        List(
           detailSectionCallout,
           detailStackedNote3,
           detailStackedNote4,
@@ -1918,7 +1918,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
 
       val p = uiBuilder.buildPage(
         "/start",
-        Seq(
+        List(
           detailSectionCallout,
           detailStackedNote1,
           detailStackedNote3,
@@ -1952,7 +1952,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
 
       val p = uiBuilder.buildPage(
         "/start",
-        Seq(
+        List(
           detailSectionCallout.rendered(TextBuilder.expandLabels(ctx.labels)),
           detailStackedNote9.rendered(TextBuilder.expandLabels(ctx.labels)),
           detailStackedNote10.rendered(TextBuilder.expandLabels(ctx.labels)),
@@ -1978,7 +1978,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
 
       val p = uiBuilder.buildPage(
         "/start",
-        Seq(
+        List(
           detailSectionCallout,
           detailStackedNote12,
           detailStackedNote13
@@ -2006,7 +2006,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
 
       val p = uiBuilder.buildPage(
         "/start",
-        Seq(
+        List(
           detailSectionCallout,
           detailStackedNote12,
           detailStackedNote13,
@@ -2076,7 +2076,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
     }
 
     "Convert a empty important list into a ImportantGroup" in new ImportantTest {
-      val p = uiBuilder.buildPage("/start", Seq(emptyImportantGroup))
+      val p = uiBuilder.buildPage("/start", List(emptyImportantGroup))
       p.fold(_ => fail(), p => p).components match {
       case Seq(_: WarningText) => succeed
       case x => fail(s"Found $x")
@@ -2084,7 +2084,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
   }
 
     "Convert sequence of Important callouts into a single importantGroup" in new ImportantTest {
-      val p = uiBuilder.buildPage("/start", Seq(important1Co, important2Co, important3Co, important4Co))
+      val p = uiBuilder.buildPage("/start", List(important1Co, important2Co, important3Co, important4Co))
       p.fold(_ => fail(), p => p).components match {
       case Seq(_: WarningText) => succeed
       case x => fail(s"Found $x")
@@ -2092,7 +2092,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
   }
 
     "Convert single unstacked Important callout into separate importantGroup" in new ImportantTest {
-      val p = uiBuilder.buildPage("/start", Seq(important1Co))
+      val p = uiBuilder.buildPage("/start", List(important1Co))
       p.fold(_ => fail(), p => p).components match {
       case Seq(_: WarningText) => succeed
       case x => fail(s"Found $x")
@@ -2100,7 +2100,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
   }
 
     "Convert sequence of unstacked Important callouts into separate importantGroup" in new ImportantTest {
-      val p = uiBuilder.buildPage("/start", Seq(important1Co, important1Co, important1Co))
+      val p = uiBuilder.buildPage("/start", List(important1Co, important1Co, important1Co))
       p.fold(_ => fail(), p => p).components match {
       case Seq(_: WarningText, _: WarningText, _: WarningText) => succeed
       case x => fail(s"Found $x")
@@ -2175,7 +2175,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
 
       val uiPage = uiBuilder.buildPage(
         page.url,
-        page.stanzas.collect{case s: VisualStanza => s}
+        page.stanzas.toList.collect{case s: VisualStanza => s}
       )
 
       uiPage match {
@@ -2206,7 +2206,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
 
       val uiPageWithHint = uiBuilder.buildPage(
         pageWithHint.url,
-        pageWithHint.stanzas.collect{case s: VisualStanza => s},
+        pageWithHint.stanzas.toList.collect{case s: VisualStanza => s},
         ValueMissingError
       )
 
@@ -2230,7 +2230,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
 
       val uiPage = uiBuilder.buildPage(
         page.url,
-        page.stanzas.collect{case s: VisualStanza => s},
+        page.stanzas.toList.collect{case s: VisualStanza => s},
         ValueMissingError
       )
 
@@ -2326,7 +2326,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
 
       val uiPage = uiBuilder.buildPage(
         page.url,
-        page.stanzas.collect{case s: VisualStanza => s}
+        page.stanzas.toList.collect{case s: VisualStanza => s}
       )
 
       uiPage match {
@@ -2358,7 +2358,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
 
       val uiPageWithHint = uiBuilder.buildPage(
         pageWithHint.url,
-        pageWithHint.stanzas.collect{case s: VisualStanza => s},
+        pageWithHint.stanzas.toList.collect{case s: VisualStanza => s},
         ValueMissingError
       )
 
@@ -2382,7 +2382,7 @@ class WelshUIBuilderSpec extends BaseSpec with ProcessJson with WelshLanguage {
 
       val uiPage = uiBuilder.buildPage(
         page.url,
-        page.stanzas.collect{case s: VisualStanza => s},
+        page.stanzas.toList.collect{case s: VisualStanza => s},
         ValueMissingError
       )
 

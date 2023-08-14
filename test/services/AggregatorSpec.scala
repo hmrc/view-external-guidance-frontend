@@ -83,8 +83,8 @@ class AggregatorSpec extends BaseSpec {
   "NumberedList aggregation" must {
 
     "add an isolated number list co with stack equals false into a row group of size 1" in new NumberedListTest {
-      val stanzas: Seq[VisualStanza] =
-        Seq(
+      val stanzas: List[VisualStanza] =
+        List(
           callout,
           num1ListCo,
           instruction)
@@ -94,46 +94,46 @@ class AggregatorSpec extends BaseSpec {
     }
 
   "add an isolated number list co with stack equals true into a row group of size 1" in new NumberedListTest {
-    val stanzas: Seq[VisualStanza] = Seq(
+    val stanzas: List[VisualStanza] = List(
       callout,
       num1ListCo,
       instruction
     )
 
-    val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+    val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
 
     aggregatedStanzas(1) shouldBe NumberedList(Seq(num1ListCo))
   }
 
   "create two number list groups for two contiguous rows with stack set to false" in new NumberedListTest {
 
-    val stanzas: Seq[VisualStanza] = Seq(
+    val stanzas: List[VisualStanza] = List(
       callout,
       num1ListCo,
       num1ListCo,
       instruction
     )
 
-    val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+    val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
 
     aggregatedStanzas(1) shouldBe NumberedList(Seq(num1ListCo))
     aggregatedStanzas(2) shouldBe NumberedList(Seq(num1ListCo))
   }
 
   "create a number list group with two entries for two contiguous number list cos with stack set to true" in new NumberedListTest {
-    val stanzas: Seq[VisualStanza] = Seq(
+    val stanzas: List[VisualStanza] = List(
       callout,
       num2ListCo,
       num3ListCo,
       instruction
     )
 
-    val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+    val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
     aggregatedStanzas(1) shouldBe NumberedList(Seq(num2ListCo, num3ListCo))
   }
 
   "create two number list groups for two contiguous number list cos with stack set to true and false respectively" in new NumberedListTest {
-    val stanzas: Seq[VisualStanza] = Seq(
+    val stanzas: List[VisualStanza] = List(
       instruction,
       num2ListCo,
       num1ListCo,
@@ -141,14 +141,14 @@ class AggregatorSpec extends BaseSpec {
       callout
     )
 
-    val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+    val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
 
     aggregatedStanzas(1) shouldBe NumberedList(Seq(num2ListCo))
     aggregatedStanzas(2) shouldBe NumberedList(Seq(num1ListCo))
   }
 
   "create a number list group with two number list co with stack set to false and true respectively" in new NumberedListTest {
-    val stanzas: Seq[VisualStanza] = Seq(
+    val stanzas: List[VisualStanza] = List(
       instruction,
       num1ListCo,
       num2ListCo,
@@ -156,13 +156,13 @@ class AggregatorSpec extends BaseSpec {
       callout
     )
 
-    val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+    val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
 
     aggregatedStanzas(1) shouldBe NumberedList(Seq(num1ListCo, num2ListCo))
   }
 
   "create a number list group with multiple number list cos" in new NumberedListTest {
-    val stanzas: Seq[VisualStanza] = Seq(
+    val stanzas: List[VisualStanza] = List(
       callout,
       num1ListCo,
       num2ListCo,
@@ -171,25 +171,25 @@ class AggregatorSpec extends BaseSpec {
       instruction
     )
 
-    val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+    val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
     aggregatedStanzas(1) shouldBe NumberedList(Seq(num1ListCo, num2ListCo, num3ListCo, num4ListCo))
   }
 
   "create two number list groups of size two from four contiguous elems where stack is false for the third elem" in new NumberedListTest {
-    val stanzas: Seq[VisualStanza] = Seq(
+    val stanzas: List[VisualStanza] = List(
       num2ListCo,
       num3ListCo,
       num1ListCo,
       num4ListCo
     )
 
-    val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+    val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
     aggregatedStanzas(0) shouldBe NumberedList(Seq(num2ListCo, num3ListCo))
     aggregatedStanzas(1) shouldBe NumberedList(Seq(num1ListCo, num4ListCo))
   }
 
   "create two number list groups of size one for two non-contiguous elems in sequence of stanzas" in new NumberedListTest {
-    val stanzas: Seq[VisualStanza] = Seq(
+    val stanzas: List[VisualStanza] = List(
       callout,
       instruction,
       num1ListCo,
@@ -198,13 +198,13 @@ class AggregatorSpec extends BaseSpec {
       instruction2
     )
 
-    val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+    val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
     aggregatedStanzas(2) shouldBe NumberedList(Seq(num1ListCo))
     aggregatedStanzas(four) shouldBe NumberedList(Seq(num1ListCo))
   }
 
   "create two number list groups with multiple elems from a complex sequence of stanzas" in new NumberedListTest {
-    val stanzas: Seq[VisualStanza] = Seq(
+    val stanzas: List[VisualStanza] = List(
       callout,
       instruction,
       instruction1,
@@ -217,13 +217,13 @@ class AggregatorSpec extends BaseSpec {
       instruction2
     )
 
-    val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+    val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
     aggregatedStanzas(3) shouldBe NumberedList(Seq(num1ListCo, num2ListCo, num3ListCo))
     aggregatedStanzas(five) shouldBe NumberedList(Seq(num1ListCo, num2ListCo))
   }
 
   "create two number circle list groups with multiple elems from a complex sequence of stanzas" in new NumberedListTest {
-    val stanzas: Seq[VisualStanza] = Seq(
+    val stanzas: List[VisualStanza] = List(
       callout,
       instruction,
       instruction1,
@@ -236,7 +236,7 @@ class AggregatorSpec extends BaseSpec {
       instruction2
     )
 
-    val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+    val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
     aggregatedStanzas(3) shouldBe NumberedCircleList(Seq(num1CircListCo, num2CircListCo, num3CircListCo))
     aggregatedStanzas(five) shouldBe NumberedCircleList(Seq(num1CircListCo, num2CircListCo))
   }
@@ -249,7 +249,7 @@ class AggregatorSpec extends BaseSpec {
 
       val row: Row = Row(r1Cells, Seq(""))
 
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         pageStanza,
         callout,
         row,
@@ -257,7 +257,7 @@ class AggregatorSpec extends BaseSpec {
         EndStanza
       ).collect{case s: VisualStanza => s}
 
-      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
       aggregatedStanzas(1) shouldBe RowGroup(Seq(row))
     }
 
@@ -265,7 +265,7 @@ class AggregatorSpec extends BaseSpec {
 
     val row: Row = Row(r1Cells, Seq(""), stack = true)
 
-    val stanzas: Seq[VisualStanza] = Seq(
+    val stanzas: List[VisualStanza] = List(
       pageStanza,
       callout,
       row,
@@ -273,7 +273,7 @@ class AggregatorSpec extends BaseSpec {
       EndStanza
     ).collect{case s: VisualStanza => s}
 
-    val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+    val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
 
     aggregatedStanzas(1) shouldBe RowGroup(Seq(row))
   }
@@ -283,7 +283,7 @@ class AggregatorSpec extends BaseSpec {
     val row1: Row = Row(r1Cells, Seq(""))
     val row2: Row = Row(r2Cells, Seq(""))
 
-    val stanzas: Seq[VisualStanza] = Seq(
+    val stanzas: List[VisualStanza] = List(
       pageStanza,
       callout,
       row1,
@@ -292,7 +292,7 @@ class AggregatorSpec extends BaseSpec {
       EndStanza
     ).collect{case s: VisualStanza => s}
 
-    val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+    val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
 
     aggregatedStanzas(1) shouldBe RowGroup(Seq(row1))
     aggregatedStanzas(2) shouldBe RowGroup(Seq(row2))
@@ -303,7 +303,7 @@ class AggregatorSpec extends BaseSpec {
     val row1: Row = Row(r1Cells, Seq(""), stack = true)
     val row2: Row = Row(r2Cells, Seq(""), stack = true)
 
-    val stanzas: Seq[VisualStanza] = Seq(
+    val stanzas: List[VisualStanza] = List(
       pageStanza,
       callout,
       row1,
@@ -312,9 +312,9 @@ class AggregatorSpec extends BaseSpec {
       EndStanza
     ).collect{case s: VisualStanza => s}
 
-    val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+    val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
 
-    aggregatedStanzas(1) shouldBe RowGroup(Seq(row1, row2))
+    aggregatedStanzas(1) shouldBe RowGroup(List(row1, row2))
   }
 
   "create two row groups for two contiguous rows with stack set to true and false respectively" in new Test {
@@ -322,7 +322,7 @@ class AggregatorSpec extends BaseSpec {
     val row1: Row = Row(r1Cells, Seq(""), stack = true)
     val row2: Row = Row(r2Cells, Seq(""))
 
-    val stanzas: Seq[VisualStanza] = Seq(
+    val stanzas: List[VisualStanza] = List(
       pageStanza,
       instruction,
       row1,
@@ -332,7 +332,7 @@ class AggregatorSpec extends BaseSpec {
       EndStanza
     ).collect{case s: VisualStanza => s}
 
-    val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+    val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
 
     aggregatedStanzas(1) shouldBe RowGroup(Seq(row1))
     aggregatedStanzas(2) shouldBe RowGroup(Seq(row2))
@@ -343,7 +343,7 @@ class AggregatorSpec extends BaseSpec {
     val row1: Row = Row(r1Cells, Seq(""))
     val row2: Row = Row(r2Cells, Seq(""), stack = true)
 
-    val stanzas: Seq[VisualStanza] = Seq(
+    val stanzas: List[VisualStanza] = List(
       pageStanza,
       instruction,
       row1,
@@ -353,7 +353,7 @@ class AggregatorSpec extends BaseSpec {
       EndStanza
     ).collect{case s: VisualStanza => s}
 
-    val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+    val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
 
     aggregatedStanzas(1) shouldBe RowGroup(Seq(row1, row2))
   }
@@ -366,7 +366,7 @@ class AggregatorSpec extends BaseSpec {
     val row4: Row = Row(r4Cells, Seq(""), stack = true)
     val row5: Row = Row(r5Cells, Seq(""), stack = true)
 
-    val stanzas: Seq[VisualStanza] = Seq(
+    val stanzas: List[VisualStanza] = List(
       pageStanza,
       callout,
       row1,
@@ -378,7 +378,7 @@ class AggregatorSpec extends BaseSpec {
       EndStanza
     ).collect{case s: VisualStanza => s}
 
-    val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+    val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
 
     aggregatedStanzas(1) shouldBe RowGroup(Seq(row1, row2, row3, row4, row5))
   }
@@ -390,7 +390,7 @@ class AggregatorSpec extends BaseSpec {
     val row3: Row = Row(r3Cells, Seq(""))
     val row4: Row = Row(r4Cells, Seq(""), stack = true)
 
-    val stanzas: Seq[VisualStanza] = Seq(
+    val stanzas: List[VisualStanza] = List(
       pageStanza,
       row1,
       row2,
@@ -399,7 +399,7 @@ class AggregatorSpec extends BaseSpec {
       EndStanza
     ).collect{case s: VisualStanza => s}
 
-    val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+    val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
 
     aggregatedStanzas(0) shouldBe RowGroup(Seq(row1, row2))
     aggregatedStanzas(1) shouldBe RowGroup(Seq(row3, row4))
@@ -410,7 +410,7 @@ class AggregatorSpec extends BaseSpec {
     val row1: Row = Row(r1Cells, Seq(""))
     val row2: Row = Row(r2Cells, Seq(""), stack = true)
 
-    val stanzas: Seq[VisualStanza] = Seq(
+    val stanzas: List[VisualStanza] = List(
       pageStanza,
       callout,
       instruction,
@@ -421,7 +421,7 @@ class AggregatorSpec extends BaseSpec {
       EndStanza
     ).collect{case s: VisualStanza => s}
 
-    val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+    val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
     aggregatedStanzas(2) shouldBe RowGroup(Seq(row1))
     aggregatedStanzas(four) shouldBe RowGroup(Seq(row2))
   }
@@ -434,7 +434,7 @@ class AggregatorSpec extends BaseSpec {
     val row4: Row = Row(r4Cells, Seq(""))
     val row5: Row = Row(r5Cells, Seq(""), stack = true)
 
-    val stanzas: Seq[VisualStanza] = Seq(
+    val stanzas: List[VisualStanza] = List(
       pageStanza,
       callout,
       instruction,
@@ -449,7 +449,7 @@ class AggregatorSpec extends BaseSpec {
       EndStanza
     ).collect{case s: VisualStanza => s}
 
-    val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+    val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
 
     aggregatedStanzas(3) shouldBe RowGroup(Seq(row1, row2, row3))
     aggregatedStanzas(five) shouldBe RowGroup(Seq(row4, row5))
@@ -457,7 +457,7 @@ class AggregatorSpec extends BaseSpec {
 
   "return input sequence of stanzas if sequence does not contain row stanzas" in new Test {
 
-    val stanzas: Seq[VisualStanza] = Seq(
+    val stanzas: List[VisualStanza] = List(
       pageStanza,
       callout,
       instruction,
@@ -465,7 +465,7 @@ class AggregatorSpec extends BaseSpec {
       EndStanza
     ).collect{case s: VisualStanza => s}
 
-    val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+    val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
 
     aggregatedStanzas shouldBe stanzas
   }
@@ -486,8 +486,8 @@ class AggregatorSpec extends BaseSpec {
     }
 
     "not create NoteGroups of of length 1 when encountering isolated Note co" in new NoteTest {
-      val stanzas: Seq[VisualStanza] =
-        Seq(
+      val stanzas: List[VisualStanza] =
+        List(
           callout,
           callout1,
           instruction)
@@ -499,33 +499,33 @@ class AggregatorSpec extends BaseSpec {
 
     "leave two note callouts with stack set to false" in new NoteTest {
 
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         callout,
         callout1,
         callout1,
         instruction
       )
 
-      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
 
       aggregatedStanzas(1) shouldBe callout1
       aggregatedStanzas(2) shouldBe callout1
     }
 
     "create a note group with two entries for two contiguous note cos with stack set to true" in new NoteTest {
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         callout,
         callout2,
         callout3,
         instruction
       )
 
-      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
       aggregatedStanzas(1) shouldBe NoteGroup(Seq(callout2, callout3))
     }
 
     "create a note group with two note co with stack set to false and true respectively" in new NoteTest {
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         instruction,
         callout1,
         callout2,
@@ -533,13 +533,13 @@ class AggregatorSpec extends BaseSpec {
         callout
       )
 
-      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
 
       aggregatedStanzas(1) shouldBe NoteGroup(Seq(callout1, callout2))
     }
 
     "create a note group with multiple note cos" in new NoteTest {
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         callout,
         callout1,
         callout2,
@@ -548,25 +548,25 @@ class AggregatorSpec extends BaseSpec {
         instruction
       )
 
-      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
       aggregatedStanzas(1) shouldBe NoteGroup(Seq(callout1, callout2, callout3, callout4))
     }
 
     "create two note groups of size two from four contiguous elems where stack is false for the third elem" in new NoteTest {
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         callout2,
         callout3,
         callout1,
         callout4
       )
 
-      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
       aggregatedStanzas(0) shouldBe NoteGroup(Seq(callout2, callout3))
       aggregatedStanzas(1) shouldBe NoteGroup(Seq(callout1, callout4))
     }
 
     "leave two note callouts in sequence of stanzas" in new NoteTest {
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         callout,
         instruction,
         callout1,
@@ -575,13 +575,13 @@ class AggregatorSpec extends BaseSpec {
         instruction2
       )
 
-      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
       aggregatedStanzas(2) shouldBe callout1
       aggregatedStanzas(four) shouldBe callout1
     }
 
     "create two note groups with multiple elems from a complex sequence of stanzas" in new NoteTest {
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         callout,
         instruction,
         instruction1,
@@ -594,7 +594,7 @@ class AggregatorSpec extends BaseSpec {
         instruction2
       )
 
-      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
       aggregatedStanzas(3) shouldBe NoteGroup(Seq(callout1, callout2, callout3))
       aggregatedStanzas(five) shouldBe NoteGroup(Seq(callout1, callout2))
     }
@@ -616,43 +616,43 @@ class AggregatorSpec extends BaseSpec {
     }
 
     "not create YourCallGroups of of length 1 when encountering isolated YourCall co" in new YourCallTest {
-      val stanzas: Seq[VisualStanza] =
-        Seq(
+      val stanzas: List[VisualStanza] =
+        List(
           callout1,
           instruction)
 
-      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
       aggregatedStanzas(0) shouldBe callout1
       aggregatedStanzas(1) shouldBe instruction
     }
 
     "leave two YourCall callouts with stack set to false" in new YourCallTest {
 
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         callout1,
         callout1,
         instruction
       )
 
-      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
 
       aggregatedStanzas(0) shouldBe callout1
       aggregatedStanzas(1) shouldBe callout1
     }
 
     "create a YourCall group with two entries for two contiguous YourCall cos with stack set to true" in new YourCallTest {
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         callout2,
         callout3,
         instruction
       )
 
-      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
       aggregatedStanzas(0) shouldBe YourCallGroup(Seq(callout2, callout3))
     }
 
     "create a YourCall group with two YourCall co with stack set to false and true respectively" in new YourCallTest {
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         instruction,
         callout1,
         callout2,
@@ -660,13 +660,13 @@ class AggregatorSpec extends BaseSpec {
         callout
       )
 
-      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
 
       aggregatedStanzas(1) shouldBe YourCallGroup(Seq(callout1, callout2))
     }
 
     "create a YourCall group with multiple YourCall cos" in new YourCallTest {
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         callout1,
         callout2,
         callout3,
@@ -674,25 +674,25 @@ class AggregatorSpec extends BaseSpec {
         instruction
       )
 
-      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
       aggregatedStanzas(0) shouldBe YourCallGroup(Seq(callout1, callout2, callout3, callout4))
     }
 
     "create two YourCall groups of size two from four contiguous elems where stack is false for the third elem" in new YourCallTest {
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         callout2,
         callout3,
         callout1,
         callout4
       )
 
-      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
       aggregatedStanzas(0) shouldBe YourCallGroup(Seq(callout2, callout3))
       aggregatedStanzas(1) shouldBe YourCallGroup(Seq(callout1, callout4))
     }
 
     "leave two YourCall callouts in sequence of stanzas" in new YourCallTest {
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         instruction,
         callout1,
         instruction1,
@@ -700,13 +700,13 @@ class AggregatorSpec extends BaseSpec {
         instruction2
       )
 
-      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
       aggregatedStanzas(1) shouldBe callout1
       aggregatedStanzas(three) shouldBe callout1
     }
 
     "create two YourCall groups with multiple elems from a complex sequence of stanzas" in new YourCallTest {
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         callout,
         instruction,
         instruction1,
@@ -719,7 +719,7 @@ class AggregatorSpec extends BaseSpec {
         instruction2
       )
 
-      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
       aggregatedStanzas(3) shouldBe YourCallGroup(Seq(callout1, callout2, callout3))
       aggregatedStanzas(five) shouldBe YourCallGroup(Seq(callout1, callout2))
     }
@@ -741,46 +741,46 @@ class AggregatorSpec extends BaseSpec {
     }
 
     "not create ImportantGroup  of length 1 when encountering isolated Important co" in new ImportantTest {
-      val stanzas: Seq[VisualStanza] =
-        Seq(
+      val stanzas: List[VisualStanza] =
+        List(
           callout,
           callout1,
           instruction)
 
-      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
       aggregatedStanzas(0) shouldBe callout
       aggregatedStanzas(1) shouldBe callout1
     }
 
     "leave two Important callouts with stack set to false" in new ImportantTest {
 
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         callout,
         callout1,
         callout1,
         instruction
       )
 
-      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
 
       aggregatedStanzas(1) shouldBe callout1
       aggregatedStanzas(2) shouldBe callout1
     }
 
     "create a Important group with two entries for two contiguous Important cos with stack set to true" in new ImportantTest {
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         callout,
         callout2,
         callout3,
         instruction
       )
 
-      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
       aggregatedStanzas(1) shouldBe ImportantGroup(Seq(callout2, callout3))
     }
 
     "create a Important group with two Important co with stack set to false and true respectively" in new ImportantTest {
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         instruction,
         callout1,
         callout2,
@@ -788,13 +788,13 @@ class AggregatorSpec extends BaseSpec {
         callout
       )
 
-      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
 
       aggregatedStanzas(1) shouldBe ImportantGroup(Seq(callout1, callout2))
     }
 
     "create a Important group with multiple Important cos" in new ImportantTest {
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         callout,
         callout1,
         callout2,
@@ -803,25 +803,25 @@ class AggregatorSpec extends BaseSpec {
         instruction
       )
 
-      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
       aggregatedStanzas(1) shouldBe ImportantGroup(Seq(callout1, callout2, callout3, callout4))
     }
 
     "create two Important group of size two from four contiguous elems where stack is false for the third elem" in new ImportantTest {
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         callout2,
         callout3,
         callout1,
         callout4
       )
 
-      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
       aggregatedStanzas(0) shouldBe ImportantGroup(Seq(callout2, callout3))
       aggregatedStanzas(1) shouldBe ImportantGroup(Seq(callout1, callout4))
     }
 
     "leave two Important callouts in sequence of stanzas" in new ImportantTest {
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         callout,
         instruction,
         callout1,
@@ -830,13 +830,13 @@ class AggregatorSpec extends BaseSpec {
         instruction2
       )
 
-      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
       aggregatedStanzas(2) shouldBe callout1
       aggregatedStanzas(four) shouldBe callout1
     }
 
     "create two Important group with multiple elems from a complex sequence of stanzas" in new ImportantTest {
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         callout,
         instruction,
         instruction1,
@@ -849,7 +849,7 @@ class AggregatorSpec extends BaseSpec {
         instruction2
       )
 
-      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
       aggregatedStanzas(3) shouldBe ImportantGroup(Seq(callout1, callout2, callout3))
       aggregatedStanzas(five) shouldBe ImportantGroup(Seq(callout1, callout2))
     }
@@ -871,46 +871,46 @@ class AggregatorSpec extends BaseSpec {
     }
 
     "not create RequiredErrorGroup of length 1 when encountering isolated Error co" in new ErrorCalloutTest {
-      val stanzas: Seq[VisualStanza] =
-        Seq(
+      val stanzas: List[VisualStanza] =
+        List(
           callout,
           callout1,
           instruction)
 
-      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
       aggregatedStanzas(0) shouldBe callout
       aggregatedStanzas(1) shouldBe callout1
     }
 
     "leave two RequiredErrorGroups with stack set to false" in new ErrorCalloutTest {
 
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         callout,
         callout1,
         callout1,
         instruction
       )
 
-      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
 
       aggregatedStanzas(1) shouldBe callout1
       aggregatedStanzas(2) shouldBe callout1
     }
 
     "create a RequiredErrorGroup with two entries for two contiguous Error cos with stack set to true" in new ErrorCalloutTest {
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         callout,
         callout2,
         callout3,
         instruction
       )
 
-      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
       aggregatedStanzas(1) shouldBe RequiredErrorGroup(Seq(callout2, callout3))
     }
 
     "create a RequiredErrorGroup with two Error co with stack set to false and true respectively" in new ErrorCalloutTest {
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         instruction,
         callout1,
         callout2,
@@ -918,13 +918,13 @@ class AggregatorSpec extends BaseSpec {
         callout
       )
 
-      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
 
       aggregatedStanzas(1) shouldBe RequiredErrorGroup(Seq(callout1, callout2))
     }
 
     "create a RequiredErrorGroup with multiple Error cos" in new ErrorCalloutTest {
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         callout,
         callout1,
         callout2,
@@ -933,25 +933,25 @@ class AggregatorSpec extends BaseSpec {
         instruction
       )
 
-      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
       aggregatedStanzas(1) shouldBe RequiredErrorGroup(Seq(callout1, callout2, callout3, callout4))
     }
 
     "create two RequiredErrorGroup of size two from four contiguous elems where stack is false for the third elem" in new ErrorCalloutTest {
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         callout2,
         callout3,
         callout1,
         callout4
       )
 
-      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
       aggregatedStanzas(0) shouldBe RequiredErrorGroup(Seq(callout2, callout3))
       aggregatedStanzas(1) shouldBe RequiredErrorGroup(Seq(callout1, callout4))
     }
 
     "leave two RequiredErrorGroups in sequence of stanzas" in new ErrorCalloutTest {
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         callout,
         instruction,
         callout1,
@@ -960,13 +960,13 @@ class AggregatorSpec extends BaseSpec {
         instruction2
       )
 
-      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
       aggregatedStanzas(2) shouldBe callout1
       aggregatedStanzas(four) shouldBe callout1
     }
 
     "create two RequiredErrorGroup with multiple elems from a complex sequence of stanzas" in new ErrorCalloutTest {
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         callout,
         instruction,
         instruction1,
@@ -979,7 +979,7 @@ class AggregatorSpec extends BaseSpec {
         instruction2
       )
 
-      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
       aggregatedStanzas(3) shouldBe RequiredErrorGroup(Seq(callout1, callout2, callout3))
       aggregatedStanzas(five) shouldBe RequiredErrorGroup(Seq(callout1, callout2))
     }
@@ -1006,46 +1006,46 @@ class AggregatorSpec extends BaseSpec {
     }
 
     "not create TypeErrorGroup of length 1 when encountering isolated Error co" in new TypeErrorCalloutTest {
-      val stanzas: Seq[VisualStanza] =
-        Seq(
+      val stanzas: List[VisualStanza] =
+        List(
           callout,
           callout1,
           instruction)
 
-      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
       aggregatedStanzas(0) shouldBe callout
       aggregatedStanzas(1) shouldBe callout1
     }
 
     "leave two TypeErrorGroups with stack set to false" in new TypeErrorCalloutTest {
 
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         callout,
         callout1,
         callout1,
         instruction
       )
 
-      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
 
       aggregatedStanzas(1) shouldBe callout1
       aggregatedStanzas(2) shouldBe callout1
     }
 
     "create a TypeErrorGroup with two entries for two contiguous Error cos with stack set to true" in new TypeErrorCalloutTest {
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         callout,
         callout2,
         callout3,
         instruction
       )
 
-      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
       aggregatedStanzas(1) shouldBe TypeErrorGroup(Seq(callout2, callout3))
     }
 
     "create a TypeErrorGroup with two Error co with stack set to false and true respectively" in new TypeErrorCalloutTest {
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         instruction,
         callout1,
         callout2,
@@ -1053,13 +1053,13 @@ class AggregatorSpec extends BaseSpec {
         callout
       )
 
-      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
 
       aggregatedStanzas(1) shouldBe TypeErrorGroup(Seq(callout1, callout2))
     }
 
     "create a TypeErrorGroup with multiple Error cos" in new TypeErrorCalloutTest {
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         callout,
         callout1,
         callout2,
@@ -1068,25 +1068,25 @@ class AggregatorSpec extends BaseSpec {
         instruction
       )
 
-      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
       aggregatedStanzas(1) shouldBe TypeErrorGroup(Seq(callout1, callout2, callout3, callout4))
     }
 
     "create two TypeErrorGroup of size two from four contiguous elems where stack is false for the third elem" in new TypeErrorCalloutTest {
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         callout2,
         callout3,
         callout1,
         callout4
       )
 
-      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
       aggregatedStanzas(0) shouldBe TypeErrorGroup(Seq(callout2, callout3))
       aggregatedStanzas(1) shouldBe TypeErrorGroup(Seq(callout1, callout4))
     }
 
     "leave two TypeErrorGroups in sequence of stanzas" in new TypeErrorCalloutTest {
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         callout,
         instruction,
         callout1,
@@ -1095,13 +1095,13 @@ class AggregatorSpec extends BaseSpec {
         instruction2
       )
 
-      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
       aggregatedStanzas(2) shouldBe callout1
       aggregatedStanzas(four) shouldBe callout1
     }
 
     "create two TypeErrorGroup with multiple elems from a complex sequence of stanzas" in new TypeErrorCalloutTest {
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         callout,
         instruction,
         instruction1,
@@ -1114,7 +1114,7 @@ class AggregatorSpec extends BaseSpec {
         instruction2
       )
 
-      val aggregatedStanzas: Seq[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
+      val aggregatedStanzas: List[Stanza] = Aggregator.aggregateStanzas(Nil)(stanzas)
       aggregatedStanzas(3) shouldBe TypeErrorGroup(Seq(callout1, callout2, callout3))
       aggregatedStanzas(five) shouldBe TypeErrorGroup(Seq(callout1, callout2))
     }

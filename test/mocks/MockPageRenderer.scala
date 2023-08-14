@@ -29,7 +29,7 @@ trait MockPageRenderer extends MockFactory {
 
   object MockPageRenderer {
 
-    def renderPage(page: Page, labels: Labels): CallHandler[RequestOutcome[(Seq[VisualStanza], Labels, Option[DataInput])]] =
+    def renderPage(page: Page, labels: Labels): CallHandler[RequestOutcome[(List[VisualStanza], Labels, Option[DataInput])]] =
       (mockPageRenderer
         .renderPage(_: Page, _: Labels)(_: Messages))
         .expects(page, *, *)
