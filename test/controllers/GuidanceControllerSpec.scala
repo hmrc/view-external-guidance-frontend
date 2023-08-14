@@ -2302,6 +2302,12 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
 
     }
 
+    "translate ProgrammingError" in new TestBase {
+      val report = fromRuntimeError(ProgrammingError("Something went wrong"), "stanzaId")
+      report shouldBe "ProgrammingError: \'Something went wrong\' on page containing stanza \'stanzaId\'"
+
+    }
+
   }
 
 }
