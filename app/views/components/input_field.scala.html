@@ -23,6 +23,7 @@
     case _: TextInput => components.input_text_field(input, name, form)
     case _: CurrencyInput => components.input_currency_field(input, name, "decimal", form)
     case _: CurrencyPoundsOnlyInput => components.input_currency_field(input, name, "numeric", form)
+    case _ => {}
   }
 }
 </div>

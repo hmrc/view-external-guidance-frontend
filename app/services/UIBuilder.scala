@@ -20,13 +20,13 @@ import javax.inject.Singleton
 import scala.util.matching.Regex._
 import models._
 import models.ocelot.stanzas._
-import core.models.errors.Error
+import core.models.errors.{Error, InternalServerError}
 import core.models.RequestOutcome
 import core.models.ocelot.stanzas.{CurrencyInput, CurrencyPoundsOnlyInput, DateInput, Input, Question}
 import core.models.ocelot.stanzas._
-import core.models.ocelot.{PageReview, Labels, Link, EmbeddedParameterRegex, EmbeddedParameterGroup}
+import core.models.ocelot.{EmbeddedParameterGroup, EmbeddedParameterRegex, Labels, Link, PageReview}
 import core.models.ocelot.errors.UnsupportedUiPatternError
-import models.ui.{Answer, SequenceAnswer, BulletPointList, ConfirmationPanel, CyaSummaryList, Details, ErrorMsg, H1, H2, H3, H4, InsetText, WarningText}
+import models.ui.{Answer, BulletPointList, ConfirmationPanel, CyaSummaryList, Details, ErrorMsg, H1, H2, H3, H4, InsetText, SequenceAnswer, WarningText}
 import models.ui.{NameValueSummaryList, Page, Paragraph, RequiredErrorMsg, Table, Text, TypeErrorMsg, UIComponent, ValueErrorMsg, stackStanzas}
 import play.api.Logger
 import play.api.i18n.Messages
@@ -58,8 +58,8 @@ case class ValueTypeGroupError(override val missingFieldNames: List[String], ove
 class UIBuilder {
   val logger: Logger = Logger(getClass)
 
-  def buildPage(url: String, stanzas: Seq[VisualStanza], errStrategy: ErrorStrategy = NoError)(implicit ctx: UIContext): RequestOutcome[Page] = {
-    val transformPipeline: List[Seq[VisualStanza] => Seq[VisualStanza]] = List(Aggregator.aggregateStanzas(Nil), stackStanzas(Nil))
+  def buildPage(url: String, stanzas: List[VisualStanza], errStrategy: ErrorStrategy = NoError)(implicit ctx: UIContext): RequestOutcome[Page] = {
+    val transformPipeline: List[List[VisualStanza] => List[VisualStanza]] = List(Aggregator.aggregateStanzas(Nil), stackStanzas(Nil))
     fromStanzas(transformPipeline.foldLeft(stanzas){case (s, t) => t(s)}, Nil, errStrategy.default(stanzas)) match {
       case Right(stanzas) => Right(Page(url, stanzas))
       case Left(err) => Left(err)
@@ -67,7 +67,7 @@ class UIBuilder {
   }
 
   @tailrec
-  private def fromStanzas(stanzas: Seq[VisualStanza], acc: Seq[UIComponent], errStrategy: ErrorStrategy)(implicit ctx: UIContext): RequestOutcome[Seq[UIComponent]] =
+  private def fromStanzas(stanzas: List[VisualStanza], acc: List[UIComponent], errStrategy: ErrorStrategy)(implicit ctx: UIContext): RequestOutcome[List[UIComponent]] =
     stanzas match {
       case Nil => Right(acc)
       case (sg: StackedGroup) :: xs =>
@@ -77,19 +77,19 @@ class UIBuilder {
         }
       case (eg: RequiredErrorGroup) :: xs => fromStanzas(xs, acc ++ fromRequiredErrorGroup(eg, errStrategy), errStrategy)
       case (tg: TypeErrorGroup) :: xs => fromStanzas(xs, acc ++ fromTypeErrorGroup(tg, errStrategy), errStrategy)
-      case (i: Instruction) :: xs => fromStanzas(xs, acc ++ Seq(fromInstruction(i)), errStrategy)
-      case (ig: InstructionGroup) :: xs => fromStanzas(xs, acc ++ Seq(fromInstructionGroup(ig)), errStrategy)
-      case (rg: RowGroup) :: xs if rg.isCYASummaryList => fromStanzas(xs, acc ++ Seq(fromCYASummaryListRowGroup(rg)), errStrategy)
-      case (rg: RowGroup) :: xs if rg.isNameValueSummaryList => fromStanzas(xs, acc ++ Seq(fromNameValueSummaryListRowGroup(rg)), errStrategy)
-      case (nl: NumberedList) :: xs => fromStanzas(xs, acc ++ Seq(fromNumberedList(nl)), errStrategy)
-      case (nl: NumberedCircleList) :: xs => fromStanzas(xs, acc ++ Seq(fromNumberedCircleList(nl)), errStrategy)
+      case (i: Instruction) :: xs => fromStanzas(xs, acc ++ List(fromInstruction(i)), errStrategy)
+      case (ig: InstructionGroup) :: xs => fromStanzas(xs, acc ++ List(fromInstructionGroup(ig)), errStrategy)
+      case (rg: RowGroup) :: xs if rg.isCYASummaryList => fromStanzas(xs, acc ++ List(fromCYASummaryListRowGroup(rg)), errStrategy)
+      case (rg: RowGroup) :: xs if rg.isNameValueSummaryList => fromStanzas(xs, acc ++ List(fromNameValueSummaryListRowGroup(rg)), errStrategy)
+      case (nl: NumberedList) :: xs => fromStanzas(xs, acc ++ List(fromNumberedList(nl)), errStrategy)
+      case (nl: NumberedCircleList) :: xs => fromStanzas(xs, acc ++ List(fromNumberedCircleList(nl)), errStrategy)
       case (c: Callout) :: xs => fromStanzas(xs, acc ++ fromCallout(c, errStrategy), errStrategy)
-      case (in: Input) :: _ => fromStanzas(Nil, Seq(fromInput(in, acc)), errStrategy)
-      case (q: Question) :: _ => fromStanzas(Nil, Seq(fromQuestion(q, acc)), errStrategy)
-      case (s: Sequence) :: _ => fromStanzas(Nil, Seq(fromSequence(s, acc)), errStrategy)
-      case (ng: NoteGroup) :: xs => fromStanzas(xs, acc ++ Seq(fromNoteGroup(ng)), errStrategy)
-      case (wt: ImportantGroup) :: xs => fromStanzas(xs, acc ++ Seq(fromImportantGroup(wt)), errStrategy)
-      case (ycg: YourCallGroup) :: xs => fromStanzas(xs, acc ++ Seq(fromYourCallGroup(ycg)), errStrategy)
+      case (in: Input) :: _ => fromStanzas(Nil, List(fromInput(in, acc)), errStrategy)
+      case (q: Question) :: _ => fromStanzas(Nil, List(fromQuestion(q, acc)), errStrategy)
+      case (s: Sequence) :: _ => fromStanzas(Nil, List(fromSequence(s, acc)), errStrategy)
+      case (ng: NoteGroup) :: xs => fromStanzas(xs, acc ++ List(fromNoteGroup(ng)), errStrategy)
+      case (wt: ImportantGroup) :: xs => fromStanzas(xs, acc ++ List(fromImportantGroup(wt)), errStrategy)
+      case (ycg: YourCallGroup) :: xs => fromStanzas(xs, acc ++ List(fromYourCallGroup(ycg)), errStrategy)
       case x :: xs if ctx.labels.runMode == PageReview =>
         logger.warn(s"Encountered and ignored (PageReview usage) invalid VisualStanza due to accessibility rules, $x")
         fromStanzas(xs, acc, errStrategy)
@@ -99,21 +99,24 @@ class UIBuilder {
     }
 
   private def fromStackedGroup(sg: StackedGroup, errStrategy: ErrorStrategy)(implicit ctx: UIContext): RequestOutcome[Seq[UIComponent]] =
-    sg.group match {
+    sg.group.toList match {
       case (c: SubSectionCallout) :: (rg: RowGroup) :: xs if rg.isTableCandidate =>
-        fromStanzas(stackStanzas(Nil)(xs), Seq(fromTableRowGroup(TextBuilder.fromPhrase(c.text), rg)), errStrategy)
+        fromStanzas(stackStanzas(Nil)(xs), List(fromTableRowGroup(TextBuilder.fromPhrase(c.text), rg)), errStrategy)
       case (c: SubSectionCallout) :: (ng: NoteGroup) :: xs  =>
-        fromStanzas(stackStanzas(Nil)(xs), Seq(fromSectionAndNoteGroup(TextBuilder.fromPhrase(c.text), ng)), errStrategy)
+        fromStanzas(stackStanzas(Nil)(xs), List(fromSectionAndNoteGroup(TextBuilder.fromPhrase(c.text), ng)), errStrategy)
       case (c: SubSectionCallout) :: (nc: NoteCallout) :: xs  =>
-        fromStanzas(stackStanzas(Nil)(xs), Seq(fromSectionAndNoteCallout(TextBuilder.fromPhrase(c.text), nc)), errStrategy)
+        fromStanzas(stackStanzas(Nil)(xs), List(fromSectionAndNoteCallout(TextBuilder.fromPhrase(c.text), nc)), errStrategy)
       case x :: xs => // No recognised stacked pattern
         fromStanzas(x +: stackStanzas(Nil)(xs), Nil, errStrategy)
+      case Nil => // No recognised stacked pattern
+        logger.error("Empty stack group found")
+        Left(InternalServerError)
     }
 
   private def fromCYASummaryListRowGroup(rg: RowGroup)(implicit ctx: UIContext): UIComponent =
     CyaSummaryList(rg.paddedRows.map{row =>
       row.map(phrase => TextBuilder.fromPhrase(phrase)) match {
-        // If hint is missing, use firsd column text as hint
+        // If hint is missing, use first column text as hint
         case Seq(label, value, Text(Seq(l: models.ui.Link))) if l.hint.isEmpty =>
           Seq(label, value, Text(Seq(l.copy(hint = Some(label.asString)))))
         case rowAsText => rowAsText
@@ -154,7 +157,7 @@ class UIBuilder {
       Answer(answer, hint)
     }
     // Split out an Error callouts from body components
-    val (errorMsgs, uiElements) = partitionComponents(components, Seq.empty, Seq.empty)
+    val (errorMsgs, uiElements) = partitionComponents(components.toList, List.empty, List.empty)
     val (question, hint) = TextBuilder.fromPhraseWithOptionalHint(q.text)
     ui.Question(question, hint, uiElements, answers, errorMsgs)
   }
@@ -179,7 +182,7 @@ class UIBuilder {
 
   private def fromInput(input: Input, components: Seq[UIComponent])(implicit ctx: UIContext): UIComponent = {
     // Split out an Error callouts from body components
-    val (errorMsgs, uiElements) = partitionComponents(components, Seq.empty, Seq.empty)
+    val (errorMsgs, uiElements) = partitionComponents(components.toList, List.empty, List.empty)
     val name = TextBuilder.fromPhrase(input.name)
     val hint = input.help.map(phrase => TextBuilder.fromPhrase(phrase))
     input match {
@@ -192,7 +195,7 @@ class UIBuilder {
   }
 
   @tailrec
-  private def partitionComponents(components: Seq[UIComponent], errors: Seq[ErrorMsg], others: Seq[UIComponent]): (Seq[ErrorMsg], Seq[UIComponent]) =
+  private def partitionComponents(components: List[UIComponent], errors: List[ErrorMsg], others: List[UIComponent]): (List[ErrorMsg], List[UIComponent]) =
     components match {
       case Nil => (errors.reverse, others.reverse)
       case (e: ErrorMsg) :: xs => partitionComponents(xs, e +: errors, others)
@@ -252,7 +255,7 @@ class UIBuilder {
     val standardAnswers = s.options.map(p=> SequenceAnswer.tupled(TextBuilder.fromPhraseWithOptionalHint(p)))
 
     // Split out an Error callouts from body
-    val (errorMsgs, uiElements) = partitionComponents(body, Seq.empty, Seq.empty)
+    val (errorMsgs, uiElements) = partitionComponents(body.toList, List.empty, List.empty)
     val (question, hint) = TextBuilder.fromPhraseWithOptionalHint(s.text)
 
     ui.Sequence(question, hint, standardAnswers, exclusiveAnswer, uiElements, errorMsgs)

@@ -461,7 +461,7 @@ class GuidanceServiceSpec extends BaseSpec {
         .returns(Future.successful(Right({})))
 
       target.savePageState(processId, processCode, LabelCache()).map { outcome =>
-        (outcome: @unchecked) match {
+        (outcome) match {
           case Right(x) if x.equals(()) => succeed
           case Left(_) => fail()
         }

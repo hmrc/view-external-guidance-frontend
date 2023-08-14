@@ -71,7 +71,7 @@ class GuidanceService @Inject() (
                     (implicit hc: HeaderCarrier, context: ExecutionContext, messages: Messages): Future[RequestOutcome[PageContext]] =
     getPageEvaluationContext(processCode, url, previousPageByLink, sessionId).map{
       case Right(ctx) =>
-        uiBuilder.buildPage(ctx.page.url, ctx.visualStanzas)(UIContext(ctx.labels, ctx.pageMapById, messages)).fold(err => Left(err), page =>
+        uiBuilder.buildPage(ctx.page.url, ctx.visualStanzas.toList)(UIContext(ctx.labels, ctx.pageMapById, messages)).fold(err => Left(err), page =>
           Right(PageContext(ctx, page))
         )
       case Left(err) => Left(err)

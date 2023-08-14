@@ -22,6 +22,7 @@
       case di: DateInput => components.input_date(di, name, form)
       case i: Input => components.input(i, name, form)
       case s: Sequence => components.sequence(s, name, form)
+      case _ => {}
     }
   }
 
