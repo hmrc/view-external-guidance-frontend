@@ -16,7 +16,7 @@
 
 @import ui.H1
 
-@( h1: H1, field: String )( implicit messages: Messages, ctx: PageContext)
+@( h1: H1, field: String )( implicit ctx: PageContext)
  <h1 class="govuk-label-wrapper"><label class="govuk-label @if(ctx.page.reduceHeadings){govuk-label--l} else {govuk-label--xl}" for="@field">
    @components.render_text(h1.text)
    </label>

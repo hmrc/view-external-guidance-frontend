@@ -33,7 +33,7 @@ trait MockPageBuilder extends MockFactory {
         .buildPage(_: String, _: Process))
         .expects(key, process)
 
-    def pages(process: Process): CallHandler[Either[List[GuidanceError], Seq[Page]]] =
+    def pages(process: Process): CallHandler[Either[List[GuidanceError], List[Page]]] =
       (mockPageBuilder
         .pages(_: Process, _: String))
         .expects(process, *)

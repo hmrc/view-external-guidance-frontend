@@ -16,25 +16,23 @@
 
 package views.components
 
+import base.ViewFns
+import forms.providers.{DateFormProvider, StringFormProvider, StringListFormProvider}
+import models.PageContext
+import models.ui.{CurrencyInput, DateAnswer, DateInput, FormPage, ListAnswer, RequiredErrorMsg, Sequence, StringAnswer, Text, TypeErrorMsg, ValueErrorMsg}
+import org.jsoup.nodes.{Document, Element}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.data.Form
-import play.api.data.Forms._
-import play.api.inject.Injector
+import play.api.data.FormBinding.Implicits._
 import play.api.i18n.{Lang, Messages, MessagesApi}
+import play.api.inject.Injector
 import play.api.mvc.Request
 import play.api.test.FakeRequest
 import views.html._
-import forms.FormProvider
-import forms.providers.{DateFormProvider, StringListFormProvider, StringFormProvider}
-import models.PageContext
-import models.ui.{CurrencyInput, DateInput, FormPage, RequiredErrorMsg, Sequence, DateAnswer, ListAnswer, StringAnswer, Text, TypeErrorMsg, ValueErrorMsg}
-import base.ViewFns
-import org.jsoup.nodes.{Document, Element}
-import play.api.data.FormBinding.Implicits._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class ErrorSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with ViewFns {
 

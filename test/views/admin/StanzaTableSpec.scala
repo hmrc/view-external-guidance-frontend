@@ -16,19 +16,13 @@
 
 package views.admin
 
-import models.admin._
 import base.{BaseSpec, ViewFns, ViewSpec}
 import core.models.ocelot._
 import core.models.ocelot.stanzas._
-import org.jsoup.nodes.Element
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.i18n.{Lang, Messages, MessagesApi}
-import play.api.inject.Injector
+import models.admin._
+import play.api.i18n.{Messages, MessagesApi}
 import play.api.test.FakeRequest
-import play.twirl.api.Html
 import views.html.admin.stanza_table
-
-import scala.collection.JavaConverters._
 
 class StanzaTableSpec extends BaseSpec with ViewSpec with ViewFns {
 

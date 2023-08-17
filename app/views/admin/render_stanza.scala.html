@@ -18,7 +18,7 @@
 @import models.admin._
 @import core.models.ocelot.stanzas._
 
-@(s: PopulatedStanza, pageIds: Seq[String])(implicit messages: Messages)
+@(s: PopulatedStanza, pageIds: Seq[String])
   @{s match {
     case p: PageStanza => Html(
       s"<span><Strong>url</Strong>=${p.url}, <Strong>next</Strong>=${renderNext(p.next, pageIds)}, <Strong>stack</Strong>=${p.stack}</span>"

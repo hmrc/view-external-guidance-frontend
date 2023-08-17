@@ -106,14 +106,14 @@ class StanzaAggregatorSpec extends BaseSpec {
     val instruction10: Instruction = Instruction(instruction10Phrase, Seq("20"), None, stack = false)
     val row9: Row = Row(dl4r1Cells, Seq("21"), stack = true)
     val instruction11: Instruction = Instruction(instruction11Phrase, Seq("end"), None, stack = false)
-    val uiPreProcessTransformations: Seq[Seq[VisualStanza] => Seq[VisualStanza]] = Seq(Aggregator.aggregateStanzas(Nil))
+    val uiPreProcessTransformations: Seq[List[VisualStanza] => List[VisualStanza]] = Seq(Aggregator.aggregateStanzas(Nil))
   }
 
   "Stanza aggregator" must {
 
     "aggregate appropriate instructions and rows in a sequence of stanzas" in new Test {
 
-      val stanzas: Seq[VisualStanza] = Seq(
+      val stanzas: List[VisualStanza] = List(
         pageStanza,
         callout,
         instruction1,
@@ -140,7 +140,7 @@ class StanzaAggregatorSpec extends BaseSpec {
       ).collect{case s: VisualStanza => s}
 
 
-      val aggregatedStanzas: Seq[Stanza] = uiPreProcessTransformations.foldLeft(stanzas){case (s, t) => t(s)}
+      val aggregatedStanzas: List[Stanza] = uiPreProcessTransformations.foldLeft(stanzas){case (s, t) => t(s)}
 
       aggregatedStanzas.head shouldBe callout
       aggregatedStanzas(1) shouldBe instruction1
@@ -157,7 +157,7 @@ class StanzaAggregatorSpec extends BaseSpec {
 
     "return sequence of stanzas unchanged when no aggregation is necessary" in new Test {
 
-      val inputStanzas: Seq[VisualStanza] = Seq(
+      val inputStanzas: List[VisualStanza] = List(
         pageStanza,
         callout,
         instruction1,

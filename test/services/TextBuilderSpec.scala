@@ -27,7 +27,7 @@ class TextBuilderSpec extends BaseSpec {
   trait Test {
     val messagesApi: MessagesApi = injector.instanceOf[MessagesApi]
     implicit val messages: Messages = messagesApi.preferred(Seq())
-
+    private def messagesFn(k: String, args: Seq[Any])(implicit messages: Messages): String = messages(k, args: _*)
 
     val labelsMap = List(
                       ScalarLabel("X", List("43")),
@@ -39,7 +39,7 @@ class TextBuilderSpec extends BaseSpec {
                       ScalarLabel("BackslashValue", List("Hello\\World\\"))
                     ).map(l => (l.name -> l)).toMap
     val timescales = Map("RDelay" -> 23)
-    val labels: Labels = LabelCache(labelsMap, Map(), Nil, Map(), timescales, messages.apply, runMode = Published)
+    val labels: Labels = LabelCache(labelsMap, Map(), Nil, Map(), timescales, messagesFn, runMode = Published)
   }
 
   "Label expansion" must {

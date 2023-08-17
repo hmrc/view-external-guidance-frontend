@@ -16,20 +16,18 @@
 
 package views.components
 
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.inject.Injector
-import play.api.i18n.{Lang, Messages, MessagesApi}
+import base.{BaseSpec, ViewFns, ViewSpec}
 import core.models.ocelot.{LabelCache, Labels}
 import models.PageContext
-import models.ui.{Details, StandardPage, Text, BulletPointList, Paragraph}
-import views.html._
-import base.{BaseSpec, ViewFns, ViewSpec}
+import models.ui.{BulletPointList, Details, Paragraph, StandardPage, Text}
 import org.jsoup.nodes.{Document, Element}
 import org.jsoup.select.Elements
+import play.api.i18n.{Lang, Messages, MessagesApi}
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
+import views.html._
 import views.html.components.details
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class DetailsSpec extends BaseSpec with ViewFns with ViewSpec {
 

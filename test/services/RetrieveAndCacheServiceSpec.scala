@@ -45,7 +45,7 @@ class RetrieveAndCacheServiceSpec extends BaseSpec {
     val lastPageUrl = "/last-page"
     val lastUiPage: ui.Page = ui.Page(lastPageUrl, Seq())
 
-    val pages: Seq[Page] = Seq(
+    val pages: List[Page] = List(
       pageWithUrl(Process.StartStanzaId, firstPageUrl),
       pageWithUrl("1", "/page-1"),
       pageWithUrl("2", lastPageUrl)
@@ -98,7 +98,7 @@ class RetrieveAndCacheServiceSpec extends BaseSpec {
 
       target.retrieveAndCacheScratch(uuid, uuid).map{
         case Left(err) => err shouldBe NotFoundError
-        case Right(_) => fail
+        case Right(_) => fail()
       }
 
     }
@@ -136,7 +136,7 @@ class RetrieveAndCacheServiceSpec extends BaseSpec {
 
       target.retrieveAndCachePublished(processId, sessionRepoId).map{
         case Left(err) => err shouldBe NotFoundError
-        case Right(_) => fail
+        case Right(_) => fail()
       }
 
     }
@@ -174,7 +174,7 @@ class RetrieveAndCacheServiceSpec extends BaseSpec {
 
       target.retrieveAndCacheApproval(processId, sessionRepoId).map{
         case Left(err) => err shouldBe NotFoundError
-        case Right(_) => fail
+        case Right(_) => fail()
       }
 
     }
@@ -212,7 +212,7 @@ class RetrieveAndCacheServiceSpec extends BaseSpec {
 
       target.retrieveAndCacheApprovalByPageUrl("/page-1")(processId, sessionRepoId).map{
         case Left(err) => err shouldBe NotFoundError
-        case Right(_) => fail
+        case Right(_) => fail()
       }
 
     }
@@ -235,7 +235,7 @@ class RetrieveAndCacheServiceSpec extends BaseSpec {
         case Right((process, pges)) =>
           process shouldBe processWithProcessCode
           pges shouldBe pages
-        case Left(_) => fail
+        case Left(_) => fail()
       }
     }
 
@@ -246,7 +246,7 @@ class RetrieveAndCacheServiceSpec extends BaseSpec {
         .returns(Future.successful(Left(NotFoundError)))
 
       target.retrieveOnlyPublished(processId).map{
-        case Right((process, pges)) => fail
+        case Right((process, pges)) => fail()
         case Left(err) => err shouldBe NotFoundError
       }
 
@@ -270,7 +270,7 @@ class RetrieveAndCacheServiceSpec extends BaseSpec {
         case Right((process, pges)) =>
           process shouldBe processWithProcessCode
           pges shouldBe pages
-        case Left(_) => fail
+        case Left(_) => fail()
       }
 
     }
@@ -282,7 +282,7 @@ class RetrieveAndCacheServiceSpec extends BaseSpec {
         .returns(Future.successful(Left(NotFoundError)))
 
       target.retrieveOnlyApproval(processId).map{
-        case Right((process, pges)) => fail
+        case Right((process, pges)) => fail()
         case Left(err) => err shouldBe NotFoundError
       }
 

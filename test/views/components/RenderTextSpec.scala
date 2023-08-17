@@ -16,22 +16,21 @@
 
 package views.components
 
+import core.models.ocelot.{LabelCache, Labels, ScalarLabel}
 import models.PageContext
+import models.ui.{CurrencyInput, FormPage, H1, H2, H3, Link, Paragraph, Text, TextItem, Words}
+import org.jsoup.Jsoup
+import org.jsoup.nodes.{Document, Element}
+import org.jsoup.select.Elements
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.inject.Injector
 import play.api.i18n.{Lang, Messages, MessagesApi}
+import play.api.inject.Injector
+import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import play.twirl.api.Html
-import org.jsoup.Jsoup
 import views.html.components.{h1_heading, h2_heading, h3_heading, paragraph}
-import core.models.ocelot.{Label, ScalarLabel, LabelCache, Labels}
-import models.ui.{Currency, CurrencyInput, CurrencyPoundsOnly, DateStandard, FormPage, H1, H2, H3}
-import models.ui.{Link, Number, Paragraph, Text, TextItem, Txt, Words}
-import org.jsoup.nodes.{Document, Element}
-import org.jsoup.select.Elements
-import play.api.mvc.AnyContentAsEmpty
 
 class RenderTextSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite {
 
@@ -59,7 +58,7 @@ class RenderTextSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite 
   "render_text component" should {
 
     "generate English html containing bold text with default output formatting" in new Test {
-      val doc: Document = asDocument(paragraph(Paragraph(textWithBold))(messages, ctx))
+      val doc: Document = asDocument(paragraph(Paragraph(textWithBold))(ctx))
       val p: Element = doc.getElementsByTag("p").first
       val boldElement: Element = p.getElementsByTag("strong").first
       boldElement.text shouldBe "Blah"

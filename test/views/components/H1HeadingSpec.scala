@@ -16,21 +16,16 @@
 
 package views.components
 
+import base.ViewSpec
+import core.models.ocelot.{LabelCache, Labels}
+import models.ui._
 import org.jsoup.nodes.Element
-
-import play.api.i18n.{Lang, Messages, MessagesApi}
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.i18n.{Messages, MessagesApi}
 import play.api.inject.Injector
 import play.api.test.FakeRequest
-
 import play.twirl.api.Html
-
-import models.ui._
-import core.models.ocelot.{Labels, LabelCache}
 import views.html.components.h1_heading
-
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-
-import base.ViewSpec
 
 class H1HeadingSpec extends ViewSpec with GuiceOneAppPerSuite {
 
@@ -57,7 +52,7 @@ class H1HeadingSpec extends ViewSpec with GuiceOneAppPerSuite {
 
     "Define the correct GDS standard class" in new Test {
 
-      val markUp: Html = h1_heading(h1)(messages, ctx)
+      val markUp: Html = h1_heading(h1)(ctx)
 
       val h1Element: Element = getSingleElementByTag(markUp, "h1")
 
@@ -66,7 +61,7 @@ class H1HeadingSpec extends ViewSpec with GuiceOneAppPerSuite {
 
     "Define the correct GDS reduced class" in new Test {
 
-      val markUp: Html = h1_heading(h1)(messages, ctxReduced)
+      val markUp: Html = h1_heading(h1)(ctxReduced)
 
       val h1Element: Element = getSingleElementByTag(markUp, "h1")
 
@@ -75,7 +70,7 @@ class H1HeadingSpec extends ViewSpec with GuiceOneAppPerSuite {
 
     "display text" in new Test {
 
-      val markUp: Html = h1_heading(h1)(messages, ctx)
+      val markUp: Html = h1_heading(h1)(ctx)
       val h1Element: Element = getSingleElementByTag(markUp, "h1")
 
       h1Element.text() shouldBe h1Str

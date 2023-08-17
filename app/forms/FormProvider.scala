@@ -22,6 +22,7 @@ import play.api.data.Form
 import play.api.i18n.Messages
 import forms.providers._
 import core.models.ocelot.stanzas.{DataInput, DateInput, Input, Question, Sequence}
+import play.api.Logging
 
 trait FormProvider[T] {
   def bind(name: String)(implicit request: Request[_], messages: Messages): Binding
@@ -32,12 +33,15 @@ trait FormProvider[T] {
 class FormProviderFactory @Inject() (
   dateFormProvider: DateFormProvider,
   stringFormProvider: StringFormProvider,
-  stringListFormProvider: StringListFormProvider) {
+  stringListFormProvider: StringListFormProvider) extends Logging {
 
   def apply(input: DataInput): FormProvider[_] = input match {
       case _: DateInput => dateFormProvider
       case _: Input | _: Question => stringFormProvider
       case _: Sequence => stringListFormProvider
+      case _ =>
+        logger.error("ERROR!: Unsupported Stanza type, please provide a form provider for this stanza type")
+        stringFormProvider
     }
 }
 

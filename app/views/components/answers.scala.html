@@ -17,7 +17,7 @@
 @import models.ui._
 @import controllers.routes._
 
-@(q: Question, name: String, form: Form[_])(implicit request: Request[_], messages: Messages, ctx: PageContext)
+@(q: Question, name: String, form: Form[_])(implicit ctx: PageContext)
 
 <div class="govuk-radios@{if(q.horizontal) " govuk-radios--inline" else ""}">
   @for((ans, index) <- q.answers.zipWithIndex) {

@@ -21,7 +21,7 @@ import play.api.inject.Injector
 import play.api.i18n.{Messages, MessagesApi, Lang}
 import play.api.test.FakeRequest
 import org.jsoup.nodes.{Document, Element}
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import base.{ViewSpec, ViewFns}
 import uk.gov.hmrc.govukfrontend.views.html.components._
 

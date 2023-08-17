@@ -16,23 +16,20 @@
 
 package views.components
 
+import base.ViewFns
+import core.models.ocelot.{LabelCache, Labels}
+import forms.providers.StringFormProvider
+import models.ui.{Answer, BulletPointList, Paragraph, Question, RequiredErrorMsg, Text}
+import org.jsoup.nodes.Document
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.data.Forms.nonEmptyText
+import play.api.i18n.{Lang, Messages, MessagesApi}
 import play.api.inject.Injector
-import play.api.i18n.{Messages, MessagesApi, Lang}
 import play.api.test.FakeRequest
-import play.twirl.api.Html
-import org.jsoup._
 import views.html._
-import forms.FormProvider
-import forms.providers.StringFormProvider
-import models.ui.{Paragraph, Text, Question, Answer, BulletPointList, RequiredErrorMsg,StringAnswer}
-import core.models.ocelot.{Labels, LabelCache}
-import org.jsoup.nodes.{Document, Element}
-import scala.collection.JavaConverters._
-import base.ViewFns
+
+import scala.jdk.CollectionConverters._
 
 class QuestionSpec extends AnyWordSpec with Matchers with ViewFns with GuiceOneAppPerSuite {
 
@@ -115,11 +112,8 @@ class QuestionSpec extends AnyWordSpec with Matchers with ViewFns with GuiceOneA
       val doc: Document = asDocument(components.question(question, "test", formProvider("test"))(fakeRequest, messages, ctx))
       val hints = doc.getElementsByClass("govuk-hint govuk-radios__hint").asScala.toList
 
-      val hint1Attrs = elementAttrs(hints(0))
       hints(0).text() shouldBe ans1Hint
-      val hint2Attrs = elementAttrs(hints(1))
       hints(1).text() shouldBe ans2Hint
-      val hint3Attrs = elementAttrs(hints(2))
       hints(2).text() shouldBe ans3Hint
     }
 

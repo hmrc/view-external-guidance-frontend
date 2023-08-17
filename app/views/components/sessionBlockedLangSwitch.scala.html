@@ -16,7 +16,7 @@
 
 @import uk.gov.hmrc.hmrcfrontend.views.viewmodels.language.{En, Cy}
 
-@(lang: String, processCode: String)(implicit request: Request[_], messages: Messages)
+@(lang: String, processCode: String)(implicit messages: Messages)
 
 @switchLanguage = @{if (lang == En.code) Cy.code else En.code}
 

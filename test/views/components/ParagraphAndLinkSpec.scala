@@ -16,18 +16,17 @@
 
 package views.components
 
+import core.models.ocelot.{LabelCache, Labels}
+import models.ui.{Link, Paragraph, PreviousPageLinkQuery, Text}
+import org.jsoup.nodes.{Document, Element}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.inject.Injector
 import play.api.i18n.{Lang, Messages, MessagesApi}
+import play.api.inject.Injector
 import play.api.test.FakeRequest
 import views.html.components.{link, link_withHint, paragraph}
-import models.ui.{Link, Paragraph, PreviousPageLinkQuery, Text}
-import org.jsoup.nodes.{Attributes, Document, Element}
-
-import scala.collection.JavaConverters._
-import core.models.ocelot.{LabelCache, Labels}
+import scala.jdk.CollectionConverters._
 
 class ParagraphAndLinkSpec extends AnyWordSpec with Matchers with base.ViewFns with GuiceOneAppPerSuite {
 
@@ -122,7 +121,6 @@ class ParagraphAndLinkSpec extends AnyWordSpec with Matchers with base.ViewFns w
       spans(0).text shouldBe "BBC News"
       spans(1).text shouldBe "HINT"
 
-      val link4Attrs = links(3).attributes.asScala.toList.map(attr => (attr.getKey, attr.getValue)).toMap
       elementAttrs(links(3))("href") shouldBe dest2
       elementAttrs(links(3))("class") shouldBe "govuk-link"
       elementAttrs(links(3)).get("target") shouldBe None

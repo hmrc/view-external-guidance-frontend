@@ -16,16 +16,16 @@
 
 package views.components
 
+import base.ViewSpec
+import core.models.ocelot.{LabelCache, Labels}
+import models.ui._
 import org.jsoup.nodes.Element
-import play.api.i18n.{Lang, Messages, MessagesApi}
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.i18n.{Messages, MessagesApi}
 import play.api.inject.Injector
 import play.api.test.FakeRequest
 import play.twirl.api.Html
-import core.models.ocelot.{Labels, LabelCache}
-import models.ui._
 import views.html.components.h2_heading
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import base.ViewSpec
 
 class H2HeadingSpec extends ViewSpec with GuiceOneAppPerSuite {
 
@@ -47,21 +47,21 @@ class H2HeadingSpec extends ViewSpec with GuiceOneAppPerSuite {
 
   "Creating a level 2 heading with some content" must {
     "Define the correct GDS standard class" in new Test {
-      val markUp: Html = h2_heading(h2)(messages, ctx)
+      val markUp: Html = h2_heading(h2)(ctx)
       val h2Element: Element = getSingleElementByTag(markUp, "h2")
 
       h2Element.hasClass("govuk-heading-l") shouldBe true
     }
 
     "Define the correct GDS reduced class" in new Test {
-      val markUp: Html = h2_heading(h2)(messages, ctxReduced)
+      val markUp: Html = h2_heading(h2)(ctxReduced)
       val h2Element: Element = getSingleElementByTag(markUp, "h2")
 
       h2Element.hasClass("govuk-heading-m") shouldBe true
     }
 
     "display text" in new Test {
-      val markUp: Html = h2_heading(h2)(messages, ctx)
+      val markUp: Html = h2_heading(h2)(ctx)
       val h2Element: Element = getSingleElementByTag(markUp, "h2")
 
       h2Element.text() shouldBe h2Str

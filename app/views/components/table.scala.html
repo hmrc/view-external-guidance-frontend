@@ -18,7 +18,7 @@
 @import controllers.routes._
 @import models.ui.Table
 
-@(tbl: Table)(implicit request: Request[_], messages: Messages, ctx: PageContext)
+@(tbl: Table)(implicit ctx: PageContext)
 <table class="govuk-table">
   <caption class="govuk-table__caption">@components.render_text(tbl.caption)</caption>
     <thead class="govuk-table__head">

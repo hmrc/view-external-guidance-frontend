@@ -16,7 +16,7 @@
 
 @import ui.H1
 
-@( h1: H1 )( implicit messages: Messages, ctx: PageContext)
+@( h1: H1 )( implicit ctx: PageContext)
 <legend class="govuk-fieldset__legend @if(ctx.page.reduceHeadings){govuk-fieldset__legend--l} else {govuk-fieldset__legend--xl}">
  <h1 class="govuk-fieldset__heading">
   @components.render_text(h1.text)

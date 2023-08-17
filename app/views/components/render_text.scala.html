@@ -19,7 +19,7 @@
 @import play.twirl.api.StringInterpolation
 @import core.models.ocelot.Labels
 
-@(txt: ui.Text)(implicit messages: Messages, ctx: PageContext)
+@(txt: ui.Text)(implicit ctx: PageContext)
 @Html(
   txt.items.map{
     case w: Words if w.bold => s"<strong>$w</strong>"

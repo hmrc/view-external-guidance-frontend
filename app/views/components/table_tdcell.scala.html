@@ -18,7 +18,7 @@
 @import controllers.routes._
 @import models.ui.Text
 
-@(text: Text, numeric: Boolean)(implicit request: Request[_], messages: Messages, ctx: PageContext)
+@(text: Text, numeric: Boolean)(implicit ctx: PageContext)
 <td class=@if(numeric){"govuk-table__cell govuk-table__cell--numeric"} else{"govuk-table__cell"}>
   @components.render_text(text)
 </td>

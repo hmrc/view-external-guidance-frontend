@@ -16,11 +16,9 @@
 
 package core.models.ocelot.stanzas
 
-import core.models.ocelot.LabelCache
 import base.BaseSpec
+import core.models.ocelot._
 import play.api.libs.json._
-
-import core.models.ocelot.{Label, Labels, LabelCache, ListLabel, ScalarLabel}
 
 class ValueStanzaSpec extends BaseSpec {
 

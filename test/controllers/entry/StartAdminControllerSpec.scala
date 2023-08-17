@@ -17,20 +17,18 @@
 package controllers.entry
 
 import base.BaseSpec
+import core.models.errors._
+import core.models.ocelot.stanzas._
+import core.models.ocelot._
 import mocks.MockRetrieveAndCacheService
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.Status
-import play.api.mvc._
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import play.api.test.Helpers.stubMessagesControllerComponents
-import core.models.errors._
-import scala.concurrent.Future
-import core.models.ocelot.stanzas._
-import core.models.ocelot._
-import core.models.ocelot.{Meta, Process}
 import views.html._
+
+import scala.concurrent.Future
 
 class StartAdminControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
 

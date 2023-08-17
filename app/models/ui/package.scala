@@ -29,14 +29,14 @@ package object ui {
   implicit def toText(p: Phrase)(implicit lang: Lang): Text = Text(p.value(lang))
 
   @tailrec
-  def stackStanzas(acc: Seq[Seq[VisualStanza]])(stanzas: Seq[VisualStanza]): Seq[VisualStanza] =
-    stanzas match {
+  def stackStanzas(acc: List[List[VisualStanza]])(stanzas: List[VisualStanza]): List[VisualStanza] =
+    (stanzas) match {
       case Nil => acc.collect{
         case s if s.length > 1 => StackedGroup(s)
         case s => s.head
       }
-      case x :: xs if acc.isEmpty => stackStanzas(Seq(Seq(x)))(xs)
+      case x :: xs if acc.isEmpty => stackStanzas(List(List(x)))(xs)
       case x :: xs if x.stack => stackStanzas(acc.init :+ (acc.last :+ x))(xs)
-      case x :: xs => stackStanzas(acc :+ Seq(x))(xs)
+      case x :: xs => stackStanzas(acc :+ List(x))(xs)
     }
 }

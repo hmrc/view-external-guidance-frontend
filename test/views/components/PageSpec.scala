@@ -17,23 +17,18 @@
 package views.components
 
 import base.{ViewFns, ViewSpec}
+import forms.providers.{StringFormProvider, StringListFormProvider}
+import models.PageContext
+import models.ui.{Answer, BulletPointList, ConfirmationPanel, CurrencyInput, CyaSummaryList, Details, FormPage, H1, InsetText, NumberedCircleList, NumberedList, Paragraph, Question, RequiredErrorMsg, Sequence, SequenceAnswer, StandardPage, Text, WarningText}
+import org.jsoup.nodes.{Document, Element}
+import org.jsoup.select.Elements
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.data.Forms.nonEmptyText
 import play.api.i18n.{Lang, Messages, MessagesApi}
 import play.api.inject.Injector
 import play.api.test.FakeRequest
-import forms.FormProvider
-import forms.providers.{StringListFormProvider, StringFormProvider}
-import models.PageContext
-import models.ui.{Answer, BulletPointList, Details, ConfirmationPanel, CurrencyInput, CyaSummaryList}
-import models.ui.{FormPage, H1, InsetText, NumberedCircleList, NumberedList, Sequence, SequenceAnswer}
-import models.ui.{Paragraph, Question, RequiredErrorMsg, StandardPage, Text, WarningText}
-import org.jsoup.nodes.{Document, Element}
-import org.jsoup.select.Elements
-
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class PageSpec extends AnyWordSpec with Matchers with ViewSpec with ViewFns with GuiceOneAppPerSuite {
 

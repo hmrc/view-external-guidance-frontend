@@ -37,6 +37,7 @@ package object controllers {
     case e: UnsupportedOperationError => messages("guidance.error.unsupported_operation", stanzaId, e.op, e.left, e.right)
     case NonTerminatingPageError => messages("guidance.error.nonterminating_loop", stanzaId)
     case UnsupportedUiPatternError => messages("guidance.error.unsupported_ui_pattern", stanzaId)
+    case e: ProgrammingError => messages("guidance.error.programming_error", e.msg, stanzaId)
   }
 
   def errorSolutions(errors: List[RuntimeError], stanzaId: String)(implicit messages: Messages): List[List[String]] =
@@ -51,7 +52,10 @@ package object controllers {
              messages("guidance.error.unsupported_ui_pattern.soln2"),
              messages("guidance.error.unsupported_ui_pattern.soln3"),
              messages("guidance.error.unsupported_ui_pattern.soln4"))
-    }).collect{case Some(s) => s}
+    }, errors.collectFirst{
+      case e: ProgrammingError => List(messages("guidance.error.programming_error", e.msg, stanzaId))
+    }
+    ).collect{case Some(s) => s}
 
   def decodeUrlPath(url: String): Option[String] =
     try { Some(java.net.URLDecoder.decode(url, "UTF-8"))}

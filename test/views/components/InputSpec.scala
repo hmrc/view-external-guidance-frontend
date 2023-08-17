@@ -16,11 +16,10 @@
 
 package views.components
 
-import forms.FormProvider
+import core.models.ocelot.{LabelCache, Labels, Phrase}
 import forms.providers.{DateFormProvider, StringFormProvider}
-import core.models.ocelot.{Label, LabelCache, Labels, Phrase}
-import models.ui.{BulletPointList, CurrencyInput, DateInput, FormPage, H2, H3, H4, Input, NumberInput}
-import models.ui.{Paragraph, RequiredErrorMsg, DateAnswer, Text, TextInput, ValueErrorMsg,StringAnswer}
+import models.PageContext
+import models.ui._
 import org.jsoup._
 import org.jsoup.nodes.{Document, Element}
 import org.jsoup.select.Elements
@@ -28,17 +27,14 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.data.Form
-import play.api.data.Forms.nonEmptyText
+import play.api.data.FormBinding.Implicits._
 import play.api.i18n.{Lang, Messages, MessagesApi}
 import play.api.inject.Injector
 import play.api.mvc.{AnyContentAsEmpty, Request}
 import play.api.test.FakeRequest
 import play.twirl.api.Html
 import views.html._
-import play.api.data.FormBinding.Implicits._
-
-import scala.collection.JavaConverters._
-import models.PageContext
+import scala.jdk.CollectionConverters._
 
 class InputSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite {
 

@@ -36,7 +36,7 @@ class SequencePageRenderSpec extends BaseSpec with ProcessJson {
     def followNext(next: Option[String], l: Labels, process: Process, f: (Page, Labels) => Unit): Unit =
       next.map(nxt => pageBuilder.buildPage(nxt, process).fold(e => fail(e.toString), p => f(p,l)))
     def renderPagePostSubmit(p: Page, l: Labels, a: String): (Option[String], Labels) = {
-      renderer.renderPagePostSubmit(p, l, a).fold(_ => fail, res => res)
+      renderer.renderPagePostSubmit(p, l, a).fold(_ => fail(), res => res)
     }
   }
 

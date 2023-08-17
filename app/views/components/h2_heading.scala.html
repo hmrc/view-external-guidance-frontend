@@ -17,7 +17,7 @@
 @import ui.H2
 @import core.models.ocelot.Labels
 
-@( h2: H2 )(implicit messages: Messages, ctx: PageContext)
+@( h2: H2 )(implicit ctx: PageContext)
 
 <h2 class="@if(ctx.page.reduceHeadings){govuk-heading-m} else {govuk-heading-l}">@components.render_text(h2.text)</h2>
 

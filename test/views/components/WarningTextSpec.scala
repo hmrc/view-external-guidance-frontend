@@ -27,8 +27,6 @@ import play.api.test.FakeRequest
 import play.twirl.api.Html
 import views.html.components.warning_text
 
-import scala.collection.JavaConverters._
-
 class WarningTextSpec extends ViewSpec with ViewFns with GuiceOneAppPerSuite {
 
   private trait Test {

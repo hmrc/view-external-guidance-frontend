@@ -21,7 +21,7 @@ import core.models.ocelot.{LabelCache, Labels}
 import models.ui._
 import org.jsoup.nodes.Element
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.i18n.{Lang, Messages, MessagesApi}
+import play.api.i18n.{Messages, MessagesApi}
 import play.api.inject.Injector
 import play.api.test.FakeRequest
 import play.twirl.api.Html
@@ -54,7 +54,7 @@ class H1HeadingWithFieldsetSpec extends ViewSpec with GuiceOneAppPerSuite {
 
   "Creating a level 1 heading with some content" must {
     "Define the correct GDS standard class" in new Test {
-      val markUp: Html = h1_within_legend_with_fieldset(h1)(messages, ctx)
+      val markUp: Html = h1_within_legend_with_fieldset(h1)(ctx)
 
       val h1Element: Element = getSingleElementByTag(markUp, "h1")
       h1Element.hasClass("govuk-fieldset__heading") shouldBe true
@@ -64,7 +64,7 @@ class H1HeadingWithFieldsetSpec extends ViewSpec with GuiceOneAppPerSuite {
     }
 
     "Define the correct GDS reduced class" in new Test {
-      val markUp: Html = h1_within_legend_with_fieldset(h1)(messages, ctxReduced)
+      val markUp: Html = h1_within_legend_with_fieldset(h1)(ctxReduced)
       val h1Element: Element = getSingleElementByTag(markUp, "h1")
       h1Element.hasClass("govuk-fieldset__heading") shouldBe true
 
@@ -73,7 +73,7 @@ class H1HeadingWithFieldsetSpec extends ViewSpec with GuiceOneAppPerSuite {
     }
 
     "display text in English" in new Test {
-      val markUp: Html = h1_within_legend_with_fieldset(h1)(messages, ctx)
+      val markUp: Html = h1_within_legend_with_fieldset(h1)(ctx)
       val legendElement: Element = getSingleElementByTag(markUp, "legend")
 
       legendElement.text() shouldBe h1English

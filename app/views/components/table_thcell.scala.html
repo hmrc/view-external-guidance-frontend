@@ -18,7 +18,7 @@
 @import controllers.routes._
 @import models.ui.Text
 
-@(text: Text, scope: String, numeric: Boolean = false)(implicit request: Request[_], messages: Messages, ctx: PageContext)
+@(text: Text, scope: String, numeric: Boolean = false)(implicit ctx: PageContext)
 <th scope="@scope" class=@if(numeric){"govuk-table__header govuk-table__header--numeric"} else {"govuk-table__header"}>@components.render_text(text)</th>
 @{
      //$COVERAGE-OFF$

@@ -17,10 +17,10 @@
 package views.components
 
 import config.AppConfig
-import javax.inject.Inject
 import play.api.i18n.Messages
-import play.api.mvc.Request
 import uk.gov.hmrc.govukfrontend.views.viewmodels.footer.FooterItem
+
+import javax.inject.Inject
 
 class FooterLinks @Inject() (implicit appConfig: AppConfig) {
 
@@ -44,16 +44,16 @@ class FooterLinks @Inject() (implicit appConfig: AppConfig) {
     Some(appConfig.govukHelp)
   )
 
-  def accecssibilityLink()(implicit messages: Messages, request:Request[_]): FooterItem = FooterItem(
+  def accecssibilityLink()(implicit messages: Messages): FooterItem = FooterItem(
     Some(messages("footer.links.accessibility.text")),
     Some(appConfig.accessibilityStatement)
   )
 
-  def items(implicit messages: Messages, request:Request[_]): Seq[FooterItem] = Seq(
-    cookieLink,
-    accecssibilityLink,
-    privacyLink,
-    termsConditionsLink,
-    govukHelpLink
+  def items(implicit messages: Messages): Seq[FooterItem] = Seq(
+    cookieLink(),
+    accecssibilityLink(),
+    privacyLink(),
+    termsConditionsLink(),
+    govukHelpLink()
   )
 }
