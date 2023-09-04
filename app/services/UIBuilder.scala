@@ -71,13 +71,16 @@ class UIBuilder {
                          (implicit ctx: UIContext): RequestOutcome[List[UIComponent]] =
     stanzas match {
       case Nil => Right(acc)
-      case StackedGroup(_, (c: SubSectionCallout) :: (rg: RowGroup) :: xs, _) :: others if rg.isTableCandidate =>
-        fromStanzas(stackStanzas(Nil)(xs) ++ others, acc ++ List(fromTableRowGroup(TextBuilder.fromPhrase(c.text), rg)), errStrategy)
-      case StackedGroup(_, (c: SubSectionCallout) :: (ng: NoteGroup) :: xs, _) :: others =>
-        fromStanzas(stackStanzas(Nil)(xs) ++ others, acc ++ List(fromSectionAndNoteGroup(TextBuilder.fromPhrase(c.text), ng)), errStrategy)
-      case StackedGroup(_, (c: SubSectionCallout) :: (nc: NoteCallout) :: xs, _) :: others =>
-        fromStanzas(stackStanzas(Nil)(xs) ++ others, acc ++ List(fromSectionAndNoteCallout(TextBuilder.fromPhrase(c.text), nc)), errStrategy)
-      case StackedGroup(_, x :: xs, _) :: others => fromStanzas(x :: stackStanzas(Nil)(xs) ++ others, acc, errStrategy)
+      case (sg: StackedGroup) :: xs => sg.group.toList match {
+        case (c: SubSectionCallout) :: (rg: RowGroup) :: xsgroup if rg.isTableCandidate =>
+          fromStanzas(stackStanzas(Nil)(xsgroup) ++ xs, acc ++ List(fromTableRowGroup(TextBuilder.fromPhrase(c.text), rg)), errStrategy)
+        case (c: SubSectionCallout) :: (ng: NoteGroup) :: xsgroup =>
+          fromStanzas(stackStanzas(Nil)(xsgroup) ++ xs, acc ++ List(fromSectionAndNoteGroup(TextBuilder.fromPhrase(c.text), ng)), errStrategy)
+        case (c: SubSectionCallout) :: (nc: NoteCallout) :: xsgroup =>
+          fromStanzas(stackStanzas(Nil)(xsgroup) ++ xs, acc ++ List(fromSectionAndNoteCallout(TextBuilder.fromPhrase(c.text), nc)), errStrategy)
+        case x :: xsgroup => fromStanzas(x :: stackStanzas(Nil)(xsgroup) ++ xs, acc, errStrategy)
+        case Nil => fromStanzas(xs, acc, errStrategy)
+      }
       case (eg: RequiredErrorGroup) :: xs => fromStanzas(xs, acc ++ fromRequiredErrorGroup(eg, errStrategy), errStrategy)
       case (tg: TypeErrorGroup) :: xs => fromStanzas(xs, acc ++ fromTypeErrorGroup(tg, errStrategy), errStrategy)
       case (i: Instruction) :: xs => fromStanzas(xs, acc ++ List(fromInstruction(i)), errStrategy)

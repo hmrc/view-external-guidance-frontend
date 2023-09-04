@@ -1677,6 +1677,48 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
     }
   }
 
+  "UIBuilder Date stacking Input processing" must {
+    trait DateInputTest extends BaseTest {
+      implicit val urlMap: Map[String, PageDesc] =
+        Map(
+          Process.StartStanzaId -> PageDesc(Process.StartStanzaId, "/blah"),
+          "3" -> PageDesc("3", "dummy-path"),
+          "4" -> PageDesc("4", "dummy-path/input"),
+          "5" -> PageDesc("5", "dummy-path/blah"),
+          "6" -> PageDesc("6", "dummy-path/anotherinput"),
+          "34" -> PageDesc("34", "dummy-path/next")
+        )
+      val inputNext = Seq("4")
+      val inputPhrase: Phrase = Phrase(Vector("Some Text", "Welsh: Some Text"))
+      val helpPhrase: Phrase = Phrase(Vector("Help text", "Welsh: Help text"))
+      val stanzas = List(
+        KeyedStanza("start", PageStanza("/blah", Seq("1"), false)),
+        KeyedStanza("1", ErrorCallout(Phrase(Vector("Some Error Text", "Welsh: Some Error Text")), Seq("11"), true)),
+        KeyedStanza("11", ErrorCallout(Phrase(Vector("Some Error Text {0}", "Welsh: Some Error Text {0}")), Seq("111"), true)),
+        KeyedStanza("111", ErrorCallout(Phrase(Vector("Some Error Text {0} and {1}", "Welsh: Some Error Text {0} and {1}")), Seq("2"), true)),
+        KeyedStanza("2", TypeErrorCallout(Phrase(Vector("Some Error Text", "Welsh: Some Error Text")), Seq("22"), true)),
+        KeyedStanza("22", TypeErrorCallout(Phrase(Vector("Some Error Text {0}", "Welsh: Some Error Text {0}")), Seq("222"), true)),
+        KeyedStanza("222", TypeErrorCallout(Phrase(Vector("Some Error Text {0} and {1}", "Welsh: Some Error Text {0} and {1}")), Seq("5"), true)),
+        //KeyedStanza("3", SectionCallout(Phrase(Vector("Some Text", "Welsh: Some Text")), Seq("4"), false)),
+        KeyedStanza("4", Instruction(Phrase(Vector("Some Text", "Welsh: Some Text")), Seq("end"), None, true))
+      )
+      val dateInput = DateInput(inputNext, inputPhrase, Some(helpPhrase), label ="input1", None, stack = true)
+      val datePage = Page(Process.StartStanzaId, "/test-page", stanzas :+ KeyedStanza("5", dateInput), Seq.empty)
+      val uiBuilder: UIBuilder = new UIBuilder()
+
+      implicit val ctx: UIContext = UIContext(labels, urlMap, messages)
+    }
+
+    "Maintain order of components within an Input" in new DateInputTest {
+      uiBuilder.buildPage(datePage.url, datePage.stanzas.toList.collect{case s: VisualStanza => s}, ValueMissingError) match {
+        case Right(i: FormPage) => succeed
+        case x => fail(s"Should return FormPage: found $x")
+      }
+    }
+
+  }
+
+
   "UIBuilder Details Component processing" must {
     trait DetailsTest extends Test {
       val sectionPhrase = Phrase(Vector("Visible text", "Welsh visible Text"))
