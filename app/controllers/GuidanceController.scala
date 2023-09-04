@@ -254,7 +254,9 @@ class GuidanceController @Inject() (
       case Right(ctx) =>
         ctx.page match {
           case page: FormPage => formView(page, ctx, inputName, form)
-          case _ => errorHandler.badRequestTemplateWithProcessCode(Some(ctx.processCode))
+          case page => 
+            logger.error(s"ERROR: Expected a form page, but standard page created $page")
+            errorHandler.badRequestTemplateWithProcessCode(Some(ctx.processCode))
         }
     }
 
