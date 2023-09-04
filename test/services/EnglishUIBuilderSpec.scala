@@ -1699,7 +1699,6 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
         KeyedStanza("2", TypeErrorCallout(Phrase(Vector("Some Error Text", "Welsh: Some Error Text")), Seq("22"), true)),
         KeyedStanza("22", TypeErrorCallout(Phrase(Vector("Some Error Text {0}", "Welsh: Some Error Text {0}")), Seq("222"), true)),
         KeyedStanza("222", TypeErrorCallout(Phrase(Vector("Some Error Text {0} and {1}", "Welsh: Some Error Text {0} and {1}")), Seq("5"), true)),
-        //KeyedStanza("3", SectionCallout(Phrase(Vector("Some Text", "Welsh: Some Text")), Seq("4"), false)),
         KeyedStanza("4", Instruction(Phrase(Vector("Some Text", "Welsh: Some Text")), Seq("end"), None, true))
       )
       val dateInput = DateInput(inputNext, inputPhrase, Some(helpPhrase), label ="input1", None, stack = true)
@@ -1709,15 +1708,13 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
       implicit val ctx: UIContext = UIContext(labels, urlMap, messages)
     }
 
-    "Maintain order of components within an Input" in new DateInputTest {
-      uiBuilder.buildPage(datePage.url, datePage.stanzas.toList.collect{case s: VisualStanza => s}, ValueMissingError) match {
+    "Create a Form page" in new DateInputTest {
+      uiBuilder.buildPage(datePage.url, datePage.stanzas.toList.collect{case s: VisualStanza => s}, ValueMissingGroupError(Nil)) match {
         case Right(i: FormPage) => succeed
         case x => fail(s"Should return FormPage: found $x")
       }
     }
-
   }
-
 
   "UIBuilder Details Component processing" must {
     trait DetailsTest extends Test {
