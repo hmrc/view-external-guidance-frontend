@@ -36,7 +36,8 @@ class TextBuilderSpec extends BaseSpec {
                       ListLabel("L", List("1","2","3")),
                       ScalarLabel("When", List("22/9/1973")),
                       ScalarLabel("DollarValue", List("Hello$World$")),
-                      ScalarLabel("BackslashValue", List("Hello\\World\\"))
+                      ScalarLabel("BackslashValue", List("Hello\\World\\")),
+                      ScalarLabel("Idx", List("2"))
                     ).map(l => (l.name -> l)).toMap
     val timescales = Map("RDelay" -> 23)
     val labels: Labels = LabelCache(labelsMap, Map(), Nil, Map(), timescales, messagesFn, runMode = Published)
@@ -57,6 +58,10 @@ class TextBuilderSpec extends BaseSpec {
 
     "expand list lengths with embedded label for list name" in new Test {
       expandLabels("X = [label:X] and L has length [list:[label:Y]:length]", labels) shouldBe "X = 43 and L has length 3"
+    }
+
+    "expand list index as label" in new Test {
+      expandLabels("The [label:Idx]nd element of L is [list:L:[label:Idx]]", labels) shouldBe "The 2nd element of L is 2"
     }
 
     "expand date add" in new Test {
