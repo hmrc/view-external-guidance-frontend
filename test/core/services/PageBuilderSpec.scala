@@ -1165,9 +1165,9 @@ class PageBuilderSpec extends BaseSpec with ProcessJson with PageDefns {
           "end" -> EndStanza)
       val process: Process = Process(meta, simpleTextInputFlow, phrasesInvalid, Vector())
 
-      (pageBuilder.pages(process): @unchecked) match {
+      pageBuilder.pages(process) match {
         case Left(List(InvalidFieldWidth("2"))) => succeed
-        case Right(_) => fail()
+        case _ => fail()
       }
     }
 
