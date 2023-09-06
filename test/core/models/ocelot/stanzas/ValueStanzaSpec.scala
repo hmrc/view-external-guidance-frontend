@@ -16,11 +16,11 @@
 
 package core.models.ocelot.stanzas
 
-import base.BaseSpec
-import core.models.ocelot._
 import play.api.libs.json._
 
-class ValueStanzaSpec extends BaseSpec {
+import core.models.ocelot.{Label, Labels, LabelCache, ListLabel, ScalarLabel}
+
+class ValueStanzaSpec extends base.BaseSpec {
 
   val stanzaType = "ValueStanza"
   val scalarType = "scalar"

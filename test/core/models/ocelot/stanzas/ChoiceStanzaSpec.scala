@@ -627,9 +627,7 @@ class ChoiceStanzaSpec extends BaseSpec {
           GuidanceError.fromJsonValidationErrors(errs) match {
             case Nil => fail()
             case UnknownTestType("3", "UnknownType") :: _ => succeed
-            case _ => fail(
-
-            )
+            case _ => fail()
           }
       }
 

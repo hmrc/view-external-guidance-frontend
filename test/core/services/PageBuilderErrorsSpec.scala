@@ -329,7 +329,8 @@ class PageBuilderErrorsSpec extends BaseSpec with ProcessJson {
 
       val jsObject = assortedParseErrorsJson
       val result = jsObject.as[JsObject].validate[Process].fold(
-        errs => Left(GuidanceError.fromJsonValidationErrors(errs)),
+        errs =>
+          Left(GuidanceError.fromJsonValidationErrors(errs)),
         process => {
           pageBuilder.pages(process, process.startPageId).fold(errs => Left(errs),
             pages => Right((process, pages, jsObject))
