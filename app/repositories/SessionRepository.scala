@@ -85,7 +85,6 @@ trait SessionRepositoryConstants {
   val LegalPageIdsKey: String = "legalPageIds"
   val RequestId: String = "requestId"
   val LastAccessedIndexName = "lastAccessedIndex"
-  val ExpiryAfterOptionName = "expireAfterSeconds"
   val TtlExpiryFieldName = "lastAccessed"
 }
 
