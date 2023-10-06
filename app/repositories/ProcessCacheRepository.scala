@@ -37,7 +37,7 @@ import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 import scala.concurrent.{ExecutionContext, Future}
 import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats.Implicits._
 
-case class CacheKey(id: String, version: Int)
+case class CacheKey(id: String, version: Long)
 
 object CacheKey{
   implicit lazy val format: Format[CacheKey] = Json.format[CacheKey]
@@ -60,8 +60,8 @@ trait ProcessCacheRepositoryConstants {
 }
 
 trait ProcessCacheRepository extends ProcessCacheRepositoryConstants {
-  def create(process: Process, pageMap: Map[String, PageNext]): Future[RequestOutcome[Unit]]
-  def get(id: String, version: Int): Future[RequestOutcome[CachedProcess]]
+  def create(process: Process, pageMap: Map[String, PageNext]): Future[RequestOutcome[CachedProcess]]
+  def get(id: String, version: Long): Future[RequestOutcome[CachedProcess]]
 }
 
 object DefaultProcessCacheRepository extends ProcessCacheRepositoryConstants
@@ -81,35 +81,38 @@ class DefaultProcessCacheRepository @Inject() (config: AppConfig, component: Mon
     replaceIndexes = true // Ensure an updated timeout from config is used
   ) with ProcessCacheRepository with Logging {
 
-  def create(process: Process, pageMap: Map[String, PageNext]): Future[RequestOutcome[Unit]] =
-    collection.findOneAndReplace(equal("_id", CacheKey(process.meta.id, process.meta.version)),
-                                 CachedProcess(CacheKey(process.meta.id, process.meta.version), process, pageMap, Instant.now),
+  def create(process: Process, pageMap: Map[String, PageNext]): Future[RequestOutcome[CachedProcess]] =
+    collection.findOneAndReplace(equal("_id", CacheKey(process.meta.id, process.meta.lastUpdate)),
+                                 CachedProcess(CacheKey(process.meta.id, process.meta.lastUpdate), process, pageMap, Instant.now),
                                  FindOneAndReplaceOptions().upsert(true))
     .toFutureOption()
     .map{
-      case _ =>
-      logger.warn(s"Session repo creation _id=(${process.meta.id}, ${process.meta.version}) complete for ${process.meta.id}, ${process.meta.processCode}, page count ${pageMap.size}")
-      Right(())
+      case Some(cachedProcess) =>
+        logger.warn(s"Session repo creation _id=(${process.meta.id}, ${process.meta.lastUpdate}) complete for ${process.meta.id}, ${process.meta.processCode}, page count ${pageMap.size}")
+        Right(cachedProcess)
+      case None =>
+        logger.error(s"Session repo creation _id=(${process.meta.id}, ${process.meta.lastUpdate}) failed")
+        Left(DatabaseError)
     }
     .recover {
       case ex: MongoCommandException if ex.getErrorCode == 11000 =>
-        logger.error(s"Duplicate key Error ${ex.getErrorMessage} while trying to persist process=${process.meta.id} to session repo using _id=(${process.meta.id}, ${process.meta.version})")
+        logger.error(s"Duplicate key Error ${ex.getErrorMessage} while trying to persist process=${process.meta.id} to session repo using _id=(${process.meta.id}, ${process.meta.lastUpdate})")
         Left(DuplicateKeyError)
       case lastError =>
-        logger.error(s"Error $lastError while trying to persist process=${process.meta.id} to session repo using _id=(${process.meta.id}, ${process.meta.version})")
+        logger.error(s"Error $lastError while trying to persist process=${process.meta.id} to session repo using _id=(${process.meta.id}, ${process.meta.lastUpdate})")
         Left(DatabaseError)
     }
 
-  def get(id: String, version: Int): Future[RequestOutcome[CachedProcess]] =
-    collection.findOneAndUpdate(equal("_id", CacheKey(id, version)), Updates.set(TtlExpiryFieldName, Instant.now()))
-    .toFutureOption()
+  def get(id: String, lastUpdate: Long): Future[RequestOutcome[CachedProcess]] =
+    collection.find(equal("_id", CacheKey(id, lastUpdate)))
+    .headOption()
     .map{
       case Some(cachedProcess) => Right(cachedProcess)
       case None =>
-        logger.warn(s"Attempt to retrieve cached process from ProcessCache repo with _id=($id, $version), returned no result")
+        logger.warn(s"Attempt to retrieve cached process from ProcessCache repo with _id=($id, $lastUpdate), returned no result")
         Left(CachedProcessNotFoundError)
     }.recover { case lastError =>
-      logger.error(s"Error $lastError while trying to retrieve cached process from ProcessCache repo with _id=($id, $version)")
+      logger.error(s"Error $lastError while trying to retrieve cached process from ProcessCache repo with _id=($id, $lastUpdate)")
       Left(DatabaseError)
     }
 
