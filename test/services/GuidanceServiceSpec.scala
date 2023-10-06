@@ -334,15 +334,15 @@ class GuidanceServiceSpec extends BaseSpec {
     }
   }
 
-  "Calling getById" should {
+  "Calling getCurrentGuidanceSession" should {
 
     "successfully retrieve a process context when the session data contains a single process" in new Test {
-
+      val expectedSession = Session(SessionKey(sessionRepoId, processCode), Some(Published), process.meta.id, process, Map(), Nil, Map(), Map(), Map(), Nil, Nil, None, Instant.now)
       val expectedGuidanceSession: GuidanceSession = GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None, Published)
 
       MockSessionRepository
-        .getById(sessionRepoId, process.meta.processCode)
-        .returns(Future.successful(Right(expectedGuidanceSession)))
+        .getNoUpdate(sessionRepoId, process.meta.processCode)
+        .returns(Future.successful(Right(expectedSession)))
 
       private val result = target.getCurrentGuidanceSession(process.meta.processCode)(sessionRepoId)
 
@@ -354,7 +354,7 @@ class GuidanceServiceSpec extends BaseSpec {
     "return a not found error if the session data does not exist" in new Test {
 
       MockSessionRepository
-        .getById(sessionRepoId, process.meta.processCode)
+        .getNoUpdate(sessionRepoId, process.meta.processCode)
         .returns(Future.successful(Left(NotFoundError)))
 
       private val result = target.getCurrentGuidanceSession(process.meta.processCode)(sessionRepoId)
@@ -367,7 +367,7 @@ class GuidanceServiceSpec extends BaseSpec {
     "return a database error if an error occurs retrieving the session data" in new Test {
 
       MockSessionRepository
-        .getById(sessionRepoId, process.meta.processCode)
+        .getNoUpdate(sessionRepoId, process.meta.processCode)
         .returns(Future.successful(Left(DatabaseError)))
 
       private val result = target.getCurrentGuidanceSession(process.meta.processCode)(sessionRepoId)

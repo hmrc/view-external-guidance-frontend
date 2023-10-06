@@ -411,6 +411,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
 
     "return a NOT_FOUND response" in new QuestionSubmissionTest {
       val url = "/rent/less-than-1000/do-you-receive-any-income"
+      val session = Session(SessionKey(processId, process.meta.processCode), Some(Published), process.meta.id, process, Map(), Nil, Map(), Map(), Map(), List(PageHistory(s"tell-hmrc$url",Nil)), Nil, None, Instant.now)
       MockGuidanceService
         .getSubmitGuidanceSession(processId, process.meta.processCode, Some(s"tell-hmrc$url"))
         .returns(Future.successful(Right(GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None, Published))))
@@ -422,9 +423,9 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
         )))
 
       MockSessionRepository
-        .getById(processId, process.meta.processCode)
+        .getNoUpdate(processId, process.meta.processCode)
         .returns(Future.successful(Right(
-          GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None, Published)
+          session
         )))
 
       override val fakeRequest = FakeRequest("POST", path)
@@ -442,7 +443,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
 
     "Force redirect to current page" in new QuestionSubmissionTest with MockGuidanceService {
       val outOfSequence = "/rent/1000-or-more/was-your-income-more-than-3750"
-      val session = GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, Some(url), None, Published)
+      val guidanceSession = GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, Some(url), None, Published)
       MockGuidanceService
         .getSubmitGuidanceSession(processId, process.meta.processCode, Some(s"tell-hmrc$outOfSequence"))
         .returns(Future.successful(Left(IllegalPageSubmissionError)))
@@ -456,8 +457,12 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
         )))
 
       MockSessionRepository
-        .getById(processId, process.meta.processCode)
-        .returns(Future.successful(Right(session)))
+        .getNoUpdate(processId, process.meta.processCode)
+        .returns(Future.successful(Right(
+          Session(SessionKey(processId, process.meta.processCode), Some(Published), process.meta.id, process, Map(), Nil, Map(),
+                  Map(url -> PageNext("36", Nil, Nil), outOfSequence -> PageNext("80", Nil, Nil)), Map(),
+                  List(PageHistory(s"tell-hmrc$url",Nil)), Nil, None, Instant.now)
+        )))
 
       override val fakeRequest = FakeRequest("POST", outOfSequence)
                                   .withSession(SessionKeys.sessionId -> processId)
@@ -466,11 +471,11 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
                                   .withCSRFToken
       val result = target.submitPage("tell-hmrc", outOfSequence.drop(1))(fakeRequest)
       status(result) shouldBe Status.SEE_OTHER
-      redirectLocation(result) shouldBe session.currentPageUrl.map(url => s"/guidance/tell-hmrc$url")
+      redirectLocation(result) shouldBe guidanceSession.currentPageUrl.map(url => s"/guidance/tell-hmrc$url")
     }
 
     "Restart process when no current page available" in new QuestionSubmissionTest with MockGuidanceService {
-      val session = GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None, Published)
+
       MockGuidanceService
         .getSubmitGuidanceSession(processId, process.meta.processCode, Some(s"tell-hmrc$path"))
         .returns(Future.successful(Left(IllegalPageSubmissionError)))
@@ -479,13 +484,17 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
         .get(processId, process.meta.processCode, requestId)
         .returns(Future.successful(Right(
           Session(SessionKey(processId, process.meta.processCode), Some(Published), process.meta.id, process, Map(), Nil, Map(),
-                  Map(url -> PageNext("36", Nil, Nil)), Map(),
-                  List(PageHistory(s"tell-hmrc$url",Nil)), Nil, None, Instant.now)
+                  Map(), Map(),
+                  List(), Nil, None, Instant.now)
         )))
 
       MockSessionRepository
-        .getById(processId, process.meta.processCode)
-        .returns(Future.successful(Right(session)))
+        .getNoUpdate(processId, process.meta.processCode)
+        .returns(Future.successful(Right(
+          Session(SessionKey(processId, process.meta.processCode), Some(Published), process.meta.id, process, Map(), Nil, Map(),
+                  Map(), Map(),
+                  List(), Nil, None, Instant.now)
+        )))
 
       override val fakeRequest = FakeRequest("POST", "some-other-url")
                                   .withSession(SessionKeys.sessionId -> processId)
@@ -498,7 +507,11 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
     }
 
     "Sync process when process code doesnt match current session" in new QuestionSubmissionTest with MockGuidanceService {
-      val session = GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, Some("/current-page-url"), None, Published)
+      val session = Session(SessionKey(processId, process.meta.processCode), Some(Published), process.meta.id, process, Map(), Nil, Map(),
+                            Map(url -> PageNext("36", Nil, Nil)), Map(),
+                            List(PageHistory(s"tell-hmrc$url",Nil)), Nil, None, Instant.now)
+
+      val guidanceSession = GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, Some("/current-page-url"), None, Published)
       MockGuidanceService
         .getSubmitGuidanceSession(processId, "blah", Some(s"blah$path"))
         .returns(Future.successful(Left(SessionNotFoundError)))
@@ -508,7 +521,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
         .returns(Future.successful(Left(SessionNotFoundError)))
 
       MockSessionRepository
-        .getById(processId, process.meta.processCode)
+        .getNoUpdate(processId, process.meta.processCode)
         .returns(Future.successful(Right(session)))
 
       override val fakeRequest = FakeRequest("POST", path)
@@ -518,7 +531,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
                                   .withCSRFToken
       val result = target.submitPage("blah", relativePath)(fakeRequest)
       status(result) shouldBe Status.SEE_OTHER
-      redirectLocation(result) shouldBe session.currentPageUrl.map(url => s"/guidance/blah")
+      redirectLocation(result) shouldBe guidanceSession.currentPageUrl.map(url => s"/guidance/blah")
     }
 
     "Return Internal server error when a Database error occurs" in new QuestionSubmissionTest with MockGuidanceService {
@@ -531,7 +544,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
         .returns(Future.successful(Left(DatabaseError)))
 
       MockSessionRepository
-        .getById(processId, process.meta.processCode)
+        .getNoUpdate(processId, process.meta.processCode)
         .returns(Future.successful(Left(DatabaseError)))
 
       override val fakeRequest = FakeRequest("POST", path)
@@ -1552,19 +1565,20 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
     "Redirect to the currrent page of current session when processCode is common" in new TestWithRealGuidanceService with ProcessJson {
 
       val process = prototypeJson.as[Process]
+      val session = Session(SessionKey(processId, process.meta.processCode), Some(Published), process.meta.id, process, Map(), Nil, Map(),
+                  Map(), Map(),
+                  List(PageHistory(s"${process.meta.processCode}$path", Nil)), Nil, None, Instant.now)
+
+      println(s"################# ${session.pageUrl}")
 
       MockSessionRepository
         .get(sessionId, process.meta.processCode, requestId)
         .returns(Future.successful(Left(TransactionFaultError)))
-
       MockSessionRepository
-        .getById(sessionId, process.meta.processCode)
-        .returns(Future.successful(Right(
-          GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, Some(path), None, Published)
-        )))
+        .getNoUpdate(sessionId, process.meta.processCode)
+        .returns(Future.successful(Right(session)))
 
-
-      lazy val result = target.getPage(process.meta.processCode, path.drop(1), None)(fakeRequest)
+      val result = target.getPage(process.meta.processCode, path.drop(1), None)(fakeRequest)
 
       status(result) shouldBe Status.SEE_OTHER
 
@@ -1582,13 +1596,14 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
         .returns(Future.successful(Left(TransactionFaultError)))
 
       MockSessionRepository
-        .getById(sessionId, processCode)
+        .getNoUpdate(sessionId, processCode)
         .returns(Future.successful(Right(
-          GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None, Published)
+          Session(SessionKey(processId, process.meta.processCode), Some(Published), process.meta.id, process, Map(), Nil, Map(),
+                  Map(), Map(),
+                  List(), Nil, None, Instant.now)
         )))
 
-
-      lazy val result = target.getPage(processCode, path.drop(1), None)(fakeRequest)
+      val result = target.getPage(processCode, path.drop(1), None)(fakeRequest)
 
       status(result) shouldBe Status.SEE_OTHER
 

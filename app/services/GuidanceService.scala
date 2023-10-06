@@ -45,10 +45,11 @@ class GuidanceService @Inject() (
 
   def sessionRestart(processCode: String, sessionId: String)(implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[String]] =
     sessionRepository.reset(sessionId, processCode, hc.requestId.map(_.value)).map{
-      case Right(ctx) =>
-        ctx.pageMap.collectFirst{case (k,v) if v.id == ctx.process.startPageId => k}
+      case Right(session) =>
+        val guidanceSession = GuidanceSession(session, session.pageMap, Nil)
+        guidanceSession.pageMap.collectFirst{case (k,v) if v.id == guidanceSession.process.startPageId => k}
           .fold[RequestOutcome[String]]{
-            logger.error(s"Process start pageId (${ctx.process.startPageId}) missing from retrieved session map" )
+            logger.error(s"Process start pageId (${guidanceSession.process.startPageId}) missing from retrieved session map" )
             Left(InternalServerError)
           }(Right(_))
       case Left(err) => Left(err)
@@ -78,9 +79,9 @@ class GuidanceService @Inject() (
     }
 
   def getCurrentGuidanceSession(processCode: String)(sessionId: String)(implicit context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] =
-    sessionRepository.getById(sessionId, processCode).map{
-      case Right(session) => Right(session)
-      case err @ Left(_) => err
+    sessionRepository.getNoUpdate(sessionId, processCode).map{
+      case Right(session) => Right(GuidanceSession(session, session.pageMap, session.legalPageIds))
+      case Left(err) => Left(err)
     }
 
   def getPageEvaluationContext(processCode: String, url: String, previousPageByLink: Boolean, sessionId: String)

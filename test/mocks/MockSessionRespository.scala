@@ -17,7 +17,7 @@
 package mocks
 
 import repositories.{Session, SessionRepository, PageHistory}
-import models.{PageNext, GuidanceSession}
+import models.PageNext
 import core.models.ocelot._
 import core.models.RequestOutcome
 import core.models.ocelot.RunMode
@@ -46,9 +46,9 @@ trait MockSessionRepository extends MockFactory {
         .updateAfterFormSubmission(_: String, _: String, _: String, _: String, _: Labels, _: List[String], _: Option[String]))
         .expects(docId, processCode, url, answer, *, nextLegalPageIds, requestId)
 
-    def getById(key: String, processCode: String): CallHandler[Future[RequestOutcome[GuidanceSession]]] =
+    def getNoUpdate(key: String, processCode: String): CallHandler[Future[RequestOutcome[Session]]] =
       (mockSessionRepository
-        .getById(_: String, _: String))
+        .getNoUpdate(_: String, _: String))
         .expects(key, processCode)
 
     def get(key: String, processCode: String, requestId: Option[String]): CallHandler[Future[RequestOutcome[Session]]] =
@@ -56,7 +56,7 @@ trait MockSessionRepository extends MockFactory {
         .get(_: String, _: String, _: Option[String]))
         .expects(key, processCode, requestId)
 
-    def reset(key: String, processCode: String, requestId: Option[String]): CallHandler[Future[RequestOutcome[GuidanceSession]]] =
+    def reset(key: String, processCode: String, requestId: Option[String]): CallHandler[Future[RequestOutcome[Session]]] =
       (mockSessionRepository
         .reset(_: String, _: String, _: Option[String]))
         .expects(key, processCode, requestId)

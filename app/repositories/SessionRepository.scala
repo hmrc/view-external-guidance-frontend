@@ -25,7 +25,7 @@ import core.models.ocelot._
 import core.models.ocelot.stanzas.{PopulatedStanza, Stanza}
 import core.models.errors._
 import core.models.RequestOutcome
-import models.{PageNext, GuidanceSession}
+import models.PageNext
 import java.util.concurrent.TimeUnit
 import play.api.Logger
 import java.time.{Instant}
@@ -91,9 +91,9 @@ trait SessionRepositoryConstants {
 trait SessionRepository extends SessionRepositoryConstants {
   def create(key: String, runMode: RunMode, process: Process, pageMap: Map[String, PageNext], legalPageIds: List[String]): Future[RequestOutcome[Unit]]
   def delete(key: String, processCode: String): Future[RequestOutcome[Unit]]
-  def getById(key: String, processCode: String): Future[RequestOutcome[GuidanceSession]]
+  def getNoUpdate(key: String, processCode: String): Future[RequestOutcome[Session]]
   def get(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[Session]]
-  def reset(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[GuidanceSession]]
+  def reset(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[Session]]
   def updateForNewPage(key: String, processCode: String, pageHistory: Option[List[PageHistory]], flowStack: Option[List[FlowStage]],
                        labelUpdates: List[Label], legalPageIds: List[String], requestId: Option[String]): Future[RequestOutcome[Unit]]
   def updateAfterStandardPage(key: String, processCode: String, labels: Labels, requestId: Option[String]): Future[RequestOutcome[Unit]]
@@ -158,17 +158,17 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
           Left(DatabaseError)
       }
 
-  def getById(key:String, processCode: String): Future[RequestOutcome[GuidanceSession]] =
+  def getNoUpdate(key:String, processCode: String): Future[RequestOutcome[Session]] =
     collection
       .find(equal("_id", SessionKey(key, processCode)))
       .headOption()
       .map{
         case None =>  Left(SessionNotFoundError)
-        case Some(sp) => Right(GuidanceSession(sp, sp.pageMap, sp.legalPageIds))
+        case Some(session) => Right(session)
       }
       .recover {
         case lastError =>
-        logger.error(s"Error $lastError occurred in method get(key: String) attempting to retrieve session $key")
+        logger.error(s"Error $lastError occurred in method getNoUpdate attempting to retrieve session ($key, $processCode)")
         Left(DatabaseError)
       }
 
@@ -193,7 +193,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
       Left(DatabaseError)
     }
 
-  def reset(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[GuidanceSession]] =
+  def reset(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[Session]] =
     collection.findOneAndUpdate(
       equal("_id", SessionKey(key, processCode)),
       combine((List(
@@ -210,7 +210,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
       case None =>
         logger.warn(s"Attempt to retrieve cached process from session repo with _id=$key returned no result")
         Left(SessionNotFoundError)
-      case Some(sp) => Right(GuidanceSession(sp, sp.pageMap, Nil))
+      case Some(sp) => Right(sp)
     }.recover { case lastError =>
       logger.error(s"Error $lastError while trying to retrieve reset process from session repo with _id=$key")
       Left(DatabaseError)
