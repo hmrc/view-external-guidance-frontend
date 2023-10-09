@@ -47,22 +47,22 @@ object SessionKey {
   implicit lazy val format: Format[SessionKey] = Json.format[SessionKey]
 }
 
-final case class Session(_id: SessionKey,
-                         runMode: Option[RunMode],
-                         processId: String,
-                         process: Process,
-                         labels: Map[String, Label],
-                         flowStack: List[FlowStage],
-                         continuationPool: Map[String, Stanza],
-                         pageMap: Map[String, PageNext],
-                         answers: Map[String, String],
-                         pageHistory: List[PageHistory],
-                         legalPageIds: List[String],
-                         requestId: Option[String],
-                         lastAccessed: Instant,
-                         lastUpdated: Option[Long]) {
-  lazy val pageUrl: Option[String] = pageHistory.reverse.headOption.map(_.url.drop(process.meta.processCode.length))
-}
+final case class Session(
+    _id: SessionKey,
+   runMode: Option[RunMode],
+   processId: String,
+   process: Option[Process],
+   labels: Map[String, Label],
+   flowStack: List[FlowStage],
+   continuationPool: Map[String, Stanza],
+   pageMap: Option[Map[String, PageNext]],
+   answers: Map[String, String],
+   pageHistory: List[PageHistory],
+   legalPageIds: List[String],
+   requestId: Option[String],
+   lastAccessed: Instant,
+   lastUpdate: Option[Long]
+)
 
 object Session {
   def apply(key: SessionKey,
@@ -72,7 +72,7 @@ object Session {
             legalPageIds: List[String],
             pageMap: Map[String, PageNext] = Map(),
             lastAccessed: Instant = Instant.now): Session =
-    Session(key, Some(runMode), processId, process, Map(), Nil, Map(), pageMap, Map(), Nil, legalPageIds, None, lastAccessed, None)
+    Session(key, Some(runMode), processId, Some(process), Map(), Nil, Map(), Some(pageMap), Map(), Nil, legalPageIds, None, lastAccessed, Some(process.meta.lastUpdate))
 
   implicit lazy val format: Format[Session] = Json.format[Session]
 }

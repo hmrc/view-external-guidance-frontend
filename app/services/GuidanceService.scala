@@ -109,7 +109,6 @@ class GuidanceService @Inject() (
             val labels: Map[String, Label] = sp.labels ++ labelUpdates.map(l => l.name -> l).toMap
             val legalPageIds = (pageNext.id :: Process.StartStanzaId :: pageNext.linked ++
                                 backLink.fold(List.empty[String])(bl => List(sp.pageMap(bl.drop(sp.process.meta.processCode.length)).id))).distinct
-            val session = GuidanceSession(sp, labels, flowStackUpdate.getOrElse(sp.flowStack), backLink)
 
             sessionService.updateForNewPage(key, processCode, historyUpdate, flowStackUpdate, labelUpdates, legalPageIds, requestId).map {
               case Left(NotFoundError) =>
@@ -118,7 +117,7 @@ class GuidanceService @Inject() (
               case Left(err) =>
                 logger.error(s"Unable to update session data, error = $err")
                 Left(err)
-              case _ => Right(session)
+              case _ => Right(sp.copy(labels = labels, flowStack = flowStackUpdate.getOrElse(sp.flowStack), backLink = backLink))
             }
           } else {
             logger.warn(s"Attempt to move to illegal page $url, LEGALPIDS ${sp.legalPageIds}")

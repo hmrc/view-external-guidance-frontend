@@ -38,71 +38,87 @@ case class GuidanceSession(process: Process,
 }
 
 object GuidanceSession {
-  def apply(sp: Session, pageMap: Map[String, PageNext], legalPageIds: List[String]): GuidanceSession =
-    GuidanceSession(sp.process,
+  // def apply(sp: Session, pageMap: Map[String, PageNext], legalPageIds: List[String]): GuidanceSession =
+  //   GuidanceSession(sp.process,
+  //                   sp.answers,
+  //                   sp.labels,
+  //                   sp.flowStack,
+  //                   sp.continuationPool,
+  //                   pageMap,
+  //                   legalPageIds,
+  //                   sp.pageUrl,
+  //                   None,
+  //                   sp.runMode.getOrElse(Published),
+  //                   sp.pageHistory)
+
+  // def apply(sp: Session, labels: Map[String, Label], flowStack: List[FlowStage], backLink: Option[String]): GuidanceSession =
+  //   GuidanceSession(sp.process,
+  //                   sp.answers,
+  //                   labels,
+  //                   flowStack,
+  //                   sp.continuationPool,
+  //                   sp.pageMap,
+  //                   sp.legalPageIds,
+  //                   sp.pageUrl,
+  //                   backLink,
+  //                   sp.runMode.getOrElse(Published),
+  //                   sp.pageHistory)
+
+  // def apply(sp: Session, backLink: Option[String]): GuidanceSession =
+  //   GuidanceSession(sp.process,
+  //                   sp.answers,
+  //                   sp.labels,
+  //                   sp.flowStack,
+  //                   sp.continuationPool,
+  //                   sp.pageMap,
+  //                   sp.legalPageIds,
+  //                   sp.pageUrl,
+  //                   backLink,
+  //                   sp.runMode.getOrElse(Published),
+  //                   sp.pageHistory)
+
+  // TEMPORARY UNTIL SessionService complete 
+  def apply(sp: Session): GuidanceSession = 
+    GuidanceSession(sp.process.get, //TODO
+                    sp.answers,
+                    sp.labels,
+                    sp.flowStack,
+                    sp.continuationPool,
+                    sp.pageMap.get, //TODO
+                    sp.legalPageIds,
+                    sp.pageHistory.reverse.headOption.map(_.url.drop(sp.process.get.meta.processCode.length)), //TODO
+                    None,
+                    sp.runMode.getOrElse(Published),
+                    sp.pageHistory)
+
+  def apply(sp: Session, process: Process, pageMap: Map[String, PageNext]): GuidanceSession = 
+    GuidanceSession(process,
                     sp.answers,
                     sp.labels,
                     sp.flowStack,
                     sp.continuationPool,
                     pageMap,
-                    legalPageIds,
-                    sp.pageUrl,
-                    None,
-                    sp.runMode.getOrElse(Published),
-                    sp.pageHistory)
-
-  def apply(sp: Session, labels: Map[String, Label], flowStack: List[FlowStage], backLink: Option[String]): GuidanceSession =
-    GuidanceSession(sp.process,
-                    sp.answers,
-                    labels,
-                    flowStack,
-                    sp.continuationPool,
-                    sp.pageMap,
                     sp.legalPageIds,
-                    sp.pageUrl,
-                    backLink,
-                    sp.runMode.getOrElse(Published),
-                    sp.pageHistory)
-
-  def apply(sp: Session, backLink: Option[String]): GuidanceSession =
-    GuidanceSession(sp.process,
-                    sp.answers,
-                    sp.labels,
-                    sp.flowStack,
-                    sp.continuationPool,
-                    sp.pageMap,
-                    sp.legalPageIds,
-                    sp.pageUrl,
-                    backLink,
-                    sp.runMode.getOrElse(Published),
-                    sp.pageHistory)
-
-  def apply(sp: Session): GuidanceSession = 
-    GuidanceSession(sp.process,
-                    sp.answers,
-                    sp.labels,
-                    sp.flowStack,
-                    sp.continuationPool,
-                    sp.pageMap,
-                    sp.legalPageIds,
-                    sp.pageUrl,
+                    sp.pageHistory.reverse.headOption.map(_.url.drop(process.meta.processCode.length)),
                     None,
                     sp.runMode.getOrElse(Published),
                     sp.pageHistory)
 
 
-  def apply(gs: GuidanceSession, labels: Map[String, Label], flowStack: List[FlowStage], backLink: Option[String]): GuidanceSession =
-    GuidanceSession(gs.process,
-                    gs.answers,
-                    labels,
-                    flowStack,
-                    gs.continuationPool,
-                    gs.pageMap,
-                    gs.legalPageIds,
-                    gs.currentPageUrl,
-                    backLink,
-                    gs.runMode,
-                    gs.pageHistory)
+
+  // def apply(gs: GuidanceSession, labels: Map[String, Label], flowStack: List[FlowStage], backLink: Option[String]): GuidanceSession =
+  //   gs.copy(labels = labels, flowStack = flowStack, backLink = backLink)
+  //   GuidanceSession(gs.process,
+  //                   gs.answers,
+  //                   labels,
+  //                   flowStack,
+  //                   gs.continuationPool,
+  //                   gs.pageMap,
+  //                   gs.legalPageIds,
+  //                   gs.currentPageUrl,
+  //                   backLink,
+  //                   gs.runMode,
+  //                   gs.pageHistory)
 
 }
 
