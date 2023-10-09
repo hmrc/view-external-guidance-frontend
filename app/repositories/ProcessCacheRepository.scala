@@ -37,7 +37,7 @@ import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 import scala.concurrent.{ExecutionContext, Future}
 import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats.Implicits._
 
-case class CacheKey(id: String, version: Long)
+case class CacheKey(id: String, lastUpdate: Long)
 
 object CacheKey{
   implicit lazy val format: Format[CacheKey] = Json.format[CacheKey]
@@ -60,8 +60,8 @@ trait ProcessCacheRepositoryConstants {
 }
 
 trait ProcessCacheRepository extends ProcessCacheRepositoryConstants {
-  def create(process: Process, pageMap: Map[String, PageNext]): Future[RequestOutcome[CachedProcess]]
-  def get(id: String, version: Long): Future[RequestOutcome[CachedProcess]]
+  def create(process: Process, pageMap: Map[String, PageNext]): Future[RequestOutcome[Unit]]
+  def get(id: String, lastUpdate: Long): Future[RequestOutcome[CachedProcess]]
 }
 
 object DefaultProcessCacheRepository extends ProcessCacheRepositoryConstants
@@ -81,18 +81,15 @@ class DefaultProcessCacheRepository @Inject() (config: AppConfig, component: Mon
     replaceIndexes = true // Ensure an updated timeout from config is used
   ) with ProcessCacheRepository with Logging {
 
-  def create(process: Process, pageMap: Map[String, PageNext]): Future[RequestOutcome[CachedProcess]] =
+  def create(process: Process, pageMap: Map[String, PageNext]): Future[RequestOutcome[Unit]] =
     collection.findOneAndReplace(equal("_id", CacheKey(process.meta.id, process.meta.lastUpdate)),
                                  CachedProcess(CacheKey(process.meta.id, process.meta.lastUpdate), process, pageMap, Instant.now),
                                  FindOneAndReplaceOptions().upsert(true))
     .toFutureOption()
     .map{
-      case Some(cachedProcess) =>
+      case _ => 
         logger.warn(s"Session repo creation _id=(${process.meta.id}, ${process.meta.lastUpdate}) complete for ${process.meta.id}, ${process.meta.processCode}, page count ${pageMap.size}")
-        Right(cachedProcess)
-      case None =>
-        logger.error(s"Session repo creation _id=(${process.meta.id}, ${process.meta.lastUpdate}) failed")
-        Left(DatabaseError)
+        Right(())
     }
     .recover {
       case ex: MongoCommandException if ex.getErrorCode == 11000 =>

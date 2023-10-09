@@ -21,43 +21,45 @@ import config.AppConfig
 import javax.inject.{Inject, Singleton}
 import models.GuidanceSession
 import core.models.RequestOutcome
+import core.models.errors.SessionNotFoundError
 import scala.concurrent.{ExecutionContext, Future}
-import repositories.{PageHistory, SessionRepository}
+import repositories.{PageHistory, Session, SessionRepository, ProcessCacheRepository}
 import models.PageNext
 import core.models.ocelot.{Process, RunMode, Label, Labels, FlowStage}
 
 @Singleton
-class SessionService @Inject() (appConfig: AppConfig, sessionRepository: SessionRepository) extends Logging {
+class SessionService @Inject() (appConfig: AppConfig, sessionRepository: SessionRepository, processCacheRepository: ProcessCacheRepository) extends Logging {
 
-  def create(key: String, runMode: RunMode, process: Process, pageMap: Map[String, PageNext], legalPageIds: List[String]): Future[RequestOutcome[Unit]] =
-    sessionRepository.create(key, runMode, process, pageMap, legalPageIds)
+  def create(id: String, runMode: RunMode, process: Process, pageMap: Map[String, PageNext], legalPageIds: List[String])(implicit ec: ExecutionContext): Future[RequestOutcome[Unit]] = {
+    logger.warn(s"Attempting to create a session sessionId: $id and processId: ${process.meta.id}")
+    sessionRepository.create(id, process.meta, runMode, legalPageIds).flatMap{_ =>
+      processCacheRepository.create(process, pageMap).map{
+        case Right(_) => Right(())
+        case Left(err) => Left(err) 
+      }
+    }
+  }
 
   def delete(key: String, processCode: String): Future[RequestOutcome[Unit]] = sessionRepository.delete(key, processCode)
 
   def getNoUpdate(key: String, processCode: String)(implicit context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] = {
-    sessionRepository.getNoUpdate(key, processCode).map{result =>
-      result.fold(
-        err => Left(err),
-        session => Right(GuidanceSession(session))
-      )
+    sessionRepository.getNoUpdate(key, processCode).flatMap{
+      case Right(session) => guidanceSession(session.processId, session)
+      case Left(err) => Future.successful(Left(err))
     }
   }
 
   def get(key: String, processCode: String, requestId: Option[String])(implicit context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] = {
-    sessionRepository.get(key, processCode, requestId).map{result =>
-      result.fold(
-        err => Left(err),
-        session => Right(GuidanceSession(session))
-      )
+    sessionRepository.get(key, processCode, requestId).flatMap{
+      case Right(session) => guidanceSession(session.processId, session)
+      case Left(err) => Future.successful(Left(err))
     }
   }
 
   def reset(key: String, processCode: String, requestId: Option[String])(implicit context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] = {
-    sessionRepository.reset(key, processCode, requestId).map{result =>
-      result.fold(
-        err => Left(err),
-        session => Right(GuidanceSession(session))
-      )
+    sessionRepository.reset(key, processCode, requestId).flatMap{
+      case Right(session) => guidanceSession(session.processId, session)
+      case Left(err) => Future.successful(Left(err))
     }
   }
 
@@ -71,5 +73,19 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
   def updateAfterFormSubmission(key: String, processCode: String, answerId: String, answer: String, labels: Labels, nextLegalPageIds: List[String],
                                 requestId: Option[String]): Future[RequestOutcome[Unit]] =
     sessionRepository.updateAfterFormSubmission(key, processCode, answerId, answer, labels, nextLegalPageIds, requestId)
+
+  private def guidanceSession(id: String, session: Session)(implicit context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] =
+    session.lastUpdate.fold[Future[RequestOutcome[GuidanceSession]]](Future.successful(obsoleteInflightSession(session)))(lastUpdate =>
+      processCacheRepository.get(session.processId, lastUpdate).map{
+        case Right(cachedProcess) => Right(GuidanceSession(session, cachedProcess.process, cachedProcess.pageMap))
+        case Left(err) => Left(err)
+      }
+    )
+
+  private def obsoleteInflightSession(session: Session): RequestOutcome[GuidanceSession] =
+    (session.process, session.pageMap) match {
+      case (Some(process), Some(pageMap)) => Right(GuidanceSession(session, process, pageMap))
+      case _ => Left(SessionNotFoundError)
+    }
 
 }

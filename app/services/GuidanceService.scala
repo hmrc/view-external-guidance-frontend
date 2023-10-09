@@ -46,7 +46,6 @@ class GuidanceService @Inject() (
   def sessionRestart(processCode: String, sessionId: String)(implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[String]] =
     sessionService.reset(sessionId, processCode, hc.requestId.map(_.value)).map{
       case Right(session) =>
-        // val guidanceSession = GuidanceSession(session, session.pageMap, Nil)
         session.pageMap.collectFirst{case (k,v) if v.id == session.process.startPageId => k}
           .fold[RequestOutcome[String]]{
             logger.error(s"Process start pageId (${session.process.startPageId}) missing from retrieved session map" )

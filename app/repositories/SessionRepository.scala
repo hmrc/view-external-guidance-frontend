@@ -68,11 +68,10 @@ object Session {
   def apply(key: SessionKey,
             runMode: RunMode,
             processId: String,
-            process: Process,
+            lastUpdate: Long,
             legalPageIds: List[String],
-            pageMap: Map[String, PageNext] = Map(),
             lastAccessed: Instant = Instant.now): Session =
-    Session(key, Some(runMode), processId, Some(process), Map(), Nil, Map(), Some(pageMap), Map(), Nil, legalPageIds, None, lastAccessed, Some(process.meta.lastUpdate))
+    Session(key, Some(runMode), processId, None, Map(), Nil, Map(), None, Map(), Nil, legalPageIds, None, lastAccessed, Some(lastUpdate))
 
   implicit lazy val format: Format[Session] = Json.format[Session]
 }
@@ -90,7 +89,7 @@ trait SessionRepositoryConstants {
 }
 
 trait SessionRepository extends SessionRepositoryConstants {
-  def create(key: String, runMode: RunMode, process: Process, pageMap: Map[String, PageNext], legalPageIds: List[String]): Future[RequestOutcome[Unit]]
+  def create(id: String, meta: Meta, runMode: RunMode, legalPageIds: List[String]): Future[RequestOutcome[Unit]]
   def delete(key: String, processCode: String): Future[RequestOutcome[Unit]]
   def getNoUpdate(key: String, processCode: String): Future[RequestOutcome[Session]]
   def get(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[Session]]
@@ -120,23 +119,23 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
   ) with SessionRepository {
   val logger: Logger = Logger(getClass)
 
-  def create(key: String, runMode: RunMode, process: Process, pageMap: Map[String, PageNext], legalPageIds: List[String]): Future[RequestOutcome[Unit]] =
-    collection.findOneAndReplace(equal("_id", SessionKey(key, process.meta.processCode)),
-                                 Session(SessionKey(key, process.meta.processCode), runMode, process.meta.id, process, legalPageIds, pageMap, Instant.now),
+  def create(id: String, meta: Meta, runMode: RunMode, legalPageIds: List[String]): Future[RequestOutcome[Unit]] =
+    collection.findOneAndReplace(equal("_id", SessionKey(id, meta.processCode)),
+                                 Session(SessionKey(id, meta.processCode), runMode, meta.id, meta.lastUpdate, legalPageIds, Instant.now),
                                  FindOneAndReplaceOptions().upsert(true))
     .toFutureOption()
     .map{
       case _ =>
-      logger.warn(s"Session repo creation (key $key) complete for ${process.meta.id}, ${process.meta.processCode}, page count ${pageMap.size}")
+      logger.warn(s"Session repo creation; key:($id, ${meta.processCode}) lastUpdate: ${meta.lastUpdate} complete")
       Right(())
     }
     .recover {
       case ex: MongoCommandException if ex.getErrorCode == 11000 =>
         // Appears two concurrent findOneAndReplace() finding no underlying doc, would then both try to insert with the second triggering a duplicate key err
-        logger.error(s"Duplicate key Error ${ex.getErrorMessage} while trying to persist process=${process.meta.id} to session repo using _id=$key")
+        logger.error(s"Duplicate key Error ${ex.getErrorMessage} while trying to persist process=${id} to session repo using _id=($id, ${meta.processCode})")
         Left(DuplicateKeyError)
       case lastError =>
-        logger.error(s"Error $lastError while trying to persist process=${process.meta.id} to session repo using _id=$key")
+        logger.error(s"Error $lastError while trying to persist process=${id} to session repo using _id=($id, ${meta.processCode})")
         Left(DatabaseError)
     }
 

@@ -78,18 +78,18 @@ object GuidanceSession {
   //                   sp.pageHistory)
 
   // TEMPORARY UNTIL SessionService complete 
-  def apply(sp: Session): GuidanceSession = 
-    GuidanceSession(sp.process.get, //TODO
-                    sp.answers,
-                    sp.labels,
-                    sp.flowStack,
-                    sp.continuationPool,
-                    sp.pageMap.get, //TODO
-                    sp.legalPageIds,
-                    sp.pageHistory.reverse.headOption.map(_.url.drop(sp.process.get.meta.processCode.length)), //TODO
-                    None,
-                    sp.runMode.getOrElse(Published),
-                    sp.pageHistory)
+  // def apply(sp: Session): GuidanceSession = 
+  //   GuidanceSession(sp.process.get, //TODO
+  //                   sp.answers,
+  //                   sp.labels,
+  //                   sp.flowStack,
+  //                   sp.continuationPool,
+  //                   sp.pageMap.get, //TODO
+  //                   sp.legalPageIds,
+  //                   sp.pageHistory.reverse.headOption.map(_.url.drop(sp.process.get.meta.processCode.length)), //TODO
+  //                   None,
+  //                   sp.runMode.getOrElse(Published),
+  //                   sp.pageHistory)
 
   def apply(sp: Session, process: Process, pageMap: Map[String, PageNext]): GuidanceSession = 
     GuidanceSession(process,
