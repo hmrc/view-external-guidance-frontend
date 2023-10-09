@@ -19,7 +19,7 @@ package models
 import core.models.ocelot.stanzas.Stanza
 import core.models.ocelot.{FlowStage, SecuredProcess, Process, Label, RunMode, Published}
 import play.api.libs.json.{Json, OFormat}
-import repositories.Session
+import repositories.{PageHistory, Session}
 
 case class GuidanceSession(process: Process,
                            answers: Map[String, String],
@@ -30,7 +30,8 @@ case class GuidanceSession(process: Process,
                            legalPageIds: List[String],
                            currentPageUrl: Option[String],
                            backLink: Option[String],
-                           runMode: RunMode) {
+                           runMode: RunMode,
+                           pageHistory: List[PageHistory]) {
   val secure: Boolean = process.flow.get(SecuredProcess.PassPhrasePageId).fold(true){_ =>
     labels.get(SecuredProcess.PassPhraseResponseLabelName).fold(false)(lbl => lbl.english.headOption == process.passPhrase)
   }
@@ -47,7 +48,8 @@ object GuidanceSession {
                     legalPageIds,
                     sp.pageUrl,
                     None,
-                    sp.runMode.getOrElse(Published))
+                    sp.runMode.getOrElse(Published),
+                    sp.pageHistory)
 
   def apply(sp: Session, labels: Map[String, Label], flowStack: List[FlowStage], backLink: Option[String]): GuidanceSession =
     GuidanceSession(sp.process,
@@ -59,7 +61,8 @@ object GuidanceSession {
                     sp.legalPageIds,
                     sp.pageUrl,
                     backLink,
-                    sp.runMode.getOrElse(Published))
+                    sp.runMode.getOrElse(Published),
+                    sp.pageHistory)
 
   def apply(sp: Session, backLink: Option[String]): GuidanceSession =
     GuidanceSession(sp.process,
@@ -71,7 +74,35 @@ object GuidanceSession {
                     sp.legalPageIds,
                     sp.pageUrl,
                     backLink,
-                    sp.runMode.getOrElse(Published))
+                    sp.runMode.getOrElse(Published),
+                    sp.pageHistory)
+
+  def apply(sp: Session): GuidanceSession = 
+    GuidanceSession(sp.process,
+                    sp.answers,
+                    sp.labels,
+                    sp.flowStack,
+                    sp.continuationPool,
+                    sp.pageMap,
+                    sp.legalPageIds,
+                    sp.pageUrl,
+                    None,
+                    sp.runMode.getOrElse(Published),
+                    sp.pageHistory)
+
+
+  def apply(gs: GuidanceSession, labels: Map[String, Label], flowStack: List[FlowStage], backLink: Option[String]): GuidanceSession =
+    GuidanceSession(gs.process,
+                    gs.answers,
+                    labels,
+                    flowStack,
+                    gs.continuationPool,
+                    gs.pageMap,
+                    gs.legalPageIds,
+                    gs.currentPageUrl,
+                    backLink,
+                    gs.runMode,
+                    gs.pageHistory)
 
 }
 

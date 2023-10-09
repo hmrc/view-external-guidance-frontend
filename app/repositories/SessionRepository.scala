@@ -59,7 +59,8 @@ final case class Session(_id: SessionKey,
                          pageHistory: List[PageHistory],
                          legalPageIds: List[String],
                          requestId: Option[String],
-                         lastAccessed: Instant) {
+                         lastAccessed: Instant,
+                         lastUpdated: Option[Long]) {
   lazy val pageUrl: Option[String] = pageHistory.reverse.headOption.map(_.url.drop(process.meta.processCode.length))
 }
 
@@ -71,7 +72,7 @@ object Session {
             legalPageIds: List[String],
             pageMap: Map[String, PageNext] = Map(),
             lastAccessed: Instant = Instant.now): Session =
-    Session(key, Some(runMode), processId, process, Map(), Nil, Map(), pageMap, Map(), Nil, legalPageIds, None, lastAccessed)
+    Session(key, Some(runMode), processId, process, Map(), Nil, Map(), pageMap, Map(), Nil, legalPageIds, None, lastAccessed, None)
 
   implicit lazy val format: Format[Session] = Json.format[Session]
 }

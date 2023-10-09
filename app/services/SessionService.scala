@@ -1,0 +1,75 @@
+/*
+ * Copyright 2023 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package services
+
+import play.api.Logging
+import config.AppConfig
+import javax.inject.{Inject, Singleton}
+import models.GuidanceSession
+import core.models.RequestOutcome
+import scala.concurrent.{ExecutionContext, Future}
+import repositories.{PageHistory, SessionRepository}
+import models.PageNext
+import core.models.ocelot.{Process, RunMode, Label, Labels, FlowStage}
+
+@Singleton
+class SessionService @Inject() (appConfig: AppConfig, sessionRepository: SessionRepository) extends Logging {
+
+  def create(key: String, runMode: RunMode, process: Process, pageMap: Map[String, PageNext], legalPageIds: List[String]): Future[RequestOutcome[Unit]] =
+    sessionRepository.create(key, runMode, process, pageMap, legalPageIds)
+
+  def delete(key: String, processCode: String): Future[RequestOutcome[Unit]] = sessionRepository.delete(key, processCode)
+
+  def getNoUpdate(key: String, processCode: String)(implicit context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] = {
+    sessionRepository.getNoUpdate(key, processCode).map{result =>
+      result.fold(
+        err => Left(err),
+        session => Right(GuidanceSession(session))
+      )
+    }
+  }
+
+  def get(key: String, processCode: String, requestId: Option[String])(implicit context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] = {
+    sessionRepository.get(key, processCode, requestId).map{result =>
+      result.fold(
+        err => Left(err),
+        session => Right(GuidanceSession(session))
+      )
+    }
+  }
+
+  def reset(key: String, processCode: String, requestId: Option[String])(implicit context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] = {
+    sessionRepository.reset(key, processCode, requestId).map{result =>
+      result.fold(
+        err => Left(err),
+        session => Right(GuidanceSession(session))
+      )
+    }
+  }
+
+  def updateForNewPage(key: String, processCode: String, pageHistory: Option[List[PageHistory]], flowStack: Option[List[FlowStage]],
+                       labelUpdates: List[Label], legalPageIds: List[String], requestId: Option[String]): Future[RequestOutcome[Unit]] =
+    sessionRepository.updateForNewPage(key, processCode, pageHistory, flowStack, labelUpdates, legalPageIds, requestId)
+
+  def updateAfterStandardPage(key: String, processCode: String, labels: Labels, requestId: Option[String]): Future[RequestOutcome[Unit]] =
+    sessionRepository.updateAfterStandardPage(key, processCode, labels, requestId)
+
+  def updateAfterFormSubmission(key: String, processCode: String, answerId: String, answer: String, labels: Labels, nextLegalPageIds: List[String],
+                                requestId: Option[String]): Future[RequestOutcome[Unit]] =
+    sessionRepository.updateAfterFormSubmission(key, processCode, answerId, answer, labels, nextLegalPageIds, requestId)
+
+}

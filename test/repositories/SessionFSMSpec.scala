@@ -72,7 +72,7 @@ class SessionFSMSpec extends BaseSpec {
 
   "SessionFSM with no flowStack" must {
     "Return no backlink or updates for any url with no page history, forceForward false (Nil)" in new NoFlowStackTest {
-      verify(fsm("/start", Session(SessionKey("id", process.meta.processCode), Published, "processId", process, Nil), false, "/start"),
+      verify(fsm("/start", Nil, Nil, false, "/start"),
              None,
              Some(List(PageHistory("/start", Nil))),
              None,
@@ -80,7 +80,7 @@ class SessionFSMSpec extends BaseSpec {
     }
 
     "Return no backlink or updates for any url with no page history, forceForward true (Nil)" in new NoFlowStackTest {
-      verify(fsm("/start", Session(SessionKey("id", process.meta.processCode), Published, "processId", process, Nil), true, "/start"),
+      verify(fsm("/start", Nil, Nil, false, "/start"),
              None,
              Some(List(PageHistory("/start", Nil))),
              None,
@@ -88,7 +88,7 @@ class SessionFSMSpec extends BaseSpec {
     }
 
     "Return backlink and no updates for any url with single history, forceForward false (FORWARD)" in new NoFlowStackTest {
-      verify(fsm("/next", session, false, "/start"),
+      verify(fsm("/next", List(PageHistory("/start", Nil)), Nil, false, "/start"),
              Some("/start"),
              Some(List(PageHistory("/start", Nil), PageHistory("/next",Nil))),
              None,
@@ -96,7 +96,7 @@ class SessionFSMSpec extends BaseSpec {
     }
 
     "Return backlink and no updates for any url with single history, forceForward true (FORWARD)" in new NoFlowStackTest {
-      verify(fsm("/next", session, true, "/start"),
+      verify(fsm("/next", List(PageHistory("/start", Nil)), Nil, true, "/start"),
              Some("/start"),
              Some(List(PageHistory("/start", Nil), PageHistory("/next",Nil))),
              None,
@@ -104,7 +104,7 @@ class SessionFSMSpec extends BaseSpec {
     }
 
     "Return no backlink, + PageHistory update for repitition of the last url, with single history, forceForward false (REFRESH)" in new NoFlowStackTest {
-      verify(fsm("/start", session, false, "/start"),
+      verify(fsm("/start", List(PageHistory("/start", Nil)), Nil, false, "/start"),
              None,
              None,
              None,
@@ -112,7 +112,7 @@ class SessionFSMSpec extends BaseSpec {
     }
 
     "Return no backlink, PageHistory update for repitition of the last url, with single history, forceForward  true (REFRESH)" in new NoFlowStackTest {
-      verify(fsm("/start", session, true, "/start"),
+      verify(fsm("/start", List(PageHistory("/start", Nil)), Nil, true, "/start"),
              None,
              None,
              None,
@@ -120,7 +120,7 @@ class SessionFSMSpec extends BaseSpec {
     }
 
     "Return backlink, + PageHistory update for repitition of the last url, with multiple history, forceForward false (REFRESH)" in new NoFlowStackTest {
-      verify(fsm("/next", session.copy(pageHistory = List(PageHistory("/start", Nil), PageHistory("/next", Nil))), false, "/start"),
+      verify(fsm("/next", List(PageHistory("/start", Nil), PageHistory("/next", Nil)), Nil, false, "/start"),
              Some("/start"),
              None,
              None,
@@ -128,7 +128,7 @@ class SessionFSMSpec extends BaseSpec {
     }
 
     "Return backlink, PageHistory update for repitition of the last url, with multiple history, forceForward  true (REFRESH)" in new NoFlowStackTest {
-      verify(fsm("/next", session.copy(pageHistory = List(PageHistory("/start", Nil), PageHistory("/next", Nil))), true, "/start"),
+      verify(fsm("/next", List(PageHistory("/start", Nil), PageHistory("/next", Nil)), Nil, true, "/start"),
              Some("/start"),
              None,
              None,
@@ -136,7 +136,7 @@ class SessionFSMSpec extends BaseSpec {
     }
 
     "Return no backlink, PageHistory update with two element history, forceForward false (BACK)" in new NoFlowStackTest {
-        verify(fsm("/start", session.copy(pageHistory = List(PageHistory("/start", Nil), PageHistory("/next", Nil))), false, "/start"),
+        verify(fsm("/start", List(PageHistory("/start", Nil), PageHistory("/next", Nil)), Nil, false, "/start"),
                None,
                Some(List(PageHistory("/start", Nil))),
                None,
@@ -144,7 +144,7 @@ class SessionFSMSpec extends BaseSpec {
     }
 
     "Return backlink, PageHistory update with multiple element history, forceForward false (BACK)" in new NoFlowStackTest {
-        verify(fsm("/next", session.copy(pageHistory = List(PageHistory("/start", Nil), PageHistory("/next", Nil), PageHistory("/another", Nil))), false, "/start"),
+        verify(fsm("/next", List(PageHistory("/start", Nil), PageHistory("/next", Nil), PageHistory("/another", Nil)), Nil, false, "/start"),
                Some("/start"),
                Some(List(PageHistory("/start", Nil), PageHistory("/next", Nil))),
                None,
@@ -152,7 +152,7 @@ class SessionFSMSpec extends BaseSpec {
     }
 
     "Return backlink, No updates with multiple element history, forceForward true (FORWARD to HISTORIC)" in new NoFlowStackTest {
-        verify(fsm("/next", session.copy(pageHistory = List(PageHistory("/start", Nil), PageHistory("/next", Nil), PageHistory("/another", Nil))), true, "/start"),
+        verify(fsm("/next", List(PageHistory("/start", Nil), PageHistory("/next", Nil), PageHistory("/another", Nil)), Nil, true, "/start"),
                Some("/another"),
                Some(List(PageHistory("/start", Nil), PageHistory("/next", Nil), PageHistory("/another", Nil), PageHistory("/next", Nil))),
                None,
@@ -160,7 +160,7 @@ class SessionFSMSpec extends BaseSpec {
     }
 
     "Return no backlink, PageHistory update with multiple element history, when returning to first page forceForward false (FORWARD)" in new NoFlowStackTest {
-        verify(fsm("/start", session.copy(pageHistory = List(PageHistory("/start", Nil), PageHistory("/next", Nil), PageHistory("/another", Nil))), true, "/start"),
+        verify(fsm("/start", List(PageHistory("/start", Nil), PageHistory("/next", Nil), PageHistory("/another", Nil)), Nil, true, "/start"),
                None,
                Some(List(PageHistory("/start", Nil))),
                Some(Nil),
@@ -168,7 +168,7 @@ class SessionFSMSpec extends BaseSpec {
     }
 
     "Return backlink, PageHistory update with multiple element history, when returning to a page not in a sequence flow, forceForward false (FORWARD to HISTORIC)" in new NoFlowStackTest {
-        verify(fsm("/next", session.copy(pageHistory = List(PageHistory("/start", Nil), PageHistory("/next", Nil), PageHistory("/somepage", Nil), PageHistory("/another", Nil))), true, "/start"),
+        verify(fsm("/next", List(PageHistory("/start", Nil), PageHistory("/next", Nil), PageHistory("/somepage", Nil), PageHistory("/another", Nil)), Nil, true, "/start"),
                Some("/another"),
                Some(List(PageHistory("/start", Nil), PageHistory("/next", Nil), PageHistory("/somepage", Nil), PageHistory("/another", Nil), PageHistory("/next", Nil))),
                None,
@@ -180,7 +180,7 @@ class SessionFSMSpec extends BaseSpec {
                                                        PageHistory("/next", List(Flow("8",None),Continuation("2"))),
                                                        PageHistory("/somepage", Nil),
                                                        PageHistory("/another", Nil))
-        verify(fsm("/next", session.copy(pageHistory = updatedPageHistory), true, "/start"),
+        verify(fsm("/next", updatedPageHistory, Nil, true, "/start"),
                Some("/another"),
                Some(List(PageHistory("/start", Nil),
                          PageHistory("/next", List(Flow("8",None),Continuation("2"))),
@@ -192,6 +192,7 @@ class SessionFSMSpec extends BaseSpec {
     }
 
   }
+
 
   trait FlowStackTest extends Test with SequenceJson {
     override val process: Process = nestedSeqJson.as[Process]
@@ -216,7 +217,7 @@ class SessionFSMSpec extends BaseSpec {
 
   "SessionFSM with flowStack" must {
     "Return no backlink or updates for any url with no page history, forceForward false (Nil)" in new FlowStackTest {
-      verify(fsm("/start", Session(SessionKey("id", process.meta.processCode), Published, "processId", process, Nil), false, "/start"),
+      verify(fsm("/start", Nil, Nil, false, "/start"),
              None,
              Some(List(PageHistory("/start", Nil))),
              None,
@@ -224,7 +225,7 @@ class SessionFSMSpec extends BaseSpec {
     }
 
     "Return no backlink or updates for any url with no page history, forceForward true (Nil)" in new FlowStackTest {
-      verify(fsm("/start", Session(SessionKey("id", process.meta.processCode), Published, "processId", process, Nil), true, "/start"),
+      verify(fsm("/start", Nil, Nil, true, "/start"),
              None,
              Some(List(PageHistory("/start", Nil))),
              None,
@@ -232,7 +233,7 @@ class SessionFSMSpec extends BaseSpec {
     }
 
     "Return backlink and no updates for any url with single history, forceForward false (FORWARD)" in new FlowStackTest {
-      verify(fsm("/next", session, false, "/start"),
+      verify(fsm("/next", List(PageHistory("/start", Nil)), List(Flow("8",Some(LabelValue("Choice",phraseThree))), Flow("88",Some(LabelValue("Choice",phraseFour))), Continuation("2")), false, "/start"),
              Some("/start"),
              Some(List(PageHistory("/start",List()),
                        PageHistory("/next",
@@ -243,7 +244,7 @@ class SessionFSMSpec extends BaseSpec {
     }
 
     "Return backlink and no updates for any url with single history, forceForward true (FORWARD)" in new FlowStackTest {
-      verify(fsm("/next", session, true, "/start"),
+      verify(fsm("/next", List(PageHistory("/start", Nil)), List(Flow("8",Some(LabelValue("Choice",phraseThree))), Flow("88",Some(LabelValue("Choice",phraseFour))), Continuation("2")), true, "/start"),
              Some("/start"),
              Some(List(PageHistory("/start",List()),
                        PageHistory("/next",
@@ -254,7 +255,7 @@ class SessionFSMSpec extends BaseSpec {
     }
 
     "Return no backlink, + PageHistory update for repitition of the last url, with single history, forceForward false (REFRESH)" in new FlowStackTest {
-      verify(fsm("/start", session, false, "/start"),
+      verify(fsm("/start", List(PageHistory("/start", Nil)), List(Flow("8",Some(LabelValue("Choice",phraseThree))), Flow("88",Some(LabelValue("Choice",phraseFour))), Continuation("2")), false, "/start"),
              None,
              None,
              None,
@@ -262,7 +263,7 @@ class SessionFSMSpec extends BaseSpec {
     }
 
     "Return no backlink, PageHistory update for repitition of the last url, with single history, forceForward  true (REFRESH)" in new FlowStackTest {
-      verify(fsm("/start", session, true, "/start"),
+      verify(fsm("/start", List(PageHistory("/start", Nil)), List(Flow("8",Some(LabelValue("Choice",phraseThree))), Flow("88",Some(LabelValue("Choice",phraseFour))), Continuation("2")), true, "/start"),
              None,
              None,
              None,
@@ -270,7 +271,7 @@ class SessionFSMSpec extends BaseSpec {
     }
 
     "Return backlink, + PageHistory update for repitition of the last url, with multiple history, forceForward false (REFRESH)" in new FlowStackTest {
-      verify(fsm("/next", session.copy(pageHistory = List(PageHistory("/start", Nil), PageHistory("/next", Nil))), false, "/start"),
+      verify(fsm("/next", List(PageHistory("/start", Nil), PageHistory("/next", Nil)), List(Flow("8",Some(LabelValue("Choice",phraseThree))), Flow("88",Some(LabelValue("Choice",phraseFour))), Continuation("2")), false, "/start"),
              Some("/start"),
              None,
              None,
@@ -278,7 +279,7 @@ class SessionFSMSpec extends BaseSpec {
     }
 
     "Return backlink, PageHistory update for repitition of the last url, with multiple history, forceForward  true (REFRESH)" in new FlowStackTest {
-      verify(fsm("/next", session.copy(pageHistory = List(PageHistory("/start", Nil), PageHistory("/next", Nil))), true, "/start"),
+      verify(fsm("/next", List(PageHistory("/start", Nil), PageHistory("/next", Nil)), List(Flow("8",Some(LabelValue("Choice",phraseThree))), Flow("88",Some(LabelValue("Choice",phraseFour))), Continuation("2")), true, "/start"),
              Some("/start"),
              None,
              None,
@@ -286,7 +287,7 @@ class SessionFSMSpec extends BaseSpec {
     }
 
     "Return no backlink, PageHistory update with two element history, forceForward false (BACK)" in new FlowStackTest {
-        verify(fsm("/start", session.copy(pageHistory = List(PageHistory("/start", Nil), PageHistory("/next", Nil))), false, "/start"),
+        verify(fsm("/start", List(PageHistory("/start", Nil), PageHistory("/next", Nil)), List(Flow("8",Some(LabelValue("Choice",phraseThree))), Flow("88",Some(LabelValue("Choice",phraseFour))), Continuation("2")), false, "/start"),
                None,
                Some(List(PageHistory("/start", Nil))),
                Some(Nil),
@@ -294,9 +295,9 @@ class SessionFSMSpec extends BaseSpec {
     }
 
     "Return backlink, PageHistory update with multiple element history, forceForward false (BACK)" in new FlowStackTest {
-        verify(fsm("/next", session.copy(pageHistory = List(PageHistory("/start", Nil),
-                                                                   PageHistory("/next", Nil),
-                                                                   PageHistory("/another", Nil))), false, "/start"),
+        verify(fsm("/next", List(PageHistory("/start", Nil),
+                                 PageHistory("/next", Nil),
+                                 PageHistory("/another", Nil)), List(Flow("8",Some(LabelValue("Choice",phraseThree))), Flow("88",Some(LabelValue("Choice",phraseFour))), Continuation("2")), false, "/start"),
                Some("/start"),
                Some(List(PageHistory("/start", Nil),
                          PageHistory("/next", Nil))),
@@ -305,13 +306,12 @@ class SessionFSMSpec extends BaseSpec {
     }
 
     "Return backlink, PageHistory update and flow label update with multiple element history, forceForward false (BACK)" in new FlowStackTest {
-        val sp: Session = session.copy(
-          pageHistory = List(PageHistory("/fourth",List(Flow("88",Some(LabelValue("Choice",phraseFour))), Continuation("2"))),
+        val pageHistory = List(PageHistory("/fourth",List(Flow("88",Some(LabelValue("Choice",phraseFour))), Continuation("2"))),
                              PageHistory("/third",List(Flow("8",Some(LabelValue("Choice",phraseThree))), Flow("88",Some(LabelValue("Choice",phraseFour))), Continuation("2"))),
-                             PageHistory("/start",List())).reverse,
-          flowStack = List(Flow("88",Some(LabelValue("Choice",phraseFour))), Continuation("2"))
-        )
-        verify(fsm("/third", sp, false, "/start"),
+                             PageHistory("/start",List())).reverse
+        val flowStack = List(Flow("88",Some(LabelValue("Choice",phraseFour))), Continuation("2"))
+
+        verify(fsm("/third", pageHistory, flowStack, false, "/start"),
                Some("/start"),
                Some(List(PageHistory("/start",List()),
                          PageHistory("/third",List(Flow("8",Some(LabelValue("Choice",phraseThree))), Flow("88",Some(LabelValue("Choice",phraseFour))), Continuation("2"))))),
@@ -320,27 +320,27 @@ class SessionFSMSpec extends BaseSpec {
     }
 
     "Return backlink, PageHistory update with multiple element history, forceForward true (FORWARD to HISTORIC)" in new FlowStackTest {
-        verify(fsm("/next",
-               session.copy(
-                 pageHistory = List(PageHistory("/start", Nil),
-                                    PageHistory("/next", List(Flow("8",Some(LabelValue("Choice",phraseThree))),
-                                                              Flow("88",Some(LabelValue("Choice",phraseFour))),
-                                                              Continuation("2"))),
-                                    PageHistory("/another", Nil))), true, "/start"),
-               Some("/another"),
-               Some(List(PageHistory("/start",List()),
-                         PageHistory("/next",List(Flow("8",Some(LabelValue("Choice",phraseThree))), Flow("88",Some(LabelValue("Choice",phraseFour))), Continuation("2"))),
-                         PageHistory("/another",List()),
-                         PageHistory("/next",List(Flow("8",Some(LabelValue("Choice",phraseThree))), Flow("88",Some(LabelValue("Choice",phraseFour))), Continuation("2")))
-                         )),
-               None,
-               Nil)
+      val flowStack = List(Flow("8",Some(LabelValue("Choice",phraseThree))), Flow("88",Some(LabelValue("Choice",phraseFour))), Continuation("2"))
+      verify(fsm("/next", List(PageHistory("/start", Nil),
+                               PageHistory("/next", List(Flow("8",Some(LabelValue("Choice",phraseThree))),
+                                                        Flow("88",Some(LabelValue("Choice",phraseFour))),
+                                                        Continuation("2"))),
+                               PageHistory("/another", Nil)), flowStack, true, "/start"),
+             Some("/another"),
+             Some(List(PageHistory("/start",List()),
+                       PageHistory("/next",List(Flow("8",Some(LabelValue("Choice",phraseThree))), Flow("88",Some(LabelValue("Choice",phraseFour))), Continuation("2"))),
+                       PageHistory("/another",List()),
+                       PageHistory("/next",List(Flow("8",Some(LabelValue("Choice",phraseThree))), Flow("88",Some(LabelValue("Choice",phraseFour))), Continuation("2")))
+                       )),
+             None,
+             Nil)
     }
 
     "Return no backlink, PageHistory update with multiple element history, when returning to first page forceForward false (FORWARD)" in new FlowStackTest {
-        verify(fsm("/start", session.copy(pageHistory = List(PageHistory("/start", Nil),
-                                                                    PageHistory("/next", Nil),
-                                                                    PageHistory("/another", Nil))), true, "/start"),
+      val flowStack = List(Flow("8",Some(LabelValue("Choice",phraseThree))), Flow("88",Some(LabelValue("Choice",phraseFour))), Continuation("2"))
+        verify(fsm("/start", List(PageHistory("/start", Nil),
+                                  PageHistory("/next", Nil),
+                                  PageHistory("/another", Nil)), flowStack, true, "/start"),
                None,
                Some(List(PageHistory("/start", Nil))),
                Some(Nil),
@@ -348,41 +348,43 @@ class SessionFSMSpec extends BaseSpec {
     }
 
     "Return no backlink, PageHistory update with multiple element history, when returning to first page when no first page visited" in new FlowStackTest {
-        verify(fsm("/start", session.copy(pageHistory = List(PageHistory("/next", Nil), PageHistory("/another", Nil))), true, "/start"),
-               None,
-               Some(List(PageHistory("/start", Nil))),
-               Some(Nil),
-               Nil)
+      val flowStack = List(Flow("8",Some(LabelValue("Choice",phraseThree))), Flow("88",Some(LabelValue("Choice",phraseFour))), Continuation("2"))
+      verify(fsm("/start", List(PageHistory("/next", Nil), PageHistory("/another", Nil)), flowStack, true, "/start"),
+             None,
+             Some(List(PageHistory("/start", Nil))),
+             Some(Nil),
+             Nil)
     }
 
     "Return backlink, PageHistory update with multiple element history, when returning to a page not in a sequence flow, forceForward false (FORWARD to HISTORIC)" in new FlowStackTest {
-        verify(fsm("/somepage", session.copy(pageHistory = List(PageHistory("/start", Nil),
-                                                                       PageHistory("/next", List(Flow("8",None),Continuation("2"))),
-                                                                       PageHistory("/somepage", Nil),
-                                                                       PageHistory("/another", Nil))), true, "/start"),
-               Some("/another"),
-               Some(List(PageHistory("/start", Nil),
-                         PageHistory("/next", List(Flow("8",None),Continuation("2"))),
-                         PageHistory("/somepage", Nil),
-                         PageHistory("/another", Nil),
-                         PageHistory("/somepage", Nil))),
-               Some(Nil),
-               Nil)
+      val flowStack = List(Flow("8",Some(LabelValue("Choice",phraseThree))), Flow("88",Some(LabelValue("Choice",phraseFour))), Continuation("2"))
+      verify(fsm("/somepage", List(PageHistory("/start", Nil),
+                                   PageHistory("/next", List(Flow("8",None),Continuation("2"))),
+                                   PageHistory("/somepage", Nil),
+                                   PageHistory("/another", Nil)), flowStack, true, "/start"),
+             Some("/another"),
+             Some(List(PageHistory("/start", Nil),
+                       PageHistory("/next", List(Flow("8",None),Continuation("2"))),
+                       PageHistory("/somepage", Nil),
+                       PageHistory("/another", Nil),
+                       PageHistory("/somepage", Nil))),
+             Some(Nil),
+             Nil)
     }
 
     "Return backlink, PageHistory update with multiple element history, when returning to a page within a sequence flow, forceForward false (FORWARD to HISTORIC)" in new FlowStackTest {
-        val sp = session.copy(pageHistory = List(PageHistory("/start", Nil),
-                                                        PageHistory("/next", List(Flow("8",None),Continuation("2"))),
-                                                        PageHistory("/somepage", Nil),
-                                                        PageHistory("/another", Nil)))
+      val flowStack = List(Flow("8",Some(LabelValue("Choice",phraseThree))), Flow("88",Some(LabelValue("Choice",phraseFour))), Continuation("2"))
 
-        verify(fsm("/next", sp, true, "/start"),
+        verify(fsm("/next", List(PageHistory("/start", Nil),
+                                 PageHistory("/next", List(Flow("8",None),Continuation("2"))),
+                                 PageHistory("/somepage", Nil),
+                                 PageHistory("/another", Nil)), flowStack, true, "/start"),
                Some("/another"),
                Some(List(PageHistory("/start", Nil),
                          PageHistory("/next", List(Flow("8",None),Continuation("2"))),
                          PageHistory("/somepage", Nil),
                          PageHistory("/another", Nil),
-                         PageHistory("/next", sp.flowStack))),
+                         PageHistory("/next", flowStack))),
                None,
                Nil)
     }

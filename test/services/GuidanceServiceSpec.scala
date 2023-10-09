@@ -37,7 +37,7 @@ class GuidanceServiceSpec extends BaseSpec {
   implicit val messages: Messages = messagesApi.preferred(Seq())
   val rId: String = "71dcc4a3-9d19-47f5-ad97-74bb6c2a15c4"
 
-  trait Test extends MockGuidanceConnector with MockSessionRepository with MockPageBuilder with MockPageRenderer with MockUIBuilder with ProcessJson {
+  trait Test extends MockGuidanceConnector with MockSessionService with MockPageBuilder with MockPageRenderer with MockUIBuilder with ProcessJson {
     implicit val lang: Lang = Lang("en")
     implicit val headerCarrier: HeaderCarrier = HeaderCarrier(requestId = Some(RequestId(rId)))
     implicit val stanzaIdToUrl: Map[String, String] = Map[String, String]()
@@ -98,7 +98,7 @@ class GuidanceServiceSpec extends BaseSpec {
 
     lazy val target = new GuidanceService(
       MockAppConfig,
-      mockSessionRepository,
+      mockSessionService,
       mockPageBuilder,
       mockPageRenderer,
       new SecuredProcessBuilder(messagesApi),
@@ -116,7 +116,7 @@ class GuidanceServiceSpec extends BaseSpec {
     "save updated labels" in new Test {
       val changedLabels = labels.update("LabelName", "New value")
 
-      MockSessionRepository
+      MockSessionService
         .updateAfterStandardPage(sessionRepoId, processCode, changedLabels, requestId)
         .returns(Future.successful(Right({})))
 
@@ -135,10 +135,15 @@ class GuidanceServiceSpec extends BaseSpec {
 
       override val processCode = "cup-of-tea"
 
-      MockSessionRepository
+      MockSessionService
         .get(sessionRepoId, processCode, requestId)
         .returns(Future.successful(Right(
-          Session(SessionKey(sessionRepoId, processCode), Some(Published), process.meta.id, process, Map(), Nil, Map(), Map(page.url -> PageNext("2", Nil)), Map(), Nil, Nil, None, Instant.now)
+          GuidanceSession(
+            Session(
+              SessionKey(sessionRepoId, processCode), 
+              Some(Published), process.meta.id, process, Map(), Nil, Map(), Map(page.url -> PageNext("2", Nil)), Map(), Nil, Nil, None, Instant.now
+            )
+          )
         )))
 
       MockPageBuilder
@@ -149,7 +154,7 @@ class GuidanceServiceSpec extends BaseSpec {
         .renderPage(page, labels)
         .returns(Right((page.stanzas.toList.collect{case s: VisualStanza => s}, labels, None)))
 
-      MockSessionRepository
+      MockSessionService
         .updateAfterStandardPage(sessionRepoId, processCode, labels, requestId)
         .returns(Future.successful(Right({})))
 
@@ -167,11 +172,16 @@ class GuidanceServiceSpec extends BaseSpec {
 
       override val processCode = "cup-of-tea"
       val NtpError = executionError(NonTerminatingPageError, "1", Scratch)
-      MockSessionRepository
+      MockSessionService
         .get(sessionRepoId, processCode, requestId)
         .returns(Future.successful(Right(
-          Session(SessionKey(sessionRepoId, processCode), Some(Published), process.meta.id, process, Map(), Nil, Map(), Map(page.url -> PageNext("2", Nil)), Map(), Nil, Nil, None, Instant.now)
-        )))
+          GuidanceSession(
+            Session(
+              SessionKey(sessionRepoId, processCode), 
+              Some(Published), process.meta.id, process, Map(), Nil, Map(), Map(page.url -> PageNext("2", Nil)), Map(), Nil, Nil, None, Instant.now)
+            )
+          )
+        ))
 
       MockPageBuilder
         .buildPage("2", process)
@@ -195,10 +205,16 @@ class GuidanceServiceSpec extends BaseSpec {
 
       override val processCode = "cup-of-tea"
 
-      MockSessionRepository
+      MockSessionService
         .get(sessionRepoId, processCode, requestId)
         .returns(Future.successful(Right(
-          Session(SessionKey(sessionRepoId, processCode), Some(Published), process.meta.id, process, Map(), Nil, Map(), Map(lastPageUrl -> PageNext("2", Nil)), Map(), Nil, Nil, None, Instant.now)
+          GuidanceSession(
+            Session(
+              SessionKey(sessionRepoId, processCode), 
+              Some(Published), 
+              process.meta.id, process, Map(), Nil, Map(), Map(lastPageUrl -> PageNext("2", Nil)), Map(), Nil, Nil, None, Instant.now
+            )
+          )
         )))
 
       MockPageBuilder
@@ -209,7 +225,7 @@ class GuidanceServiceSpec extends BaseSpec {
         .renderPage(lastPage, labels)
         .returns(Right((lastPage.stanzas.toList.collect{case s: VisualStanza => s}, labels, None)))
 
-      MockSessionRepository
+      MockSessionService
         .updateAfterStandardPage(sessionRepoId, processCode, labels, requestId)
         .returns(Future.successful(Right({})))
 
@@ -217,7 +233,7 @@ class GuidanceServiceSpec extends BaseSpec {
         .buildPage(lastPageUrl, lastPage.stanzas.toList.collect{case s: VisualStanza => s}, NoError)
         .returns(Right(lastUiPage))
 
-      MockSessionRepository
+      MockSessionService
         .updateForNewPage(sessionRepoId, processCode, Some(List(PageHistory("cup-of-tea/last-page",Nil))), None, Nil, List("2", "start"), requestId)
         .returns(Future.successful(Right(())))
 
@@ -236,13 +252,19 @@ class GuidanceServiceSpec extends BaseSpec {
 
       override val processCode = "cup-of-tea"
       val nonTerminatingPageError = executionError(NonTerminatingPageError, "1", Scratch)
-       MockSessionRepository
+       MockSessionService
         .get(sessionRepoId, processCode, requestId)
         .returns(Future.successful(Right(
-          Session(SessionKey(sessionRepoId, processCode), Some(Published), process.meta.id, process, Map(), Nil, Map(), Map(lastPageUrl -> PageNext("2", Nil)), Map(), Nil, Nil, None, Instant.now)
+          GuidanceSession(
+            Session(
+              SessionKey(sessionRepoId, processCode), 
+              Some(Published), 
+              process.meta.id, process, Map(), Nil, Map(), Map(lastPageUrl -> PageNext("2", Nil)), Map(), Nil, Nil, None, Instant.now
+            )
+          )
         )))
 
-      MockSessionRepository
+      MockSessionService
         .updateForNewPage(sessionRepoId, processCode, Some(List(PageHistory("cup-of-tea/last-page",Nil))), None, Nil, List("2", "start"), requestId)
         .returns(Future.successful(Right(())))
 
@@ -271,13 +293,19 @@ class GuidanceServiceSpec extends BaseSpec {
 
       override val processCode = "tell-hmrc"
 
-      MockSessionRepository
+      MockSessionService
         .get(sessionRepoId, processCode, requestId)
         .returns(Future.successful(Right(
-          Session(SessionKey(sessionRepoId, processCode), Some(Published), fullProcess.meta.id, fullProcess, Map(), Nil, Map(), Map(lastPageUrl -> PageNext("2")), Map(lastPageUrl -> "answer"), Nil, Nil, None, Instant.now)
+          GuidanceSession(
+            Session(
+              SessionKey(sessionRepoId, processCode), 
+              Some(Published), 
+              fullProcess.meta.id, fullProcess, Map(), Nil, Map(), Map(lastPageUrl -> PageNext("2")), Map(lastPageUrl -> "answer"), Nil, Nil, None, Instant.now
+            )
+          )
         )))
 
-      MockSessionRepository
+      MockSessionService
         .updateForNewPage(sessionRepoId, processCode, Some(List(PageHistory("tell-hmrc/last-page",Nil))), None, Nil, List("2", "start"), requestId)
         .returns(Future.successful(Right(())))
 
@@ -289,7 +317,7 @@ class GuidanceServiceSpec extends BaseSpec {
         .renderPage(lastPage, labels)
         .returns(Right((lastPage.stanzas.toList.collect{case s: VisualStanza => s}, labels, None)))
 
-      MockSessionRepository
+      MockSessionService
         .updateAfterStandardPage(sessionRepoId, processCode, labels, requestId)
         .returns(Future.successful(Right({})))
 
@@ -316,10 +344,16 @@ class GuidanceServiceSpec extends BaseSpec {
       val url = "/scooby"
       override val processCode = "cup-of-tea"
 
-      MockSessionRepository
+      MockSessionService
         .get(processId, processCode, requestId)
         .returns(Future.successful(Right(
-          Session(SessionKey(sessionRepoId, processCode), Some(Published), process.meta.id, process, Map(), Nil, Map(), Map(), Map(), Nil, Nil, None, Instant.now)
+          GuidanceSession(
+            Session(
+              SessionKey(sessionRepoId, processCode), 
+              Some(Published), 
+              process.meta.id, process, Map(), Nil, Map(), Map(), Map(), Nil, Nil, None, Instant.now
+            )
+          )
         )))
 
       MockPageBuilder
@@ -338,11 +372,11 @@ class GuidanceServiceSpec extends BaseSpec {
 
     "successfully retrieve a process context when the session data contains a single process" in new Test {
       val expectedSession = Session(SessionKey(sessionRepoId, processCode), Some(Published), process.meta.id, process, Map(), Nil, Map(), Map(), Map(), Nil, Nil, None, Instant.now)
-      val expectedGuidanceSession: GuidanceSession = GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None, Published)
+      val expectedGuidanceSession: GuidanceSession = GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None, Published, Nil)
 
-      MockSessionRepository
+      MockSessionService
         .getNoUpdate(sessionRepoId, process.meta.processCode)
-        .returns(Future.successful(Right(expectedSession)))
+        .returns(Future.successful(Right(GuidanceSession(expectedSession))))
 
       private val result = target.getCurrentGuidanceSession(process.meta.processCode)(sessionRepoId)
 
@@ -353,7 +387,7 @@ class GuidanceServiceSpec extends BaseSpec {
 
     "return a not found error if the session data does not exist" in new Test {
 
-      MockSessionRepository
+      MockSessionService
         .getNoUpdate(sessionRepoId, process.meta.processCode)
         .returns(Future.successful(Left(NotFoundError)))
 
@@ -366,7 +400,7 @@ class GuidanceServiceSpec extends BaseSpec {
 
     "return a database error if an error occurs retrieving the session data" in new Test {
 
-      MockSessionRepository
+      MockSessionService
         .getNoUpdate(sessionRepoId, process.meta.processCode)
         .returns(Future.successful(Left(DatabaseError)))
 
@@ -384,9 +418,9 @@ class GuidanceServiceSpec extends BaseSpec {
     "When passed a url to the passphrase page should send no pageHistory url to the repository" in new Test {
       val expectedSession: Session = Session(SessionKey(sessionRepoId, process.meta.processCode), Some(Published), process.meta.id, process, Map(), Nil, Map(), Map(), Map(), Nil, Nil, None, Instant.now)
 
-      MockSessionRepository
+      MockSessionService
         .get(sessionRepoId, process.meta.processCode, requestId)
-        .returns(Future.successful(Right(expectedSession)))
+        .returns(Future.successful(Right(GuidanceSession(expectedSession))))
 
       target.getPageEvaluationContext(process.meta.processCode, s"/${SecuredProcess.SecuredProcessStartUrl}", false, sessionRepoId)
     }
@@ -394,9 +428,9 @@ class GuidanceServiceSpec extends BaseSpec {
     "When passed a url to a standard page should send pageHistory url to the repository" in new Test {
       val expectedSession: Session = Session(SessionKey(sessionRepoId, process.meta.processCode), Some(Published), process.meta.id, process, Map(), Nil, Map(), Map(), Map(), Nil, Nil, None, Instant.now)
 
-      MockSessionRepository
+      MockSessionService
         .get(sessionRepoId, process.meta.processCode, requestId)
-        .returns(Future.successful(Right(expectedSession)))
+        .returns(Future.successful(Right(GuidanceSession(expectedSession))))
 
       target.getPageEvaluationContext(process.meta.processCode, s"/start", false, sessionRepoId)
     }
@@ -409,8 +443,8 @@ class GuidanceServiceSpec extends BaseSpec {
         .renderPagePostSubmit(page, labels, "yes")
         .returns(Right((None, LabelCache())))
 
-      MockSessionRepository
-        .updateAfterFormSubmission(processId, processCode, "/test-page", "yes", labels, Nil, requestId)
+      MockSessionService
+        .updateAfterFormSubmission(processId, processCode, "/test-page", "yes", LabelCache(), List("2"), requestId)
         .returns(Future.successful(Right({})))
 
       target.submitPage(pec, "/test-page", "yes", "yes").map{
@@ -425,7 +459,7 @@ class GuidanceServiceSpec extends BaseSpec {
         .renderPagePostSubmit(page, labels, "yes")
         .returns(Right((Some("2"), LabelCache())))
 
-      MockSessionRepository
+      MockSessionService
         .updateAfterFormSubmission(processId, pec.processCode, "/last-page", "yes", labels, List("2"), requestId)
         .returns(Future.successful(Right({})))
 
@@ -442,7 +476,7 @@ class GuidanceServiceSpec extends BaseSpec {
         .renderPagePostSubmit(page, labels, "yes")
         .returns(Left(nonTerminatingPageError))
 
-      MockSessionRepository
+      MockSessionService
         .updateAfterFormSubmission(processId, processCode, "/test-page", "yes", labels, Nil, requestId)
         .returns(Future.successful(Right({})))
 
@@ -456,7 +490,7 @@ class GuidanceServiceSpec extends BaseSpec {
 
   "Calling saveLabels" should {
     "Success when labels saved successfully" in new Test {
-      MockSessionRepository
+      MockSessionService
         .updateAfterStandardPage(processId, processCode, labels, requestId)
         .returns(Future.successful(Right({})))
 
@@ -469,7 +503,7 @@ class GuidanceServiceSpec extends BaseSpec {
     }
 
     "An error when labels not saved successfully" in new Test {
-      MockSessionRepository
+      MockSessionService
         .updateAfterStandardPage(processId, processCode, labels, requestId)
         .returns(Future.successful(Left(DatabaseError)))
 
