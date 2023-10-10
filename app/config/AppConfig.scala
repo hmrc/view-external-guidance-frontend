@@ -50,6 +50,8 @@ trait AppConfig {
   val hostBaseUrl: String
   val adminHostBaseUrl: String
   val pageStanzaLimit: Int
+  val processCacheTimeoutHours: Int
+  val processCacheScratchTimeoutHours: Int
 }
 
 @Singleton
@@ -87,4 +89,6 @@ class AppConfigImpl @Inject() (val config: Configuration, servicesConfig: Servic
   lazy val hostBaseUrl: String = s"$host$baseUrl"
   lazy val adminHostBaseUrl: String = s"$adminHost$baseUrl"
   lazy val pageStanzaLimit: Int = config.getOptional[Int]("page-rendering.page-stanza-limit").getOrElse(PageStanzaCountLimit)
+  lazy val processCacheTimeoutHours: Int = config.get[Int]("session-process-cache.timeoutHours")
+  lazy val processCacheScratchTimeoutHours: Int = config.get[Int]("session-process-cache.scratchTimeoutHours")
 }

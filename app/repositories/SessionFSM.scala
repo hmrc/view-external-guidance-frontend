@@ -26,7 +26,8 @@ class SessionFSM @Inject() () {
   type BackLinkAndStateUpdate = (Option[String], Option[List[PageHistory]], Option[List[FlowStage]], List[Label])
   // Input
   // url: incoming url
-  // priorSp: prior Session corresponding to the previous url processed.
+  // priorHistory: prior Session pageHistory corresponding to the previous url processed.
+  // priorFlowStack: prior Session FlowStack corresponding to the previous url processed.
   //
   // forceForward: true indicates that a url similar to head of prior history (looks like a BACK) should be treated as a forward movement
   // sentinelUrl: generally url of the first page, arrival here will always clear down the page history
@@ -38,8 +39,8 @@ class SessionFSM @Inject() () {
   // optional page history update
   // optional flowStack update
   // Flow Labels update (Nil unless flowstack active in from or to page)
-  def apply(url: String, priorSp: Session, forceForward: Boolean, sentinelUrl: String): BackLinkAndStateUpdate =
-    priorSp.pageHistory.reverse match {
+  def apply(url: String, priorHistory: List[PageHistory], priorFlowStack: List[FlowStage], forceForward: Boolean, sentinelUrl: String): BackLinkAndStateUpdate =
+    priorHistory.reverse match {
       // Initial page
       case Nil => (None, Some(List(PageHistory(url, Nil))), None, Nil)
 
@@ -53,7 +54,7 @@ class SessionFSM @Inject() () {
       //case x :: y :: xs if x.url == url && flowPath(x.flowStack).equals(flowPath(y.flowStack)) => (xs.headOption.map(_.url), None, None, Nil)
 
       // BACK: new url equals previous url and prior flowStack equals the previous flowStack
-      case _ :: y :: xs if y.url == url && !forceForward && priorSp.flowStack == y.flowStack =>
+      case _ :: y :: xs if y.url == url && !forceForward && priorFlowStack == y.flowStack =>
         (xs.headOption.map(_.url), Some((y :: xs).reverse), None, Nil)
 
       // BACK: flowStack change
@@ -62,7 +63,7 @@ class SessionFSM @Inject() () {
 
       // FORWARD to first page of guidance
       case _ :: _ if url == sentinelUrl =>
-        findPreviousFlowAndLabelState(url, priorSp.pageHistory).fold[BackLinkAndStateUpdate](
+        findPreviousFlowAndLabelState(url, priorHistory).fold[BackLinkAndStateUpdate](
           (None, Some(List(PageHistory(url, Nil))), Some(Nil), Nil)
         ){t =>
           val (labelValue, flowStack) = t
@@ -70,18 +71,18 @@ class SessionFSM @Inject() () {
         }
 
       // FORWARD from a non-empty flowStack
-      case x :: xs if priorSp.flowStack.nonEmpty => // Check for forward  movement to a previous page (possibly from CYA)
-        findPreviousFlowAndLabelState(url, priorSp.pageHistory).fold[BackLinkAndStateUpdate]{
-          (Some(x.url), Some((PageHistory(url, priorSp.flowStack) :: x :: xs).reverse), None, Nil)
+      case x :: xs if priorFlowStack.nonEmpty => // Check for forward  movement to a previous page (possibly from CYA)
+        findPreviousFlowAndLabelState(url, priorHistory).fold[BackLinkAndStateUpdate]{
+          (Some(x.url), Some((PageHistory(url, priorFlowStack) :: x :: xs).reverse), None, Nil)
         }{
           case (_, Nil) => (Some(x.url), Some((PageHistory(url, Nil) :: x :: xs).reverse), Some(Nil), Nil)
-          case _ => (Some(x.url), Some((PageHistory(url, priorSp.flowStack) :: x :: xs).reverse), None, Nil)
+          case _ => (Some(x.url), Some((PageHistory(url, priorFlowStack) :: x :: xs).reverse), None, Nil)
         }
 
       // FORWARD from empty flowStack
       case x :: xs => // Check for forward  movement to a previous page (CYA)
-        findPreviousFlowAndLabelState(url, priorSp.pageHistory).fold[BackLinkAndStateUpdate]{
-          (Some(x.url), Some((PageHistory(url, priorSp.flowStack) :: x :: xs).reverse), None, Nil)
+        findPreviousFlowAndLabelState(url, priorHistory).fold[BackLinkAndStateUpdate]{
+          (Some(x.url), Some((PageHistory(url, priorFlowStack) :: x :: xs).reverse), None, Nil)
         }{
           case (_, Nil) =>
             (Some(x.url), Some((PageHistory(url, Nil) :: x :: xs).reverse), None, Nil)

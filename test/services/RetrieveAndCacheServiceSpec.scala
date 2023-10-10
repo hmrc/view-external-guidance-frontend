@@ -20,7 +20,7 @@ import base.BaseSpec
 import core.models.errors.NotFoundError
 import core.models.ocelot.stanzas._
 import core.models.ocelot.{Approval, KeyedStanza, Page, PageReview, Process, ProcessJson, Published, Scratch}
-import mocks.{MockGuidanceConnector, MockPageBuilder, MockSessionRepository}
+import mocks.{MockGuidanceConnector, MockPageBuilder, MockSessionService}
 import models.{PageNext, ui}
 import play.api.i18n.MessagesApi
 import uk.gov.hmrc.http.HeaderCarrier
@@ -31,7 +31,7 @@ class RetrieveAndCacheServiceSpec extends BaseSpec {
 
   val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
 
-  trait Test extends MockGuidanceConnector with MockSessionRepository with MockPageBuilder with ProcessJson {
+  trait Test extends MockGuidanceConnector with MockSessionService with MockPageBuilder with ProcessJson {
     implicit val headerCarrier: HeaderCarrier = HeaderCarrier()
 
     def pageWithUrl(id: String, url: String) = Page(id, url, Seq(KeyedStanza("1", EndStanza)), Seq())
@@ -58,7 +58,7 @@ class RetrieveAndCacheServiceSpec extends BaseSpec {
 
     lazy val target = new RetrieveAndCacheService(
       mockGuidanceConnector,
-      mockSessionRepository,
+      mockSessionService,
       mockPageBuilder,
       new SecuredProcessBuilder(messagesApi)
     )
@@ -75,7 +75,7 @@ class RetrieveAndCacheServiceSpec extends BaseSpec {
 
       val processWithUpdatedId = process.copy(meta = process.meta.copy( id = uuid))
 
-      MockSessionRepository
+      MockSessionService
         .create(uuid, Scratch, processWithUpdatedId, Map("/first-page" -> PageNext("start"), "/page-1" -> PageNext("1"), "/last-page" -> PageNext("2")), List("start"))
         .returns(Future.successful(Right(())))
 
@@ -113,7 +113,7 @@ class RetrieveAndCacheServiceSpec extends BaseSpec {
         .publishedProcess(processId)
         .returns(Future.successful(Right(processWithProcessCode)))
 
-      MockSessionRepository
+      MockSessionService
         .create(sessionRepoId, Published, processWithProcessCode,Map("/first-page" -> PageNext("start"), "/page-1" -> PageNext("1"), "/last-page" -> PageNext("2")), List("start"))
         .returns(Future.successful(Right(())))
 
@@ -151,7 +151,7 @@ class RetrieveAndCacheServiceSpec extends BaseSpec {
         .approvalProcess(processId)
         .returns(Future.successful(Right(processWithProcessCode)))
 
-      MockSessionRepository
+      MockSessionService
         .create(sessionRepoId, Approval, processWithProcessCode, Map("/first-page" -> PageNext("start"), "/page-1" -> PageNext("1"), "/last-page" -> PageNext("2")), List("start"))
         .returns(Future.successful(Right(())))
 
@@ -189,7 +189,7 @@ class RetrieveAndCacheServiceSpec extends BaseSpec {
         .approvalProcess(processId)
         .returns(Future.successful(Right(processWithProcessCode)))
 
-      MockSessionRepository
+      MockSessionService
         .create(sessionRepoId, PageReview, processWithProcessCode, Map("/first-page" -> PageNext("start"), "/page-1" -> PageNext("1"), "/last-page" -> PageNext("2")), List("1"))
         .returns(Future.successful(Right(())))
 

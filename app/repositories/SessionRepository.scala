@@ -25,7 +25,7 @@ import core.models.ocelot._
 import core.models.ocelot.stanzas.{PopulatedStanza, Stanza}
 import core.models.errors._
 import core.models.RequestOutcome
-import models.{PageNext, GuidanceSession}
+import models.PageNext
 import java.util.concurrent.TimeUnit
 import play.api.Logger
 import java.time.{Instant}
@@ -47,31 +47,31 @@ object SessionKey {
   implicit lazy val format: Format[SessionKey] = Json.format[SessionKey]
 }
 
-final case class Session(_id: SessionKey,
-                         runMode: Option[RunMode],
-                         processId: String,
-                         process: Process,
-                         labels: Map[String, Label],
-                         flowStack: List[FlowStage],
-                         continuationPool: Map[String, Stanza],
-                         pageMap: Map[String, PageNext],
-                         answers: Map[String, String],
-                         pageHistory: List[PageHistory],
-                         legalPageIds: List[String],
-                         requestId: Option[String],
-                         lastAccessed: Instant) {
-  lazy val pageUrl: Option[String] = pageHistory.reverse.headOption.map(_.url.drop(process.meta.processCode.length))
-}
+final case class Session(
+    _id: SessionKey,
+   runMode: Option[RunMode],
+   processId: String,
+   process: Option[Process],
+   labels: Map[String, Label],
+   flowStack: List[FlowStage],
+   continuationPool: Map[String, Stanza],
+   pageMap: Option[Map[String, PageNext]],
+   answers: Map[String, String],
+   pageHistory: List[PageHistory],
+   legalPageIds: List[String],
+   requestId: Option[String],
+   lastAccessed: Instant, // expiry time
+   processVersion: Option[Long]
+)
 
 object Session {
   def apply(key: SessionKey,
             runMode: RunMode,
             processId: String,
-            process: Process,
+            processVersion: Long,
             legalPageIds: List[String],
-            pageMap: Map[String, PageNext] = Map(),
             lastAccessed: Instant = Instant.now): Session =
-    Session(key, Some(runMode), processId, process, Map(), Nil, Map(), pageMap, Map(), Nil, legalPageIds, None, lastAccessed)
+    Session(key, Some(runMode), processId, None, Map(), Nil, Map(), None, Map(), Nil, legalPageIds, None, lastAccessed, Some(processVersion))
 
   implicit lazy val format: Format[Session] = Json.format[Session]
 }
@@ -85,16 +85,15 @@ trait SessionRepositoryConstants {
   val LegalPageIdsKey: String = "legalPageIds"
   val RequestId: String = "requestId"
   val LastAccessedIndexName = "lastAccessedIndex"
-  val ExpiryAfterOptionName = "expireAfterSeconds"
   val TtlExpiryFieldName = "lastAccessed"
 }
 
 trait SessionRepository extends SessionRepositoryConstants {
-  def create(key: String, runMode: RunMode, process: Process, pageMap: Map[String, PageNext], legalPageIds: List[String]): Future[RequestOutcome[Unit]]
+  def create(id: String, meta: Meta, runMode: RunMode, legalPageIds: List[String]): Future[RequestOutcome[Unit]]
   def delete(key: String, processCode: String): Future[RequestOutcome[Unit]]
-  def getById(key: String, processCode: String): Future[RequestOutcome[GuidanceSession]]
+  def getNoUpdate(key: String, processCode: String): Future[RequestOutcome[Session]]
   def get(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[Session]]
-  def reset(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[GuidanceSession]]
+  def reset(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[Session]]
   def updateForNewPage(key: String, processCode: String, pageHistory: Option[List[PageHistory]], flowStack: Option[List[FlowStage]],
                        labelUpdates: List[Label], legalPageIds: List[String], requestId: Option[String]): Future[RequestOutcome[Unit]]
   def updateAfterStandardPage(key: String, processCode: String, labels: Labels, requestId: Option[String]): Future[RequestOutcome[Unit]]
@@ -120,23 +119,23 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
   ) with SessionRepository {
   val logger: Logger = Logger(getClass)
 
-  def create(key: String, runMode: RunMode, process: Process, pageMap: Map[String, PageNext], legalPageIds: List[String]): Future[RequestOutcome[Unit]] =
-    collection.findOneAndReplace(equal("_id", SessionKey(key, process.meta.processCode)),
-                                 Session(SessionKey(key, process.meta.processCode), runMode, process.meta.id, process, legalPageIds, pageMap, Instant.now),
+  def create(id: String, meta: Meta, runMode: RunMode, legalPageIds: List[String]): Future[RequestOutcome[Unit]] =
+    collection.findOneAndReplace(equal("_id", SessionKey(id, meta.processCode)),
+                                 Session(SessionKey(id, meta.processCode), runMode, meta.id, meta.lastUpdate, legalPageIds, Instant.now),
                                  FindOneAndReplaceOptions().upsert(true))
     .toFutureOption()
     .map{
       case _ =>
-      logger.warn(s"Session repo creation (key $key) complete for ${process.meta.id}, ${process.meta.processCode}, page count ${pageMap.size}")
+      logger.warn(s"Session repo creation; key:($id, ${meta.processCode}) processVersion: ${meta.lastUpdate} complete")
       Right(())
     }
     .recover {
       case ex: MongoCommandException if ex.getErrorCode == 11000 =>
         // Appears two concurrent findOneAndReplace() finding no underlying doc, would then both try to insert with the second triggering a duplicate key err
-        logger.error(s"Duplicate key Error ${ex.getErrorMessage} while trying to persist process=${process.meta.id} to session repo using _id=$key")
+        logger.error(s"Duplicate key Error ${ex.getErrorMessage} while trying to persist process=${id} to session repo using _id=($id, ${meta.processCode})")
         Left(DuplicateKeyError)
       case lastError =>
-        logger.error(s"Error $lastError while trying to persist process=${process.meta.id} to session repo using _id=$key")
+        logger.error(s"Error $lastError while trying to persist process=${id} to session repo using _id=($id, ${meta.processCode})")
         Left(DatabaseError)
     }
 
@@ -159,17 +158,17 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
           Left(DatabaseError)
       }
 
-  def getById(key:String, processCode: String): Future[RequestOutcome[GuidanceSession]] =
+  def getNoUpdate(key:String, processCode: String): Future[RequestOutcome[Session]] =
     collection
       .find(equal("_id", SessionKey(key, processCode)))
       .headOption()
       .map{
         case None =>  Left(SessionNotFoundError)
-        case Some(sp) => Right(GuidanceSession(sp, sp.pageMap, sp.legalPageIds))
+        case Some(session) => Right(session)
       }
       .recover {
         case lastError =>
-        logger.error(s"Error $lastError occurred in method get(key: String) attempting to retrieve session $key")
+        logger.error(s"Error $lastError occurred in method getNoUpdate attempting to retrieve session ($key, $processCode)")
         Left(DatabaseError)
       }
 
@@ -194,7 +193,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
       Left(DatabaseError)
     }
 
-  def reset(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[GuidanceSession]] =
+  def reset(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[Session]] =
     collection.findOneAndUpdate(
       equal("_id", SessionKey(key, processCode)),
       combine((List(
@@ -211,7 +210,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
       case None =>
         logger.warn(s"Attempt to retrieve cached process from session repo with _id=$key returned no result")
         Left(SessionNotFoundError)
-      case Some(sp) => Right(GuidanceSession(sp, sp.pageMap, Nil))
+      case Some(sp) => Right(sp)
     }.recover { case lastError =>
       logger.error(s"Error $lastError while trying to retrieve reset process from session repo with _id=$key")
       Left(DatabaseError)

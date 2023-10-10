@@ -24,14 +24,13 @@ import core.models.errors._
 import core.models.RequestOutcome
 import uk.gov.hmrc.http.HeaderCarrier
 import scala.concurrent.{ExecutionContext, Future}
-import repositories.SessionRepository
 import models.PageNext
 import core.models.ocelot.{Process, RunMode, PageReview, Scratch, Approval, Published, Page}
 
 @Singleton
 class RetrieveAndCacheService @Inject() (
     connector: GuidanceConnector,
-    sessionRepository: SessionRepository,
+    sessionService: SessionService,
     pageBuilder: PageBuilder,
     spb: SecuredProcessBuilder
 )(implicit ec: ExecutionContext) {
@@ -99,7 +98,7 @@ class RetrieveAndCacheService @Inject() (
         val pageMap: Map[String, PageNext] = pages.map(p => p.url -> PageNext(p.id, p.next.toList, p.linked.toList)).toMap
         val startPageUrl: String = url.getOrElse(pages.head.url)
         val startPageId: Option[String] = pageMap.get(startPageUrl).map(_.id)
-        sessionRepository.create(docId, runMode, process, pageMap, startPageId.toList).map{
+        sessionService.create(docId, runMode, process, pageMap, startPageId.toList).map{
           case Right(_) => Right((startPageUrl, process.meta.processCode))
           case Left(err) =>
             logger.error(s"Failed to store new parsed process in session repository, $err")

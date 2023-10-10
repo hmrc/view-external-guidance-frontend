@@ -26,14 +26,14 @@ import core.models.errors._
 import core.models.RequestOutcome
 import play.api.i18n.{MessagesApi, Messages}
 import scala.concurrent.{ExecutionContext, Future}
-import repositories.{SessionFSM, SessionRepository}
+import repositories.SessionFSM
 import core.models.ocelot.{LabelCache, Labels, Process, Label, flowPath}
 import core.models.ocelot.SecuredProcess
 
 @Singleton
 class GuidanceService @Inject() (
     appConfig: AppConfig,
-    sessionRepository: SessionRepository,
+    sessionService: SessionService,
     pageBuilder: PageBuilder,
     pageRenderer: PageRenderer,
     spb: SecuredProcessBuilder,
@@ -44,17 +44,17 @@ class GuidanceService @Inject() (
   val logger: Logger = Logger(getClass)
 
   def sessionRestart(processCode: String, sessionId: String)(implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[String]] =
-    sessionRepository.reset(sessionId, processCode, hc.requestId.map(_.value)).map{
-      case Right(ctx) =>
-        ctx.pageMap.collectFirst{case (k,v) if v.id == ctx.process.startPageId => k}
+    sessionService.reset(sessionId, processCode, hc.requestId.map(_.value)).map{
+      case Right(session) =>
+        session.pageMap.collectFirst{case (k,v) if v.id == session.process.startPageId => k}
           .fold[RequestOutcome[String]]{
-            logger.error(s"Process start pageId (${ctx.process.startPageId}) missing from retrieved session map" )
+            logger.error(s"Process start pageId (${session.process.startPageId}) missing from retrieved session map" )
             Left(InternalServerError)
           }(Right(_))
       case Left(err) => Left(err)
     }
 
-  def deleteSession(processCode: String, sessionId: String): Future[RequestOutcome[Unit]] = sessionRepository.delete(sessionId, processCode)
+  def deleteSession(processCode: String, sessionId: String): Future[RequestOutcome[Unit]] = sessionService.delete(sessionId, processCode)
 
   def getSubmitPageContext(pec: PageEvaluationContext, errStrategy: ErrorStrategy = NoError)(implicit messages: Messages): RequestOutcome[PageContext] =
     pageRenderer.renderPage(pec.page, pec.labels) match {
@@ -78,10 +78,7 @@ class GuidanceService @Inject() (
     }
 
   def getCurrentGuidanceSession(processCode: String)(sessionId: String)(implicit context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] =
-    sessionRepository.getById(sessionId, processCode).map{
-      case Right(session) => Right(session)
-      case err @ Left(_) => err
-    }
+    sessionService.getNoUpdate(sessionId, processCode)
 
   def getPageEvaluationContext(processCode: String, url: String, previousPageByLink: Boolean, sessionId: String)
                               (implicit hc: HeaderCarrier, context: ExecutionContext, messages: Messages): Future[RequestOutcome[PageEvaluationContext]] = {
@@ -95,31 +92,31 @@ class GuidanceService @Inject() (
 
   def getPageGuidanceSession(key: String, processCode: String, pageUrl: Option[String], previousPageByLink: Boolean)
                             (implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] =
-    sessionRepository.get(key, processCode, hc.requestId.map(_.value)).flatMap{
+    sessionService.get(key, processCode, hc.requestId.map(_.value)).flatMap{
       case Left(err) => Future.successful(Left(err))
       case Right(sp) =>
-      pageUrl.fold[Future[RequestOutcome[GuidanceSession]]](Future.successful(Right(GuidanceSession(sp, sp.pageMap, Nil)))){url =>
+      pageUrl.fold[Future[RequestOutcome[GuidanceSession]]](Future.successful(Right(sp))){url =>
         sp.pageMap.get(url.drop(sp.process.meta.processCode.length)).fold[Future[RequestOutcome[GuidanceSession]]]{
-          logger.warn(s"Attempt to move to unknown page $url in process ${sp.processId}, page count = ${sp.pageMap.size}")
+          logger.warn(s"Attempt to move to unknown page $url in process ${sp.process.meta.id}, page count = ${sp.pageMap.size}")
           Future.successful(Left(NotFoundError))
         }{pageNext =>
           logger.debug(s"Incoming Page: ${pageNext.id}, $url, current legalPageIds: ${sp.legalPageIds}")
           val requestId: Option[String] = hc.requestId.map(_.value)
           if (sp.legalPageIds.isEmpty || sp.legalPageIds.contains(pageNext.id)){ // Wild card or fixed list of valid page ids
             val firstPageUrl: String = s"${sp.process.meta.processCode}${sp.process.startUrl.getOrElse("")}"
-            val (backLink, historyUpdate, flowStackUpdate, labelUpdates) = transition(url, sp, previousPageByLink, firstPageUrl)
+            val (backLink, historyUpdate, flowStackUpdate, labelUpdates) = transition(url, sp.pageHistory, sp.flowStack, previousPageByLink, firstPageUrl)
             val labels: Map[String, Label] = sp.labels ++ labelUpdates.map(l => l.name -> l).toMap
             val legalPageIds = (pageNext.id :: Process.StartStanzaId :: pageNext.linked ++
                                 backLink.fold(List.empty[String])(bl => List(sp.pageMap(bl.drop(sp.process.meta.processCode.length)).id))).distinct
-            val session = GuidanceSession(sp, labels, flowStackUpdate.getOrElse(sp.flowStack), backLink)
-            sessionRepository.updateForNewPage(key, processCode, historyUpdate, flowStackUpdate, labelUpdates, legalPageIds, requestId).map {
+
+            sessionService.updateForNewPage(key, processCode, historyUpdate, flowStackUpdate, labelUpdates, legalPageIds, requestId).map {
               case Left(NotFoundError) =>
                 logger.warn(s"TRANSACTION FAULT(Recoverable): saveUpdates _id=$key, requestId: $requestId")
                 Left(TransactionFaultError)
               case Left(err) =>
                 logger.error(s"Unable to update session data, error = $err")
                 Left(err)
-              case _ => Right(session)
+              case _ => Right(sp.copy(labels = labels, flowStack = flowStackUpdate.getOrElse(sp.flowStack), backLink = backLink))
             }
           } else {
             logger.warn(s"Attempt to move to illegal page $url, LEGALPIDS ${sp.legalPageIds}")
@@ -141,7 +138,7 @@ class GuidanceService @Inject() (
 
   def getSubmitGuidanceSession(key: String, processCode: String, pageUrl: Option[String])
                               (implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] =
-    sessionRepository.get(key, processCode, hc.requestId.map(_.value)).map{
+    sessionService.get(key, processCode, hc.requestId.map(_.value)).map{
       case Left(err) => Left(err)
       // If incoming url equals the most recent page history url proceed, otherwise, the POST is out of sequence (IllegalPageSubmissionError)
       case Right(sp) if pageUrl.fold(true)(url => sp.pageHistory.reverse.headOption.fold(false)(ph => url.equals(ph.url))) =>
@@ -151,7 +148,7 @@ class GuidanceService @Inject() (
             case _ => None
           }
         }
-        Right(GuidanceSession(sp, backlink))
+        Right(sp.copy(backLink = backlink))
       case Right(sp) => Left(IllegalPageSubmissionError)
     }
 
@@ -163,7 +160,7 @@ class GuidanceService @Inject() (
         val requestId: Option[String] = hc.requestId.map(_.value)
         optionalNext.fold[Future[RequestOutcome[(Option[String], Labels)]]](Future.successful(Right((None, labels)))){next =>
           logger.debug(s"Next page found at stanzaId: $next")
-          sessionRepository.updateAfterFormSubmission(ctx.sessionId, ctx.processCode, answerStorageId(ctx.labels, url), submittedAnswer, labels, List(next), requestId).map{
+          sessionService.updateAfterFormSubmission(ctx.sessionId, ctx.processCode, answerStorageId(ctx.labels, url), submittedAnswer, labels, List(next), requestId).map{
             case Left(NotFoundError) =>
               logger.warn(s"TRANSACTION FAULT(Recoverable): saveFormPageState _id=${ctx.sessionId}, url: $url, answer: $validatedAnswer, requestId: ${requestId}")
               Left(TransactionFaultError)
@@ -177,7 +174,7 @@ class GuidanceService @Inject() (
 
   def savePageState(sessionId: String, processCode: String, labels: Labels)
                    (implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[Unit]] =
-    sessionRepository.updateAfterStandardPage(sessionId, processCode, labels, hc.requestId.map(_.value)).map{
+    sessionService.updateAfterStandardPage(sessionId, processCode, labels, hc.requestId.map(_.value)).map{
       case Left(NotFoundError) =>
         logger.warn(s"TRANSACTION FAULT(Recoverable): saveLabels _id=$sessionId, requestId: ${hc.requestId.map(_.value)}")
         Left(TransactionFaultError)
