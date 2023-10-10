@@ -52,4 +52,5 @@ object MockAppConfig extends AppConfig {
   val pageStanzaLimit: Int = 1000
   val optimizelyProjectId: Option[String] = None
   val processCacheTimeoutHours: Int = 120
+  val processCacheScratchTimeoutHours: Int = 12
 }

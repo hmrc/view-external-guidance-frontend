@@ -33,7 +33,7 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
   def create(id: String, runMode: RunMode, process: Process, pageMap: Map[String, PageNext], legalPageIds: List[String])(implicit ec: ExecutionContext): Future[RequestOutcome[Unit]] = {
     logger.warn(s"Attempting to create a session sessionId: $id and processId: ${process.meta.id}")
     sessionRepository.create(id, process.meta, runMode, legalPageIds).flatMap{_ =>
-      processCacheRepository.create(process, pageMap).map{
+      processCacheRepository.create(process, pageMap, runMode).map{
         case Right(_) => Right(())
         case Left(err) => Left(err) 
       }
@@ -74,15 +74,15 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
                                 requestId: Option[String]): Future[RequestOutcome[Unit]] =
     sessionRepository.updateAfterFormSubmission(key, processCode, answerId, answer, labels, nextLegalPageIds, requestId)
 
-  private def guidanceSession(id: String, session: Session)(implicit context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] =
-    session.lastUpdate.fold[Future[RequestOutcome[GuidanceSession]]](Future.successful(obsoleteInflightSession(session)))(lastUpdate =>
-      processCacheRepository.get(session.processId, lastUpdate).map{
+  private[services] def guidanceSession(id: String, session: Session)(implicit context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] =
+    session.processVersion.fold[Future[RequestOutcome[GuidanceSession]]](Future.successful(obsoleteInflightSession(session)))(processVersion =>
+      processCacheRepository.get(session.processId, processVersion).map{
         case Right(cachedProcess) => Right(GuidanceSession(session, cachedProcess.process, cachedProcess.pageMap))
         case Left(err) => Left(err)
       }
     )
 
-  private def obsoleteInflightSession(session: Session): RequestOutcome[GuidanceSession] =
+  private[services] def obsoleteInflightSession(session: Session): RequestOutcome[GuidanceSession] =
     (session.process, session.pageMap) match {
       case (Some(process), Some(pageMap)) => Right(GuidanceSession(session, process, pageMap))
       case _ => Left(SessionNotFoundError)

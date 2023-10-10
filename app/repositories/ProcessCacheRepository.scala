@@ -27,17 +27,19 @@ import core.models.RequestOutcome
 import models.PageNext
 import java.util.concurrent.TimeUnit
 import play.api.Logging
-import java.time.{Instant}
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 import org.mongodb.scala._
 import org.mongodb.scala.model.Filters._
 import org.mongodb.scala.model.Sorts._
 import org.mongodb.scala.model._
+import org.mongodb.scala.model.Updates.combine
 import uk.gov.hmrc.mongo._
 import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 import scala.concurrent.{ExecutionContext, Future}
 import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats.Implicits._
 
-case class CacheKey(id: String, lastUpdate: Long)
+case class CacheKey(id: String, processVersion: Long)
 
 object CacheKey{
   implicit lazy val format: Format[CacheKey] = Json.format[CacheKey]
@@ -47,7 +49,7 @@ final case class CachedProcess(
   _id: CacheKey,
   process: Process,
   pageMap: Map[String, PageNext],
-  lastAccessed: Instant
+  expiryTime: Instant
 )
 
 object CachedProcess {
@@ -56,12 +58,14 @@ object CachedProcess {
 
 trait ProcessCacheRepositoryConstants {
   val LastAccessedIndexName = "lastAccessedIndex"
-  val TtlExpiryFieldName = "lastAccessed"
+  val TtlExpiryFieldName = "expiryTime"
+  val ProcessFieldName = "process"
+  val PageMapFieldName = "pageMap"
 }
 
 trait ProcessCacheRepository extends ProcessCacheRepositoryConstants {
-  def create(process: Process, pageMap: Map[String, PageNext]): Future[RequestOutcome[Unit]]
-  def get(id: String, lastUpdate: Long): Future[RequestOutcome[CachedProcess]]
+  def create(process: Process, pageMap: Map[String, PageNext], runMode: RunMode): Future[RequestOutcome[Unit]]
+  def get(id: String, processVersion: Long): Future[RequestOutcome[CachedProcess]]
 }
 
 object DefaultProcessCacheRepository extends ProcessCacheRepositoryConstants
@@ -76,15 +80,19 @@ class DefaultProcessCacheRepository @Inject() (config: AppConfig, component: Mon
                              IndexOptions()
                               .name(DefaultProcessCacheRepository.LastAccessedIndexName)
                               .unique(false)
-                              .expireAfter(config.processCacheTimeoutHours, TimeUnit.HOURS))),
+                              .expireAfter(0, TimeUnit.SECONDS))),
     extraCodecs = Seq(Codecs.playFormatCodec(CacheKey.format)),
     replaceIndexes = true // Ensure an updated timeout from config is used
   ) with ProcessCacheRepository with Logging {
 
-  def create(process: Process, pageMap: Map[String, PageNext]): Future[RequestOutcome[Unit]] =
-    collection.findOneAndReplace(equal("_id", CacheKey(process.meta.id, process.meta.lastUpdate)),
-                                 CachedProcess(CacheKey(process.meta.id, process.meta.lastUpdate), process, pageMap, Instant.now),
-                                 FindOneAndReplaceOptions().upsert(true))
+  def create(process: Process, pageMap: Map[String, PageNext], runMode: RunMode): Future[RequestOutcome[Unit]] = {
+    collection.findOneAndUpdate(equal("_id", CacheKey(process.meta.id, process.meta.lastUpdate)),
+                                combine(List(
+                                  Updates.set(TtlExpiryFieldName, expiryInstant(runMode, Instant.now)),
+                                  Updates.set(ProcessFieldName, Codecs.toBson(process)),
+                                  Updates.set(PageMapFieldName, Codecs.toBson(pageMap))
+                                ).toIndexedSeq: _*),
+                                FindOneAndUpdateOptions().upsert(true))
     .toFutureOption()
     .map{
       case _ => 
@@ -99,18 +107,24 @@ class DefaultProcessCacheRepository @Inject() (config: AppConfig, component: Mon
         logger.error(s"Error $lastError while trying to persist process=${process.meta.id} to session repo using _id=(${process.meta.id}, ${process.meta.lastUpdate})")
         Left(DatabaseError)
     }
+  }
 
-  def get(id: String, lastUpdate: Long): Future[RequestOutcome[CachedProcess]] =
-    collection.find(equal("_id", CacheKey(id, lastUpdate)))
+  def get(id: String, processVersion: Long): Future[RequestOutcome[CachedProcess]] =
+    collection.find(equal("_id", CacheKey(id, processVersion)))
     .headOption()
     .map{
       case Some(cachedProcess) => Right(cachedProcess)
       case None =>
-        logger.warn(s"Attempt to retrieve cached process from ProcessCache repo with _id=($id, $lastUpdate), returned no result")
+        logger.warn(s"Attempt to retrieve cached process from ProcessCache repo with _id=($id, $processVersion), returned no result")
         Left(CachedProcessNotFoundError)
     }.recover { case lastError =>
-      logger.error(s"Error $lastError while trying to retrieve cached process from ProcessCache repo with _id=($id, $lastUpdate)")
+      logger.error(s"Error $lastError while trying to retrieve cached process from ProcessCache repo with _id=($id, $processVersion)")
       Left(DatabaseError)
     }
 
+  private[repositories] def expiryInstant(runMode: RunMode, when: Instant): Instant =
+    runMode match {
+      case Scratch => when.plus(config.processCacheScratchTimeoutHours, ChronoUnit.HOURS)
+      case _ => when.plus(config.processCacheTimeoutHours, ChronoUnit.HOURS)
+    }
 }

@@ -60,18 +60,18 @@ final case class Session(
    pageHistory: List[PageHistory],
    legalPageIds: List[String],
    requestId: Option[String],
-   lastAccessed: Instant,
-   lastUpdate: Option[Long]
+   lastAccessed: Instant, // expiry time
+   processVersion: Option[Long]
 )
 
 object Session {
   def apply(key: SessionKey,
             runMode: RunMode,
             processId: String,
-            lastUpdate: Long,
+            processVersion: Long,
             legalPageIds: List[String],
             lastAccessed: Instant = Instant.now): Session =
-    Session(key, Some(runMode), processId, None, Map(), Nil, Map(), None, Map(), Nil, legalPageIds, None, lastAccessed, Some(lastUpdate))
+    Session(key, Some(runMode), processId, None, Map(), Nil, Map(), None, Map(), Nil, legalPageIds, None, lastAccessed, Some(processVersion))
 
   implicit lazy val format: Format[Session] = Json.format[Session]
 }
@@ -126,7 +126,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
     .toFutureOption()
     .map{
       case _ =>
-      logger.warn(s"Session repo creation; key:($id, ${meta.processCode}) lastUpdate: ${meta.lastUpdate} complete")
+      logger.warn(s"Session repo creation; key:($id, ${meta.processCode}) processVersion: ${meta.lastUpdate} complete")
       Right(())
     }
     .recover {
