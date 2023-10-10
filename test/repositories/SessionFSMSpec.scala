@@ -215,24 +215,6 @@ class SessionFSMSpec extends BaseSpec {
         Some(process.meta.lastUpdate)
       )
   }
-    // val session: Session =
-    //   new Session(
-    //     SessionKey("id", process.meta.processCode),
-    //     Some(Published),
-    //     "processId",
-    //     nestedSeqJson.as[Process],
-    //     Map("Choice" -> ScalarLabel("Choice",List(phraseThree.english),List(phraseThree.welsh)),
-    //         "Choice_seq" -> ListLabel("Choice_seq",List(phraseThree.english, phraseFour.english),List(phraseThree.welsh, phraseFour.welsh))),
-    //     List(Flow("8",Some(LabelValue("Choice",phraseThree))), Flow("88",Some(LabelValue("Choice",phraseFour))), Continuation("2")),
-    //     Map("6" -> ValueStanza(List(Value(ScalarType,"SecondSeqChoice","Loop value = [label:Choice]")),Vector("end"),false)),
-    //     Map("/done" -> PageNext("2"), "/one" -> PageNext("4"), "/third" -> PageNext("8"), "/start" -> PageNext("start"), "/fourth" -> PageNext("88")),
-    //     Map("/start" -> "2,3"),
-    //     List(PageHistory("/start", Nil)),
-    //     Nil,
-    //     None,
-    //     Instant.now,
-    //     Some(process.meta.lastUpdate)
-    //   )
 
   "SessionFSM with flowStack" must {
     "Return no backlink or updates for any url with no page history, forceForward false (Nil)" in new FlowStackTest {
