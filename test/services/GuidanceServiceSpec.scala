@@ -141,8 +141,8 @@ class GuidanceServiceSpec extends BaseSpec {
           GuidanceSession(
             Session(
               SessionKey(sessionRepoId, processCode), 
-              Some(Published), process.meta.id, process, Map(), Nil, Map(), Map(page.url -> PageNext("2", Nil)), Map(), Nil, Nil, None, Instant.now
-            )
+              Some(Published), process.meta.id, None, Map(), Nil, Map(), None, Map(), Nil, Nil, None, Instant.now, Some(process.meta.lastUpdate)
+            ), process, Map(page.url -> PageNext("2", Nil))
           )
         )))
 
@@ -178,10 +178,11 @@ class GuidanceServiceSpec extends BaseSpec {
           GuidanceSession(
             Session(
               SessionKey(sessionRepoId, processCode), 
-              Some(Published), process.meta.id, process, Map(), Nil, Map(), Map(page.url -> PageNext("2", Nil)), Map(), Nil, Nil, None, Instant.now)
-            )
+              Some(Published), process.meta.id, None, Map(), Nil, Map(), None, Map(), Nil, Nil, None, Instant.now, Some(process.meta.lastUpdate)
+            ), 
+            process, Map(page.url -> PageNext("2", Nil))
           )
-        ))
+        )))
 
       MockPageBuilder
         .buildPage("2", process)
@@ -211,9 +212,9 @@ class GuidanceServiceSpec extends BaseSpec {
           GuidanceSession(
             Session(
               SessionKey(sessionRepoId, processCode), 
-              Some(Published), 
-              process.meta.id, process, Map(), Nil, Map(), Map(lastPageUrl -> PageNext("2", Nil)), Map(), Nil, Nil, None, Instant.now
-            )
+              Some(Published), process.meta.id, None, Map(), Nil, Map(), None, Map(), Nil, Nil, None, Instant.now, Some(process.meta.lastUpdate)
+            ), 
+            process, Map(lastPageUrl -> PageNext("2", Nil))
           )
         )))
 
@@ -258,9 +259,9 @@ class GuidanceServiceSpec extends BaseSpec {
           GuidanceSession(
             Session(
               SessionKey(sessionRepoId, processCode), 
-              Some(Published), 
-              process.meta.id, process, Map(), Nil, Map(), Map(lastPageUrl -> PageNext("2", Nil)), Map(), Nil, Nil, None, Instant.now
-            )
+              Some(Published), process.meta.id, None, Map(), Nil, Map(), None, Map(), Nil, Nil, None, Instant.now, Some(process.meta.lastUpdate)
+            ), 
+            process, Map(lastPageUrl -> PageNext("2", Nil))
           )
         )))
 
@@ -299,9 +300,9 @@ class GuidanceServiceSpec extends BaseSpec {
           GuidanceSession(
             Session(
               SessionKey(sessionRepoId, processCode), 
-              Some(Published), 
-              fullProcess.meta.id, fullProcess, Map(), Nil, Map(), Map(lastPageUrl -> PageNext("2")), Map(lastPageUrl -> "answer"), Nil, Nil, None, Instant.now
-            )
+              Some(Published), fullProcess.meta.id, None, Map(), Nil, Map(), None, Map(lastPageUrl -> "answer"), Nil, Nil, None, Instant.now, Some(fullProcess.meta.lastUpdate)
+            ), 
+            fullProcess, Map(lastPageUrl -> PageNext("2"))
           )
         )))
 
@@ -350,9 +351,9 @@ class GuidanceServiceSpec extends BaseSpec {
           GuidanceSession(
             Session(
               SessionKey(sessionRepoId, processCode), 
-              Some(Published), 
-              process.meta.id, process, Map(), Nil, Map(), Map(), Map(), Nil, Nil, None, Instant.now
-            )
+              Some(Published), fullProcess.meta.id, None, Map(), Nil, Map(), None, Map(), Nil, Nil, None, Instant.now, Some(fullProcess.meta.lastUpdate)
+            ), 
+            fullProcess, Map()
           )
         )))
 
@@ -371,12 +372,12 @@ class GuidanceServiceSpec extends BaseSpec {
   "Calling getCurrentGuidanceSession" should {
 
     "successfully retrieve a process context when the session data contains a single process" in new Test {
-      val expectedSession = Session(SessionKey(sessionRepoId, processCode), Some(Published), process.meta.id, process, Map(), Nil, Map(), Map(), Map(), Nil, Nil, None, Instant.now)
-      val expectedGuidanceSession: GuidanceSession = GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None, Published, Nil)
+      val expectedSession = Session(SessionKey(sessionRepoId, processCode), Some(Published), process.meta.id, None, Map(), Nil, Map(), None, Map(), Nil, Nil, None, Instant.now, Some(process.meta.lastUpdate))
+      val expectedGuidanceSession: GuidanceSession = GuidanceSession(expectedSession, process, Map())
 
       MockSessionService
         .getNoUpdate(sessionRepoId, process.meta.processCode)
-        .returns(Future.successful(Right(GuidanceSession(expectedSession))))
+        .returns(Future.successful(Right(expectedGuidanceSession)))
 
       private val result = target.getCurrentGuidanceSession(process.meta.processCode)(sessionRepoId)
 
@@ -416,21 +417,26 @@ class GuidanceServiceSpec extends BaseSpec {
   "Calling getPageGuidanceSession" should {
 
     "When passed a url to the passphrase page should send no pageHistory url to the repository" in new Test {
-      val expectedSession: Session = Session(SessionKey(sessionRepoId, process.meta.processCode), Some(Published), process.meta.id, process, Map(), Nil, Map(), Map(), Map(), Nil, Nil, None, Instant.now)
+      val expectedSession: Session = Session(SessionKey(sessionRepoId, process.meta.processCode), 
+                                             Some(Published), 
+                                             process.meta.id, None, Map(), Nil, Map(),None, Map(), Nil, Nil, None, 
+                                             Instant.now, Some(process.meta.lastUpdate))
 
       MockSessionService
         .get(sessionRepoId, process.meta.processCode, requestId)
-        .returns(Future.successful(Right(GuidanceSession(expectedSession))))
+        .returns(Future.successful(Right(GuidanceSession(expectedSession, process, Map()))))
 
       target.getPageEvaluationContext(process.meta.processCode, s"/${SecuredProcess.SecuredProcessStartUrl}", false, sessionRepoId)
     }
 
     "When passed a url to a standard page should send pageHistory url to the repository" in new Test {
-      val expectedSession: Session = Session(SessionKey(sessionRepoId, process.meta.processCode), Some(Published), process.meta.id, process, Map(), Nil, Map(), Map(), Map(), Nil, Nil, None, Instant.now)
-
+    val expectedSession: Session = Session(SessionKey(sessionRepoId, process.meta.processCode), 
+                                             Some(Published), 
+                                             process.meta.id, None, Map(), Nil, Map(),None, Map(), Nil, Nil, None, 
+                                             Instant.now, Some(process.meta.lastUpdate))
       MockSessionService
         .get(sessionRepoId, process.meta.processCode, requestId)
-        .returns(Future.successful(Right(GuidanceSession(expectedSession))))
+        .returns(Future.successful(Right(GuidanceSession(expectedSession, process, Map()))))
 
       target.getPageEvaluationContext(process.meta.processCode, s"/start", false, sessionRepoId)
     }

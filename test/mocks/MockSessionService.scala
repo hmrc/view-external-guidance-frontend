@@ -34,8 +34,8 @@ trait MockSessionService extends MockFactory {
 
     def create(key: String, runMode: RunMode, process: Process, pageMap: Map[String, PageNext], legalPageIds: List[String]): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockSessionService
-        .create(_: String, _: RunMode, _: Process, _:Map[String, PageNext], _: List[String]))
-        .expects(key, runMode, process, pageMap, legalPageIds)
+        .create(_: String, _: RunMode, _: Process, _:Map[String, PageNext], _: List[String])(_: ExecutionContext))
+        .expects(key, runMode, process, pageMap, legalPageIds, *)
 
     def delete(key: String, processCode: String): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockSessionService

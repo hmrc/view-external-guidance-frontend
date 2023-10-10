@@ -19,7 +19,6 @@ package repositories
 import base.BaseSpec
 import core.models.ocelot.stanzas.{ValueStanza, Value, ScalarType}
 import core.models.ocelot.{Process, ProcessJson, SequenceJson, FlowStage, ScalarLabel, ListLabel, Flow, Continuation, Label, LabelValue, Phrase, Published}
-import models.PageNext
 import java.time.Instant
 
 class SessionFSMSpec extends BaseSpec {
@@ -57,16 +56,17 @@ class SessionFSMSpec extends BaseSpec {
         SessionKey("id", process.meta.processCode),
         Some(Published),
         "processId",
-        process,
+        None,
         Map(),
         Nil,
         Map(),
-        Map(),
+        None,
         Map(),
         List(PageHistory("/start", Nil)),
         Nil,
         None,
-        Instant.now
+        Instant.now,
+        Some(process.meta.lastUpdate)
       )
   }
 
@@ -201,19 +201,38 @@ class SessionFSMSpec extends BaseSpec {
         SessionKey("id", process.meta.processCode),
         Some(Published),
         "processId",
-        nestedSeqJson.as[Process],
+        None,
         Map("Choice" -> ScalarLabel("Choice",List(phraseThree.english),List(phraseThree.welsh)),
             "Choice_seq" -> ListLabel("Choice_seq",List(phraseThree.english, phraseFour.english),List(phraseThree.welsh, phraseFour.welsh))),
         List(Flow("8",Some(LabelValue("Choice",phraseThree))), Flow("88",Some(LabelValue("Choice",phraseFour))), Continuation("2")),
         Map("6" -> ValueStanza(List(Value(ScalarType,"SecondSeqChoice","Loop value = [label:Choice]")),Vector("end"),false)),
-        Map("/done" -> PageNext("2"), "/one" -> PageNext("4"), "/third" -> PageNext("8"), "/start" -> PageNext("start"), "/fourth" -> PageNext("88")),
+        None,
         Map("/start" -> "2,3"),
         List(PageHistory("/start", Nil)),
         Nil,
         None,
-        Instant.now
+        Instant.now,
+        Some(process.meta.lastUpdate)
       )
   }
+    // val session: Session =
+    //   new Session(
+    //     SessionKey("id", process.meta.processCode),
+    //     Some(Published),
+    //     "processId",
+    //     nestedSeqJson.as[Process],
+    //     Map("Choice" -> ScalarLabel("Choice",List(phraseThree.english),List(phraseThree.welsh)),
+    //         "Choice_seq" -> ListLabel("Choice_seq",List(phraseThree.english, phraseFour.english),List(phraseThree.welsh, phraseFour.welsh))),
+    //     List(Flow("8",Some(LabelValue("Choice",phraseThree))), Flow("88",Some(LabelValue("Choice",phraseFour))), Continuation("2")),
+    //     Map("6" -> ValueStanza(List(Value(ScalarType,"SecondSeqChoice","Loop value = [label:Choice]")),Vector("end"),false)),
+    //     Map("/done" -> PageNext("2"), "/one" -> PageNext("4"), "/third" -> PageNext("8"), "/start" -> PageNext("start"), "/fourth" -> PageNext("88")),
+    //     Map("/start" -> "2,3"),
+    //     List(PageHistory("/start", Nil)),
+    //     Nil,
+    //     None,
+    //     Instant.now,
+    //     Some(process.meta.lastUpdate)
+    //   )
 
   "SessionFSM with flowStack" must {
     "Return no backlink or updates for any url with no page history, forceForward false (Nil)" in new FlowStackTest {

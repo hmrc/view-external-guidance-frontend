@@ -28,17 +28,17 @@ trait MockProcessCacheRepository extends MockFactory {
 
   val mockProcessCacheRepository: ProcessCacheRepository = mock[ProcessCacheRepository]
 
-  object MockSessionRepository {
+  object MockProcessCacheRepository {
 
-    def create(process: Process, pageMap: Map[String, PageNext]): CallHandler[Future[RequestOutcome[CachedProcess]]] =
+    def create(process: Process, pageMap: Map[String, PageNext], runMode: RunMode): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockProcessCacheRepository
-        .create(_: Process, _: Map[String, PageNext]))
-        .expects(process, pageMap)
+        .create(_: Process, _: Map[String, PageNext], _: RunMode))
+        .expects(process, pageMap, runMode)
 
-    def get(id: String, lastUpdate: Long): CallHandler[Future[RequestOutcome[CachedProcess]]] =
+    def get(id: String, processVersion: Long): CallHandler[Future[RequestOutcome[CachedProcess]]] =
       (mockProcessCacheRepository
         .get(_: String, _: Long))
-        .expects(id, lastUpdate)
+        .expects(id, processVersion)
 
   }
 }

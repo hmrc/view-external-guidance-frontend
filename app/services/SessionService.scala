@@ -32,11 +32,12 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
 
   def create(id: String, runMode: RunMode, process: Process, pageMap: Map[String, PageNext], legalPageIds: List[String])(implicit ec: ExecutionContext): Future[RequestOutcome[Unit]] = {
     logger.warn(s"Attempting to create a session sessionId: $id and processId: ${process.meta.id}")
-    sessionRepository.create(id, process.meta, runMode, legalPageIds).flatMap{_ =>
-      processCacheRepository.create(process, pageMap, runMode).map{
-        case Right(_) => Right(())
-        case Left(err) => Left(err) 
-      }
+    sessionRepository.create(id, process.meta, runMode, legalPageIds).flatMap{
+      case Right(_) => processCacheRepository.create(process, pageMap, runMode).map{
+          case Right(_) => Right(())
+          case Left(err) => Left(err)
+        }
+      case Left(err) => Future.successful(Left(err))
     }
   }
 
@@ -44,21 +45,21 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
 
   def getNoUpdate(key: String, processCode: String)(implicit context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] = {
     sessionRepository.getNoUpdate(key, processCode).flatMap{
-      case Right(session) => guidanceSession(session.processId, session)
+      case Right(session) => guidanceSession(session)
       case Left(err) => Future.successful(Left(err))
     }
   }
 
   def get(key: String, processCode: String, requestId: Option[String])(implicit context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] = {
     sessionRepository.get(key, processCode, requestId).flatMap{
-      case Right(session) => guidanceSession(session.processId, session)
+      case Right(session) => guidanceSession(session)
       case Left(err) => Future.successful(Left(err))
     }
   }
 
   def reset(key: String, processCode: String, requestId: Option[String])(implicit context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] = {
     sessionRepository.reset(key, processCode, requestId).flatMap{
-      case Right(session) => guidanceSession(session.processId, session)
+      case Right(session) => guidanceSession(session)
       case Left(err) => Future.successful(Left(err))
     }
   }
@@ -74,7 +75,7 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
                                 requestId: Option[String]): Future[RequestOutcome[Unit]] =
     sessionRepository.updateAfterFormSubmission(key, processCode, answerId, answer, labels, nextLegalPageIds, requestId)
 
-  private[services] def guidanceSession(id: String, session: Session)(implicit context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] =
+  private[services] def guidanceSession(session: Session)(implicit context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] =
     session.processVersion.fold[Future[RequestOutcome[GuidanceSession]]](Future.successful(obsoleteInflightSession(session)))(processVersion =>
       processCacheRepository.get(session.processId, processVersion).map{
         case Right(cachedProcess) => Right(GuidanceSession(session, cachedProcess.process, cachedProcess.pageMap))

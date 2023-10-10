@@ -30,6 +30,7 @@ import play.api.Logging
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import org.mongodb.scala._
+import org.mongodb.scala.result.UpdateResult
 import org.mongodb.scala.model.Filters._
 import org.mongodb.scala.model.Sorts._
 import org.mongodb.scala.model._
@@ -86,18 +87,21 @@ class DefaultProcessCacheRepository @Inject() (config: AppConfig, component: Mon
   ) with ProcessCacheRepository with Logging {
 
   def create(process: Process, pageMap: Map[String, PageNext], runMode: RunMode): Future[RequestOutcome[Unit]] = {
-    collection.findOneAndUpdate(equal("_id", CacheKey(process.meta.id, process.meta.lastUpdate)),
+    collection.updateOne(equal("_id", CacheKey(process.meta.id, process.meta.lastUpdate)),
                                 combine(List(
                                   Updates.set(TtlExpiryFieldName, expiryInstant(runMode, Instant.now)),
                                   Updates.set(ProcessFieldName, Codecs.toBson(process)),
                                   Updates.set(PageMapFieldName, Codecs.toBson(pageMap))
                                 ).toIndexedSeq: _*),
-                                FindOneAndUpdateOptions().upsert(true))
+                                UpdateOptions().upsert(true))
     .toFutureOption()
     .map{
-      case _ => 
+      case Some(result: UpdateResult) if result.wasAcknowledged => 
         logger.warn(s"Session repo creation _id=(${process.meta.id}, ${process.meta.lastUpdate}) complete for ${process.meta.id}, ${process.meta.processCode}, page count ${pageMap.size}")
         Right(())
+      case other =>
+        logger.error(s"Session repo creation _id=(${process.meta.id}, ${process.meta.lastUpdate}) failed with $other")
+        Left(DatabaseError)
     }
     .recover {
       case ex: MongoCommandException if ex.getErrorCode == 11000 =>

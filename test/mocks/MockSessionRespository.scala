@@ -17,7 +17,6 @@
 package mocks
 
 import repositories.{Session, SessionRepository, PageHistory}
-import models.PageNext
 import core.models.ocelot._
 import core.models.RequestOutcome
 import core.models.ocelot.RunMode
@@ -31,10 +30,10 @@ trait MockSessionRepository extends MockFactory {
 
   object MockSessionRepository {
 
-    def create(key: String, runMode: RunMode, process: Process, pageMap: Map[String, PageNext], legalPageIds: List[String]): CallHandler[Future[RequestOutcome[Unit]]] =
+    def create(id: String, meta: Meta, runMode: RunMode, legalPageIds: List[String]): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockSessionRepository
-        .create(_: String, _: RunMode, _: Process, _: Map[String, PageNext], _: List[String]))
-        .expects(key, runMode, process, pageMap, legalPageIds)
+        .create(_: String, _: Meta, _: RunMode, _: List[String]))
+        .expects(id, meta, runMode, legalPageIds)
 
     def delete(key: String, processCode: String): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockSessionRepository
