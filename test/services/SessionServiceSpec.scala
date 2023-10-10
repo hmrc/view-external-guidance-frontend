@@ -26,6 +26,7 @@ import uk.gov.hmrc.http.{HeaderCarrier, RequestId}
 import scala.concurrent.Future
 import java.time.Instant
 import repositories.CachedProcess
+import core.models.RequestOutcome
 
 class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with MockSessionRepository {
 
@@ -35,12 +36,10 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
     implicit val headerCarrier: HeaderCarrier = HeaderCarrier(requestId = Some(RequestId(rId)))
 
     val process: Process = validOnePageJson.as[Process]
-    val processWithProcessCode = validOnePageProcessWithProcessCodeJson.as[Process]
+    val processWithProcessCode: Process = validOnePageProcessWithProcessCodeJson.as[Process]
     val fullProcess: Process = prototypeJson.as[Process]
-
     val firstPageUrl = "/first-page"
     val lastPageUrl = "/last-page"
-
     val processId = "oct90001"
     val processCode = "CupOfTea"
     val uuid = "683d9aa0-2a0e-4e28-9ac8-65ce453d2730"
@@ -65,7 +64,7 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
         .create(process, Map(), Published)
         .returns(Future.successful(Right(())))
 
-      val result = target.create(sessionRepoId, Published, process, Map(), List())
+      val result: Future[RequestOutcome[Unit]] = target.create(sessionRepoId, Published, process, Map(), List())
 
       whenReady(result) {
         case Right(pc) => succeed
@@ -107,14 +106,14 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
   "SessionService guidanceSession" should {
 
     "Query process cache for Sessions containg only dynamic items" in new Test {
-      val expiry = Instant.now
-      val newSession = Session(
-                        SessionKey(processId, process.meta.processCode), 
-                        Some(Published), process.meta.id, 
-                        None, Map(), Nil, Map(), None, Map(), Nil, Nil, None, Instant.now, 
+      val expiry: Instant = Instant.now
+      val newSession: Session = Session(
+                        SessionKey(processId, process.meta.processCode),
+                        Some(Published), process.meta.id,
+                        None, Map(), Nil, Map(), None, Map(), Nil, Nil, None, Instant.now,
                         Some(process.meta.lastUpdate)
                       )
-      val cachedProcess = CachedProcess(
+      val cachedProcess: CachedProcess = CachedProcess(
                             repositories.CacheKey(processId, process.meta.lastUpdate),
                             process,
                             Map(),
@@ -123,26 +122,29 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
 
       MockProcessCacheRepository
         .get(processId, process.meta.lastUpdate)
-        .returns(Future.successful(Right(cachedProcess)))      
+        .returns(Future.successful(Right(cachedProcess)))
 
       whenReady(target.guidanceSession(newSession)) {
         case Right(gSession) if gSession == GuidanceSession(newSession, process, Map()) => succeed
         case _ => fail()
-      }      
+      }
+
     }
 
-    "Not query process cache for in inflight obsolete sessions" in new Test {      
-      val obsoleteSession = Session(
-                        SessionKey(processId, process.meta.processCode), 
-                        Some(Published), process.meta.id, 
-                        Some(process), Map(), Nil, Map(), Some(Map()), Map(), Nil, Nil, None, Instant.now, 
+    "Not query process cache for in inflight obsolete sessions" in new Test {
+
+      val obsoleteSession: Session = Session(
+                        SessionKey(processId, process.meta.processCode),
+                        Some(Published), process.meta.id,
+                        Some(process), Map(), Nil, Map(), Some(Map()), Map(), Nil, Nil, None, Instant.now,
                         None
                       )
 
       whenReady(target.guidanceSession(obsoleteSession)) {
         case Right(gSession) if gSession == GuidanceSession(obsoleteSession, process, Map()) => succeed
         case _ => fail()
-      }      
+      }
+
     }
 
   }
