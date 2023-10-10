@@ -73,7 +73,7 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
       }
     }
 
-    "Fail to Create a new session is session repository returns an error" in new Test {
+    "Fail to Create a new session if session repository returns an error" in new Test {
 
       MockSessionRepository
         .create(sessionRepoId, process.meta, Published, List())
@@ -85,7 +85,7 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
       }
     }
 
-    "Fail to Create a new session is process cache repository returns an error" in new Test {
+    "Fail to Create a new session if process cache repository returns an error" in new Test {
 
       MockSessionRepository
         .create(sessionRepoId, process.meta, Published, List())
