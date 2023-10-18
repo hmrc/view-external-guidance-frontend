@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import uk.gov.hmrc.DefaultBuildSettings
+
 val appName = "view-external-guidance-frontend"
 
 lazy val microservice = Project(appName, file("."))
@@ -29,10 +31,15 @@ lazy val microservice = Project(appName, file("."))
     ),
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test
   )
-  .configs(IntegrationTest)
   .settings(CodeCoverageSettings.settings: _*)
   .settings(resolvers += Resolver.jcenterRepo)
 
+
+lazy val it = project
+  .enablePlugins(PlayScala)
+  .dependsOn(microservice % "test->test") // the "test->test" allows reusing test code and test dependencies
+  .settings(DefaultBuildSettings.itSettings)
+  .settings(libraryDependencies ++= AppDependencies.itDependencies)
 
 inConfig(IntegrationTest)(org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings)
 
