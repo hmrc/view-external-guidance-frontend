@@ -26,10 +26,6 @@ import scala.concurrent.ExecutionContext
 import play.api.Logging
 import models.admin.CachedProcessSummary
 
-// case class ActiveProcessSummary(id: String, processVersion: Long, title: String, expiryTime: Instant)
-// object ActiveProcessSummary {
-//   implicit lazy val formats: Format[ActiveProcessSummary] = Json.format[ActiveProcessSummary]
-// }
 
 @Singleton
 class AdminApiController @Inject() (appConfig: AppConfig, processCacheRepository: ProcessCacheRepository, mcc: MessagesControllerComponents) 

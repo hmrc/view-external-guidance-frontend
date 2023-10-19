@@ -5,5 +5,5 @@ GET   /approval/:processId/*url          controllers.entry.StartGuidanceControll
 GET   /approval/:processId               controllers.entry.StartGuidanceController.approval(processId: String)
 GET   /map-approval/:processCode         controllers.entry.StartAdminController.approvalPageMap(processCode: String)
 GET   /map-published/:processCode        controllers.entry.StartAdminController.publishedPageMap(processCode: String)
-GET	  /active					         controllers.apis.AdminApiController.listActiveProcessSummaries()
-GET	  /active/:id/:version				 controllers.apis.AdminApiController.getActive(id, version)
+GET   /active                            controllers.apis.AdminApiController.listActiveProcessSummaries()
+GET   /active/:id/:version               controllers.apis.AdminApiController.getActive(id, version)
