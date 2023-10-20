@@ -31,18 +31,16 @@ import models.admin.CachedProcessSummary
 class AdminApiController @Inject() (appConfig: AppConfig, processCacheRepository: ProcessCacheRepository, mcc: MessagesControllerComponents) 
   extends FrontendController(mcc) with Logging {
 
-  implicit val config: AppConfig = appConfig
   implicit val ec: ExecutionContext = mcc.executionContext
+  implicit lazy val config: AppConfig = appConfig
   implicit lazy val cachedProcessSummaryFormats: Format[CachedProcessSummary] = Json.format[CachedProcessSummary]
 
   def listActiveProcessSummaries(): Action[AnyContent] = Action.async {_ =>
     processCacheRepository.listSummaries().map{
-      case Right(list: List[CachedProcessSummary]) => 
-        logger.info(s"Returning $list")
-        Ok(Json.toJson(list))
+      case Right(list: List[CachedProcessSummary]) => Ok(Json.toJson(list))
       case Left(err) => 
         logger.error(s"Unable to retrieve list of active process summaries, error : $err")
-        InternalServerError("")
+        InternalServerError(s"Unable to retrieve list of active process summaries, error : $err")
     }
   }
 
