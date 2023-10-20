@@ -20,8 +20,8 @@ import javax.inject.{Inject, Singleton}
 import play.api.Configuration
 import play.api.i18n.Lang
 import play.api.mvc.RequestHeader
-import uk.gov.hmrc.play.bootstrap.binders.SafeRedirectUrl
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+import uk.gov.hmrc.http.StringContextOps
 
 import scala.collection.immutable.ListMap
 
@@ -69,8 +69,8 @@ class AppConfigImpl @Inject() (val config: Configuration, servicesConfig: Servic
   val reportAProblemNonJSUrl: String = s"$contactBaseUrl/contact/problem_reports_nonjs?service=$serviceIdentifier"
   val languageMap: Map[String, Lang] = ListMap("english" -> Lang("en"), "cymraeg" -> Lang("cy"))
 
-  def feedbackUrl(implicit request: RequestHeader): String =
-    s"$contactBaseUrl$betaFeedback?service=$serviceIdentifier&backUrl=${SafeRedirectUrl(host + request.uri).encodedUrl}"
+  def feedbackUrl(implicit request: RequestHeader) =
+    url"$contactBaseUrl$betaFeedback?service=$serviceIdentifier&backUrl=${host + request.uri}"
 
   lazy val externalGuidanceBaseUrl: String = servicesConfig.baseUrl("external-guidance")
   lazy val cookies: String = config.get[String]("urls.footer.cookies")

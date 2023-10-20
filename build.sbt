@@ -18,12 +18,13 @@ import uk.gov.hmrc.DefaultBuildSettings
 
 val appName = "view-external-guidance-frontend"
 
+ThisBuild / majorVersion := 0
+ThisBuild / scalaVersion := "2.13.8"
+
 lazy val microservice = Project(appName, file("."))
   .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin)
   .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427
   .settings(
-    scalaVersion := "2.13.8",
-    majorVersion := 0,
     scalacOptions ++= Seq(
       "-feature",
       "-Wconf:src=routes/.*:s",
