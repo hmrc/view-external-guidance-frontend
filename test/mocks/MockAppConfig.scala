@@ -51,4 +51,6 @@ object MockAppConfig extends AppConfig {
   val adminHostBaseUrl: String = s"${adminHost}${baseUrl}"
   val pageStanzaLimit: Int = 1000
   val optimizelyProjectId: Option[String] = None
+  val processCacheTimeoutHours: Int = 120
+  val processCacheScratchTimeoutHours: Int = 12
 }

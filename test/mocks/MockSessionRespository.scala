@@ -17,7 +17,6 @@
 package mocks
 
 import repositories.{Session, SessionRepository, PageHistory}
-import models.{PageNext, GuidanceSession}
 import core.models.ocelot._
 import core.models.RequestOutcome
 import core.models.ocelot.RunMode
@@ -31,10 +30,10 @@ trait MockSessionRepository extends MockFactory {
 
   object MockSessionRepository {
 
-    def create(key: String, runMode: RunMode, process: Process, pageMap: Map[String, PageNext], legalPageIds: List[String]): CallHandler[Future[RequestOutcome[Unit]]] =
+    def create(id: String, meta: Meta, runMode: RunMode, legalPageIds: List[String]): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockSessionRepository
-        .create(_: String, _: RunMode, _: Process, _: Map[String, PageNext], _: List[String]))
-        .expects(key, runMode, process, pageMap, legalPageIds)
+        .create(_: String, _: Meta, _: RunMode, _: List[String]))
+        .expects(id, meta, runMode, legalPageIds)
 
     def delete(key: String, processCode: String): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockSessionRepository
@@ -46,9 +45,9 @@ trait MockSessionRepository extends MockFactory {
         .updateAfterFormSubmission(_: String, _: String, _: String, _: String, _: Labels, _: List[String], _: Option[String]))
         .expects(docId, processCode, url, answer, *, nextLegalPageIds, requestId)
 
-    def getById(key: String, processCode: String): CallHandler[Future[RequestOutcome[GuidanceSession]]] =
+    def getNoUpdate(key: String, processCode: String): CallHandler[Future[RequestOutcome[Session]]] =
       (mockSessionRepository
-        .getById(_: String, _: String))
+        .getNoUpdate(_: String, _: String))
         .expects(key, processCode)
 
     def get(key: String, processCode: String, requestId: Option[String]): CallHandler[Future[RequestOutcome[Session]]] =
@@ -56,7 +55,7 @@ trait MockSessionRepository extends MockFactory {
         .get(_: String, _: String, _: Option[String]))
         .expects(key, processCode, requestId)
 
-    def reset(key: String, processCode: String, requestId: Option[String]): CallHandler[Future[RequestOutcome[GuidanceSession]]] =
+    def reset(key: String, processCode: String, requestId: Option[String]): CallHandler[Future[RequestOutcome[Session]]] =
       (mockSessionRepository
         .reset(_: String, _: String, _: Option[String]))
         .expects(key, processCode, requestId)

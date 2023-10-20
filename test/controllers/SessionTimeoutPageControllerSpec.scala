@@ -45,7 +45,7 @@ class SessionTimeoutPageControllerSpec extends BaseSpec {
     lazy val invalidProcessCode = "cup-of-coffee"
 
     lazy val process: Process = validOnePageJson.as[Process]
-    lazy val session: GuidanceSession = GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None, Published)
+    lazy val session: GuidanceSession = GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, None, None, Published, Nil)
 
     val timeout: Int = MockAppConfig.timeoutInSeconds * 1000
 
