@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package pages
+package test.pages
 
 import play.api.http.Status
 import play.api.libs.ws.{WSRequest, WSResponse}
-import stubs.AuditStub
-import support.IntegrationSpec
+import test.stubs.AuditStub
+import test.support.IntegrationSpec
 
 class SwitchLanguageISpec extends IntegrationSpec {
 
