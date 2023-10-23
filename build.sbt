@@ -14,18 +14,17 @@
  * limitations under the License.
  */
 
-import uk.gov.hmrc.DefaultBuildSettings.integrationTestSettings
-import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin.publishingSettings
+import uk.gov.hmrc.DefaultBuildSettings
 
 val appName = "view-external-guidance-frontend"
-val silencerVersion = "1.7.1"
+
+ThisBuild / majorVersion := 0
+ThisBuild / scalaVersion := "2.13.8"
 
 lazy val microservice = Project(appName, file("."))
   .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin)
   .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427
   .settings(
-    scalaVersion := "2.13.8",
-    majorVersion := 0,
     scalacOptions ++= Seq(
       "-feature",
       "-Wconf:src=routes/.*:s",
@@ -33,11 +32,15 @@ lazy val microservice = Project(appName, file("."))
     ),
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test
   )
-  .configs(IntegrationTest)
   .settings(CodeCoverageSettings.settings: _*)
-  .settings(integrationTestSettings(): _*)
   .settings(resolvers += Resolver.jcenterRepo)
 
+
+lazy val it = project
+  .enablePlugins(PlayScala)
+  .dependsOn(microservice % "test->test") // the "test->test" allows reusing test code and test dependencies
+  .settings(DefaultBuildSettings.itSettings)
+  .settings(libraryDependencies ++= AppDependencies.itDependencies)
 
 inConfig(IntegrationTest)(org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings)
 
