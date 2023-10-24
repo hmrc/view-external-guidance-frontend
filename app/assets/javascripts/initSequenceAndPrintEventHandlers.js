@@ -60,6 +60,19 @@ var ready = (callback) => {
       return exclusive;
     }
 
+    function initPrintDialogHandler(elements){
+      var counter = 0;
+      while(counter < elements.length) {
+        if (elements[counter].id == "print-dialog") {
+          elements[counter].addEventListener("click", function() {
+            event.preventDefault()
+            window.print()
+          });
+        }
+        counter++;
+      }
+    }
+
     var checkboxes = document.getElementsByClassName("govuk-checkboxes__input");
 
     if(checkboxes.length > 0){
@@ -78,6 +91,9 @@ var ready = (callback) => {
         initCheckboxEventHandlers(checkboxes);
 
     }
+
+    initPrintDialogHandler(document.getElementsByClassName("govuk-link"));
+    initPrintDialogHandler(document.getElementsByClassName("govuk-button"));
 
   });
 
