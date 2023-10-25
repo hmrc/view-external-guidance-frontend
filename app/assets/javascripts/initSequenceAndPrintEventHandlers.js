@@ -63,7 +63,7 @@ var ready = (callback) => {
     function initPrintDialogHandler(elements){
       var counter = 0;
       while(counter < elements.length) {
-        if (elements[counter].id.substring(0,  "print-dialog".length) == "print-dialog") {
+        if (elements[counter].id.substring(0,  "print-dialog-".length) == "print-dialog-") {
           elements[counter].addEventListener("click", function() {
             event.preventDefault()
             window.print()
