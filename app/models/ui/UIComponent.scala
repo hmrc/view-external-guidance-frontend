@@ -16,7 +16,7 @@
 
 package models.ui
 
-import core.models.ocelot.asAnyInt
+import core.models.ocelot.{JavascriptPatternString, asAnyInt}
 trait UIComponent {
   val text: Text
 }
@@ -36,12 +36,15 @@ case class Words(s: String, bold: Boolean = false) extends TextItem {
 }
 
 case class Link(dest: String, text: String, window: Boolean = false, asButton: Boolean = false, hint:Option[String] = None) extends TextItem {
+  lazy val PrintDialogId: String = s"print-dialog-${java.util.UUID.randomUUID()}"
   override def toString: String = s"[${if(asButton) "button" else "link"}:$text:$dest:$window:$hint]"
   def isEmpty: Boolean = text.isEmpty
+  def isPrintDialog: Boolean = dest.equals(JavascriptPatternString)
   def toWords: Seq[String] = text.split(" +").toSeq
   def getDest(backLink: Option[String]): String =
     backLink match {
       case Some(bl) if dest == bl => s"$dest?$PreviousPageLinkQuery"
+      case _ if this.isPrintDialog => s"#$PrintDialogId"
       case _ => dest
     }
 }
