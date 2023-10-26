@@ -16,6 +16,5 @@
 
 @import models.ui.Link
 @(link: Link, hint: String)(implicit ctx: PageContext)
-<a @if(!link.asButton) {class="govuk-link"} href="@link.getDest(ctx.backLink)" @if(link.asButton) {class="govuk-button" role="button" data-module="govuk-button"} @if(link.window) {target="_blank"}>
-  <span aria-hidden="true">@link.text</span><span class="govuk-visually-hidden"> @hint</span>
-</a>
+<a @if(!link.asButton) {class="govuk-link"} href="@link.getDest(ctx.backLink)" @if(link.asButton) {class="govuk-button" role="button" data-module="govuk-button"} @if(link.isPrintDialog){id="@link.PrintDialogId"} @if(link.window) {target="_blank"}>
+  <span aria-hidden="true">@link.text</span><span class="govuk-visually-hidden"> @hint</span></a>

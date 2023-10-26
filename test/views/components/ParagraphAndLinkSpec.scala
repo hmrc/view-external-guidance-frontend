@@ -16,7 +16,7 @@
 
 package views.components
 
-import core.models.ocelot.{LabelCache, Labels}
+import core.models.ocelot.{LabelCache, Labels, JavascriptPatternString}
 import models.ui.{Link, Paragraph, PreviousPageLinkQuery, Text}
 import org.jsoup.nodes.{Document, Element}
 import org.scalatest.matchers.should.Matchers
@@ -149,6 +149,43 @@ class ParagraphAndLinkSpec extends AnyWordSpec with Matchers with base.ViewFns w
       elementAttrs(links.head)("data-module") shouldBe "govuk-button"
 
     }
+
+    "Detect and render javascript:window.print() links correctly" in new Test {
+      val lnk: Link = Link(s"$JavascriptPatternString", "See page 1", window = false, asButton = false, None)
+
+      val doc: Document = asDocument(link(lnk))
+
+      val links = doc.getElementsByTag("a").asScala.toList
+
+      links.size shouldBe 1
+
+      links.head.text shouldBe "See page 1"
+
+      elementAttrs(links.head)("id") shouldBe lnk.PrintDialogId
+      elementAttrs(links.head)("href") shouldBe lnk.getDest(None)
+      elementAttrs(links.head)("class") shouldBe "govuk-link"
+    }
+
+    "Detect and render javascript:window.print() buttons correctly" in new Test {
+      val lnk: Link = Link(s"$JavascriptPatternString", "See page 1", window = false, asButton = true, None)
+
+      val doc: Document = asDocument(link(lnk))
+
+      val links = doc.getElementsByTag("a").asScala.toList
+
+      links.size shouldBe 1
+
+      links.head.text shouldBe "See page 1"
+
+      elementAttrs(links.head)("id") shouldBe lnk.PrintDialogId
+      elementAttrs(links.head)("href") shouldBe lnk.getDest(None)
+      elementAttrs(links.head)("class") shouldBe "govuk-button"
+      elementAttrs(links.head).contains("role") shouldBe true
+      elementAttrs(links.head)("role") shouldBe "button"
+      elementAttrs(links.head).contains("data-module") shouldBe true
+      elementAttrs(links.head)("data-module") shouldBe "govuk-button"
+    }
+
   }
 
   "link_withHint component" should {
@@ -219,6 +256,59 @@ class ParagraphAndLinkSpec extends AnyWordSpec with Matchers with base.ViewFns w
 
       elementAttrs(spans(1))("class") shouldBe "govuk-visually-hidden"
     }
+
+    "render link with javascript:window.print() destination" in new Test {
+
+      val lnk: Link = Link(s"$JavascriptPatternString", "See page 1", window = false, asButton = false)
+
+      val doc: Document = asDocument(link_withHint(lnk, "Something else"))
+
+      val links: List[Element] = doc.getElementsByTag("a").asScala.toList
+
+      links.size shouldBe 1
+
+      elementAttrs(links.head)("id") shouldBe lnk.PrintDialogId
+      elementAttrs(links.head)("href") shouldBe lnk.getDest(None)
+      elementAttrs(links.head)("class") shouldBe "govuk-link"
+
+      val spans: List[Element] = links.head.getElementsByTag("span").asScala.toList
+
+      spans.size shouldBe 2
+
+      spans(0).text shouldBe "See page 1"
+      spans(1).text shouldBe "Something else"
+
+      elementAttrs(spans(1))("class") shouldBe "govuk-visually-hidden"
+    }
+
+    "render button with javascript:window.print() destination" in new Test {
+
+      val lnk: Link = Link(s"$JavascriptPatternString", "See page 1", window = false, asButton = true)
+
+      val doc: Document = asDocument(link_withHint(lnk, "Something else"))
+
+      val links: List[Element] = doc.getElementsByTag("a").asScala.toList
+
+      links.size shouldBe 1
+
+      elementAttrs(links.head)("id") shouldBe lnk.PrintDialogId
+      elementAttrs(links.head)("href") shouldBe lnk.getDest(None)
+      elementAttrs(links.head)("class") shouldBe "govuk-button"
+      elementAttrs(links.head).contains("role") shouldBe true
+      elementAttrs(links.head)("role") shouldBe "button"
+      elementAttrs(links.head).contains("data-module") shouldBe true
+      elementAttrs(links.head)("data-module") shouldBe "govuk-button"
+
+      val spans: List[Element] = links.head.getElementsByTag("span").asScala.toList
+
+      spans.size shouldBe 2
+
+      spans(0).text shouldBe "See page 1"
+      spans(1).text shouldBe "Something else"
+
+      elementAttrs(spans(1))("class") shouldBe "govuk-visually-hidden"
+    }
+
   }
 
 }
