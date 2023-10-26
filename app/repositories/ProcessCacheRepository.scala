@@ -25,6 +25,7 @@ import core.models.ocelot._
 import core.models.errors._
 import core.models.RequestOutcome
 import models.PageNext
+import models.admin.CachedProcessSummary
 import java.util.concurrent.TimeUnit
 import play.api.Logging
 import java.time.Instant
@@ -38,7 +39,7 @@ import org.mongodb.scala.model.Updates.combine
 import uk.gov.hmrc.mongo._
 import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 import scala.concurrent.{ExecutionContext, Future}
-import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats.Implicits._
+import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats.Implicits._  
 
 case class CacheKey(id: String, processVersion: Long)
 
@@ -67,6 +68,7 @@ trait ProcessCacheRepositoryConstants {
 trait ProcessCacheRepository extends ProcessCacheRepositoryConstants {
   def create(process: Process, pageMap: Map[String, PageNext], runMode: RunMode): Future[RequestOutcome[Unit]]
   def get(id: String, processVersion: Long): Future[RequestOutcome[CachedProcess]]
+  def listSummaries(): Future[RequestOutcome[List[CachedProcessSummary]]]
 }
 
 object DefaultProcessCacheRepository extends ProcessCacheRepositoryConstants
@@ -86,6 +88,8 @@ class DefaultProcessCacheRepository @Inject() (config: AppConfig, component: Mon
     replaceIndexes = true // Ensure an updated timeout from config is used
   ) with ProcessCacheRepository with Logging {
 
+  implicit lazy val cachedProcessSummaryformat: Format[CachedProcessSummary] = Json.format[CachedProcessSummary]
+
   def create(process: Process, pageMap: Map[String, PageNext], runMode: RunMode): Future[RequestOutcome[Unit]] = {
     collection.updateOne(equal("_id", CacheKey(process.meta.id, process.meta.lastUpdate)),
                                 combine(List(
@@ -97,7 +101,7 @@ class DefaultProcessCacheRepository @Inject() (config: AppConfig, component: Mon
     .toFutureOption()
     .map{
       case Some(result: UpdateResult) if result.wasAcknowledged => 
-        logger.warn(s"Session repo creation _id=(${process.meta.id}, ${process.meta.lastUpdate}) complete for ${process.meta.id}, ${process.meta.processCode}, page count ${pageMap.size}")
+        logger.warn(s"Session repo creation _id=(${process.meta.id}, ${process.meta.lastUpdate}) complete, page count ${pageMap.size}")
         Right(())
       case other =>
         logger.error(s"Session repo creation _id=(${process.meta.id}, ${process.meta.lastUpdate}) failed with $other")
@@ -105,10 +109,10 @@ class DefaultProcessCacheRepository @Inject() (config: AppConfig, component: Mon
     }
     .recover {
       case ex: MongoCommandException if ex.getErrorCode == 11000 =>
-        logger.error(s"Duplicate key Error ${ex.getErrorMessage} while trying to persist process=${process.meta.id} to session repo using _id=(${process.meta.id}, ${process.meta.lastUpdate})")
+        logger.error(s"Duplicate key Error ${ex.getErrorMessage} while trying to persist process=${process.meta.id} to session repo")
         Left(DuplicateKeyError)
       case lastError =>
-        logger.error(s"Error $lastError while trying to persist process=${process.meta.id} to session repo using _id=(${process.meta.id}, ${process.meta.lastUpdate})")
+        logger.error(s"Error $lastError while trying to persist process=(${process.meta.id}, ${process.meta.lastUpdate}) to session repo")
         Left(DatabaseError)
     }
   }
@@ -125,6 +129,21 @@ class DefaultProcessCacheRepository @Inject() (config: AppConfig, component: Mon
       logger.error(s"Error $lastError while trying to retrieve cached process from ProcessCache repo with _id=($id, $processVersion)")
       Left(DatabaseError)
     }
+
+  def listSummaries(): Future[RequestOutcome[List[CachedProcessSummary]]] =
+    collection
+      .find()
+      .collect()
+      .toFutureOption()
+      .map{
+        case Some(result) => Right(result.map(r => CachedProcessSummary(r._id.id, r._id.processVersion, r.process.meta.title, r.expiryTime)).toList)
+        case _ => Right(Nil)
+      }
+      .recover {
+        case error =>
+          logger.error(s"Attempt to retrieve approval process summaries failed with error : ${error.getMessage}")
+          Left(DatabaseError)
+      }
 
   private[repositories] def expiryInstant(runMode: RunMode, when: Instant): Instant =
     runMode match {
