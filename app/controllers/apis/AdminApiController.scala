@@ -22,7 +22,7 @@ import play.api.mvc._
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 import repositories.ProcessCacheRepository
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{Future, ExecutionContext}
 import play.api.Logging
 import models.admin.CachedProcessSummary
 
@@ -34,6 +34,14 @@ class AdminApiController @Inject() (appConfig: AppConfig, processCacheRepository
   implicit val ec: ExecutionContext = mcc.executionContext
   implicit lazy val config: AppConfig = appConfig
   implicit lazy val cachedProcessSummaryFormats: Format[CachedProcessSummary] = Json.format[CachedProcessSummary]
+
+  val corsHeaders: Seq[(String, String)] = Seq(
+    "Access-Control-Allow-Origin" -> "*",
+    "Access-Control-Allow-Headers" -> "*",
+    "Access-Control-Allow-Methods" -> "GET, OPTIONS"
+  )
+
+  val options: Action[AnyContent] = Action.async { _ => Future.successful(Ok("").withHeaders(corsHeaders: _*))}  
 
   def listActiveProcessSummaries(): Action[AnyContent] = Action.async {_ =>
     processCacheRepository.listSummaries().map{
@@ -51,6 +59,5 @@ class AdminApiController @Inject() (appConfig: AppConfig, processCacheRepository
         logger.error(s"Unable to retrieve active process ($id, $version), err = $err")
         BadRequest(s"Unable to retrieve active process ($id, $version), err = $err")
     }
-  }  
-
+  }
 }
