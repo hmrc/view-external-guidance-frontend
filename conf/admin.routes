@@ -1,3 +1,4 @@
+# Admin proxy routes
 GET        /approval/:processId/*url          controllers.entry.StartGuidanceController.approvalPage(processId: String, url: String)
 GET        /approval/:processId               controllers.entry.StartGuidanceController.approval(processId: String)
 GET        /map-approval/:processCode         controllers.entry.StartAdminController.approvalPageMap(processCode: String)
