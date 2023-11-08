@@ -21,7 +21,7 @@ import play.api.mvc.Request
 import play.api.data.Form
 import play.api.i18n.Messages
 import forms.providers._
-import core.models.ocelot.stanzas.{DataInput, DateInput, Input, Question, Sequence}
+import core.models.ocelot.stanzas.{DataInput, PassphraseInput, DateInput, Input, Question, Sequence}
 import play.api.Logging
 
 trait FormProvider[T] {
@@ -33,10 +33,12 @@ trait FormProvider[T] {
 class FormProviderFactory @Inject() (
   dateFormProvider: DateFormProvider,
   stringFormProvider: StringFormProvider,
-  stringListFormProvider: StringListFormProvider) extends Logging {
+  stringListFormProvider: StringListFormProvider,
+  passphraseFormProvider: PassphraseFormProvider) extends Logging {
 
   def apply(input: DataInput): FormProvider[_] = input match {
       case _: DateInput => dateFormProvider
+      case _: PassphraseInput => passphraseFormProvider
       case _: Input | _: Question => stringFormProvider
       case _: Sequence => stringListFormProvider
       case _ =>

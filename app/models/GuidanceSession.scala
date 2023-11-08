@@ -33,7 +33,9 @@ case class GuidanceSession(process: Process,
                            runMode: RunMode,
                            pageHistory: List[PageHistory]) {
   val secure: Boolean = process.flow.get(SecuredProcess.PassPhrasePageId).fold(true){_ =>
-    labels.get(SecuredProcess.PassPhraseResponseLabelName).fold(false)(lbl => lbl.english.headOption == process.passPhrase)
+    labels.get(SecuredProcess.EncryptedPassphraseResponseLabelName).fold{
+      labels.get(SecuredProcess.PassPhraseResponseLabelName).fold(false)(lbl => lbl.english.headOption == process.passPhrase)
+    }(lbl => lbl.english.headOption == process.passPhrase)
   }
 }
 

@@ -42,6 +42,7 @@ package object admin {
       case _: Sequence => "Sequence"
       case _: NumberInput => "NumberInput"
       case _: TextInput => "TextInput"
+      case _: PassphraseInput => "PassphraseInput"
       case _: CurrencyInput => "CurrencyInput"
       case _: CurrencyPoundsOnlyInput => "CurrencyPoundsOnlyInput"
       case _: DateInput => "DateInput"
