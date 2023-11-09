@@ -19,6 +19,8 @@ package services
 import base.BaseSpec
 import core.models.ocelot._
 import play.api.i18n.{Messages, MessagesApi}
+import core.services.EncrypterService
+import mocks.MockAppConfig
 
 class TextBuilderSpec extends BaseSpec {
 
@@ -28,6 +30,7 @@ class TextBuilderSpec extends BaseSpec {
     val messagesApi: MessagesApi = injector.instanceOf[MessagesApi]
     implicit val messages: Messages = messagesApi.preferred(Seq())
     private def messagesFn(k: String, args: Seq[Any])(implicit messages: Messages): String = messages(k, args: _*)
+    val encrypter = new EncrypterService(MockAppConfig)
 
     val labelsMap = List(
                       ScalarLabel("X", List("43")),
@@ -40,7 +43,7 @@ class TextBuilderSpec extends BaseSpec {
                       ScalarLabel("Idx", List("2"))
                     ).map(l => (l.name -> l)).toMap
     val timescales = Map("RDelay" -> 23)
-    val labels: Labels = LabelCache(labelsMap, Map(), Nil, Map(), timescales, messagesFn, runMode = Published)
+    val labels: Labels = LabelCache(labelsMap, Map(), Nil, Map(), timescales, messagesFn, runMode = Published, encrypter)
   }
 
   "Label expansion" must {

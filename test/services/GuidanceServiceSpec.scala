@@ -30,6 +30,7 @@ import uk.gov.hmrc.http.{HeaderCarrier, RequestId}
 
 import java.time.Instant
 import scala.concurrent.Future
+import core.services.EncrypterService
 
 class GuidanceServiceSpec extends BaseSpec {
 
@@ -96,6 +97,8 @@ class GuidanceServiceSpec extends BaseSpec {
 
     val standardPagePec = pec.copy(page = standardPage, dataInput = None, visualStanzas = Seq.empty)
 
+    val encrypter = new EncrypterService(MockAppConfig)
+
     lazy val target = new GuidanceService(
       MockAppConfig,
       mockSessionService,
@@ -104,7 +107,8 @@ class GuidanceServiceSpec extends BaseSpec {
       new SecuredProcessBuilder(messagesApi),
       mockUIBuilder,
       new SessionFSM,
-      messagesApi)
+      messagesApi,
+      encrypter)
 
     def renderPage(p: Page, labels: Labels)(implicit messages: Messages): (Seq[VisualStanza], Labels, Option[DataInput]) = {
       new PageRenderer(MockAppConfig).renderPage(p, labels).fold(_ => fail(), res => res)

@@ -41,7 +41,7 @@ class StartAdminControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
     lazy val expectedUrl = "/start-url"
     lazy val processId = "ext90002"
     lazy val processCode = "process-code"
-    val meta = Meta(processId, "", None, 0, "", 1L, 0, None, None, processCode)
+    val meta = Meta(processId, "", None, None, 0, "", 1L, 0, None, None, processCode)
     val emptyProcess = Process(meta, Map(), Vector(), Vector())
 
     val standardPagePath = "/std-page"
