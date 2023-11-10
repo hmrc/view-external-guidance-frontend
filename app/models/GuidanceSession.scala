@@ -32,11 +32,11 @@ case class GuidanceSession(process: Process,
                            backLink: Option[String],
                            runMode: RunMode,
                            pageHistory: List[PageHistory]) {
-  val secure: Boolean = process.flow.get(SecuredProcess.PassPhrasePageId).fold(true){_ =>
-    labels.get(SecuredProcess.EncryptedPassphraseResponseLabelName).fold{
+  val secure: Boolean = process.encryptedPassPhrase.fold{
+    process.passPhrase.fold(true)(_ =>
       labels.get(SecuredProcess.PassPhraseResponseLabelName).fold(false)(lbl => lbl.english.headOption == process.passPhrase)
-    }(lbl => lbl.english.headOption == process.passPhrase)
-  }
+    )
+  }(_ => labels.get(SecuredProcess.EncryptedPassphraseResponseLabelName).fold(false)(lbl => lbl.english.headOption == process.encryptedPassPhrase)) 
 }
 
 object GuidanceSession {

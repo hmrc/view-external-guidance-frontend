@@ -44,7 +44,7 @@ class SecuredProcessBuilder @Inject()(messagesApi: MessagesApi) {
                 Seq(ChoiceId),
                 nextFreePhraseIdx,
                 None,
-                PassPhraseResponseLabelName,
+                "", // Not required
                 None,
                 false)),
     (ChoiceId, ChoiceStanza(

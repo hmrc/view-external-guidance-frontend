@@ -44,13 +44,13 @@ class GuidanceSessionSpec extends BaseSpec with GuiceOneAppPerSuite {
 
     "Report not secure for a passphrase protected Process with no passphrase stored" in new Test {
       val passPhrasePc: GuidanceSession =
-        GuidanceSession(securedProcess,Map("/start" -> "0"),Map(),Nil,Map(),Map(),Nil, None,None, Published, Nil)
+        GuidanceSession(securedProcess, Map("/start" -> "0"),Map(),Nil,Map(),Map(),Nil, None,None, Published, Nil)
       passPhrasePc.secure shouldBe false
     }
 
     "Report secure for a passphrase protected Process with stored passphrase" in new Test {
       val securePassPhrasePc: GuidanceSession =
-        GuidanceSession(securedProcess,Map("/start" -> "0"),labelsWithPassPhrase,Nil,Map(),Map(),Nil, None,None, Published, Nil)
+        GuidanceSession(securedProcess, Map("/start" -> "0"),labelsWithPassPhrase,Nil,Map(),Map(),Nil, None,None, Published, Nil)
       securePassPhrasePc.secure shouldBe true
     }
   }
