@@ -42,8 +42,6 @@ lazy val it = project
   .settings(DefaultBuildSettings.itSettings)
   .settings(libraryDependencies ++= AppDependencies.itDependencies)
 
-inConfig(IntegrationTest)(org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings)
-
 TwirlKeys.templateImports ++= Seq(
   "uk.gov.hmrc.hmrcfrontend.views.html.components._",
   "uk.gov.hmrc.govukfrontend.views.html.components._",
