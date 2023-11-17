@@ -32,11 +32,22 @@ case class GuidanceSession(process: Process,
                            backLink: Option[String],
                            runMode: RunMode,
                            pageHistory: List[PageHistory]) {
-  val secure: Boolean = process.encryptedPassPhrase.fold{
-    process.passPhrase.fold(true)(_ =>
-      labels.get(SecuredProcess.PassPhraseResponseLabelName).fold(false)(lbl => lbl.english.headOption == process.passPhrase)
-    )
-  }(_ => labels.get(SecuredProcess.EncryptedPassphraseResponseLabelName).fold(false)(lbl => lbl.english.headOption == process.encryptedPassPhrase)) 
+  val secure: Boolean = process.flow.get(SecuredProcess.PassPhrasePageId).fold(true)(_ => passphraseResponseValid)
+  lazy private val passphraseResponseValid: Boolean = 
+    process.encryptedPassPhrase.fold{
+      // No encrypted passphrase
+      process.passPhrase.fold(true){_ =>
+        // Found plaintext passphraser, check plaintext response
+        labels.get(SecuredProcess.PassPhraseResponseLabelName).fold(false){lbl => 
+          lbl.english.headOption == process.passPhrase
+        }
+      }
+    }{_ => 
+      // Found encrypted passphrase, check encrypted response
+      labels.get(SecuredProcess.EncryptedPassphraseResponseLabelName).fold(false){lbl => 
+        lbl.english.headOption == process.encryptedPassPhrase
+      }
+    }
 }
 
 object GuidanceSession {
