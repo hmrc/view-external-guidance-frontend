@@ -20,13 +20,14 @@ import play.api.mvc._
 import play.api.data.Form
 import play.api.i18n.{Lang, Messages, MessagesApi}
 import core.models.ocelot.Phrase
-import core.models.ocelot.stanzas.{CurrencyInput, CurrencyPoundsOnlyInput, DateInput, Question, Sequence}
+import core.models.ocelot.stanzas.{PassphraseInput, CurrencyInput, CurrencyPoundsOnlyInput, DateInput, Question, Sequence}
 import models.ui.SubmittedAnswer
 import services.{ErrorStrategy, ValueMissingError, ValueMissingGroupError}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.test.FakeRequest
 import base.BaseSpec
 import forms.providers._
+import core.models.ocelot.SecuredProcess
 
 class FormProvidersSpec extends BaseSpec with GuiceOneAppPerSuite {
 
@@ -35,13 +36,14 @@ class FormProvidersSpec extends BaseSpec with GuiceOneAppPerSuite {
     val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
     implicit val messages: Messages = messagesApi.preferred(Seq(Lang("en")))
 
-    val formProvider: FormProviderFactory = new FormProviderFactory(new DateFormProvider, new StringFormProvider, new StringListFormProvider)
+    val formProvider: FormProviderFactory = new FormProviderFactory(new DateFormProvider, new StringFormProvider, new StringListFormProvider, new PassphraseFormProvider)
     val processId: String = "ext90000"
     val path: String = s"/guidance/$processId/question"
     val relativePath: String = path.drop(1)
     val incorrectPath: String = "guidance/somePath"
     val questionAnswer: String = "0"
     val currencyAnswer: String = "10.00"
+    val passphraseAnswer: String = "password"
     val currencyPoundsOnlyAnswer: String = "10"
     val day: String = "day"
     val month: String = "month"
@@ -64,6 +66,15 @@ class FormProvidersSpec extends BaseSpec with GuiceOneAppPerSuite {
       None,
       stack = false
     )
+
+    val passphraseInput: PassphraseInput = PassphraseInput(
+      Seq("4"),
+      Phrase("Enter passphrase", "Welsh: Enter passphrase"),
+      None,
+      SecuredProcess.PassPhraseResponseLabelName,
+      None,
+      stack = false
+    )    
 
     val currencyInput: CurrencyInput = CurrencyInput(
       Seq("4"),
@@ -149,6 +160,22 @@ class FormProvidersSpec extends BaseSpec with GuiceOneAppPerSuite {
           submittedAnswer.text shouldBe questionAnswer
         case Left((_: Form[_], _: ErrorStrategy)) => fail("Form binding returned a form with errors")
       }
+    }
+
+    "be able to bind data for a passphrase input component" in new Test {
+
+      implicit val request: Request[_] = FakeRequest("POST", path)
+        .withFormUrlEncodedBody(relativePath -> passphraseAnswer)
+
+      val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = formProvider(passphraseInput).bind(relativePath)
+
+      result match {
+        case Right((form: Form[_], submittedAnswer: SubmittedAnswer)) =>
+          form(relativePath).value shouldBe Some(passphraseAnswer)
+          submittedAnswer.text shouldBe passphraseAnswer
+        case Left((_: Form[_], _: ErrorStrategy)) => fail("Form binding returned a form with errors")
+      }
+
     }
 
     "be able to bind data for a currency input component" in new Test {
@@ -478,6 +505,14 @@ class FormProvidersSpec extends BaseSpec with GuiceOneAppPerSuite {
       val form: Form[_] = formProvider(question).populated(relativePath, Some(questionAnswer))
 
       form(relativePath).value shouldBe Some(questionAnswer)
+
+    }
+
+    "NOT populate a form with the submitted answer for a passphrase value" in new Test {
+
+      val form: Form[_] = formProvider(passphraseInput).populated(relativePath, Some(passphraseAnswer))
+
+      form(relativePath).value shouldBe None
 
     }
 

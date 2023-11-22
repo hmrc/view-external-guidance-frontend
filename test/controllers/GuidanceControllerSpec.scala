@@ -156,10 +156,10 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
     val dateInputPage = Page("start", "/test-page", stanzasWithDateInput, Seq("4"))
     val nonExclusiveSequenceInputPage: Page = Page("start", "/test-page", stanzasWithNonExclusiveSequence, Seq("4"))
     val exclusiveSequenceInputPage: Page = Page("start", "/test-page", stanzasWithExclusiveSequence, Seq("4"))
-    val meta = Meta(processId, "", None, 0, "", 1L, 0, None, None, processCode)
+    val meta = Meta(processId, "", None, None, 0, "", 1L, 0, None, None, processCode)
     val pageMap = Map("/start" -> PageNext("1", List("2", "3")), path -> PageNext("2"))
     val emptyProcess = Process(meta, Map(), Vector(), Vector())
-    val formProvider: FormProviderFactory = new FormProviderFactory(new DateFormProvider, new StringFormProvider, new StringListFormProvider)
+    val formProvider: FormProviderFactory = new FormProviderFactory(new DateFormProvider, new StringFormProvider, new StringListFormProvider, new PassphraseFormProvider)
 
     def renderPage(page: Page, labels: Labels):(Seq[VisualStanza], Labels, Option[DataInput]) =
       new PageRenderer(MockAppConfig).renderPage(page, labels).fold(_ => fail(), result => result)
@@ -215,7 +215,9 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
       new SecuredProcessBuilder(messagesApi),
       new UIBuilder(),
       new SessionFSM,
-      messagesApi)
+      messagesApi,
+      new EncrypterService(MockAppConfig)
+    )
 
     val target = new GuidanceController(
       MockAppConfig,
@@ -392,7 +394,8 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
       new SecuredProcessBuilder(messagesApi),
       new UIBuilder(),
       new SessionFSM,
-      messagesApi)
+      messagesApi,
+      new EncrypterService(MockAppConfig))
 
     val target = new GuidanceController(
       MockAppConfig,

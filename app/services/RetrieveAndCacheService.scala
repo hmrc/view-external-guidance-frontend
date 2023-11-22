@@ -81,20 +81,6 @@ class RetrieveAndCacheService @Inject() (
         logger.warn(s"Unable to process using identifier $processCode, received $err")
         Future.successful(Left(err))
       case Right((process, pages)) =>
-        //
-        // Left intentially commented out
-        //
-        // if (logger.isDebugEnabled) {
-        //   val urlMap: Map[String, String] = pages.map(p => (p.id, p.url)).toMap
-        //   logger.debug(s"Process id: $processCode, processCode: ${process.meta.processCode}, title: ${process.meta.title}")
-        //   logger.debug(s"PAGE MAP:")
-        //   pages.foreach{pge =>
-        //     logger.debug(s"PAGE: ${pge.id}, ${pge.url}")
-        //     pge.next.foreach(id => logger.debug(s"\tnxt:=> $id, ${urlMap(id)}"))
-        //     pge.linked.foreach(id => logger.debug(s"\tlnk:=> $id, ${urlMap(id)}"))
-        //   }
-        // }
-
         val pageMap: Map[String, PageNext] = pages.map(p => p.url -> PageNext(p.id, p.next.toList, p.linked.toList)).toMap
         val startPageUrl: String = url.getOrElse(pages.head.url)
         val startPageId: Option[String] = pageMap.get(startPageUrl).map(_.id)

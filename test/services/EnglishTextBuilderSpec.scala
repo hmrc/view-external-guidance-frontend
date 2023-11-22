@@ -21,6 +21,8 @@ import core.models.ocelot._
 import models.PageDesc
 import models.ui.{Link, Text, Words}
 import play.api.i18n.{Messages, MessagesApi}
+import mocks.MockAppConfig
+import core.services.EncrypterService
 
 
 class EnglishTextBuilderSpec extends BaseSpec {
@@ -29,7 +31,7 @@ class EnglishTextBuilderSpec extends BaseSpec {
 
     val messagesApi: MessagesApi = injector.instanceOf[MessagesApi]
     implicit val messages: Messages = messagesApi.preferred(Seq())
-
+    val encrypter = new EncrypterService(MockAppConfig)
     val words1 = Words("This is a ", true)
     val words2 = Words(" followed by ")
     val words3 = Words(" and nothing")
@@ -348,7 +350,7 @@ class EnglishTextBuilderSpec extends BaseSpec {
       "SomeDate"->ScalarLabel("SomeDate", List("22/9/1973")),
       "SomeList" -> ListLabel("SomeList", List("x", "y", "z"))
     )
-    val labels: Labels = LabelCache(labelsMap, Map(), Nil, Map(), Map(), message(lang), Published)
+    val labels: Labels = LabelCache(labelsMap, Map(), Nil, Map(), Map(), message(lang), Published, encrypter)
     override implicit val ctx: UIContext = UIContext(labels, urlMap1, messages)
   }
 

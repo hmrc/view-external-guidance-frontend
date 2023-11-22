@@ -35,7 +35,7 @@ class GuidanceSessionSpec extends BaseSpec with GuiceOneAppPerSuite {
                                                                     List(securedProcess.passPhrase.getOrElse(""))))
   }
 
-  "GuidanceSession" must {
+  "GuidanceSession with plaintext passphrase" must {
     "Report secure for a standard Process" in new Test {
       val pc: GuidanceSession =
         GuidanceSession(validOnePageJson.as[Process],Map("/start" -> "0"),Map(),Nil,Map(),Map(),Nil, None,None, Published, Nil)
@@ -44,14 +44,43 @@ class GuidanceSessionSpec extends BaseSpec with GuiceOneAppPerSuite {
 
     "Report not secure for a passphrase protected Process with no passphrase stored" in new Test {
       val passPhrasePc: GuidanceSession =
-        GuidanceSession(securedProcess,Map("/start" -> "0"),Map(),Nil,Map(),Map(),Nil, None,None, Published, Nil)
+        GuidanceSession(securedProcess, Map("/start" -> "0"),Map(),Nil,Map(),Map(),Nil, None,None, Published, Nil)
       passPhrasePc.secure shouldBe false
     }
 
     "Report secure for a passphrase protected Process with stored passphrase" in new Test {
       val securePassPhrasePc: GuidanceSession =
-        GuidanceSession(securedProcess,Map("/start" -> "0"),labelsWithPassPhrase,Nil,Map(),Map(),Nil, None,None, Published, Nil)
+        GuidanceSession(securedProcess, Map("/start" -> "0"),labelsWithPassPhrase,Nil,Map(),Map(),Nil, None,None, Published, Nil)
       securePassPhrasePc.secure shouldBe true
     }
   }
+
+  trait EncryptedTest extends ProcessJson {
+    val securedProcess: Process =
+      securedProcessBuilder.secureIfRequired(validOnePageProcessWithEncryptedPassPhrase.as[Process])
+    val labelsWithPassPhrase =
+      Map(SecuredProcess.EncryptedPassphraseResponseLabelName -> ScalarLabel(SecuredProcess.EncryptedPassphraseResponseLabelName,
+                                                                    List(securedProcess.encryptedPassPhrase.getOrElse(""))))
+  }
+
+  "GuidanceSession with encrypted passphrase" must {
+    "Report secure for a standard Process" in new EncryptedTest {
+      val pc: GuidanceSession =
+        GuidanceSession(validOnePageJson.as[Process],Map("/start" -> "0"),Map(),Nil,Map(),Map(),Nil, None,None, Published, Nil)
+      pc.secure shouldBe true
+    }
+
+    "Report not secure for a passphrase protected Process with no passphrase stored" in new EncryptedTest {
+      val passPhrasePc: GuidanceSession =
+        GuidanceSession(securedProcess, Map("/start" -> "0"),Map(),Nil,Map(),Map(),Nil, None,None, Published, Nil)
+      passPhrasePc.secure shouldBe false
+    }
+
+    "Report secure for a passphrase protected Process with stored passphrase" in new EncryptedTest {
+      val securePassPhrasePc: GuidanceSession =
+        GuidanceSession(securedProcess, Map("/start" -> "0"),labelsWithPassPhrase,Nil,Map(),Map(),Nil, None,None, Published, Nil)
+      securePassPhrasePc.secure shouldBe true
+    }
+  }
+
 }
