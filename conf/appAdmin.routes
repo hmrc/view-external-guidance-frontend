@@ -1,2 +1,0 @@
-# Legacy admin proxy route for Ocelot. This may move to admin routes in ther future.
-GET        /scratch/$uuid<[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}>     controllers.entry.StartGuidanceController.scratch(uuid: String)
