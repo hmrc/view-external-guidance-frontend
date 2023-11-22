@@ -21,6 +21,8 @@ import core.models.ocelot._
 import models.PageDesc
 import models.ui.{Link, Text, Words}
 import play.api.i18n.{Messages, MessagesApi}
+import core.services.EncrypterService
+import mocks.MockAppConfig
 
 class WelshTextBuilderSpec extends BaseSpec with WelshLanguage {
 
@@ -28,6 +30,7 @@ class WelshTextBuilderSpec extends BaseSpec with WelshLanguage {
 
     val messagesApi: MessagesApi = injector.instanceOf[MessagesApi]
     implicit val messages: Messages = messagesApi.preferred(Seq(TextBuilder.Welsh))
+    val encrypter = new EncrypterService(MockAppConfig)
 
     val words1 = Words("Welsh: This is a ", true)
     val words2 = Words(" Welsh: followed by ")
@@ -323,7 +326,7 @@ class WelshTextBuilderSpec extends BaseSpec with WelshLanguage {
       "SomeDate"->ScalarLabel("SomeDate", List("22/9/1973"), List("23/9/1973")),
       "SomeList" -> ListLabel("SomeList", List("x", "y", "z")))
 
-    val labels: Labels = LabelCache(labelsMap, Map(), Nil, Map(), Map(), message(lang), Published)
+    val labels: Labels = LabelCache(labelsMap, Map(), Nil, Map(), Map(), message(lang), Published, encrypter)
     override implicit val ctx: UIContext = UIContext(labels, urlMap1, messages)
   }
 

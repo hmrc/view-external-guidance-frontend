@@ -35,6 +35,12 @@ case class TextInput(text: Text,
                        errorMsgs: Seq[ErrorMsg] = Nil,
                        dontRepeatText: Boolean = false,
                        width: String = Ten) extends Input
+case class PassphraseInput(text: Text,
+                       hint: Option[Text],
+                       body: Seq[UIComponent],
+                       errorMsgs: Seq[ErrorMsg] = Nil,
+                       dontRepeatText: Boolean = false,
+                       width: String = Ten) extends Input
 case class CurrencyInput(text: Text,
                        hint: Option[Text],
                        body: Seq[UIComponent],

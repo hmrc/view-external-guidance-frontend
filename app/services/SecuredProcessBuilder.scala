@@ -19,31 +19,36 @@ package services
 import javax.inject.{Inject, Singleton}
 import play.api.i18n.{Lang, MessagesApi}
 import core.models.ocelot.{Process, SecuredProcess, Phrase}
-import core.models.ocelot.stanzas.{Txt, Equals, Stanza, PageStanza, InputStanza, ChoiceStanza, ChoiceStanzaTest}
+import core.models.ocelot.stanzas.{PassphraseText, Equals, Stanza, PageStanza, InputStanza, ChoiceStanza, ChoiceStanzaTest}
 
 @Singleton
 class SecuredProcessBuilder @Inject()(messagesApi: MessagesApi) {
   lazy val enPassPhrasePrompt: String = messagesApi("passphrase.prompt")(Lang("en"))
   lazy val cyPassPhrasePrompt: String = messagesApi("passphrase.prompt")(Lang("cy"))
+  import SecuredProcess._
 
   def secureIfRequired(process: Process): Process =
-    process.meta.passPhrase.fold(process){passPhrase =>
-      process.copy(flow = process.flow ++ stanzas(process.phrases.length, passPhrase),
+    process.meta.encryptedPassPhrase.fold{
+      process.meta.passPhrase.fold(process){passPhrase =>
+        process.copy(flow = process.flow ++ stanzas(process.phrases.length, PassPhraseResponseLabelName, passPhrase),
+                     phrases =process.phrases ++ Vector(Phrase(enPassPhrasePrompt, cyPassPhrasePrompt)))
+      }
+    }{encryptedPassphrase =>
+      process.copy(flow = process.flow ++ stanzas(process.phrases.length, EncryptedPassphraseResponseLabelName, encryptedPassphrase),
                    phrases =process.phrases ++ Vector(Phrase(enPassPhrasePrompt, cyPassPhrasePrompt)))
     }
 
-  import SecuredProcess._
-  private def stanzas(nextFreePhraseIdx: Int, passPhrase: String): Seq[(String, Stanza)] = Seq(
+  private def stanzas(nextFreePhraseIdx: Int, responseLabelName: String, passPhrase: String): Seq[(String, Stanza)] = Seq(
     (PassPhrasePageId, PageStanza(s"/${SecuredProcessStartUrl}", Seq(InputId), false)),
-    (InputId, InputStanza(Txt,
+    (InputId, InputStanza(PassphraseText,
                 Seq(ChoiceId),
                 nextFreePhraseIdx,
                 None,
-                PassPhraseResponseLabelName,
+                "", // Not required
                 None,
                 false)),
     (ChoiceId, ChoiceStanza(
                 Seq(Process.StartStanzaId, InputId),
-                Seq(ChoiceStanzaTest(s"[label:${PassPhraseResponseLabelName}]", Equals, passPhrase)), false))
+                Seq(ChoiceStanzaTest(s"[label:${responseLabelName}]", Equals, passPhrase)), false))
   )
 }

@@ -1,4 +1,4 @@
-/*
+@*
  * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,22 +12,20 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+ *@
 
-package models.ui
+@import views.html.components.fieldWidthClass
 
-trait SubmittedAnswer {
-  val text: String
-}
+@(input: models.ui.Input, name: String, form: Form[_])
 
-case class StringAnswer(text: String) extends SubmittedAnswer
-
-case class PassphraseAnswer(text: String) extends SubmittedAnswer
-
-case class DateAnswer(day: String, month: String, year: String) extends SubmittedAnswer {
-  override val text: String = day + "/" + month + "/" + year
-}
-
-case class ListAnswer(items: List[String]) extends SubmittedAnswer {
-  override val text: String = items.mkString(",")
+<input class="govuk-input @fieldWidthClass(input.width)@optionalErrorClass(input)"
+       id="@name-0"
+       name="@name"
+       type="password"
+       value="@form(name).value"
+       spellcheck="false"
+       autocomplete="off"
+       @optionalAria("input", input.hint,input.errorMsgs)/>
+@{
+    //$COVERAGE-OFF$
 }

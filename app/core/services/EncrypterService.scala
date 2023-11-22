@@ -14,20 +14,17 @@
  * limitations under the License.
  */
 
-package models.ui
+package core.services
 
-trait SubmittedAnswer {
-  val text: String
-}
+import javax.inject.{Inject, Singleton}
+import play.api.Logging
+import config.AppConfig
+import core.models.ocelot.Encrypter
+import uk.gov.hmrc.crypto.{Sha512Crypto, OnewayCryptoFactory, PlainText}
 
-case class StringAnswer(text: String) extends SubmittedAnswer
+@Singleton
+class EncrypterService @Inject() (config: AppConfig) extends Encrypter with Logging {
+  private val hasher: Sha512Crypto = OnewayCryptoFactory.sha(config.passphraseHashKey)
 
-case class PassphraseAnswer(text: String) extends SubmittedAnswer
-
-case class DateAnswer(day: String, month: String, year: String) extends SubmittedAnswer {
-  override val text: String = day + "/" + month + "/" + year
-}
-
-case class ListAnswer(items: List[String]) extends SubmittedAnswer {
-  override val text: String = items.mkString(",")
+  def encrypt(phrase: String): String = hasher.hash(PlainText(phrase)).value
 }

@@ -53,4 +53,5 @@ object MockAppConfig extends AppConfig {
   val optimizelyProjectId: Option[String] = None
   val processCacheTimeoutHours: Int = 120
   val processCacheScratchTimeoutHours: Int = 12
+  val passphraseHashKey: String = "gvBoGdgzqG1AarzF1LY0zQ=="
 }

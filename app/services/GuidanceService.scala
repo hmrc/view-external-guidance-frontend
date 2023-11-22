@@ -29,6 +29,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import repositories.SessionFSM
 import core.models.ocelot.{LabelCache, Labels, Process, Label, flowPath}
 import core.models.ocelot.SecuredProcess
+import core.services.EncrypterService
 
 @Singleton
 class GuidanceService @Inject() (
@@ -39,7 +40,8 @@ class GuidanceService @Inject() (
     spb: SecuredProcessBuilder,
     uiBuilder: UIBuilder,
     transition: SessionFSM,
-    messagesApi: MessagesApi
+    messagesApi: MessagesApi,
+    encrypter: EncrypterService
 ) {
   val logger: Logger = Logger(getClass)
 
@@ -198,7 +200,7 @@ class GuidanceService @Inject() (
           val pageMapById: Map[String, PageDesc] =
             gs.pageMap.map{case (k, pn) => (pn.id, PageDesc(pn, s"${appConfig.baseUrl}/$processCode${k}"))}
           val labels: Labels =
-            LabelCache(gs.labels, Map(), gs.flowStack, gs.continuationPool, gs.process.timescales, messagesFn, gs.runMode)
+            LabelCache(gs.labels, Map(), gs.flowStack, gs.continuationPool, gs.process.timescales, messagesFn, gs.runMode, encrypter)
           pageRenderer.renderPage(page, labels) match {
             case Left(err) => Left(err)
             case Right((visualStanzas, updatedLabels, dataInput)) =>

@@ -52,6 +52,7 @@ trait AppConfig {
   val pageStanzaLimit: Int
   val processCacheTimeoutHours: Int
   val processCacheScratchTimeoutHours: Int
+  val passphraseHashKey: String
 }
 
 @Singleton
@@ -93,4 +94,5 @@ class AppConfigImpl @Inject() (val config: Configuration, servicesConfig: Servic
   lazy val pageStanzaLimit: Int = config.getOptional[Int]("page-rendering.page-stanza-limit").getOrElse(PageStanzaCountLimit)
   lazy val processCacheTimeoutHours: Int = config.get[Int]("session-process-cache.timeoutHours")
   lazy val processCacheScratchTimeoutHours: Int = config.get[Int]("session-process-cache.scratchTimeoutHours")
+  lazy val passphraseHashKey: String = config.get[String]("passphrase-hashkey")
 }
