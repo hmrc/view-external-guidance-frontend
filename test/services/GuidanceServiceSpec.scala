@@ -145,7 +145,7 @@ class GuidanceServiceSpec extends BaseSpec {
           GuidanceSession(
             Session(
               SessionKey(sessionRepoId, processCode), 
-              Some(Published), process.meta.id, None, Map(), Nil, Map(), None, Map(), Nil, Nil, None, Instant.now, Some(process.meta.lastUpdate)
+              Some(Published), process.meta.id, Map(), Nil, Map(), Map(), Nil, Nil, None, Instant.now, process.meta.lastUpdate
             ), process, Map(page.url -> PageNext("2", Nil))
           )
         )))
@@ -182,7 +182,7 @@ class GuidanceServiceSpec extends BaseSpec {
           GuidanceSession(
             Session(
               SessionKey(sessionRepoId, processCode), 
-              Some(Published), process.meta.id, None, Map(), Nil, Map(), None, Map(), Nil, Nil, None, Instant.now, Some(process.meta.lastUpdate)
+              Some(Published), process.meta.id, Map(), Nil, Map(), Map(), Nil, Nil, None, Instant.now, process.meta.lastUpdate
             ), 
             process, Map(page.url -> PageNext("2", Nil))
           )
@@ -216,7 +216,7 @@ class GuidanceServiceSpec extends BaseSpec {
           GuidanceSession(
             Session(
               SessionKey(sessionRepoId, processCode), 
-              Some(Published), process.meta.id, None, Map(), Nil, Map(), None, Map(), Nil, Nil, None, Instant.now, Some(process.meta.lastUpdate)
+              Some(Published), process.meta.id, Map(), Nil, Map(), Map(), Nil, Nil, None, Instant.now, process.meta.lastUpdate
             ), 
             process, Map(lastPageUrl -> PageNext("2", Nil))
           )
@@ -263,7 +263,7 @@ class GuidanceServiceSpec extends BaseSpec {
           GuidanceSession(
             Session(
               SessionKey(sessionRepoId, processCode), 
-              Some(Published), process.meta.id, None, Map(), Nil, Map(), None, Map(), Nil, Nil, None, Instant.now, Some(process.meta.lastUpdate)
+              Some(Published), process.meta.id, Map(), Nil, Map(), Map(), Nil, Nil, None, Instant.now, process.meta.lastUpdate
             ), 
             process, Map(lastPageUrl -> PageNext("2", Nil))
           )
@@ -304,7 +304,7 @@ class GuidanceServiceSpec extends BaseSpec {
           GuidanceSession(
             Session(
               SessionKey(sessionRepoId, processCode), 
-              Some(Published), fullProcess.meta.id, None, Map(), Nil, Map(), None, Map(lastPageUrl -> "answer"), Nil, Nil, None, Instant.now, Some(fullProcess.meta.lastUpdate)
+              Some(Published), fullProcess.meta.id, Map(), Nil, Map(), Map(lastPageUrl -> "answer"), Nil, Nil, None, Instant.now, fullProcess.meta.lastUpdate
             ), 
             fullProcess, Map(lastPageUrl -> PageNext("2"))
           )
@@ -355,7 +355,7 @@ class GuidanceServiceSpec extends BaseSpec {
           GuidanceSession(
             Session(
               SessionKey(sessionRepoId, processCode), 
-              Some(Published), fullProcess.meta.id, None, Map(), Nil, Map(), None, Map(), Nil, Nil, None, Instant.now, Some(fullProcess.meta.lastUpdate)
+              Some(Published), fullProcess.meta.id, Map(), Nil, Map(), Map(), Nil, Nil, None, Instant.now, fullProcess.meta.lastUpdate
             ), 
             fullProcess, Map()
           )
@@ -376,7 +376,7 @@ class GuidanceServiceSpec extends BaseSpec {
   "Calling getCurrentGuidanceSession" should {
 
     "successfully retrieve a process context when the session data contains a single process" in new Test {
-      val expectedSession = Session(SessionKey(sessionRepoId, processCode), Some(Published), process.meta.id, None, Map(), Nil, Map(), None, Map(), Nil, Nil, None, Instant.now, Some(process.meta.lastUpdate))
+      val expectedSession = Session(SessionKey(sessionRepoId, processCode), Some(Published), process.meta.id, Map(), Nil, Map(), Map(), Nil, Nil, None, Instant.now, process.meta.lastUpdate)
       val expectedGuidanceSession: GuidanceSession = GuidanceSession(expectedSession, process, Map())
 
       MockSessionService
@@ -423,8 +423,8 @@ class GuidanceServiceSpec extends BaseSpec {
     "When passed a url to the passphrase page should send no pageHistory url to the repository" in new Test {
       val expectedSession: Session = Session(SessionKey(sessionRepoId, process.meta.processCode), 
                                              Some(Published), 
-                                             process.meta.id, None, Map(), Nil, Map(),None, Map(), Nil, Nil, None, 
-                                             Instant.now, Some(process.meta.lastUpdate))
+                                             process.meta.id, Map(), Nil, Map(), Map(), Nil, Nil, None,
+                                             Instant.now, process.meta.lastUpdate)
 
       MockSessionService
         .get(sessionRepoId, process.meta.processCode, requestId)
@@ -436,8 +436,8 @@ class GuidanceServiceSpec extends BaseSpec {
     "When passed a url to a standard page should send pageHistory url to the repository" in new Test {
     val expectedSession: Session = Session(SessionKey(sessionRepoId, process.meta.processCode), 
                                              Some(Published), 
-                                             process.meta.id, None, Map(), Nil, Map(),None, Map(), Nil, Nil, None, 
-                                             Instant.now, Some(process.meta.lastUpdate))
+                                             process.meta.id, Map(), Nil, Map(), Map(), Nil, Nil, None,
+                                             Instant.now, process.meta.lastUpdate)
       MockSessionService
         .get(sessionRepoId, process.meta.processCode, requestId)
         .returns(Future.successful(Right(GuidanceSession(expectedSession, process, Map()))))
