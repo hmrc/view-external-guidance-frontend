@@ -56,17 +56,15 @@ class SessionFSMSpec extends BaseSpec {
         SessionKey("id", process.meta.processCode),
         Some(Published),
         "processId",
-        None,
         Map(),
         Nil,
         Map(),
-        None,
         Map(),
         List(PageHistory("/start", Nil)),
         Nil,
         None,
         Instant.now,
-        Some(process.meta.lastUpdate)
+        process.meta.lastUpdate
       )
   }
 
@@ -201,18 +199,16 @@ class SessionFSMSpec extends BaseSpec {
         SessionKey("id", process.meta.processCode),
         Some(Published),
         "processId",
-        None,
         Map("Choice" -> ScalarLabel("Choice",List(phraseThree.english),List(phraseThree.welsh)),
             "Choice_seq" -> ListLabel("Choice_seq",List(phraseThree.english, phraseFour.english),List(phraseThree.welsh, phraseFour.welsh))),
         List(Flow("8",Some(LabelValue("Choice",phraseThree))), Flow("88",Some(LabelValue("Choice",phraseFour))), Continuation("2")),
         Map("6" -> ValueStanza(List(Value(ScalarType,"SecondSeqChoice","Loop value = [label:Choice]")),Vector("end"),false)),
-        None,
         Map("/start" -> "2,3"),
         List(PageHistory("/start", Nil)),
         Nil,
         None,
         Instant.now,
-        Some(process.meta.lastUpdate)
+        process.meta.lastUpdate
       )
   }
 

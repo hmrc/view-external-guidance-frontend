@@ -110,8 +110,8 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
       val newSession: Session = Session(
                         SessionKey(processId, process.meta.processCode),
                         Some(Published), process.meta.id,
-                        None, Map(), Nil, Map(), None, Map(), Nil, Nil, None, Instant.now,
-                        Some(process.meta.lastUpdate)
+                        Map(), Nil, Map(), Map(), Nil, Nil, None, Instant.now,
+                        process.meta.lastUpdate
                       )
       val cachedProcess: CachedProcess = CachedProcess(
                             repositories.CacheKey(processId, process.meta.lastUpdate),
@@ -128,25 +128,7 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
         case Right(gSession) if gSession == GuidanceSession(newSession, process, Map()) => succeed
         case _ => fail()
       }
-
     }
-
-    "Not query process cache for in inflight obsolete sessions" in new Test {
-
-      val obsoleteSession: Session = Session(
-                        SessionKey(processId, process.meta.processCode),
-                        Some(Published), process.meta.id,
-                        Some(process), Map(), Nil, Map(), Some(Map()), Map(), Nil, Nil, None, Instant.now,
-                        None
-                      )
-
-      whenReady(target.guidanceSession(obsoleteSession)) {
-        case Right(gSession) if gSession == GuidanceSession(obsoleteSession, process, Map()) => succeed
-        case _ => fail()
-      }
-
-    }
-
   }
 
 }
