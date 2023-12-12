@@ -21,7 +21,6 @@ import config.AppConfig
 import javax.inject.{Inject, Singleton}
 import models.GuidanceSession
 import core.models.RequestOutcome
-import core.models.errors.SessionNotFoundError
 import scala.concurrent.{ExecutionContext, Future}
 import repositories.{PageHistory, Session, SessionRepository, ProcessCacheRepository}
 import models.PageNext

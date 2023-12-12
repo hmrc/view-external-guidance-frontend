@@ -38,6 +38,7 @@ import org.mongodb.scala.result.DeleteResult
 import uk.gov.hmrc.mongo._
 import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 import scala.concurrent.{ExecutionContext, Future}
+import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats.Implicits._
 
 case class SessionKey(id: String, processCode: String)
 
