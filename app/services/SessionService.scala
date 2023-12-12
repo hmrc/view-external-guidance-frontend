@@ -21,7 +21,6 @@ import config.AppConfig
 import javax.inject.{Inject, Singleton}
 import models.GuidanceSession
 import core.models.RequestOutcome
-import core.models.errors.SessionNotFoundError
 import scala.concurrent.{ExecutionContext, Future}
 import repositories.{PageHistory, Session, SessionRepository, ProcessCacheRepository}
 import models.PageNext
@@ -76,17 +75,8 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
     sessionRepository.updateAfterFormSubmission(key, processCode, answerId, answer, labels, nextLegalPageIds, requestId)
 
   private[services] def guidanceSession(session: Session)(implicit context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] =
-    session.processVersion.fold[Future[RequestOutcome[GuidanceSession]]](Future.successful(obsoleteInflightSession(session)))(processVersion =>
-      processCacheRepository.get(session.processId, processVersion).map{
+    processCacheRepository.get(session.processId, session.processVersion).map{
         case Right(cachedProcess) => Right(GuidanceSession(session, cachedProcess.process, cachedProcess.pageMap))
         case Left(err) => Left(err)
       }
-    )
-
-  private[services] def obsoleteInflightSession(session: Session): RequestOutcome[GuidanceSession] =
-    (session.process, session.pageMap) match {
-      case (Some(process), Some(pageMap)) => Right(GuidanceSession(session, process, pageMap))
-      case _ => Left(SessionNotFoundError)
-    }
-
 }

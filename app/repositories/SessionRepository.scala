@@ -25,7 +25,6 @@ import core.models.ocelot._
 import core.models.ocelot.stanzas.{PopulatedStanza, Stanza}
 import core.models.errors._
 import core.models.RequestOutcome
-import models.PageNext
 import java.util.concurrent.TimeUnit
 import play.api.Logger
 import java.time.{Instant}
@@ -51,17 +50,15 @@ final case class Session(
     _id: SessionKey,
    runMode: Option[RunMode],
    processId: String,
-   process: Option[Process],
    labels: Map[String, Label],
    flowStack: List[FlowStage],
    continuationPool: Map[String, Stanza],
-   pageMap: Option[Map[String, PageNext]],
    answers: Map[String, String],
    pageHistory: List[PageHistory],
    legalPageIds: List[String],
    requestId: Option[String],
    lastAccessed: Instant, // expiry time
-   processVersion: Option[Long]
+   processVersion: Long
 )
 
 object Session {
@@ -71,7 +68,7 @@ object Session {
             processVersion: Long,
             legalPageIds: List[String],
             lastAccessed: Instant = Instant.now): Session =
-    Session(key, Some(runMode), processId, None, Map(), Nil, Map(), None, Map(), Nil, legalPageIds, None, lastAccessed, Some(processVersion))
+    Session(key, Some(runMode), processId, Map(), Nil, Map(), Map(), Nil, legalPageIds, None, lastAccessed, processVersion)
 
   implicit lazy val format: Format[Session] = Json.format[Session]
 }
