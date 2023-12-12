@@ -25,7 +25,6 @@ import core.models.ocelot._
 import core.models.ocelot.stanzas.{PopulatedStanza, Stanza}
 import core.models.errors._
 import core.models.RequestOutcome
-import models.PageNext
 import java.util.concurrent.TimeUnit
 import play.api.Logger
 import java.time.{Instant}
@@ -39,7 +38,6 @@ import org.mongodb.scala.result.DeleteResult
 import uk.gov.hmrc.mongo._
 import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 import scala.concurrent.{ExecutionContext, Future}
-import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats.Implicits._
 
 case class SessionKey(id: String, processCode: String)
 
