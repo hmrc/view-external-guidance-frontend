@@ -134,10 +134,8 @@
       serviceUrl = startUrl,
       accessibilityStatementUrl = Some(appConfig.accessibilityStatement)
     ),  
-    backLink = None,
     serviceName = Some(processTitle),
-    pageTitle = Some(s"$pageTitle – ${messages("service.name")} – ${messages("service.govuk")}"),
-    isWelshTranslationAvailable = false /* Handled by Service */
+    pageTitle = Some(s"$pageTitle – ${messages("service.name")} – ${messages("service.govuk")}")
   )
 )(content)
 
