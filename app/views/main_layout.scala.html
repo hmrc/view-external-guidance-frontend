@@ -31,7 +31,6 @@
   appConfig: AppConfig,
   timeoutDialog: HmrcTimeoutDialog,
   govukBackLink : GovukBackLink,
-  hmrcTrackingConsentSnippet: HmrcTrackingConsentSnippet,
   defaultLayout: TwoThirdsMainContent)
 
 @(
@@ -81,7 +80,6 @@
 }
 
 @head = {
-    @hmrcTrackingConsentSnippet()
     <!--[if lte IE 8]><link href=' @controllers.routes.Assets.versioned("stylesheets/application-ie-8.css")' rel="stylesheet" type="text/css" /><![endif]-->
     <!--[if gt IE 8]><!--> <link href='@controllers.routes.Assets.versioned("stylesheets/application.css")' media="all" rel="stylesheet" type="text/css" />
         <!--<![endif]-->
