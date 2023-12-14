@@ -47,34 +47,9 @@
 )(contentBlock: Html)(implicit request: Request[_], messages: Messages)
 
 @processCodeUrl(processCode: Option[String], url: String) = @{
-    processCode.fold[Option[String]](None){ pc =>
-        Some(s"${appConfig.baseUrl}/$pc$url")
-      }
-}
-
-@beforeContentBlock = {
-    @if(betaPhaseBanner) {
-        @phaseBanner(PhaseBanner(
-          tag = Some(Tag(content = Text(messages("service.phaseName")))),
-          content = HtmlContent(s"""${messages("feedback.before")} <a class='govuk-link' href="${appConfig.feedbackUrl}">${messages("feedback.linkLabel")}</a> ${messages("feedback.after")}""")
-        ))
-    }
-
-    @urlLangSwitch.fold{
-      @if(enableLanguageSelect) {
-        @hmrcLanguageSelect(
-            LanguageSelect(if (messages.lang.language == "en") En else Cy,
-                En -> s"${appConfig.baseUrl}/language/en",
-                Cy -> s"${appConfig.baseUrl}/language/cy")
-        )
-      }
-    }{block => @block}
-
-    @backUrl.map(url =>
-      govukBackLink(BackLink(href = url,
-                             content = Text(messages("backlink.label")),
-                             classes = "govuk-!-margin-top-0",
-                             attributes = Map( "id" -> "back-link" ))))
+  processCode.fold[Option[String]](None){ pc =>
+      Some(s"${appConfig.baseUrl}/$pc$url")
+  }
 }
 
 @head = {
@@ -101,6 +76,26 @@
   }
 }
 
+@beforeContentBlock = {
+  @urlLangSwitch.fold{
+    @if(enableLanguageSelect) {
+      @hmrcLanguageSelect(
+        LanguageSelect(
+          if (messages.lang.language == "en") En else Cy,
+          En -> s"${appConfig.baseUrl}/language/en",
+          Cy -> s"${appConfig.baseUrl}/language/cy"
+        )
+      )
+    }
+  }{block => @block}
+
+  @backUrl.map(url =>
+    govukBackLink(BackLink(href = url,
+                           content = Text(messages("backlink.label")),
+                           classes = "govuk-!-margin-top-0",
+                           attributes = Map( "id" -> "back-link" ))))
+}
+
 @content = {
  <div class="govuk-!-margin-bottom-6">
     @contentBlock
@@ -120,9 +115,16 @@
     <script @CSPNonce.attr>window.HMRCFrontend.initAll();</script>
 }
 
-
 @hmrcStandardPage(
   HmrcStandardPageParams(
+    banners = Banners(
+      phaseBanner = if(betaPhaseBanner) {
+        Some(PhaseBanner(
+          tag = Some(Tag(content = Text(messages("service.phaseName")))),
+          content = HtmlContent(s"""${messages("feedback.before")} <a class='govuk-link' href="${appConfig.feedbackUrl}">${messages("feedback.linkLabel")}</a> ${messages("feedback.after")}""")
+        ))
+      } else None
+    ),
     templateOverrides = TemplateOverrides(
       additionalHeadBlock = Some(head),
       additionalScriptsBlock = Some(scripts),
@@ -136,7 +138,6 @@
     pageTitle = Some(s"$pageTitle – ${messages("service.name")} – ${messages("service.govuk")}")
   )
 )(content)
-
 
 @{
     //$COVERAGE-OFF$
