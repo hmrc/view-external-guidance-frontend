@@ -55,10 +55,8 @@
 @beforeContentBlock = {
     @if(betaPhaseBanner) {
         @phaseBanner(PhaseBanner(
-            tag = Some(Tag(
-                content = Text(messages("service.phaseName"))
-            )),
-        content = HtmlContent(s"""${messages("feedback.before")} <a class='govuk-link' href="${appConfig.feedbackUrl}">${messages("feedback.linkLabel")}</a> ${messages("feedback.after")}""")
+          tag = Some(Tag(content = Text(messages("service.phaseName")))),
+          content = HtmlContent(s"""${messages("feedback.before")} <a class='govuk-link' href="${appConfig.feedbackUrl}">${messages("feedback.linkLabel")}</a> ${messages("feedback.after")}""")
         ))
     }
 
@@ -66,8 +64,8 @@
       @if(enableLanguageSelect) {
         @hmrcLanguageSelect(
             LanguageSelect(if (messages.lang.language == "en") En else Cy,
-                En -> s"${appConfig.baseUrl}/language/english",
-                Cy -> s"${appConfig.baseUrl}/language/cymraeg")
+                En -> s"${appConfig.baseUrl}/language/en",
+                Cy -> s"${appConfig.baseUrl}/language/cy")
         )
       }
     }{block => @block}
