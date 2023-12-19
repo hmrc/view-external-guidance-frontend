@@ -33,11 +33,7 @@ trait AppConfig {
   val languageMap: Map[String, Lang]
   val externalGuidanceBaseUrl: String
   val config: Configuration
-  val cookies: String
-  val privacy: String
   val accessibilityStatement: String
-  val termsConditions: String
-  val govukHelp: String
   val signOutUrl: String
   val timeOutUrl: String
   val timeoutInSeconds: Int
@@ -70,7 +66,7 @@ class AppConfigImpl @Inject() (val config: Configuration, servicesConfig: Servic
   val analyticsHost: String = config.get[String](s"google-analytics.host")
   val reportAProblemPartialUrl: String = s"$contactBaseUrl/contact/problem_reports_ajax?service=$serviceIdentifier"
   val reportAProblemNonJSUrl: String = s"$contactBaseUrl/contact/problem_reports_nonjs?service=$serviceIdentifier"
-  val languageMap: Map[String, Lang] = ListMap("english" -> Lang("en"), "cymraeg" -> Lang("cy"))
+  val languageMap: Map[String, Lang] = ListMap("en" -> Lang("en"), "cy" -> Lang("cy"))
 
   def feedbackUrl(implicit request: RequestHeader): String = {
     val urlString = s"$contactBaseUrl$betaFeedback?service=$serviceIdentifier&backUrl=$host${request.uri}"
@@ -78,10 +74,6 @@ class AppConfigImpl @Inject() (val config: Configuration, servicesConfig: Servic
   }
 
   lazy val externalGuidanceBaseUrl: String = servicesConfig.baseUrl("external-guidance")
-  lazy val cookies: String = config.get[String]("urls.footer.cookies")
-  lazy val privacy: String = config.get[String]("urls.footer.privacy")
-  lazy val termsConditions: String = config.get[String]("urls.footer.termsConditions")
-  lazy val govukHelp: String = config.get[String]("urls.footer.govukHelp")
   lazy val accessibilityStatement: String = config.get[String]("urls.footer.accessibilityStatement")
   lazy val signOutUrl: String = config.getOptional[String]("session-timeout.signOutUrl").getOrElse(EndSessionURL)
   lazy val timeOutUrl: String = config.getOptional[String]("session-timeout.timeOutUrl").getOrElse(SessionTimeoutURL)

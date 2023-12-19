@@ -29,7 +29,7 @@ class SwitchLanguageISpec extends IntegrationSpec {
 
       AuditStub.audit()
 
-      val request: WSRequest = buildRequest("/guidance/language/cymraeg")
+      val request: WSRequest = buildRequest("/guidance/language/cy")
 
       val response: WSResponse = await(request.get())
 
@@ -40,7 +40,7 @@ class SwitchLanguageISpec extends IntegrationSpec {
 
       AuditStub.audit()
 
-      val request: WSRequest = buildRequest("/guidance/language/cymraeg")
+      val request: WSRequest = buildRequest("/guidance/language/cy")
 
       val response: WSResponse = await(request.get())
 
@@ -60,7 +60,7 @@ class SwitchLanguageISpec extends IntegrationSpec {
 
       AuditStub.audit()
 
-      val request: WSRequest = buildRequest("/guidance/language/english")
+      val request: WSRequest = buildRequest("/guidance/language/en")
 
       val response: WSResponse = await(request.get())
 
