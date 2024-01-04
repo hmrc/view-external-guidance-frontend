@@ -223,7 +223,7 @@ class GuidanceController @Inject() (
         errorMsgs.foreach{err => logger.error(s"RuntimeError: $err within page /$path of processCode ${processCode}, sessionId=$sessionId")}
         InternalServerError(errorHandler.internalServerErrorTemplate)
       case _ =>
-        errorMsgs.foreach{err => logger.warn(s"RuntimeError: $err within page /$path of processCode ${processCode}")}
+        errorMsgs.foreach{err => logger.warn(s"RuntimeError: $err within page /$path of processCode ${processCode}, sessionId=$sessionId")}
         InternalServerError(errorHandler.runtimeErrorHandler(processCode, errorMsgs, errorSolutions(errors, stanzaId.getOrElse("UNKNOWN")), stanzaId))
     }
   }
