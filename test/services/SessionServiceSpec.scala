@@ -114,7 +114,7 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
                         process.meta.lastUpdate
                       )
       val cachedProcess: CachedProcess = CachedProcess(
-                            repositories.CacheKey(processId, process.meta.lastUpdate),
+                            repositories.CacheKey(processId, process.meta.lastUpdate, process.meta.timescalesVersion, process.meta.ratesVersion),
                             process,
                             Map(),
                             expiry
