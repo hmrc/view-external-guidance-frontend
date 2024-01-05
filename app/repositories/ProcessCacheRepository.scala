@@ -41,7 +41,7 @@ import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 import scala.concurrent.{ExecutionContext, Future}
 import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats.Implicits._  
 
-case class CacheKey(id: String, processVersion: Long)
+case class CacheKey(id: String, processVersion: Long, timescaleVersion: Option[Long], ratesVersion: Option[Long])
 
 object CacheKey{
   implicit lazy val format: Format[CacheKey] = Json.format[CacheKey]
@@ -91,7 +91,7 @@ class DefaultProcessCacheRepository @Inject() (config: AppConfig, component: Mon
   implicit lazy val cachedProcessSummaryformat: Format[CachedProcessSummary] = Json.format[CachedProcessSummary]
 
   def create(process: Process, pageMap: Map[String, PageNext], runMode: RunMode): Future[RequestOutcome[Unit]] = {
-    collection.updateOne(equal("_id", CacheKey(process.meta.id, process.meta.lastUpdate)),
+    collection.updateOne(equal("_id", CacheKey(process.meta.id, process.meta.lastUpdate, process.meta.timescalesVersion, process.meta.ratesVersion)),
                                 combine(List(
                                   Updates.set(TtlExpiryFieldName, expiryInstant(runMode, Instant.now)),
                                   Updates.set(ProcessFieldName, Codecs.toBson(process)),
@@ -118,7 +118,7 @@ class DefaultProcessCacheRepository @Inject() (config: AppConfig, component: Mon
   }
 
   def get(id: String, processVersion: Long): Future[RequestOutcome[CachedProcess]] =
-    collection.find(equal("_id", CacheKey(id, processVersion)))
+    collection.find(equal("_id", CacheKey(id, processVersion, None, None)))
     .headOption()
     .map{
       case Some(cachedProcess) => Right(cachedProcess)
