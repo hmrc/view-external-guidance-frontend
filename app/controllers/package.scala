@@ -37,6 +37,7 @@ package object controllers {
     case e: UnsupportedOperationError => messages("guidance.error.unsupported_operation", stanzaId, e.op, e.left, e.right)
     case NonTerminatingPageError => messages("guidance.error.nonterminating_loop", stanzaId)
     case UnsupportedUiPatternError => messages("guidance.error.unsupported_ui_pattern", stanzaId)
+    case e: DivideByZeroError => messages("guidance.error.divide_by_zeror", e.left, e.right, stanzaId)
     case e: ProgrammingError => messages("guidance.error.programming_error", e.msg, stanzaId)
   }
 
@@ -52,6 +53,8 @@ package object controllers {
              messages("guidance.error.unsupported_ui_pattern.soln2"),
              messages("guidance.error.unsupported_ui_pattern.soln3"),
              messages("guidance.error.unsupported_ui_pattern.soln4"))
+    }, errors.collectFirst{
+      case e: DivideByZeroError => List(messages("guidance.error.divide_by_zero", e.left, e.right, stanzaId))
     }, errors.collectFirst{
       case e: ProgrammingError => List(messages("guidance.error.programming_error", e.msg, stanzaId))
     }
