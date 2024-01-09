@@ -99,3 +99,8 @@ guidance.error.unsupported_ui_pattern.soln1=Pattern rules :-
 guidance.error.unsupported_ui_pattern.soln2=1. Check your answers page. Three columns, column 1 cells must not be bold and every column 3 is a link.
 guidance.error.unsupported_ui_pattern.soln3=2. Summary list. Two columns and column 1 cells must not be bold
 guidance.error.unsupported_ui_pattern.soln4=3. Table. At least one column and two rows. The cells of row 1 are headings, all of which must be bold. The Row stanzas which make up the table must be stacked to a Callout of type SubSection which will become the overall title of the table
+
+guidance.error.divide_by_zero=DivideByZeroError: Calculation stanza ''{0}'' contains division operation with numerator ''{1}'' and zero denominator ''{2}''.
+guidance.error.divide_by_zero.soln=DivideByZeroError: Ensure denominator is non-zero.
+
+guidance.error.programming_error=ProgrammingError: ''{0}'' on page containing stanza ''{1}''
