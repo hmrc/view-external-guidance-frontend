@@ -58,7 +58,9 @@ final case class Session(
    legalPageIds: List[String],
    requestId: Option[String],
    lastAccessed: Instant, // expiry time
-   processVersion: Long
+   processVersion: Long,
+   timescalesVersion : Option[Long],
+   ratesVersion : Option[Long]
 )
 
 object Session {
@@ -67,8 +69,10 @@ object Session {
             processId: String,
             processVersion: Long,
             legalPageIds: List[String],
-            lastAccessed: Instant = Instant.now): Session =
-    Session(key, Some(runMode), processId, Map(), Nil, Map(), Map(), Nil, legalPageIds, None, lastAccessed, processVersion)
+            lastAccessed: Instant = Instant.now,
+            timescalesVersion : Option[Long],
+            ratesVersion : Option[Long]): Session =
+    Session(key, Some(runMode), processId, Map(), Nil, Map(), Map(), Nil, legalPageIds, None, lastAccessed, processVersion, timescalesVersion, ratesVersion)
 
   implicit lazy val format: Format[Session] = Json.format[Session]
 }
@@ -118,7 +122,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
 
   def create(id: String, meta: Meta, runMode: RunMode, legalPageIds: List[String]): Future[RequestOutcome[Unit]] =
     collection.findOneAndReplace(equal("_id", SessionKey(id, meta.processCode)),
-                                 Session(SessionKey(id, meta.processCode), runMode, meta.id, meta.lastUpdate, legalPageIds, Instant.now),
+                                 Session(SessionKey(id, meta.processCode), runMode, meta.id, meta.lastUpdate, legalPageIds, Instant.now, meta.timescalesVersion, meta.ratesVersion),
                                  FindOneAndReplaceOptions().upsert(true))
     .toFutureOption()
     .map{
