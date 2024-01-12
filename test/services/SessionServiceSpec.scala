@@ -123,7 +123,7 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
                           )
 
       MockProcessCacheRepository
-        .get(processId, process.meta.lastUpdate)
+        .get(processId, process.meta.lastUpdate, process.meta.timescalesVersion, process.meta.ratesVersion)
         .returns(Future.successful(Right(cachedProcess)))
 
       whenReady(target.guidanceSession(newSession)) {
