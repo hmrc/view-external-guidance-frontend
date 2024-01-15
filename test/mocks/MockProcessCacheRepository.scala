@@ -35,10 +35,10 @@ trait MockProcessCacheRepository extends MockFactory {
         .create(_: Process, _: Map[String, PageNext], _: RunMode))
         .expects(process, pageMap, runMode)
 
-    def get(id: String, processVersion: Long): CallHandler[Future[RequestOutcome[CachedProcess]]] =
+    def get(id: String, processVersion: Long, timescalesVersion: Option[Long], ratesVersion: Option[Long]): CallHandler[Future[RequestOutcome[CachedProcess]]] =
       (mockProcessCacheRepository
-        .get(_: String, _: Long))
-        .expects(id, processVersion)
+        .get(_: String, _: Long, _: Option[Long], _: Option[Long]))
+        .expects(id, processVersion, timescalesVersion, ratesVersion)
 
   }
 }

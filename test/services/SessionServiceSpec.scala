@@ -111,7 +111,9 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
                         SessionKey(processId, process.meta.processCode),
                         Some(Published), process.meta.id,
                         Map(), Nil, Map(), Map(), Nil, Nil, None, Instant.now,
-                        process.meta.lastUpdate
+                        process.meta.lastUpdate,
+                        process.meta.timescalesVersion,
+                        process.meta.ratesVersion
                       )
       val cachedProcess: CachedProcess = CachedProcess(
                             repositories.CacheKey(processId, process.meta.lastUpdate, process.meta.timescalesVersion, process.meta.ratesVersion),
@@ -121,7 +123,7 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
                           )
 
       MockProcessCacheRepository
-        .get(processId, process.meta.lastUpdate)
+        .get(processId, process.meta.lastUpdate, process.meta.timescalesVersion, process.meta.ratesVersion)
         .returns(Future.successful(Right(cachedProcess)))
 
       whenReady(target.guidanceSession(newSession)) {

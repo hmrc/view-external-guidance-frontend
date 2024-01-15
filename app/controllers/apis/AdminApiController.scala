@@ -44,8 +44,8 @@ class AdminApiController @Inject() (appConfig: AppConfig, processCacheRepository
     }
   }
 
-  def getActive(id: String, version: String): Action[AnyContent] = Action.async { _ =>    
-    processCacheRepository.get(id, version.toLong).map {
+  def getActive(id: String, version: Long, timescalesVersion: Option[Long], ratesVersion: Option[Long]): Action[AnyContent] = Action.async { _ =>    
+    processCacheRepository.get(id, version, timescalesVersion, ratesVersion).map {
       case Right(cachedProcess) => Ok(Json.toJson(cachedProcess.process))
       case Left(err) =>
         logger.error(s"Unable to retrieve active process ($id, $version), err = $err")

@@ -67,7 +67,7 @@ trait ProcessCacheRepositoryConstants {
 
 trait ProcessCacheRepository extends ProcessCacheRepositoryConstants {
   def create(process: Process, pageMap: Map[String, PageNext], runMode: RunMode): Future[RequestOutcome[Unit]]
-  def get(id: String, processVersion: Long): Future[RequestOutcome[CachedProcess]]
+  def get(id: String, processVersion: Long, timescalesVersion: Option[Long], ratesVersion: Option[Long]): Future[RequestOutcome[CachedProcess]]
   def listSummaries(): Future[RequestOutcome[List[CachedProcessSummary]]]
 }
 
@@ -117,8 +117,8 @@ class DefaultProcessCacheRepository @Inject() (config: AppConfig, component: Mon
     }
   }
 
-  def get(id: String, processVersion: Long): Future[RequestOutcome[CachedProcess]] =
-    collection.find(equal("_id", CacheKey(id, processVersion, None, None)))
+  def get(id: String, processVersion: Long, timescalesVersion: Option[Long], ratesVersion: Option[Long]): Future[RequestOutcome[CachedProcess]] =
+    collection.find(equal("_id", CacheKey(id, processVersion, timescalesVersion, ratesVersion)))
     .headOption()
     .map{
       case Some(cachedProcess) => Right(cachedProcess)

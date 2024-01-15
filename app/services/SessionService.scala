@@ -75,7 +75,7 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
     sessionRepository.updateAfterFormSubmission(key, processCode, answerId, answer, labels, nextLegalPageIds, requestId)
 
   private[services] def guidanceSession(session: Session)(implicit context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] =
-    processCacheRepository.get(session.processId, session.processVersion).map{
+    processCacheRepository.get(session.processId, session.processVersion, session.timescalesVersion, session.ratesVersion).map{
         case Right(cachedProcess) => Right(GuidanceSession(session, cachedProcess.process, cachedProcess.pageMap))
         case Left(err) => Left(err)
       }

@@ -64,7 +64,9 @@ class SessionFSMSpec extends BaseSpec {
         Nil,
         None,
         Instant.now,
-        process.meta.lastUpdate
+        process.meta.lastUpdate,
+        process.meta.timescalesVersion,
+        process.meta.ratesVersion
       )
   }
 
@@ -208,7 +210,9 @@ class SessionFSMSpec extends BaseSpec {
         Nil,
         None,
         Instant.now,
-        process.meta.lastUpdate
+        process.meta.lastUpdate,
+        process.meta.timescalesVersion,
+        process.meta.ratesVersion
       )
   }
 
