@@ -55,7 +55,7 @@ class StartAdminController @Inject() (
     retrieve(processCode).map{
       case Right((process, Nil)) => Ok(view(process.title.english, Nil))
       case Right((process, pages)) =>
-        val processPageMaps: List[ProcessMapPage] = pages.map(debugService.mapPage(_, pages.map(p => (p.id, p)).toMap)).toList
+        val processPageMaps: List[ProcessPageStructure] = pages.map(debugService.mapPage(_, pages.map(p => (p.id, p)).toMap)).toList
         Ok(view(process.title.english, processPageMaps))
       case Left(NotFoundError) => NotFound(errorHandler.notFoundTemplate)
       case Left(err) => InternalServerError(errorHandler.internalServerErrorTemplate)

@@ -26,14 +26,14 @@ import core.models.ocelot.{Page, SecuredProcess}
 @Singleton
 class DebugService @Inject() (appConfig: AppConfig) extends Logging {
 
-  def mapPage(page: Page, pageMap: Map[String, Page]): ProcessMapPage = {
+  def mapPage(page: Page, pageMap: Map[String, Page]): ProcessPageStructure = {
     val nexts = page.next.distinct.map(n => LinkedPage(n, pageMap(n).url, pageTitle(pageMap(n))))
     val linked = page.linked.distinct.map(l => LinkedPage(l, pageMap(l).url, pageTitle(pageMap(l))))
     val linkedFrom = pageMap.values
                             .filter(p => p.linked.contains(page.id) || p.next.contains(page.id))
                             .map(_.id)
                             .filterNot(_.equals(SecuredProcess.PassPhrasePageId)).toSeq
-    ProcessMapPage(page.id, page.url, pageTitle(page), page.keyedStanzas, nexts, linked, linkedFrom)
+    ProcessPageStructure(page.id, page.url, pageTitle(page), page.keyedStanzas, nexts, linked, linkedFrom)
   }
 
   private def pageTitle(page: Page): Option[String] =

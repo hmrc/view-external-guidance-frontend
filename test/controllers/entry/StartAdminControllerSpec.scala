@@ -20,7 +20,7 @@ import base.BaseSpec
 import core.models.errors._
 import core.models.ocelot.stanzas._
 import core.models.ocelot._
-import mocks.MockRetrieveAndCacheService
+import mocks.{MockDebugService, MockRetrieveAndCacheService}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.Status
 import play.api.mvc.AnyContentAsEmpty
@@ -114,13 +114,14 @@ class StartAdminControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
 
   }
 
-  trait ProcessTest extends MockRetrieveAndCacheService with TestData {
+  trait ProcessTest extends MockRetrieveAndCacheService with MockDebugService with TestData {
     lazy val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("GET", "/")
 
     lazy val target =
       new StartAdminController(
         errorHandler,
         mockRetrieveAndCacheService,
+        mockDebugService,
         view,
         stubMessagesControllerComponents()
       )
@@ -200,29 +201,6 @@ class StartAdminControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
       status(result) shouldBe Status.INTERNAL_SERVER_ERROR
     }
 
-  }
-
-  "toProcessMapPages" should {
-    "Return sequence of ProcessMapPages" in new ProcessTest {
-      val pageMap: Map[String, Page] = Seq(titlePage).map(p => (p.id, p)).toMap
-
-
-      val rows = target.toProcessMapPages(Seq(titlePage), pageMap)
-      rows.length shouldBe 1
-      rows.head.id shouldBe "start"
-      rows.head.url shouldBe "/bulletPoints"
-      rows.head.title shouldBe Some("vtst Bullet Point List")
-    }
-  }
-
-  "pageTitle" should {
-    "Return title of page" in new ProcessTest {
-      target.pageTitle(titlePage) shouldBe Some("vtst Bullet Point List")
-      target.pageTitle(questionPage) shouldBe Some("Which?")
-      target.pageTitle(sequencePage) shouldBe Some("Select a working day of the week")
-      target.pageTitle(inputPage) shouldBe Some("Input")
-      target.pageTitle(yourCallPage) shouldBe Some("vtst Bullet Point List")
-    }
   }
 
 }

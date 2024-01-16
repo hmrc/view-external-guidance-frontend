@@ -14,14 +14,14 @@
  * limitations under the License.
  *@
 
-@import models.admin.ProcessMapPage
+@import models.admin.ProcessPageStructure
 @import views.admin.stanzaTypeName
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 @import views.html.admin.render_stanza
 
 @this(govukTable : GovukTable)
 
-@(pmpage: ProcessMapPage)(implicit messages: Messages)
+@(pmpage: ProcessPageStructure)(implicit messages: Messages)
 
   @govukTable(Table(
       pmpage.keyedStanzas.map(ks => Seq(

@@ -24,7 +24,7 @@
   wideLayout: components.FullWidthContentLayout
 )
 
-@(title: String, rows: List[ProcessMapPage])(implicit request: Request[_], messages: Messages)
+@(title: String, rows: List[ProcessPageStructure])(implicit request: Request[_], messages: Messages)
 
 @layout(title + " " + messages("guidance.internals.heading"),
         title + " " + messages("guidance.internals.heading"),
