@@ -16,6 +16,17 @@
 
 package models.admin
 
+import play.api.libs.json.{Format, Json}
 import java.time.Instant
 
-case class CachedProcessSummary(id: String, processVersion: Long, title: String, expiryTime: Instant)
+case class CachedProcessSummary(
+  id: String, 
+  processVersion: Long, 
+  timescalesVersion: Option[Long], 
+  ratesVersion: Option[Long], 
+  title: String, 
+  expiryTime: Instant
+)
+object CachedProcessSummary {
+  implicit lazy val formats: Format[CachedProcessSummary] = Json.format[CachedProcessSummary]
+}
