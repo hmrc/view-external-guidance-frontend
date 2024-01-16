@@ -41,7 +41,7 @@ import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 import scala.concurrent.{ExecutionContext, Future}
 import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats.Implicits._  
 
-case class CacheKey(id: String, processVersion: Long, timescaleVersion: Option[Long], ratesVersion: Option[Long])
+case class CacheKey(id: String, processVersion: Long, timescalesVersion: Option[Long], ratesVersion: Option[Long])
 
 object CacheKey{
   implicit lazy val format: Format[CacheKey] = Json.format[CacheKey]
@@ -136,7 +136,13 @@ class DefaultProcessCacheRepository @Inject() (config: AppConfig, component: Mon
       .collect()
       .toFutureOption()
       .map{
-        case Some(result) => Right(result.map(r => CachedProcessSummary(r._id.id, r._id.processVersion, r.process.meta.title, r.expiryTime)).toList)
+        case Some(result) => 
+          Right(result.map(r => CachedProcessSummary(r._id.id, 
+                                                     r._id.processVersion, 
+                                                     r._id.timescalesVersion, 
+                                                     r._id.ratesVersion, 
+                                                     r.process.meta.title, 
+                                                     r.expiryTime)).toList)
         case _ => Right(Nil)
       }
       .recover {
