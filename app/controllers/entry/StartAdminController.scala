@@ -19,16 +19,14 @@ package controllers.entry
 import config.ErrorHandler
 import core.models.RequestOutcome
 import core.models.errors.NotFoundError
-import core.models.ocelot.stanzas._
-import core.models.ocelot.{Page, Process, SecuredProcess}
+import core.models.ocelot.{Page, Process}
 import models.admin._
 import play.api.Logger
 import play.api.i18n.I18nSupport
 import play.api.mvc._
-import services.RetrieveAndCacheService
+import services.{DebugService, RetrieveAndCacheService}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 import views.html._
-
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -36,7 +34,8 @@ import scala.concurrent.{ExecutionContext, Future}
 class StartAdminController @Inject() (
     errorHandler: ErrorHandler,
     service: RetrieveAndCacheService,
-    view: admin.process_map,
+    debugService: DebugService,
+    view: admin.process_structure,
     mcc: MessagesControllerComponents
 )(implicit ec: ExecutionContext) extends FrontendController(mcc)
     with I18nSupport {
@@ -55,29 +54,11 @@ class StartAdminController @Inject() (
                                      retrieve: String => Future[RequestOutcome[(Process, Seq[Page])]])(implicit request: Request[_]): Future[Result] =
     retrieve(processCode).map{
       case Right((process, Nil)) => Ok(view(process.title.english, Nil))
-      case Right((process, pages)) => Ok(view(process.title.english, toProcessMapPages(pages, pages.map(p => (p.id, p)).toMap)))
+      case Right((process, pages)) =>
+        val processPageMaps: List[ProcessMapPage] = pages.map(debugService.mapPage(_, pages.map(p => (p.id, p)).toMap)).toList
+        Ok(view(process.title.english, processPageMaps))
       case Left(NotFoundError) => NotFound(errorHandler.notFoundTemplate)
       case Left(err) => InternalServerError(errorHandler.internalServerErrorTemplate)
-     }
-
-  private[entry] def toProcessMapPages(pages: Seq[Page], pageMap: Map[String, Page]): List[ProcessMapPage] =
-    pages.map{page =>
-      val nexts = page.next.distinct.map(n => LinkedPage(n, pageMap(n).url, pageTitle(pageMap(n))))
-      val linked = page.linked.distinct.map(l => LinkedPage(l, pageMap(l).url, pageTitle(pageMap(l))))
-      val linkedFrom = pageMap.values
-                              .filter(p => p.linked.contains(page.id) || p.next.contains(page.id))
-                              .map(_.id)
-                              .filterNot(_.equals(SecuredProcess.PassPhrasePageId)).toSeq
-      ProcessMapPage(page.id, page.url, pageTitle(page), page.keyedStanzas, nexts, linked, linkedFrom)
-    }.toList
-
-  private[entry] def pageTitle(page: Page): Option[String] =
-    page.stanzas.collectFirst{
-      case i: Input => i.name.english
-      case i: Question => i.text.english
-      case i: Sequence => i.text.english
-      case c: TitleCallout => c.text.english
-      case yc: YourCallCallout => yc.text.english
     }
 
 }

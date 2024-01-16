@@ -48,7 +48,7 @@ class StartAdminControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
     val relativeStdPath = standardPagePath.drop(1)
 
     lazy val errorHandler = app.injector.instanceOf[config.ErrorHandler]
-    lazy val view = app.injector.instanceOf[admin.process_map]
+    lazy val view = app.injector.instanceOf[admin.process_structure]
 
     val seq = Sequence(
       Phrase("Select a working day of the week", "Welsh: Select a working day of the week"),
