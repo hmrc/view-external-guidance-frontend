@@ -75,7 +75,7 @@ package object admin {
       case _: ContainsTest => "contains"
     }
 
-  def renderIds(ids: Seq[String], pageIds: Seq[String]): String = ids.map(renderId(_, pageIds)).mkString(", ")
-  def renderNext(nxt: Seq[String], pageIds: Seq[String]): String = nxt.headOption.fold("")(id => renderId(id, pageIds))
-  def renderId(id: String, pageIds: Seq[String]): String = if (pageIds.contains(id)) s"<a href='#$id'>Page $id</a>" else s"<a href='#$id'>$id</a>"
+  def renderIds(ids: Seq[String], pageStanzaIds: Seq[String]): String = ids.map(renderId(_, pageStanzaIds)).mkString(", ")
+  def renderNext(nxt: Seq[String], pageStanzaIds: Seq[String]): String = nxt.headOption.fold("")(id => renderId(id, pageStanzaIds))
+  def renderId(id: String, pageStanzaIds: Seq[String]): String = if (pageStanzaIds.contains(id)) s"<a href='#$id'>$id</a>" else s"<a href='#$id'>Page $id</a>"
 }
