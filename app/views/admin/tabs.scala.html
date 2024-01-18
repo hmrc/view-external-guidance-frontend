@@ -1,0 +1,152 @@
+@*
+ * Copyright 2024 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import models.admin._
+
+@import uk.gov.hmrc.govukfrontend.views.html.components._
+
+@this(
+  govukTabs : GovukTabs,
+  govukTable : GovukTable,
+  govukDetails : GovukDetails,
+  structure: page_structure
+)
+
+@(page: ProcessPageStructure)(implicit messages: Messages)
+
+
+@pastMonthHtml = {
+<h2 class="govuk-heading-l">Past month</h2>
+
+@govukTable(Table(
+    rows = Seq(
+      Seq(
+        TableRow(
+          content = Text("David Francis")
+        ), 
+        TableRow(
+          content = Text("98")
+        ), 
+        TableRow(
+          content = Text("95")
+        )
+      ), 
+      Seq(
+        TableRow(
+          content = Text("Paul Farmer")
+        ), 
+        TableRow(
+          content = Text("122")
+        ), 
+        TableRow(
+          content = Text("131")
+        )
+      ), 
+      Seq(
+        TableRow(
+          content = Text("Rita Patel")
+        ), 
+        TableRow(
+          content = Text("126")
+        ), 
+        TableRow(
+          content = Text("142")
+        )
+      )
+    ),
+    head = Some(Seq(
+      HeadCell(
+        content = Text("Case manager")
+      ), 
+      HeadCell(
+        content = Text("Cases opened")
+      ), 
+      HeadCell(
+        content = Text("Cases closed")
+      )
+    ))
+  ))
+}
+@pastYearHtml = {
+<h2 class="govuk-heading-l">Past year</h2>
+
+@govukTable(Table(
+    rows = Seq(
+      Seq(
+        TableRow(
+          content = Text("David Francis")
+        ), 
+        TableRow(
+          content = Text("1380")
+        ), 
+        TableRow(
+          content = Text("1472")
+        )
+      ), 
+      Seq(
+        TableRow(
+          content = Text("Paul Farmer")
+        ), 
+        TableRow(
+          content = Text("1129")
+        ), 
+        TableRow(
+          content = Text("1083")
+        )
+      ), 
+      Seq(
+        TableRow(
+          content = Text("Rita Patel")
+        ), 
+        TableRow(
+          content = Text("1539")
+        ), 
+        TableRow(
+          content = Text("1265")
+        )
+      )
+    ),
+    head = Some(Seq(
+      HeadCell(
+        content = Text("Case manager")
+      ), 
+      HeadCell(
+        content = Text("Cases opened")
+      ), 
+      HeadCell(
+        content = Text("Cases closed")
+      )
+    ))
+  ))
+}
+@govukTabs(Tabs(
+    items = Seq(
+      TabItem(
+        id = Some("past-month"),
+        label = "Page Structure",
+        panel = TabPanel(
+          content = HtmlContent(structure(page))
+        )
+      ), 
+      TabItem(
+        id = Some("past-year"),
+        label = "Labels",
+        panel = TabPanel(
+          content = HtmlContent(pastYearHtml)
+        )
+      )
+    )
+  ))

@@ -20,15 +20,17 @@ import play.api.Logging
 import config.AppConfig
 import javax.inject.{Inject, Singleton}
 import models.admin._
+import models.PageNext
 import core.models.ocelot.stanzas._
 import core.models.ocelot.{Page, SecuredProcess}
 
 @Singleton
 class DebugService @Inject() (appConfig: AppConfig) extends Logging {
 
-  def mapPage(page: Page, pageMap: Map[String, Page]): ProcessPageStructure = {
-    val nexts = page.next.distinct.map(n => LinkedPage(n, pageMap(n).url, pageTitle(pageMap(n))))
-    val linked = page.linked.distinct.map(l => LinkedPage(l, pageMap(l).url, pageTitle(pageMap(l))))
+  def mapPage(page: Page, pageMap: Map[String, PageNext]): ProcessPageStructure = {
+    val pageNextById: Map[String, PageNext] = pageMap.map{case (url, pn) => (pn.id, pn)}
+    val nexts = page.next.distinct.map(n => LinkedPage(n, pageNextById(n).url.getOrElse(""), pageNextById(n).title))
+    val linked = page.linked.distinct.map(l => LinkedPage(l, pageNextById(l).url.getOrElse(""), pageNextById(l).title))
     val linkedFrom = pageMap.values
                             .filter(p => p.linked.contains(page.id) || p.next.contains(page.id))
                             .map(_.id)
@@ -36,7 +38,7 @@ class DebugService @Inject() (appConfig: AppConfig) extends Logging {
     ProcessPageStructure(page.id, page.url, pageTitle(page), page.keyedStanzas, nexts, linked, linkedFrom)
   }
 
-  private def pageTitle(page: Page): Option[String] =
+  def pageTitle(page: Page): Option[String] =
     page.stanzas.collectFirst{
       case i: Input => i.name.english
       case i: Question => i.text.english

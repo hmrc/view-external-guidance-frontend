@@ -65,7 +65,7 @@ object GuidanceSession {
                     sp.pageHistory)
 }
 
-case class PageNext(id: String, next: List[String] = Nil, linked: List[String] = Nil)
+case class PageNext(id: String, next: List[String] = Nil, linked: List[String] = Nil, title: Option[String] = None, url: Option[String] = None)
 object PageNext {
   implicit val formats: OFormat[PageNext] = Json.format[PageNext]
 }

@@ -21,6 +21,7 @@ import core.models.RequestOutcome
 import core.models.errors.NotFoundError
 import core.models.ocelot.{Page, Process}
 import models.admin._
+import models.PageNext
 import play.api.Logger
 import play.api.i18n.I18nSupport
 import play.api.mvc._
@@ -55,7 +56,8 @@ class StartAdminController @Inject() (
     retrieve(processCode).map{
       case Right((process, Nil)) => Ok(view(process.title.english, Nil))
       case Right((process, pages)) =>
-        val processPageMaps: List[ProcessPageStructure] = pages.map(debugService.mapPage(_, pages.map(p => (p.id, p)).toMap)).toList
+        val pageMap: Map[String, PageNext] = pages.map(p => p.url -> PageNext(p.id, p.next.toList, p.linked.toList, debugService.pageTitle(p))).toMap
+        val processPageMaps: List[ProcessPageStructure] = pages.map(debugService.mapPage(_, pageMap)).toList
         Ok(view(process.title.english, processPageMaps))
       case Left(NotFoundError) => NotFound(errorHandler.notFoundTemplate)
       case Left(err) => InternalServerError(errorHandler.internalServerErrorTemplate)

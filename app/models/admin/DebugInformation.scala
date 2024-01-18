@@ -16,4 +16,10 @@
 
 package models.admin
 
-case class DebugInformation(processPageStructure: ProcessPageStructure)
+import core.models.ocelot.Labels
+
+case class DebugInformation(
+  processPageStructure: ProcessPageStructure,
+  preRenderLabels: Option[Labels],
+  postRenderLabels: Option[Labels]
+)

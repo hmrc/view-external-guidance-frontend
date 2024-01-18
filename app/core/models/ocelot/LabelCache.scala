@@ -32,6 +32,7 @@ trait Flows {
   // Persistence access
   def flowStack: List[FlowStage]
   def poolUpdates: Map[String, Stanza]  // Changes to initial pool
+  def dump(): List[String]
 }
 
 // Timescale defns
@@ -102,7 +103,7 @@ private[ocelot] class LabelCacheImpl(labels: Map[String, Label] = Map(),
   def updatedLabels: Map[String, Label] = cache
   def labelMap:Map[String, Label] = labels
   def flush(): Labels = new LabelCacheImpl(labels ++ cache.toList, Map(), stack, pool, poolCache, timescales, messages, runMode)
-
+  
   // Label ops
   private def label(name: String): Option[Label] = cache.get(name).fold(labels.get(name))(Some(_))
 
@@ -164,6 +165,19 @@ private[ocelot] class LabelCacheImpl(labels: Map[String, Label] = Map(),
   // Persistence access
   def flowStack: List[FlowStage] = stack
   def poolUpdates: Map[String, Stanza] = poolCache
+  def dump(): List[String] = {
+    def showLabels(names: List[String], lbls: Map[String, Label], tag: String): List[String] = 
+      names.sorted.map{ k =>
+        lbls(k) match {
+          case s: ScalarLabel => s"$tag Scalar: ${s.name} => ${s.english(0)}"
+          case l: ListLabel => s"$tag List: ${l.name} => ${l.english}"
+          case _ => s"UNKNOWN label type"
+        }
+      }
+    
+    showLabels(cache.keySet.toList.sorted, cache, "Cached") ++
+    showLabels(labels.keySet.toList.sorted, labels, "Label")
+  }
 
   // Timescales defns
   def timescaleDays(id: String): Option[Int] = timescales.get(id)

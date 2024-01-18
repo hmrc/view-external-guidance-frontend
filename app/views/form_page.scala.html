@@ -16,12 +16,14 @@
 
 @import models.PageContext
 @import models.ui.{Text, FormPage}
-
 @import controllers.routes._
+@import models.admin.ProcessPageStructure
+@import views.html.admin._
 
 @this(
   layout: main_layout,
-  formWithCSRF: FormWithCSRF
+  formWithCSRF: FormWithCSRF,
+  pageStructure: page_structure
 )
 
 @(page: FormPage, ctx: PageContext, inputName: String, form: Form[_])(implicit request: Request[_], messages: Messages)
@@ -33,7 +35,7 @@
 
 @implicitCtx = @{ctx}
 
-@layout(pageTitle(page), ctx.processTitle.asString, Some(ctx.processCode), ctx.processStartUrl, ctx.backLink, ctx.betaPhaseBanner) {
+@layout(pageTitle(page), ctx.processTitle.asString, Some(ctx.processCode), ctx.processStartUrl, ctx.backLink, ctx.betaPhaseBanner, debugInformation = ctx.debugInformation) {
 
   @components.error_summary(page.formComponent, inputName, form)
 
@@ -47,6 +49,8 @@
   }
 }
 
+
+
 @{
-     //$COVERAGE-OFF$
+  //$COVERAGE-OFF$
 }

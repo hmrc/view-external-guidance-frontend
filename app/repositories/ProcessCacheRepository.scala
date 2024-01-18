@@ -91,7 +91,8 @@ class DefaultProcessCacheRepository @Inject() (config: AppConfig, component: Mon
   implicit lazy val cachedProcessSummaryformat: Format[CachedProcessSummary] = Json.format[CachedProcessSummary]
 
   def create(process: Process, pageMap: Map[String, PageNext], runMode: RunMode): Future[RequestOutcome[Unit]] = {
-    collection.updateOne(equal("_id", CacheKey(process.meta.id, process.meta.lastUpdate, process.meta.timescalesVersion, process.meta.ratesVersion)),
+    val processIdKey = process.meta.id + Option.when(runMode == Debugging)("-dbg").getOrElse("")
+    collection.updateOne(equal("_id", CacheKey(processIdKey, process.meta.lastUpdate, process.meta.timescalesVersion, process.meta.ratesVersion)),
                                 combine(List(
                                   Updates.set(TtlExpiryFieldName, expiryInstant(runMode, Instant.now)),
                                   Updates.set(ProcessFieldName, Codecs.toBson(process)),
@@ -153,7 +154,7 @@ class DefaultProcessCacheRepository @Inject() (config: AppConfig, component: Mon
 
   private[repositories] def expiryInstant(runMode: RunMode, when: Instant): Instant =
     runMode match {
-      case Scratch => when.plus(config.processCacheScratchTimeoutHours, ChronoUnit.HOURS)
+      case Scratch | Debugging => when.plus(config.processCacheScratchTimeoutHours, ChronoUnit.HOURS)
       case _ => when.plus(config.processCacheTimeoutHours, ChronoUnit.HOURS)
     }
 }
