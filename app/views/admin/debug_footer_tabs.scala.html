@@ -1,0 +1,89 @@
+@*
+ * Copyright 2024 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import models.admin._
+
+@import uk.gov.hmrc.govukfrontend.views.html.components._
+
+@this(
+  govukTabs : GovukTabs,
+  govukTable : GovukTable,
+  govukDetails : GovukDetails,
+  structure: page_structure
+)
+
+@(dbi: DebugInformation)(implicit messages: Messages)
+
+@labelsHtml = {
+<h2 class="govuk-heading-l">Labels</h2>
+
+@govukTable(Table(
+    rows = dbi.labels.map{l =>
+      Seq(
+        TableRow(
+          content = Text(l.name)
+        ), 
+        TableRow(
+          content = Text(l.dataType)
+        ), 
+        TableRow(
+          content = Text(l.initialValue.getOrElse("-"))
+        ), 
+        TableRow(
+          content = Text(l.updatedValue.getOrElse("-"))
+        )
+      )
+    },
+    head = Some(Seq(
+      HeadCell(
+        content = Text("Name")
+      ), 
+      HeadCell(
+        content = Text("Type")
+      ), 
+      HeadCell(
+        content = Text("Entry Value")
+      ), 
+      HeadCell(
+        content = Text("Current Value")
+      )
+    ))
+  ))
+}
+
+@govukTabs(Tabs(
+    items = Seq(
+      TabItem(
+        id = Some("labels"),
+        label = "Labels",
+        panel = TabPanel(
+          content = HtmlContent(labelsHtml)
+        )
+      ),
+      TabItem(
+        id = Some("page-structure"),
+        label = "Page Structure",
+        panel = TabPanel(
+          content = HtmlContent(structure(dbi.processPageStructure, false))
+        )
+      ) 
+    )
+  ))
+
+@{
+  //$COVERAGE-OFF$
+}
+  

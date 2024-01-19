@@ -42,7 +42,6 @@ import repositories.{PageHistory, Session, SessionFSM, SessionKey}
 import services._
 import uk.gov.hmrc.http.{HeaderCarrier, HeaderNames, RequestId, SessionKeys}
 import views.html._
-
 import java.time.Instant
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -199,7 +198,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
               )
   }
 
-  trait TestWithRealGuidanceService extends MockSessionService with MockGuidanceConnector with TestBase {
+  trait TestWithRealGuidanceService extends MockSessionService with MockGuidanceConnector with MockDebugService with TestBase {
     val fakeRequest = FakeRequest("GET", path)
                         .withSession(SessionKeys.sessionId -> sessionId)
                         .withHeaders(HeaderNames.xRequestId -> requestId.get)
@@ -210,6 +209,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
     val guidanceService = new GuidanceService(
       MockAppConfig,
       mockSessionService,
+      mockDebugService,
       new PageBuilder(new Timescales(new DefaultTodayProvider)),
       new PageRenderer(MockAppConfig),
       new SecuredProcessBuilder(messagesApi),
@@ -366,7 +366,6 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
 
   }
 
-
   "Returning to a previously answered Question page in a process" should {
 
     "Show the original answer selected" in new QuestionTest {
@@ -383,12 +382,13 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
     }
   }
 
-  trait QuestionSubmissionTest extends MockGuidanceService with MockSessionService with MockGuidanceConnector with TestBase  with ProcessJson {
+  trait QuestionSubmissionTest extends MockGuidanceService with MockSessionService with MockGuidanceConnector with MockDebugService with TestBase  with ProcessJson {
     val fakeRequest = FakeRequest("GET", path).withSession(SessionKeys.sessionId -> processId).withFormUrlEncodedBody().withCSRFToken
     val formError = new FormError(relativePath, List("error.required"))
     val guidanceService = new GuidanceService(
       MockAppConfig,
       mockSessionService,
+      mockDebugService,
       new PageBuilder(new Timescales(new DefaultTodayProvider)),
       new PageRenderer(MockAppConfig),
       new SecuredProcessBuilder(messagesApi),

@@ -25,6 +25,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import repositories.{PageHistory, Session, SessionRepository, ProcessCacheRepository}
 import models.PageNext
 import core.models.ocelot.{Process, RunMode, Label, Labels, FlowStage}
+import core.models.ocelot.Debugging
 
 @Singleton
 class SessionService @Inject() (appConfig: AppConfig, sessionRepository: SessionRepository, processCacheRepository: ProcessCacheRepository) extends Logging {
@@ -74,11 +75,13 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
                                 requestId: Option[String]): Future[RequestOutcome[Unit]] =
     sessionRepository.updateAfterFormSubmission(key, processCode, answerId, answer, labels, nextLegalPageIds, requestId)
 
-  private[services] def guidanceSession(session: Session)(implicit context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] =
-    processCacheRepository.get(session.processId, session.processVersion, session.timescalesVersion, session.ratesVersion).map{
+  private[services] def guidanceSession(session: Session)(implicit context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] = {
+    val processId = if (session.runMode.equals(Some(Debugging))) s"${session.processId}-debug" else session.processId
+    processCacheRepository.get(processId, session.processVersion, session.timescalesVersion, session.ratesVersion).map{
       case Right(cachedProcess) => Right(GuidanceSession(session, cachedProcess.process, cachedProcess.pageMap))
       case Left(err) => Left(err)
     }
+  }
   
 
 }

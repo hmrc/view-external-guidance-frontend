@@ -32,7 +32,7 @@ trait Flows {
   // Persistence access
   def flowStack: List[FlowStage]
   def poolUpdates: Map[String, Stanza]  // Changes to initial pool
-  def dump(): List[String]
+  def list(): Seq[(String, String, String)]
 }
 
 // Timescale defns
@@ -165,18 +165,18 @@ private[ocelot] class LabelCacheImpl(labels: Map[String, Label] = Map(),
   // Persistence access
   def flowStack: List[FlowStage] = stack
   def poolUpdates: Map[String, Stanza] = poolCache
-  def dump(): List[String] = {
-    def showLabels(names: List[String], lbls: Map[String, Label], tag: String): List[String] = 
+  def list(): Seq[(String, String, String)] = {
+    def showLabels(names: List[String], lbls: Map[String, Label]): Seq[(String, String, String)] = 
       names.sorted.map{ k =>
         lbls(k) match {
-          case s: ScalarLabel => s"$tag Scalar: ${s.name} => ${s.english(0)}"
-          case l: ListLabel => s"$tag List: ${l.name} => ${l.english}"
-          case _ => s"UNKNOWN label type"
+          case s: ScalarLabel => (s.name, "Scalar", s.english(0))
+          case l: ListLabel => (l.name, "List", l.english.mkString(","))
+          case _ => ("", "", "")
         }
       }
-    
-    showLabels(cache.keySet.toList.sorted, cache, "Cached") ++
-    showLabels(labels.keySet.toList.sorted, labels, "Label")
+
+    val allLabels: Map[String, Label] = labels ++ cache.toList
+    showLabels(allLabels.keySet.toList.sorted, allLabels)
   }
 
   // Timescales defns

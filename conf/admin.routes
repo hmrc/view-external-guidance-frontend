@@ -1,9 +1,10 @@
 # Admin proxy routes
 GET        /scratch/$uuid<[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}>     controllers.entry.StartGuidanceController.scratch(uuid: String)
-GET        /published/debug/:processCode      controllers.entry.StartGuidanceController.publishedDebugging(processCode: String)
-GET        /approval/debug/:processId         controllers.entry.StartGuidanceController.approvalDebugging(processId: String)
 GET        /approval/:processId/*url          controllers.entry.StartGuidanceController.approvalPage(processId: String, url: String)
 GET        /approval/:processId               controllers.entry.StartGuidanceController.approval(processId: String)
+
+GET        /debug/published/:processCode      controllers.entry.StartGuidanceController.publishedWithDebugging(processCode: String)
+GET        /debug/approval/:processId         controllers.entry.StartGuidanceController.approvalWithDebugging(processId: String)
 GET        /map-approval/:processCode         controllers.entry.StartAdminController.approvalPageMap(processCode: String)
 GET        /map-published/:processCode        controllers.entry.StartAdminController.publishedPageMap(processCode: String)
 GET        /active                            controllers.apis.AdminApiController.listActiveProcessSummaries()

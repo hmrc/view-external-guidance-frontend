@@ -21,13 +21,13 @@
 
 @this(govukTable : GovukTable)
 
-@(pmpage: ProcessPageStructure)(implicit messages: Messages)
+@(pmpage: ProcessPageStructure, externalLinks: Boolean)(implicit messages: Messages)
 
   @govukTable(Table(
       pmpage.keyedStanzas.map(ks => Seq(
         TableRow(content=Text(ks.key), attributes=Map("id" -> ks.key)),
         TableRow(content=Text(stanzaTypeName(ks.stanza))),
-        TableRow(content=HtmlContent(render_stanza(ks.stanza, pmpage.keyedStanzas.map(_.key))))
+        TableRow(content=HtmlContent(render_stanza(ks.stanza, pmpage.keyedStanzas.map(_.key), externalLinks)))
         )
       )
     ,
@@ -43,6 +43,6 @@
   ))
 
 @{
-     //$COVERAGE-OFF$
+  //$COVERAGE-OFF$
 }
 

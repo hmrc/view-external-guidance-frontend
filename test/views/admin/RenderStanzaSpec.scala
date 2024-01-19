@@ -39,22 +39,22 @@ class RenderStanzaSpec extends BaseSpec with ViewSpec with ViewFns {
   "render_stanza" must {
 
     "support all Input stanza types" in new Test {
-      asDocument(render_stanza(currencyInput, Seq.empty)).toString.contains("help") shouldBe true
+      asDocument(render_stanza(currencyInput, Seq.empty, true)).toString.contains("help") shouldBe true
     }
     "support PageStanza" in new Test {
-      asDocument(render_stanza(PageStanza("/usr",Seq("1"), false), Seq.empty)).toString.contains("url") shouldBe true
+      asDocument(render_stanza(PageStanza("/usr",Seq("1"), false), Seq.empty, true)).toString.contains("url") shouldBe true
     }
     "support Instruction" in new Test {
-      asDocument(render_stanza(Instruction(Phrase("Input", "Input"), Seq("1"), None, false), Seq.empty)).toString.contains("text") shouldBe true
+      asDocument(render_stanza(Instruction(Phrase("Input", "Input"), Seq("1"), None, false), Seq.empty, true)).toString.contains("text") shouldBe true
     }
     "support all Callout stanza types" in new Test {
-      asDocument(render_stanza(ErrorCallout(Phrase("Input", "Input"), Seq("1"), false), Seq.empty)).toString.contains("text") shouldBe true
+      asDocument(render_stanza(ErrorCallout(Phrase("Input", "Input"), Seq("1"), false), Seq.empty, true)).toString.contains("text") shouldBe true
     }
     "support Calculation" in new Test {
-      asDocument(render_stanza(Calculation(Seq("1"), Seq(AddOperation("l","op","r"))), Seq.empty)).toString.contains("next") shouldBe true
+      asDocument(render_stanza(Calculation(Seq("1"), Seq(AddOperation("l","op","r"))), Seq.empty, true)).toString.contains("next") shouldBe true
     }
     "support ValueStanza" in new Test {
-      asDocument(render_stanza(ValueStanza(List(Value(ScalarType, "l", "0")), Seq("1"), false), Seq.empty)).toString.contains("next") shouldBe true
+      asDocument(render_stanza(ValueStanza(List(Value(ScalarType, "l", "0")), Seq("1"), false), Seq.empty, true)).toString.contains("next") shouldBe true
     }
   }
 }

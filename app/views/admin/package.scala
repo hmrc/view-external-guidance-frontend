@@ -75,7 +75,15 @@ package object admin {
       case _: ContainsTest => "contains"
     }
 
-  def renderIds(ids: Seq[String], pageStanzaIds: Seq[String]): String = ids.map(renderId(_, pageStanzaIds)).mkString(", ")
-  def renderNext(nxt: Seq[String], pageStanzaIds: Seq[String]): String = nxt.headOption.fold("")(id => renderId(id, pageStanzaIds))
-  def renderId(id: String, pageStanzaIds: Seq[String]): String = if (pageStanzaIds.contains(id)) s"<a href='#$id'>$id</a>" else s"<a href='#$id'>Page $id</a>"
+  def renderIds(ids: Seq[String], pageStanzaIds: Seq[String])(implicit externalLinks: Boolean): String = ids.map(renderId(_, pageStanzaIds)).mkString(", ")
+  def renderNext(nxt: Seq[String], pageStanzaIds: Seq[String])(implicit externalLinks: Boolean): String = nxt.headOption.fold("")(id => renderId(id, pageStanzaIds))
+  def renderId(id: String, pageStanzaIds: Seq[String])(implicit externalLinks: Boolean): String = 
+    (pageStanzaIds.contains(id), externalLinks) match {
+      case (true, true) => s"<a href='#$id'>$id</a>"
+      case (false, true) => s"<a href='#$id'>Page $id</a>"
+      case (true, false) => s"$id"
+      case (false, false) => s"Page $id"
+    }
+  def renderSimpleId(id: String)(implicit externalLinks: Boolean): String = if (externalLinks) s"<a href='#$id'>$id</a>" else id
+
 }

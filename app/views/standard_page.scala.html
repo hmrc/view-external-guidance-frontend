@@ -25,10 +25,6 @@
 
 @layout(page.heading.asString, ctx.processTitle.asString, Some(ctx.processCode), ctx.processStartUrl, ctx.backLink, ctx.betaPhaseBanner, debugInformation = ctx.debugInformation) {
 
-  @ctx.debugInformation.map{dbg =>
-    @dbg
-  }
-
   @components.render_components(page.components)
 }
 @{

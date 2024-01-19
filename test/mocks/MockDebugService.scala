@@ -21,6 +21,7 @@ import org.scalamock.scalatest.MockFactory
 import services.DebugService
 import models.admin._
 import core.models.ocelot._
+import models.PageNext
 
 trait MockDebugService extends MockFactory {
 
@@ -28,10 +29,15 @@ trait MockDebugService extends MockFactory {
 
   object MockDebugService {
 
-    def mapPage(page: Page, pageMap: Map[String, Page]): CallHandler[ProcessPageStructure] =
+    def mapPage(page: Page, pageMap: Map[String, PageNext]): CallHandler[ProcessPageStructure] =
       (mockDebugService
-        .mapPage(_: Page, _: Map[String, Page]))
+        .mapPage(_: Page, _: Map[String, PageNext]))
         .expects(page, pageMap)
+
+    def pageTitle(page: Page): CallHandler[Option[String]] =      
+      (mockDebugService
+        .pageTitle(_: Page))
+        .expects(page)
 
   }
 

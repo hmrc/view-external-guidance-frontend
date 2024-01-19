@@ -212,7 +212,7 @@ class GuidanceService @Inject() (
                   page, visualStanzas, dataInput, sessionId, pageMapById, gs.process.startUrl.map(_ => s"${appConfig.baseUrl}/${processCode}/session-restart"),
                   processTitle, gs.process.meta.id, processCode, updatedLabels, gs.backLink.map(bl => s"${appConfig.baseUrl}/$bl"), gs.answers.get(answerStorageId(updatedLabels, url)),
                   gs.process.betaPhaseBanner,
-                  Option.when(labels.runMode.equals(Debugging))(DebugInformation(debugService.mapPage(page, gs.pageMap), Some(labels), Some(updatedLabels)))
+                  Option.when(labels.runMode.equals(Debugging))(DebugInformation(debugService.mapPage(page, gs.pageMap), labels, updatedLabels))
                 )
               )
           }

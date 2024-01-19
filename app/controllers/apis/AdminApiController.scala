@@ -25,6 +25,7 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.ExecutionContext
 import play.api.Logging
 import models.admin.CachedProcessSummary
+import core.models.errors.CachedProcessNotFoundError
 
 
 @Singleton
@@ -47,9 +48,12 @@ class AdminApiController @Inject() (appConfig: AppConfig, processCacheRepository
   def getActive(id: String, version: Long, timescalesVersion: Option[Long], ratesVersion: Option[Long]): Action[AnyContent] = Action.async { _ =>    
     processCacheRepository.get(id, version, timescalesVersion, ratesVersion).map {
       case Right(cachedProcess) => Ok(Json.toJson(cachedProcess.process))
+      case Left(CachedProcessNotFoundError) =>
+        logger.error(s"Unable to retrieve active process ($id, $version)")
+        BadRequest(s"Unable to retrieve active process ($id, $version), err = $CachedProcessNotFoundError")
       case Left(err) =>
         logger.error(s"Unable to retrieve active process ($id, $version), err = $err")
-        BadRequest(s"Unable to retrieve active process ($id, $version), err = $err")
+        InternalServerError(s"Unable to retrieve active process ($id, $version), err = $err")
     }
   }
 }

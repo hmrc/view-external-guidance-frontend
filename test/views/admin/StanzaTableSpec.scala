@@ -38,7 +38,7 @@ class StanzaTableSpec extends BaseSpec with ViewSpec with ViewFns {
   "render_stanza" must {
 
     "Display a stanza table" in new Test {
-      asDocument(stable(ppm)).toString.contains("Stanzas of page '1'") shouldBe true
+      asDocument(stable(ppm, true)).toString.contains("Stanzas of page '1'") shouldBe true
     }
   }
 

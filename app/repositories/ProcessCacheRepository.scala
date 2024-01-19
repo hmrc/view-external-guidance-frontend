@@ -91,7 +91,7 @@ class DefaultProcessCacheRepository @Inject() (config: AppConfig, component: Mon
   implicit lazy val cachedProcessSummaryformat: Format[CachedProcessSummary] = Json.format[CachedProcessSummary]
 
   def create(process: Process, pageMap: Map[String, PageNext], runMode: RunMode): Future[RequestOutcome[Unit]] = {
-    val processIdKey = process.meta.id + Option.when(runMode == Debugging)("-dbg").getOrElse("")
+    val processIdKey = process.meta.id + Option.when(runMode == Debugging)("-debug").getOrElse("")
     collection.updateOne(equal("_id", CacheKey(processIdKey, process.meta.lastUpdate, process.meta.timescalesVersion, process.meta.ratesVersion)),
                                 combine(List(
                                   Updates.set(TtlExpiryFieldName, expiryInstant(runMode, Instant.now)),

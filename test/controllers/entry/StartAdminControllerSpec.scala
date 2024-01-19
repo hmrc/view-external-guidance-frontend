@@ -62,15 +62,15 @@ class StartAdminControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
       stack = false
     )
 
-    val titlePage: Page = Page("start","/bulletPoints",
-                      List(
-                        KeyedStanza("start",PageStanza("/bulletPoints",Vector("1"),false)),
-                        KeyedStanza("1",TitleCallout(Phrase("vtst Bullet Point List","vtst Welsh: Bullet Point List"),Vector("2"),false)),
-                        KeyedStanza("2",Instruction(Phrase("Test bulletpoint list here 1st testing here","Welsh Test bulletpoint list here 1st testing here"),Vector("3"),None,true,List(),List())),
-                        KeyedStanza("3",Instruction(Phrase("Test bulletpoint list here 2nd testing here","Welsh Test bulletpoint list here 2nd testing here"),Vector("4"),None,true,List(),List())),
-                        KeyedStanza("4",Instruction(Phrase("Test bulletpoint list here 3rd testing here","Welsh Test bulletpoint list here 3rd testing here"),Vector("end"),None,true,List(),List())),
-                        KeyedStanza("end",EndStanza)
-                      ),List(),true)
+    val titlePageStanzas = List(
+      KeyedStanza("start",PageStanza("/bulletPoints",Vector("1"),false)),
+      KeyedStanza("1",TitleCallout(Phrase("Bullet Point List","Welsh: Bullet Point List"),Vector("2"),false)),
+      KeyedStanza("2",Instruction(Phrase("Test bulletpoint list here 1st testing here","Welsh Test bulletpoint list here 1st testing here"),Vector("3"),None,true,List(),List())),
+      KeyedStanza("3",Instruction(Phrase("Test bulletpoint list here 2nd testing here","Welsh Test bulletpoint list here 2nd testing here"),Vector("4"),None,true,List(),List())),
+      KeyedStanza("4",Instruction(Phrase("Test bulletpoint list here 3rd testing here","Welsh Test bulletpoint list here 3rd testing here"),Vector("end"),None,true,List(),List())),
+      KeyedStanza("end",EndStanza)
+    )
+    val titlePage: Page = Page("start","/bulletPoints", titlePageStanzas,List(),true)
 
     val questionPage: Page = Page("start","/bulletPoints",
                       List(
@@ -130,9 +130,22 @@ class StartAdminControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
   "Calling the map-published endpoint with a valid process code" should {
 
     "redirect the caller to another page" in new ProcessTest {
+      val pageMap = Map("/bulletPoints" -> models.PageNext("start",List(),List(),Some("Bullet Point List"),None))
+      val processPageStructure: models.admin.ProcessPageStructure =  models.admin.ProcessPageStructure(
+        "start",
+        "/bulletPoints", 
+        Some("Bullet Point List"),
+        titlePageStanzas,
+        Seq(models.admin.LinkedPage("4", "/blah", Some("Blah blah")), models.admin.LinkedPage("5", "/Otherblah", Some("Other Blah blah"))),
+        Seq(),
+        Seq("start")
+      )
+
+      MockDebugService.pageTitle(titlePage).returns(Some("Bullet Point List"))
+      MockDebugService.mapPage(titlePage, pageMap).returns(processPageStructure)
       MockRetrieveAndCacheService
         .retrieveOnlyPublished(processCode)
-        .returns(Future.successful(Right((emptyProcess, Seq()))))
+        .returns(Future.successful(Right((emptyProcess, Seq(titlePage)))))
 
       val result = target.publishedPageMap(processCode)(fakeRequest)
       status(result) shouldBe Status.OK

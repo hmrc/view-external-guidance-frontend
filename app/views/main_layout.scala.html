@@ -28,7 +28,7 @@
 @this(
   hmrcExtendedPage: hmrc_extended_page,
   phaseBanner : GovukPhaseBanner,
-  pageStructure: views.html.admin.tabs,
+  debug_footer: views.html.admin.debug_footer_tabs,
   hmrcLanguageSelect: HmrcLanguageSelect,
   appConfig: AppConfig,
   timeoutDialog: HmrcTimeoutDialog,
@@ -142,7 +142,7 @@
     serviceName = Some(processTitle),
     pageTitle = Some(s"$pageTitle – ${messages("service.name")} – ${messages("service.govuk")}")
   ),
-  debugInformation.map(dbg => pageStructure(dbg.processPageStructure))
+  debugInformation.map(debug_footer(_))
 )(content)
 
 @{

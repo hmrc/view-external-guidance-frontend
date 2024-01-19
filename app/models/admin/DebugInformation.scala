@@ -17,9 +17,19 @@
 package models.admin
 
 import core.models.ocelot.Labels
+import core.models.ocelot.ScalarLabel
+import core.models.ocelot.ListLabel
 
-case class DebugInformation(
-  processPageStructure: ProcessPageStructure,
-  preRenderLabels: Option[Labels],
-  postRenderLabels: Option[Labels]
-)
+case class DebugLabelRow(name: String, dataType: String, initialValue: Option[String], updatedValue: Option[String])
+
+case class DebugInformation(processPageStructure: ProcessPageStructure, preRenderLabels: Labels, postRenderLabels: Labels) {
+  val allPostRenderLabels = postRenderLabels.labelMap ++ postRenderLabels.updatedLabels
+  val names: List[String] = (preRenderLabels.labelMap.keySet.toList ++ allPostRenderLabels.keySet.toList).distinct
+
+  val labels: List[DebugLabelRow] = names.map{n =>
+    allPostRenderLabels(n) match {
+      case s: ScalarLabel => DebugLabelRow(n, "Scalar", preRenderLabels.value(n), postRenderLabels.value(n))
+      case l: ListLabel => DebugLabelRow(n, "List", preRenderLabels.valueAsList(n).map(_.mkString(",")), postRenderLabels.valueAsList(n).map(_.mkString(",")))
+    }
+  }
+}

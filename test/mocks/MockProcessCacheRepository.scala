@@ -17,6 +17,7 @@
 package mocks
 
 import repositories.{CachedProcess, ProcessCacheRepository}
+import models.admin.CachedProcessSummary
 import models.PageNext
 import core.models.ocelot._
 import core.models.RequestOutcome
@@ -39,6 +40,11 @@ trait MockProcessCacheRepository extends MockFactory {
       (mockProcessCacheRepository
         .get(_: String, _: Long, _: Option[Long], _: Option[Long]))
         .expects(id, processVersion, timescalesVersion, ratesVersion)
+
+    def listSummaries(): CallHandler[Future[RequestOutcome[List[CachedProcessSummary]]]] =
+       (mockProcessCacheRepository
+        .listSummaries _)
+        .expects()
 
   }
 }
