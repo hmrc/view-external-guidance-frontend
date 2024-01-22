@@ -26,10 +26,13 @@ case class DebugInformation(processPageStructure: ProcessPageStructure, preRende
   val allPostRenderLabels = postRenderLabels.labelMap ++ postRenderLabels.updatedLabels
   val names: List[String] = (preRenderLabels.labelMap.keySet.toList ++ allPostRenderLabels.keySet.toList).distinct
 
-  val labels: List[DebugLabelRow] = names.map{n =>
-    allPostRenderLabels(n) match {
-      case s: ScalarLabel => DebugLabelRow(n, "Scalar", preRenderLabels.value(n), postRenderLabels.value(n))
-      case l: ListLabel => DebugLabelRow(n, "List", preRenderLabels.valueAsList(n).map(_.mkString(",")), postRenderLabels.valueAsList(n).map(_.mkString(",")))
+  lazy val labels: List[DebugLabelRow] = {
+    val all: List[DebugLabelRow] = names.map{n =>
+      allPostRenderLabels(n) match {
+        case s: ScalarLabel => DebugLabelRow(n, "Scalar", preRenderLabels.value(n), postRenderLabels.value(n))
+        case l: ListLabel => DebugLabelRow(n, "List", preRenderLabels.valueAsList(n).map(_.mkString(",")), postRenderLabels.valueAsList(n).map(_.mkString(",")))
+      }
     }
+    all.filterNot(_.initialValue.isDefined) ::: all.filter(_.initialValue.isDefined) // Show new labels (undefined initial value) first in list
   }
 }
