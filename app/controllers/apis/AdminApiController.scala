@@ -50,7 +50,7 @@ class AdminApiController @Inject() (appConfig: AppConfig, processCacheRepository
       case Right(cachedProcess) => Ok(Json.toJson(cachedProcess.process))
       case Left(CachedProcessNotFoundError) =>
         logger.error(s"Unable to retrieve active process ($id, $version)")
-        BadRequest(s"Unable to retrieve active process ($id, $version), err = $CachedProcessNotFoundError")
+        NotFound(s"Unable to retrieve active process ($id, $version), err = $CachedProcessNotFoundError")
       case Left(err) =>
         logger.error(s"Unable to retrieve active process ($id, $version), err = $err")
         InternalServerError(s"Unable to retrieve active process ($id, $version), err = $err")

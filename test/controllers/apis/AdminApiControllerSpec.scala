@@ -97,10 +97,10 @@ class AdminApiControllerSpec extends BaseSpec with SequenceJson with GuiceOneApp
   }
 
   "Calling the get endpoint" should {
-    "Return BadRequest on unknown process" in new ApiTest {
+    "Return NotFound on unknown process" in new ApiTest {
       MockProcessCacheRepository.get("id1", 123456L, Some(123456L), None).returns(Future.successful(Left(core.models.errors.CachedProcessNotFoundError)))
       val result = target.getActive("id1", 123456L, Some(123456L), None)(fakeRequest)
-      status(result) shouldBe Status.BAD_REQUEST
+      status(result) shouldBe Status.NOT_FOUND
     }
   }
 
