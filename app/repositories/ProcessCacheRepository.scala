@@ -66,12 +66,15 @@ trait ProcessCacheRepositoryConstants {
 }
 
 trait ProcessCacheRepository extends ProcessCacheRepositoryConstants {
+  val DebugIdSuffix = "-debug"
   def create(process: Process, pageMap: Map[String, PageNext], runMode: RunMode): Future[RequestOutcome[Unit]]
   def get(id: String, processVersion: Long, timescalesVersion: Option[Long], ratesVersion: Option[Long]): Future[RequestOutcome[CachedProcess]]
   def listSummaries(): Future[RequestOutcome[List[CachedProcessSummary]]]
 }
 
-object DefaultProcessCacheRepository extends ProcessCacheRepositoryConstants
+object DefaultProcessCacheRepository extends ProcessCacheRepositoryConstants {
+  
+}
 
 @Singleton
 class DefaultProcessCacheRepository @Inject() (config: AppConfig, component: MongoComponent)(implicit ec: ExecutionContext)
@@ -91,7 +94,7 @@ class DefaultProcessCacheRepository @Inject() (config: AppConfig, component: Mon
   implicit lazy val cachedProcessSummaryformat: Format[CachedProcessSummary] = Json.format[CachedProcessSummary]
 
   def create(process: Process, pageMap: Map[String, PageNext], runMode: RunMode): Future[RequestOutcome[Unit]] = {
-    val processIdKey = process.meta.id + Option.when(runMode == Debugging)("-debug").getOrElse("")
+    val processIdKey = process.meta.id + Option.when(runMode == Debugging)(DebugIdSuffix).getOrElse("")
     collection.updateOne(equal("_id", CacheKey(processIdKey, process.meta.lastUpdate, process.meta.timescalesVersion, process.meta.ratesVersion)),
                                 combine(List(
                                   Updates.set(TtlExpiryFieldName, expiryInstant(runMode, Instant.now)),
