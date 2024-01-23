@@ -14,20 +14,20 @@
  * limitations under the License.
  *@
 
-@import models.admin.ProcessMapPage
+@import models.admin.ProcessPageStructure
 @import views.admin.stanzaTypeName
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 @import views.html.admin.render_stanza
 
 @this(govukTable : GovukTable)
 
-@(pmpage: ProcessMapPage, pageIds: Seq[String])(implicit messages: Messages)
+@(pmpage: ProcessPageStructure, externalLinks: Boolean)(implicit messages: Messages)
 
   @govukTable(Table(
       pmpage.keyedStanzas.map(ks => Seq(
         TableRow(content=Text(ks.key), attributes=Map("id" -> ks.key)),
         TableRow(content=Text(stanzaTypeName(ks.stanza))),
-        TableRow(content=HtmlContent(render_stanza(ks.stanza, pageIds)))
+        TableRow(content=HtmlContent(render_stanza(ks.stanza, pmpage.keyedStanzas.map(_.key), externalLinks)))
         )
       )
     ,
@@ -43,6 +43,6 @@
   ))
 
 @{
-     //$COVERAGE-OFF$
+  //$COVERAGE-OFF$
 }
 

@@ -38,7 +38,7 @@ class GuidanceServiceSpec extends BaseSpec {
   implicit val messages: Messages = messagesApi.preferred(Seq())
   val rId: String = "71dcc4a3-9d19-47f5-ad97-74bb6c2a15c4"
 
-  trait Test extends MockGuidanceConnector with MockSessionService with MockPageBuilder with MockPageRenderer with MockUIBuilder with ProcessJson {
+  trait Test extends MockGuidanceConnector with MockSessionService with MockPageBuilder with MockPageRenderer with MockUIBuilder with MockDebugService with ProcessJson {
     implicit val lang: Lang = Lang("en")
     implicit val headerCarrier: HeaderCarrier = HeaderCarrier(requestId = Some(RequestId(rId)))
     implicit val stanzaIdToUrl: Map[String, String] = Map[String, String]()
@@ -102,6 +102,7 @@ class GuidanceServiceSpec extends BaseSpec {
     lazy val target = new GuidanceService(
       MockAppConfig,
       mockSessionService,
+      mockDebugService,
       mockPageBuilder,
       mockPageRenderer,
       new SecuredProcessBuilder(messagesApi),
@@ -344,7 +345,7 @@ class GuidanceServiceSpec extends BaseSpec {
 
       whenReady(result) { pageCtx =>
         pageCtx match {
-          case Right(PageContext(_, _, _, _, _, _, _, _, _, _, Some(answer), _)) => succeed
+          case Right(PageContext(_, _, _, _, _, _, _, _, _, _, Some(answer), _, _)) => succeed
           case Right(wrongContext) => fail(s"Previous answer missing from PageContext, $wrongContext")
           case Left(err) => fail(s"Previous answer missing from PageContext, $err")
         }

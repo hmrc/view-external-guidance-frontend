@@ -27,14 +27,16 @@ import core.models.RequestOutcome
 import play.api.i18n.{MessagesApi, Messages}
 import scala.concurrent.{ExecutionContext, Future}
 import repositories.SessionFSM
-import core.models.ocelot.{LabelCache, Labels, Process, Label, flowPath}
+import core.models.ocelot.{LabelCache, Labels, Process, Label, flowPath, Debugging}
 import core.models.ocelot.SecuredProcess
 import core.services.EncrypterService
+import models.admin.DebugInformation
 
 @Singleton
 class GuidanceService @Inject() (
     appConfig: AppConfig,
     sessionService: SessionService,
+    debugService: DebugService,
     pageBuilder: PageBuilder,
     pageRenderer: PageRenderer,
     spb: SecuredProcessBuilder,
@@ -209,7 +211,8 @@ class GuidanceService @Inject() (
                 PageEvaluationContext(
                   page, visualStanzas, dataInput, sessionId, pageMapById, gs.process.startUrl.map(_ => s"${appConfig.baseUrl}/${processCode}/session-restart"),
                   processTitle, gs.process.meta.id, processCode, updatedLabels, gs.backLink.map(bl => s"${appConfig.baseUrl}/$bl"), gs.answers.get(answerStorageId(updatedLabels, url)),
-                  gs.process.betaPhaseBanner
+                  gs.process.betaPhaseBanner,
+                  Option.when(labels.runMode.equals(Debugging))(DebugInformation(debugService.mapPage(page, gs.pageMap), labels, updatedLabels))
                 )
               )
           }

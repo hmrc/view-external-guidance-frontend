@@ -19,8 +19,8 @@ package forms
 import play.api.mvc._
 import play.api.data.Form
 import play.api.i18n.{Lang, Messages, MessagesApi}
-import core.models.ocelot.Phrase
-import core.models.ocelot.stanzas.{PassphraseInput, CurrencyInput, CurrencyPoundsOnlyInput, DateInput, Question, Sequence}
+import core.models.ocelot.{Labels, Phrase, Page, Validation}
+import core.models.ocelot.stanzas.{PassphraseInput, CurrencyInput, CurrencyPoundsOnlyInput, DateInput, Question, Sequence, DataInput}
 import models.ui.SubmittedAnswer
 import services.{ErrorStrategy, ValueMissingError, ValueMissingGroupError}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -103,6 +103,12 @@ class FormProvidersSpec extends BaseSpec with GuiceOneAppPerSuite {
       stack = false
     )
 
+    case class UnknownInput() extends DataInput {
+      def eval(value: String, page: Page, labels: Labels): (Option[String], Labels) = (None, labels)
+      def validInput(value: String): Validation[String] = Right(value)
+    }
+
+
     val nonExclusiveSequence: Sequence = Sequence(
       Phrase("Select a day in the working week", "Welsh: Select a day in the working week"),
       Seq("10", "20", "30", "40", "50", "60"),
@@ -146,6 +152,15 @@ class FormProvidersSpec extends BaseSpec with GuiceOneAppPerSuite {
   }
 
   "FormsHelper's binding functionality" should {
+
+    "FormProviderFactory will return StringFormProvider if passed unknown input stanza type" in new Test {
+
+      formProvider(UnknownInput()) match {
+        case _: StringFormProvider => succeed
+        case _ => fail()
+      }
+
+    }
 
     "be able to bind data for a question input component" in new Test {
 

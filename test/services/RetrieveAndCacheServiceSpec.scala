@@ -20,7 +20,7 @@ import base.BaseSpec
 import core.models.errors.NotFoundError
 import core.models.ocelot.stanzas._
 import core.models.ocelot.{Approval, KeyedStanza, Page, PageReview, Process, ProcessJson, Published, Scratch}
-import mocks.{MockGuidanceConnector, MockPageBuilder, MockSessionService}
+import mocks.{MockGuidanceConnector, MockPageBuilder, MockSessionService, MockDebugService}
 import models.{PageNext, ui}
 import play.api.i18n.MessagesApi
 import uk.gov.hmrc.http.HeaderCarrier
@@ -31,7 +31,7 @@ class RetrieveAndCacheServiceSpec extends BaseSpec {
 
   val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
 
-  trait Test extends MockGuidanceConnector with MockSessionService with MockPageBuilder with ProcessJson {
+  trait Test extends MockGuidanceConnector with MockSessionService with MockPageBuilder with MockDebugService with ProcessJson {
     implicit val headerCarrier: HeaderCarrier = HeaderCarrier()
 
     def pageWithUrl(id: String, url: String) = Page(id, url, Seq(KeyedStanza("1", EndStanza)), Seq())
@@ -59,6 +59,7 @@ class RetrieveAndCacheServiceSpec extends BaseSpec {
     lazy val target = new RetrieveAndCacheService(
       mockGuidanceConnector,
       mockSessionService,
+      mockDebugService,
       mockPageBuilder,
       new SecuredProcessBuilder(messagesApi)
     )

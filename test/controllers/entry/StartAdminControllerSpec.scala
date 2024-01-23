@@ -20,7 +20,7 @@ import base.BaseSpec
 import core.models.errors._
 import core.models.ocelot.stanzas._
 import core.models.ocelot._
-import mocks.MockRetrieveAndCacheService
+import mocks.{MockDebugService, MockRetrieveAndCacheService}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.Status
 import play.api.mvc.AnyContentAsEmpty
@@ -48,7 +48,7 @@ class StartAdminControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
     val relativeStdPath = standardPagePath.drop(1)
 
     lazy val errorHandler = app.injector.instanceOf[config.ErrorHandler]
-    lazy val view = app.injector.instanceOf[admin.process_map]
+    lazy val view = app.injector.instanceOf[admin.process_structure]
 
     val seq = Sequence(
       Phrase("Select a working day of the week", "Welsh: Select a working day of the week"),
@@ -62,15 +62,15 @@ class StartAdminControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
       stack = false
     )
 
-    val titlePage: Page = Page("start","/bulletPoints",
-                      List(
-                        KeyedStanza("start",PageStanza("/bulletPoints",Vector("1"),false)),
-                        KeyedStanza("1",TitleCallout(Phrase("vtst Bullet Point List","vtst Welsh: Bullet Point List"),Vector("2"),false)),
-                        KeyedStanza("2",Instruction(Phrase("Test bulletpoint list here 1st testing here","Welsh Test bulletpoint list here 1st testing here"),Vector("3"),None,true,List(),List())),
-                        KeyedStanza("3",Instruction(Phrase("Test bulletpoint list here 2nd testing here","Welsh Test bulletpoint list here 2nd testing here"),Vector("4"),None,true,List(),List())),
-                        KeyedStanza("4",Instruction(Phrase("Test bulletpoint list here 3rd testing here","Welsh Test bulletpoint list here 3rd testing here"),Vector("end"),None,true,List(),List())),
-                        KeyedStanza("end",EndStanza)
-                      ),List(),true)
+    val titlePageStanzas = List(
+      KeyedStanza("start",PageStanza("/bulletPoints",Vector("1"),false)),
+      KeyedStanza("1",TitleCallout(Phrase("Bullet Point List","Welsh: Bullet Point List"),Vector("2"),false)),
+      KeyedStanza("2",Instruction(Phrase("Test bulletpoint list here 1st testing here","Welsh Test bulletpoint list here 1st testing here"),Vector("3"),None,true,List(),List())),
+      KeyedStanza("3",Instruction(Phrase("Test bulletpoint list here 2nd testing here","Welsh Test bulletpoint list here 2nd testing here"),Vector("4"),None,true,List(),List())),
+      KeyedStanza("4",Instruction(Phrase("Test bulletpoint list here 3rd testing here","Welsh Test bulletpoint list here 3rd testing here"),Vector("end"),None,true,List(),List())),
+      KeyedStanza("end",EndStanza)
+    )
+    val titlePage: Page = Page("start","/bulletPoints", titlePageStanzas,List(),true)
 
     val questionPage: Page = Page("start","/bulletPoints",
                       List(
@@ -114,13 +114,14 @@ class StartAdminControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
 
   }
 
-  trait ProcessTest extends MockRetrieveAndCacheService with TestData {
+  trait ProcessTest extends MockRetrieveAndCacheService with MockDebugService with TestData {
     lazy val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("GET", "/")
 
     lazy val target =
       new StartAdminController(
         errorHandler,
         mockRetrieveAndCacheService,
+        mockDebugService,
         view,
         stubMessagesControllerComponents()
       )
@@ -129,9 +130,22 @@ class StartAdminControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
   "Calling the map-published endpoint with a valid process code" should {
 
     "redirect the caller to another page" in new ProcessTest {
+      val pageMap = Map("/bulletPoints" -> models.PageNext("start",List(),List(),Some("Bullet Point List"),None))
+      val processPageStructure: models.admin.ProcessPageStructure =  models.admin.ProcessPageStructure(
+        "start",
+        "/bulletPoints", 
+        Some("Bullet Point List"),
+        titlePageStanzas,
+        Seq(models.admin.LinkedPage("4", "/blah", Some("Blah blah")), models.admin.LinkedPage("5", "/Otherblah", Some("Other Blah blah"))),
+        Seq(),
+        Seq("start")
+      )
+
+      MockDebugService.pageTitle(titlePage).returns(Some("Bullet Point List"))
+      MockDebugService.mapPage(titlePage, pageMap).returns(processPageStructure)
       MockRetrieveAndCacheService
         .retrieveOnlyPublished(processCode)
-        .returns(Future.successful(Right((emptyProcess, Seq()))))
+        .returns(Future.successful(Right((emptyProcess, Seq(titlePage)))))
 
       val result = target.publishedPageMap(processCode)(fakeRequest)
       status(result) shouldBe Status.OK
@@ -200,29 +214,6 @@ class StartAdminControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
       status(result) shouldBe Status.INTERNAL_SERVER_ERROR
     }
 
-  }
-
-  "toProcessMapPages" should {
-    "Return sequence of ProcessMapPages" in new ProcessTest {
-      val pageMap: Map[String, Page] = Seq(titlePage).map(p => (p.id, p)).toMap
-
-
-      val rows = target.toProcessMapPages(Seq(titlePage), pageMap)
-      rows.length shouldBe 1
-      rows.head.id shouldBe "start"
-      rows.head.url shouldBe "/bulletPoints"
-      rows.head.title shouldBe Some("vtst Bullet Point List")
-    }
-  }
-
-  "pageTitle" should {
-    "Return title of page" in new ProcessTest {
-      target.pageTitle(titlePage) shouldBe Some("vtst Bullet Point List")
-      target.pageTitle(questionPage) shouldBe Some("Which?")
-      target.pageTitle(sequencePage) shouldBe Some("Select a working day of the week")
-      target.pageTitle(inputPage) shouldBe Some("Input")
-      target.pageTitle(yourCallPage) shouldBe Some("vtst Bullet Point List")
-    }
   }
 
 }

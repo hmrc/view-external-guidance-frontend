@@ -32,13 +32,13 @@ class StanzaTableSpec extends BaseSpec with ViewSpec with ViewFns {
     implicit val request = FakeRequest("GET", "/")
     implicit def messages: Messages = messagesApi.preferred(request)
 
-    val ppm = ProcessMapPage("1", "/url", Some("BLAH"), Seq(KeyedStanza("1", PageStanza("/usr",Seq("end"), false))), Seq.empty, Seq.empty, Seq.empty)
+    val ppm = ProcessPageStructure("1", "/url", Some("BLAH"), Seq(KeyedStanza("1", PageStanza("/usr",Seq("end"), false))), Seq.empty, Seq.empty, Seq.empty)
   }
 
   "render_stanza" must {
 
     "Display a stanza table" in new Test {
-      asDocument(stable(ppm, Seq.empty)).toString.contains("Stanzas of page '1'") shouldBe true
+      asDocument(stable(ppm, true)).toString.contains("Stanzas of page '1'") shouldBe true
     }
   }
 

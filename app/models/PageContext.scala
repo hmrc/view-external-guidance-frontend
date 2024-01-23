@@ -18,6 +18,7 @@ package models
 
 import core.models.ocelot.{Page, LabelCache, Labels}
 import core.models.ocelot.stanzas.{VisualStanza,DataInput}
+import models.admin.DebugInformation
 
 case class PageEvaluationContext(page: Page,
                                  visualStanzas: Seq[VisualStanza],
@@ -31,7 +32,9 @@ case class PageEvaluationContext(page: Page,
                                  labels: Labels = LabelCache(),
                                  backLink: Option[String] = None,
                                  answer: Option[String] = None,
-                                 betaPhaseBanner: Boolean = false)
+                                 betaPhaseBanner: Boolean = false,
+                                 debugInformation: Option[DebugInformation] = None
+                               )
 
 
 case class PageContext(page: ui.Page,
@@ -45,7 +48,8 @@ case class PageContext(page: ui.Page,
                        labels: Labels = LabelCache(),
                        backLink: Option[String] = None,
                        answer: Option[String] = None,
-                       betaPhaseBanner: Boolean = false)
+                       betaPhaseBanner: Boolean = false,
+                       debugInformation: Option[DebugInformation] = None)
 
 object PageContext {
   def apply(pec: PageEvaluationContext, page: ui.Page): PageContext = PageContext(pec, page, pec.labels)
@@ -62,6 +66,7 @@ object PageContext {
       labels,
       pec.backLink,
       pec.answer,
-      pec.betaPhaseBanner
+      pec.betaPhaseBanner,
+      pec.debugInformation
     )
 }

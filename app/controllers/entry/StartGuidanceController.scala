@@ -63,6 +63,16 @@ class StartGuidanceController @Inject() (
     retrieveCacheAndRedirectToView(processCode, service.retrieveAndCachePublished, publishedErrorHandler, c, lang)
   }
 
+  def approvalWithDebugging(processId: String): Action[AnyContent] = Action.async { implicit request =>
+    logger.warn(s"ST: Starting approval direct view journey")
+    retrieveCacheAndRedirectToView(processId, service.retrieveAndCacheApprovalDebugging, defaultErrorHandler)
+  }
+
+  def publishedWithDebugging(processCode: String, c: Option[String] = None, lang: Option[String] = None): Action[AnyContent] = Action.async { implicit request =>
+    logger.warn(s"ST: Starting publish journey for $processCode, lang = $lang")
+    retrieveCacheAndRedirectToView(processCode, service.retrieveAndCachePublishedDebugging, publishedErrorHandler, c, lang)
+  }
+
   private def retrieveCacheAndRedirectToView(id: String,
                                              retrieveAndCache: (String, String) => Future[RequestOutcome[(String,String)]],
                                              errHandler: (Error, String, String) => Result,

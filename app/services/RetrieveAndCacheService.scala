@@ -25,12 +25,13 @@ import core.models.RequestOutcome
 import uk.gov.hmrc.http.HeaderCarrier
 import scala.concurrent.{ExecutionContext, Future}
 import models.PageNext
-import core.models.ocelot.{Process, RunMode, PageReview, Scratch, Approval, Published, Page}
+import core.models.ocelot.{Process, RunMode, PageReview, Scratch, Approval, Published, Debugging, Page}
 
 @Singleton
 class RetrieveAndCacheService @Inject() (
     connector: GuidanceConnector,
     sessionService: SessionService,
+    debugService: DebugService,
     pageBuilder: PageBuilder,
     spb: SecuredProcessBuilder
 )(implicit ec: ExecutionContext) {
@@ -46,6 +47,10 @@ class RetrieveAndCacheService @Inject() (
                                (implicit hc: HeaderCarrier): Future[RequestOutcome[(String,String)]] =
     retrieveAndCache(processCode, docId, map(connector.publishedProcess)(spb.secureIfRequired), Published)
 
+  def retrieveAndCachePublishedDebugging(processCode: String, docId: String)
+                               (implicit hc: HeaderCarrier): Future[RequestOutcome[(String,String)]] =
+    retrieveAndCache(processCode, docId, map(connector.publishedProcess)(spb.secureIfRequired), Debugging)
+
   def retrieveAndCacheApproval(processId: String, docId: String)
                               (implicit hc: HeaderCarrier): Future[RequestOutcome[(String,String)]] =
     retrieveAndCache(processId, docId, map(connector.approvalProcess)(spb.secureIfRequired), Approval)
@@ -53,6 +58,10 @@ class RetrieveAndCacheService @Inject() (
   def retrieveAndCacheApprovalByPageUrl(url: String)(processId: String, docId: String)
                               (implicit hc: HeaderCarrier): Future[RequestOutcome[(String,String)]] =
     retrieveAndCache(processId, docId, connector.approvalProcess, PageReview, Some(url))
+
+  def retrieveAndCacheApprovalDebugging(processId: String, docId: String)
+                              (implicit hc: HeaderCarrier): Future[RequestOutcome[(String,String)]] =
+    retrieveAndCache(processId, docId, map(connector.approvalProcess)(spb.secureIfRequired), Debugging)
 
   def retrieveOnlyPublished(processCode: String)(implicit hc: HeaderCarrier): Future[RequestOutcome[(Process, Seq[Page])]] =
     retrieve(processCode, map(connector.publishedProcess)(spb.secureIfRequired))
@@ -81,7 +90,10 @@ class RetrieveAndCacheService @Inject() (
         logger.warn(s"Unable to process using identifier $processCode, received $err")
         Future.successful(Left(err))
       case Right((process, pages)) =>
-        val pageMap: Map[String, PageNext] = pages.map(p => p.url -> PageNext(p.id, p.next.toList, p.linked.toList)).toMap
+        val pageMap: Map[String, PageNext] = runMode match {
+          case Debugging => pages.map(p => p.url -> PageNext(p.id, p.next.toList,p.linked.toList, debugService.pageTitle(p), Some(p.url))).toMap
+          case _ => pages.map(p => p.url -> PageNext(p.id, p.next.toList,p.linked.toList)).toMap
+        }
         val startPageUrl: String = url.getOrElse(pages.head.url)
         val startPageId: Option[String] = pageMap.get(startPageUrl).map(_.id)
         sessionService.create(docId, runMode, process, pageMap, startPageId.toList).map{
