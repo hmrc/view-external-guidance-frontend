@@ -15,7 +15,7 @@
  *@
 
 @import config.AppConfig
-@import models.admin.DebugInformation
+@import core.models.admin.DebugInformation
 @import uk.gov.hmrc.hmrcfrontend.views.config.StandardBetaBanner
 @import uk.gov.hmrc.hmrcfrontend.views.html.helpers.HmrcStandardPage
 @import uk.gov.hmrc.hmrcfrontend.views.viewmodels.hmrcstandardpage._
@@ -138,7 +138,7 @@
     serviceURLs = ServiceURLs(
       serviceUrl = startUrl,
       accessibilityStatementUrl = Some(appConfig.accessibilityStatement)
-    ),  
+    ),
     serviceName = Some(processTitle),
     pageTitle = Some(s"$pageTitle – ${messages("service.name")} – ${messages("service.govuk")}")
   ),

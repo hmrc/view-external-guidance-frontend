@@ -14,7 +14,7 @@
  * limitations under the License.
  *@
 
-@import models.admin._
+@import core.models.admin._
 
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 
@@ -35,13 +35,13 @@
       Seq(
         TableRow(
           content = Text(l.name)
-        ), 
+        ),
         TableRow(
           content = Text(l.dataType)
-        ), 
+        ),
         TableRow(
           content = Text(l.initialValue.getOrElse("-"))
-        ), 
+        ),
         TableRow(
           content = Text(l.updatedValue.getOrElse("-"))
         )
@@ -50,13 +50,13 @@
     head = Some(Seq(
       HeadCell(
         content = Text("Name")
-      ), 
+      ),
       HeadCell(
         content = Text("Type")
-      ), 
+      ),
       HeadCell(
         content = Text("Entry Value")
-      ), 
+      ),
       HeadCell(
         content = Text("Current Value")
       )
@@ -79,11 +79,10 @@
         panel = TabPanel(
           content = HtmlContent(structure(dbi.processPageStructure, false))
         )
-      ) 
+      )
     )
   ))
 
 @{
   //$COVERAGE-OFF$
 }
-  

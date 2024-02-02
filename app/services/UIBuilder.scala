@@ -178,7 +178,7 @@ class UIBuilder {
     val hint = input.help.map(phrase => TextBuilder.fromPhrase(phrase))
     input match {
       case _: TextInput => ui.TextInput(name, hint, uiElements, errorMsgs, input.dontRepeatName, input.width)
-      case _: PassphraseInput => ui.PassphraseInput(name, hint, uiElements, errorMsgs, input.dontRepeatName, input.width)  
+      case _: PassphraseInput => ui.PassphraseInput(name, hint, uiElements, errorMsgs, input.dontRepeatName, input.width)
       case _: NumberInput => ui.NumberInput(name, hint, uiElements, errorMsgs, input.dontRepeatName, input.width)
       case _: CurrencyInput => ui.CurrencyInput(name, hint, uiElements, errorMsgs, input.dontRepeatName, input.width)
       case _: CurrencyPoundsOnlyInput => ui.CurrencyPoundsOnlyInput(name, hint, uiElements, errorMsgs, input.dontRepeatName, input.width)

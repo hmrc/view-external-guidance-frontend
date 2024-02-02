@@ -23,7 +23,7 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import models.admin.CachedProcessSummary
+import core.models.admin.CachedProcessSummary
 import scala.concurrent.Future
 import play.api.http.Status
 import repositories.{CacheKey, CachedProcess}

@@ -25,7 +25,7 @@ import core.models.ocelot._
 import core.models.errors._
 import core.models.RequestOutcome
 import models.PageNext
-import models.admin.CachedProcessSummary
+import core.models.admin.CachedProcessSummary
 import java.util.concurrent.TimeUnit
 import play.api.Logging
 import java.time.Instant
@@ -39,7 +39,7 @@ import org.mongodb.scala.model.Updates.combine
 import uk.gov.hmrc.mongo._
 import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 import scala.concurrent.{ExecutionContext, Future}
-import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats.Implicits._  
+import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats.Implicits._
 
 case class CacheKey(id: String, processVersion: Long, timescalesVersion: Option[Long], ratesVersion: Option[Long])
 
@@ -73,7 +73,7 @@ trait ProcessCacheRepository extends ProcessCacheRepositoryConstants {
 }
 
 object DefaultProcessCacheRepository extends ProcessCacheRepositoryConstants {
-  
+
 }
 
 @Singleton
@@ -104,7 +104,7 @@ class DefaultProcessCacheRepository @Inject() (config: AppConfig, component: Mon
                                 UpdateOptions().upsert(true))
     .toFutureOption()
     .map{
-      case Some(result: UpdateResult) if result.wasAcknowledged => 
+      case Some(result: UpdateResult) if result.wasAcknowledged =>
         logger.warn(s"Session repo creation _id=(${process.meta.id}, ${process.meta.lastUpdate}) complete, page count ${pageMap.size}")
         Right(())
       case other =>
@@ -140,12 +140,12 @@ class DefaultProcessCacheRepository @Inject() (config: AppConfig, component: Mon
       .collect()
       .toFutureOption()
       .map{
-        case Some(result) => 
-          Right(result.map(r => CachedProcessSummary(r._id.id, 
-                                                     r._id.processVersion, 
-                                                     r._id.timescalesVersion, 
-                                                     r._id.ratesVersion, 
-                                                     r.process.meta.title, 
+        case Some(result) =>
+          Right(result.map(r => CachedProcessSummary(r._id.id,
+                                                     r._id.processVersion,
+                                                     r._id.timescalesVersion,
+                                                     r._id.ratesVersion,
+                                                     r.process.meta.title,
                                                      r.expiryTime)).toList)
         case _ => Right(Nil)
       }

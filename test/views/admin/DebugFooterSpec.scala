@@ -21,7 +21,7 @@ import core.models.ocelot._
 import core.models.ocelot.stanzas._
 import play.api.i18n.{Messages, MessagesApi}
 import play.api.test.FakeRequest
-import models.admin._
+import core.models.admin._
 import views.html.admin.debug_footer_tabs
 
 class DebugFooterSpec extends BaseSpec with ViewSpec with ViewFns {
@@ -41,7 +41,7 @@ class DebugFooterSpec extends BaseSpec with ViewSpec with ViewFns {
 
     val processPageStructure: ProcessPageStructure = ProcessPageStructure(
       "id",
-      "/start", 
+      "/start",
       Some("The title"),
       stanzas,
       Seq(LinkedPage("4", "/blah", Some("Blah blah")), LinkedPage("5", "/Otherblah", Some("Other Blah blah"))),
@@ -68,7 +68,7 @@ class DebugFooterSpec extends BaseSpec with ViewSpec with ViewFns {
       asDocument(debugFooter(debugInfo)).toString.contains("Question") shouldBe true
     }
   }
-  
+
   "page_structure" must {
     "Contain Question" in new Test {
       asDocument(pageStructure(processPageStructure)).toString.contains("Question") shouldBe true

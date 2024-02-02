@@ -14,17 +14,19 @@
  * limitations under the License.
  */
 
-package models.admin
+package core.models.admin
 
-import core.models.ocelot._
+import play.api.libs.json.{Format, Json}
+import java.time.Instant
 
-case class LinkedPage(id: String, url: String, title: Option[String])
-case class ProcessPageStructure(
+case class CachedProcessSummary(
   id: String,
-  url: String,
-  title: Option[String],
-  keyedStanzas: Seq[KeyedStanza],
-  nexts: Seq[LinkedPage],
-  links: Seq[LinkedPage],
-  linkedFrom: Seq[String]
+  processVersion: Long,
+  timescalesVersion: Option[Long],
+  ratesVersion: Option[Long],
+  title: String,
+  expiryTime: Instant
 )
+object CachedProcessSummary {
+  implicit lazy val formats: Format[CachedProcessSummary] = Json.format[CachedProcessSummary]
+}

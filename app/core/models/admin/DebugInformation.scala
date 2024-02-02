@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package models.admin
+package core.models.admin
 
 import core.models.ocelot.Labels
 import core.models.ocelot.ScalarLabel

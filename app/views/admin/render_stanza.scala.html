@@ -15,7 +15,7 @@
  *@
 
 @import views.admin._
-@import models.admin._
+@import core.models.admin._
 @import core.models.ocelot.stanzas._
 
 @(s: PopulatedStanza, pageIds: Seq[String], externalLinks: Boolean)
@@ -25,7 +25,7 @@
   @{s match {
     case p: PageStanza => Html(
       s"<span><Strong>url</Strong>=${p.url}, <Strong>next</Strong>=${renderNext(p.next, pageIds)}, <Strong>stack</Strong>=${p.stack}</span>"
-      )  
+      )
     case i: Instruction => Html(
       s"<span><Strong>text</Strong>=${i.text.english}, <Strong>links</Strong>=${renderIds(i.links, pageIds)}, <Strong>next</Strong>=${renderNext(i.next, pageIds)}, <Strong>stack</Strong>=${i.stack}</span>"
       )

@@ -24,12 +24,12 @@ import repositories.ProcessCacheRepository
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.ExecutionContext
 import play.api.Logging
-import models.admin.CachedProcessSummary
+import core.models.admin.CachedProcessSummary
 import core.models.errors.CachedProcessNotFoundError
 
 
 @Singleton
-class AdminApiController @Inject() (appConfig: AppConfig, processCacheRepository: ProcessCacheRepository, mcc: MessagesControllerComponents) 
+class AdminApiController @Inject() (appConfig: AppConfig, processCacheRepository: ProcessCacheRepository, mcc: MessagesControllerComponents)
   extends FrontendController(mcc) with Logging {
 
   implicit val ec: ExecutionContext = mcc.executionContext
@@ -39,13 +39,13 @@ class AdminApiController @Inject() (appConfig: AppConfig, processCacheRepository
   def listActiveProcessSummaries(): Action[AnyContent] = Action.async {_ =>
     processCacheRepository.listSummaries().map{
       case Right(list: List[CachedProcessSummary]) => Ok(Json.toJson(list))
-      case Left(err) => 
+      case Left(err) =>
         logger.error(s"Unable to retrieve list of active process summaries, error : $err")
         InternalServerError(s"Unable to retrieve list of active process summaries, error : $err")
     }
   }
 
-  def getActive(id: String, version: Long, timescalesVersion: Option[Long], ratesVersion: Option[Long]): Action[AnyContent] = Action.async { _ =>    
+  def getActive(id: String, version: Long, timescalesVersion: Option[Long], ratesVersion: Option[Long]): Action[AnyContent] = Action.async { _ =>
     processCacheRepository.get(id, version, timescalesVersion, ratesVersion).map {
       case Right(cachedProcess) => Ok(Json.toJson(cachedProcess.process))
       case Left(CachedProcessNotFoundError) =>

@@ -20,7 +20,7 @@ import base.BaseSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.i18n.MessagesApi
 import services.SecuredProcessBuilder
-import models.admin._
+import core.models.admin._
 import core.models.ocelot._
 import core.models.ocelot.stanzas._
 
@@ -43,7 +43,7 @@ class DebugInformatiomSpec extends BaseSpec with GuiceOneAppPerSuite {
 
     val processPageStructure: ProcessPageStructure = ProcessPageStructure(
       "id",
-      "/start", 
+      "/start",
       Some("The title"),
       stanzas,
       Seq(LinkedPage("4", "/blah", Some("Blah blah")), LinkedPage("5", "/Otherblah", Some("Other Blah blah"))),

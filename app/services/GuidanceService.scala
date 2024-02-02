@@ -30,7 +30,7 @@ import repositories.SessionFSM
 import core.models.ocelot.{LabelCache, Labels, Process, Label, flowPath, Debugging}
 import core.models.ocelot.SecuredProcess
 import core.services.EncrypterService
-import models.admin.DebugInformation
+import core.models.admin.DebugInformation
 
 @Singleton
 class GuidanceService @Inject() (
@@ -66,8 +66,9 @@ class GuidanceService @Inject() (
         logger.error(s"Execution error on page ${pec.page.id} of processCode ${pec.processCode}")
         Left(err)
       case Right((visualStanzas, labels, dataInput)) =>
-        uiBuilder.buildPage(pec.page.url, visualStanzas, errStrategy)(UIContext(labels, pec.pageMapById, messages)).fold(err => Left(err), uiPage =>
-          Right(PageContext(pec.copy(dataInput = dataInput), uiPage, labels))
+        uiBuilder.buildPage(pec.page.url, visualStanzas, errStrategy)(UIContext(labels, pec.pageMapById, messages)).fold(
+          err => Left(err.copy(debugInformation = pec.debugInformation.map(_.copy(postRenderLabels = labels)))),
+          uiPage => Right(PageContext(pec.copy(dataInput = dataInput), uiPage, labels))
         )
     }
 
@@ -75,8 +76,9 @@ class GuidanceService @Inject() (
                     (implicit hc: HeaderCarrier, context: ExecutionContext, messages: Messages): Future[RequestOutcome[PageContext]] =
     getPageEvaluationContext(processCode, url, previousPageByLink, sessionId).map{
       case Right(ctx) =>
-        uiBuilder.buildPage(ctx.page.url, ctx.visualStanzas.toList)(UIContext(ctx.labels, ctx.pageMapById, messages)).fold(err => Left(err), page =>
-          Right(PageContext(ctx, page))
+        uiBuilder.buildPage(ctx.page.url, ctx.visualStanzas.toList)(UIContext(ctx.labels, ctx.pageMapById, messages)).fold(
+          err => Left(err.copy(debugInformation = ctx.debugInformation)),
+          page => Right(PageContext(ctx, page))
         )
       case Left(err) => Left(err)
     }
@@ -159,7 +161,7 @@ class GuidanceService @Inject() (
   def submitPage(ctx: PageEvaluationContext, url: String, validatedAnswer: String, submittedAnswer: String)
                 (implicit hc: HeaderCarrier, context: ExecutionContext, messages: Messages): Future[RequestOutcome[(Option[String], Labels)]] =
     pageRenderer.renderPagePostSubmit(ctx.page, ctx.labels, validatedAnswer) match {
-      case Left(err) => Future.successful(Left(err))
+      case Left(err) => Future.successful(Left(err.copy(debugInformation = ctx.debugInformation)))
       case Right((optionalNext, labels)) =>
         val requestId: Option[String] = hc.requestId.map(_.value)
         optionalNext.fold[Future[RequestOutcome[(Option[String], Labels)]]](Future.successful(Right((None, labels)))){next =>
@@ -204,7 +206,10 @@ class GuidanceService @Inject() (
           val labels: Labels =
             LabelCache(gs.labels, Map(), gs.flowStack, gs.continuationPool, gs.process.timescales, messagesFn, gs.runMode, encrypter)
           pageRenderer.renderPage(page, labels) match {
-            case Left(err) => Left(err)
+            case Left(err) =>
+              val debugInformation: Option[DebugInformation] =
+                Option.when(gs.runMode.equals(Debugging))(DebugInformation(debugService.mapPage(page, gs.pageMap), labels, labels))
+              Left(err.copy(debugInformation = debugInformation))
             case Right((visualStanzas, updatedLabels, dataInput)) =>
               val processTitle: models.ui.Text = TextBuilder.fromPhrase(gs.process.title)(UIContext(updatedLabels, pageMapById, messages))
               Right(
