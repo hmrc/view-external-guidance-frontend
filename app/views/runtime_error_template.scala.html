@@ -17,14 +17,15 @@
 @import config.AppConfig
 @import play.api.i18n.Lang
 @import uk.gov.hmrc.hmrcfrontend.views.html.components._
+@import core.models.admin.DebugInformation
 
 @this(layout: main_layout,
 hmrcHeading: HmrcPageHeading,
 appConfig: AppConfig)
 
-@(pageTitle: String, heading: String, processCode: String, errorMessages: List[String], solns: List[List[String]])(implicit request: Request[_], messages: Messages)
+@(pageTitle: String, heading: String, processCode: String, errorMessages: List[String], solns: List[List[String]], debugInformation: Option[DebugInformation])(implicit request: Request[_], messages: Messages)
 
-@layout(pageTitle, messages("service.name"), Some(processCode), betaPhaseBanner = false, enableTimeout = false) {
+@layout(pageTitle, messages("service.name"), Some(processCode), betaPhaseBanner = false, enableTimeout = false, debugInformation = debugInformation) {
 @hmrcHeading(PageHeading(heading))
 
     @for(msg <- errorMessages) {

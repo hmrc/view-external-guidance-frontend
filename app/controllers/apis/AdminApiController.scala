@@ -24,7 +24,7 @@ import repositories.ProcessCacheRepository
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.ExecutionContext
 import play.api.Logging
-import models.admin.CachedProcessSummary
+import core.models.admin.CachedProcessSummary
 import core.models.errors.CachedProcessNotFoundError
 
 

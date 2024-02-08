@@ -28,7 +28,7 @@ import core.services._
 import forms.FormProviderFactory
 import forms.providers._
 import mocks._
-import models.errors._
+import core.models.errors.Error
 import models.ui._
 import models._
 import play.api.data.FormError
@@ -729,7 +729,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
     }
 
     "return a INTERNAL_SERVER_ERROR response if encountering non-terminating page when submitting to page" in new QuestionTest {
-      val NtpError = executionError(NonTerminatingPageError, "1", Scratch)
+      val NtpError = Error(Error.ExecutionError, List(NonTerminatingPageError), Some(Scratch), Some("1"))
       MockGuidanceService
         .getSubmitEvaluationContext(processId, path, processId)
         .returns(Future.successful(Left(NtpError)))
@@ -1315,7 +1315,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
 
     trait Test extends MockGuidanceService with TestBase {
       lazy val fakeRequest = FakeRequest(GET, path).withSession(SessionKeys.sessionId -> processId).withCSRFToken
-      val NtpError = executionError(NonTerminatingPageError, "1", Scratch)
+      val NtpError = Error(Error.ExecutionError, List(NonTerminatingPageError), Some(Scratch), Some("1"))
       MockGuidanceService
         .getPageContext(processCode, path, previousPageByLink = false, processId)
         .returns(Future.successful(Left(NtpError)))

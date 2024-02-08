@@ -25,7 +25,7 @@ import core.models.ocelot._
 import core.models.errors._
 import core.models.RequestOutcome
 import models.PageNext
-import models.admin.CachedProcessSummary
+import core.models.admin.CachedProcessSummary
 import java.util.concurrent.TimeUnit
 import play.api.Logging
 import java.time.Instant

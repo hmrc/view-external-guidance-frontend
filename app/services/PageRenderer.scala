@@ -20,11 +20,10 @@ import config.AppConfig
 import core.models.RequestOutcome
 import core.models.ocelot.errors.{NonTerminatingPageError, ProgrammingError, RuntimeError}
 import core.models.ocelot.stanzas._
-import core.models.ocelot.{Labels, Page, PageReview, Process}
-import models.errors._
+import core.models.ocelot.{Labels, Page, PageReview, Process, RunMode}
+import core.models.errors.Error
 import play.api.Logger
 import play.api.i18n.Messages
-
 import javax.inject.{Inject, Singleton}
 import scala.annotation.tailrec
 
@@ -60,8 +59,8 @@ class PageRenderer @Inject() (appConfig: AppConfig) {
             }
           case s: Stanza with Evaluate =>
             evalStanza(s,labels) match {
-              case (nxt, updatedLabels, Nil) => evaluatePostInputStanzas(nxt, updatedLabels, seen, stanzaCount + 1)
-              case (_, _, errs) => Left(executionError(errs, next, labels.runMode))
+              case (nxt, updatedLabels, None) => evaluatePostInputStanzas(nxt, updatedLabels, seen, stanzaCount + 1)
+              case (_, _, Some(err)) => Left(executionError(err, next, labels.runMode))
             }
           case _ => Left(executionError(ProgrammingError("Visual stanzas found after input"), next, labels.runMode))
         }
@@ -88,11 +87,11 @@ class PageRenderer @Inject() (appConfig: AppConfig) {
     }
   }
 
-  private def evalStanza(s: Evaluate, labels: Labels):(String, Labels, List[RuntimeError]) =
+  private def evalStanza(s: Evaluate, labels: Labels):(String, Labels, Option[RuntimeError]) =
     (s.eval(labels), labels.runMode) match {
-      // Ignore evaluation errors when running in PageReview run mode
-      case ((nxt, updatedLabels, errs), PageReview) => (nxt, updatedLabels, Nil)
-      case ((nxt, updatedLabels, errs), _) => (nxt, updatedLabels, errs)
+      // Ignore evaluation error when running in PageReview run mode
+      case ((nxt, updatedLabels, err), PageReview) => (nxt, updatedLabels, None)
+      case ((nxt, updatedLabels, err), _) => (nxt, updatedLabels, err)
     }
 
   @tailrec
@@ -107,12 +106,14 @@ class PageRenderer @Inject() (appConfig: AppConfig) {
           Right((visualStanzas :+ es, labels, seen :+ stanzaId, stanzaId, Some(es)))
         case s: Stanza with Evaluate =>
           evalStanza(s,labels) match {
-            case (nxt, updatedLabels, Nil) => evaluateStanzas(nxt, updatedLabels, visualStanzas, seen :+ stanzaId, stanzaCount + 1)
-            case (_, _, errs) => Left(executionError(errs, stanzaId, labels.runMode))
+            case (nxt, updatedLabels, None) => evaluateStanzas(nxt, updatedLabels, visualStanzas, seen :+ stanzaId, stanzaCount + 1)
+            case (_, _, Some(err)) => Left(executionError(err, stanzaId, labels.runMode))
           }
         case s: VisualStanza => evaluateStanzas(s.next.head, labels, visualStanzas :+ s.rendered(TextBuilder.expandLabels(labels)), seen :+ stanzaId, stanzaCount + 1)
         case _ => Left(executionError(ProgrammingError("Unknown stanza without Evaluate"), stanzaId, labels.runMode))
       }
       case Some(s) => Left(executionError(NonTerminatingPageError, stanzaId, labels.runMode))
     }
+
+  private def executionError(err: RuntimeError, stanzId: String, runMode: RunMode): Error = Error(Error.ExecutionError, List(err), Some(runMode), Some(stanzId))    
 }

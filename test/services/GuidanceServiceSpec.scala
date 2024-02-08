@@ -23,7 +23,7 @@ import core.models.ocelot.stanzas._
 import core.models.ocelot.{KeyedStanza, LabelCache, Labels, Page, Phrase, Process, ProcessJson, Published, Scratch, SecuredProcess}
 import mocks._
 import models._
-import models.errors._
+import core.models.errors.Error
 import play.api.i18n.{Lang, Messages, MessagesApi}
 import repositories.{PageHistory, Session, SessionFSM, SessionKey}
 import uk.gov.hmrc.http.{HeaderCarrier, RequestId}
@@ -178,7 +178,7 @@ class GuidanceServiceSpec extends BaseSpec {
     "return an error when retrieving a non-terminating page" in new Test {
 
       override val processCode = "cup-of-tea"
-      val NtpError = executionError(NonTerminatingPageError, "1", Scratch)
+      val NtpError = Error(Error.ExecutionError, List(NonTerminatingPageError), Some(Scratch), Some("1"))
       MockSessionService
         .get(sessionRepoId, processCode, requestId)
         .returns(Future.successful(Right(
@@ -263,7 +263,7 @@ class GuidanceServiceSpec extends BaseSpec {
     "retrieve a page for the process" in new Test {
 
       override val processCode = "cup-of-tea"
-      val nonTerminatingPageError = executionError(NonTerminatingPageError, "1", Scratch)
+      val nonTerminatingPageError = Error(Error.ExecutionError, List(NonTerminatingPageError), Some(Scratch), Some("1"))
        MockSessionService
         .get(sessionRepoId, processCode, requestId)
         .returns(Future.successful(Right(
@@ -498,7 +498,7 @@ class GuidanceServiceSpec extends BaseSpec {
     }
 
     "Return error if page submission evaluation finds a non-terminating page" in new Test {
-      val nonTerminatingPageError = executionError(NonTerminatingPageError, "1", Scratch)
+      val nonTerminatingPageError = Error(Error.ExecutionError, List(NonTerminatingPageError), Some(Scratch), Some("1"))
       MockPageRenderer
         .renderPagePostSubmit(page, labels, "yes")
         .returns(Left(nonTerminatingPageError))

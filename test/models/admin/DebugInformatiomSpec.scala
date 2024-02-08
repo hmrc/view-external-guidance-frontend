@@ -20,7 +20,7 @@ import base.BaseSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.i18n.MessagesApi
 import services.SecuredProcessBuilder
-import models.admin._
+import core.models.admin._
 import core.models.ocelot._
 import core.models.ocelot.stanzas._
 

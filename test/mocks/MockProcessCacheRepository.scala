@@ -17,7 +17,7 @@
 package mocks
 
 import repositories.{CachedProcess, ProcessCacheRepository}
-import models.admin.CachedProcessSummary
+import core.models.admin.CachedProcessSummary
 import models.PageNext
 import core.models.ocelot._
 import core.models.RequestOutcome

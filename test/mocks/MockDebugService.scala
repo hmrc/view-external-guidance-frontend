@@ -19,7 +19,7 @@ package mocks
 import org.scalamock.handlers.CallHandler
 import org.scalamock.scalatest.MockFactory
 import services.DebugService
-import models.admin._
+import core.models.admin._
 import core.models.ocelot._
 import models.PageNext
 

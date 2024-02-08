@@ -14,13 +14,17 @@
  * limitations under the License.
  */
 
-package models
+package core.models.admin
 
-import core.models.ocelot.RunMode
-import core.models.errors.Error
-import core.models.ocelot.errors._
+import core.models.ocelot._
 
-package object errors {
-  def executionError(errs: List[RuntimeError], stanzId: String, runMode: RunMode): Error = Error(Error.ExecutionError, errs, Some(runMode), Some(stanzId))
-  def executionError(err: RuntimeError, stanzId: String, runMode: RunMode): Error = executionError(List(err), stanzId, runMode)
-}
+case class LinkedPage(id: String, url: String, title: Option[String])
+case class ProcessPageStructure(
+  id: String,
+  url: String,
+  title: Option[String],
+  keyedStanzas: Seq[KeyedStanza],
+  nexts: Seq[LinkedPage],
+  links: Seq[LinkedPage],
+  linkedFrom: Seq[String]
+)

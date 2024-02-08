@@ -34,7 +34,7 @@ import play.twirl.api.Html
 import services.{ErrorStrategy, GuidanceService, ValueTypeError, ValueTypeGroupError}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 import views.html.{form_page, standard_page}
-
+import core.models.admin.DebugInformation
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -136,8 +136,8 @@ class GuidanceController @Inject() (
     case ExpectationFailedError =>
       logger.warn(s"ExpectationFailed error on getPage. Redirecting to ${appConfig.baseUrl}/$processCode")
       Future.successful(redirectToGuidanceStartWhenNoSession(processCode, lang))
-    case Error(Error.ExecutionError, errs, Some(errorRunMode), stanzaId) =>
-      Future.successful(translateExecutionError(err.errors.collect{case e: RuntimeError => e}, processCode, path, errorRunMode, stanzaId, sessionId))
+    case Error(Error.ExecutionError, errs, Some(errorRunMode), stanzaId, debugInformation) =>
+      Future.successful(translateExecutionError(err.errors.collect{case e: RuntimeError => e}, processCode, path, errorRunMode, stanzaId, sessionId, debugInformation))
     case err =>
       logger.error(s"Request for PageContext at /$path returned $err, returning InternalServerError")
       Future.successful(InternalServerError(errorHandler.internalServerErrorTemplate))
@@ -207,14 +207,20 @@ class GuidanceController @Inject() (
     case SessionNotFoundError =>
       logger.warn(s"Request for page at /$path returned SessionNotFound. Redirect to ${appConfig.baseUrl}/$processCode")
       Future.successful(redirectToGuidanceStart(processCode))
-    case Error(Error.ExecutionError, errs, Some(errorRunMode), stanzaId) =>
-      Future.successful(translateExecutionError(err.errors.collect{case e: RuntimeError => e}, processCode, path, errorRunMode, stanzaId, sessionId))
+    case Error(Error.ExecutionError, errs, Some(errorRunMode), stanzaId, debugInformation) =>
+      Future.successful(translateExecutionError(err.errors.collect{case e: RuntimeError => e}, processCode, path, errorRunMode, stanzaId, sessionId, debugInformation))
     case err =>
       logger.error(s"Request for PageContext at /$path returned $err during form submission, returning InternalServerError")
       Future.successful(InternalServerError(errorHandler.internalServerErrorTemplate))
   }
 
-  private def translateExecutionError(errors: List[RuntimeError], processCode: String, path: String, runMode: RunMode, stanzaId: Option[String], sessionId: Option[String])
+  private def translateExecutionError(errors: List[RuntimeError],
+                                      processCode: String,
+                                      path: String,
+                                      runMode: RunMode,
+                                      stanzaId: Option[String],
+                                      sessionId: Option[String],
+                                      debugInformation: Option[DebugInformation])
                                            (implicit request: Request[_]): Result = {
     implicit val messages: Messages = mcc.messagesApi.preferred(request)
     val errorMsgs = errors.map(err => fromRuntimeError(err, stanzaId.getOrElse("UNKNOWN")))
@@ -224,7 +230,7 @@ class GuidanceController @Inject() (
         InternalServerError(errorHandler.internalServerErrorTemplate)
       case _ =>
         errorMsgs.foreach{err => logger.warn(s"RuntimeError: $err within page /$path of processCode ${processCode}, sessionId=$sessionId")}
-        InternalServerError(errorHandler.runtimeErrorHandler(processCode, errorMsgs, errorSolutions(errors, stanzaId.getOrElse("UNKNOWN")), stanzaId))
+        InternalServerError(errorHandler.runtimeErrorHandler(processCode, errorMsgs, errorSolutions(errors, stanzaId.getOrElse("UNKNOWN")), stanzaId, debugInformation))
     }
   }
 
