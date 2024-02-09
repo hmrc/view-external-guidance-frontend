@@ -22,7 +22,7 @@ import core.models.ocelot.ListLabel
 
 case class DebugLabelRow(name: String, dataType: String, initialValue: Option[String], updatedValue: Option[String])
 
-case class DebugInformation(processPageStructure: ProcessPageStructure, preRenderLabels: Labels, postRenderLabels: Labels) {
+case class DebugInformation(processPageStructure: Option[ProcessPageStructure], preRenderLabels: Labels, postRenderLabels: Labels) {
   val allPostRenderLabels = postRenderLabels.labelMap ++ postRenderLabels.updatedLabels
   val names: List[String] = (preRenderLabels.labelMap.keySet.toList ++ allPostRenderLabels.keySet.toList).distinct
 

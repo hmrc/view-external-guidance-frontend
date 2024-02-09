@@ -139,7 +139,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson {
       )
       val unsupportedOpError =
         Error(Error.ExecutionError,
-              List(UnsupportedOperationError("AddOperation", "[label:input1]", "10", "[label:input1]", "10")), 
+              List(UnsupportedOperationError("AddOperation","UNINITIALISED", "10", "[label:input1]",  "10")), 
               Some(Published), 
               Some("3"))
 
@@ -161,7 +161,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson {
       val operations: Seq[CalcOperation] = Seq(CalcOperation("[label:input1]", Addition, "10", "output1"))
       val unsupportedOpError =
         Error(Error.ExecutionError,
-              List(UnsupportedOperationError("AddOperation", "[label:input1]", "10", "[label:input1]", "10")), 
+              List(UnsupportedOperationError("AddOperation","UNINITIALISED", "10", "[label:input1]",  "10")), 
               Some(Published), 
               Some("3"))
 

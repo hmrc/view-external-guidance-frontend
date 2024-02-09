@@ -2296,7 +2296,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
   "fromRuntimeError" should {
     "translate UnsupportedOperationError" in new TestBase {
       val report = fromRuntimeError(UnsupportedOperationError("AddOperation", "lvalue", "rvalue", "left", "right"), "stanzaId")
-      report shouldBe "UnsupportedOperationError: Calculation stanza 'stanzaId' contains operation 'AddOperation' with invalid arguments 'left', 'right'."
+      report shouldBe "UnsupportedOperationError: Calculation stanza 'stanzaId' contains operation 'AddOperation' with arguments 'left'. = lvalue, 'right' = rvalue."
     }
 
     "translate NonTerminatingPageError" in new TestBase {

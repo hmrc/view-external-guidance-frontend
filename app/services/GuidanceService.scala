@@ -207,9 +207,8 @@ class GuidanceService @Inject() (
             LabelCache(gs.labels, Map(), gs.flowStack, gs.continuationPool, gs.process.timescales, messagesFn, gs.runMode, encrypter)
           pageRenderer.renderPage(page, labels) match {
             case Left(err) =>
-              val debugInformation: Option[DebugInformation] =
-                Option.when(gs.runMode.equals(Debugging))(DebugInformation(debugService.mapPage(page, gs.pageMap), labels, labels))
-              Left(err.copy(debugInformation = debugInformation))
+              Left(err.copy(debugInformation = Option.when(gs.runMode.equals(Debugging))
+                                                          (DebugInformation(Some(debugService.mapPage(page, gs.pageMap)), labels, labels))))
             case Right((visualStanzas, updatedLabels, dataInput)) =>
               val processTitle: models.ui.Text = TextBuilder.fromPhrase(gs.process.title)(UIContext(updatedLabels, pageMapById, messages))
               Right(
@@ -217,7 +216,7 @@ class GuidanceService @Inject() (
                   page, visualStanzas, dataInput, sessionId, pageMapById, gs.process.startUrl.map(_ => s"${appConfig.baseUrl}/${processCode}/session-restart"),
                   processTitle, gs.process.meta.id, processCode, updatedLabels, gs.backLink.map(bl => s"${appConfig.baseUrl}/$bl"), gs.answers.get(answerStorageId(updatedLabels, url)),
                   gs.process.betaPhaseBanner,
-                  Option.when(labels.runMode.equals(Debugging))(DebugInformation(debugService.mapPage(page, gs.pageMap), labels, updatedLabels))
+                  Option.when(labels.runMode.equals(Debugging))(DebugInformation(Some(debugService.mapPage(page, gs.pageMap)), labels, updatedLabels))
                 )
               )
           }

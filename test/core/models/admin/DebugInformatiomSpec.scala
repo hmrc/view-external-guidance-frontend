@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package models
+package core.models.admin
 
 import base.BaseSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -43,7 +43,7 @@ class DebugInformatiomSpec extends BaseSpec with GuiceOneAppPerSuite {
 
     val processPageStructure: ProcessPageStructure = ProcessPageStructure(
       "id",
-      "/start", 
+      "/start",
       Some("The title"),
       stanzas,
       Seq(LinkedPage("4", "/blah", Some("Blah blah")), LinkedPage("5", "/Otherblah", Some("Other Blah blah"))),
@@ -51,7 +51,7 @@ class DebugInformatiomSpec extends BaseSpec with GuiceOneAppPerSuite {
       Seq("start")
     )
 
-    val debugInfo = DebugInformation(processPageStructure, labels, labels.update("A", "23").update("B", "46").updateList("C", List("1","2","3")))
+    val debugInfo = DebugInformation(Some(processPageStructure), labels, labels.update("A", "23").update("B", "46").updateList("C", List("1","2","3")))
   }
 
   "DebugInformation" must {
