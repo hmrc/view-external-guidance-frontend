@@ -91,7 +91,7 @@ class GuidanceController @Inject() (
       Future.successful(NotFound(errorHandler.notFoundTemplateWithProcessCode(None)))
     } { _ =>
       withExistingSession[PageContext](service.getPageContext(processCode, s"/$path", p.isDefined, _)).flatMap {
-        case Left((err, dbg)) => translateGetPageError(err, processCode, path, c, lang, sId, dbg)
+        case Left((err, debugInformation)) => translateGetPageError(err, processCode, path, c, lang, sId, debugInformation)
         case Right(pageCtx) =>
           logger.info(s"Retrieved page: ${pageCtx.page.urlPath}, start: ${pageCtx.processStartUrl}, answer: ${pageCtx.answer}, backLink: ${pageCtx.backLink}")
           pageCtx.page match {
@@ -152,7 +152,7 @@ class GuidanceController @Inject() (
 
     logger.warn(s"SP: sessionId: ${sId}, requestId: ${rId}, URI: ${uri}")
     withExistingSession[PageEvaluationContext](service.getSubmitEvaluationContext(processCode, s"/$path", _)).flatMap {
-      case Left((err, dbg)) => translateSubmitError(err, processCode, path, sId, dbg)
+      case Left((err, debugInformation)) => translateSubmitError(err, processCode, path, sId, debugInformation)
       case Right(ctx) => ctx.dataInput.fold{
           logger.error( s"Unable to locate input stanza for process ${ctx.processCode} on submission")
           Future.successful(BadRequest(errorHandler.badRequestTemplateWithProcessCode(Some(processCode))))
