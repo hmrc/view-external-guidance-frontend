@@ -93,7 +93,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson {
       val page = Page(Process.StartStanzaId, "/test-page", stanzas, answerDestinations)
 
       renderer.renderPage(page, LabelCache()) match {
-        case Left(err) if err == nonTerminatingPageError => succeed
+        case Left((err, _)) if err == nonTerminatingPageError => succeed
         case _ => fail()
       }
     }
@@ -110,7 +110,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson {
       val page = Page(Process.StartStanzaId, "/test-page", stanzas, answerDestinations)
 
       renderer.renderPagePostSubmit(page, LabelCache(), "0") match {
-        case Left(err) if err == nonTerminatingPageError => succeed
+        case Left((err, _)) if err == nonTerminatingPageError => succeed
         case _ => fail()
       }
     }
@@ -128,7 +128,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson {
       val page = Page(Process.StartStanzaId, "/test-page", stanzas, answerDestinations)
 
       renderer.renderPagePostSubmit(page, LabelCache(), "0") match {
-        case Left(err) if err == programmingError => succeed
+        case Left((err, _)) if err == programmingError => succeed
         case res => fail(res.toString)
       }
     }
@@ -152,7 +152,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson {
       val page = Page(Process.StartStanzaId, "/test-page", stanzas, answerDestinations)
 
       renderer.renderPage(page, LabelCache()) match {
-        case Left(err) if err == unsupportedOpError => succeed
+        case Left((err, _)) if err == unsupportedOpError => succeed
         case res => fail()
       }
     }
@@ -174,7 +174,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson {
       val page = Page(Process.StartStanzaId, "/test-page", stanzas, answerDestinations)
 
       renderer.renderPagePostSubmit(page, LabelCache(), "0") match {
-        case Left(err) if err == unsupportedOpError => succeed
+        case Left((err, _)) if err == unsupportedOpError => succeed
         case res => fail()
       }
     }
@@ -197,7 +197,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson {
       val programmingError = Error(Error.ExecutionError, List(ProgrammingError("Unknown stanza without Evaluate")), Some(Published), Some("5"))
 
       renderer.renderPage(page, LabelCache()) match {
-        case Left(err) if err == programmingError => succeed
+        case Left((err, _)) if err == programmingError => succeed
         case res => fail(res.toString)
       }
 

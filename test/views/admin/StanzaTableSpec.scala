@@ -19,7 +19,7 @@ package views.admin
 import base.{BaseSpec, ViewFns, ViewSpec}
 import core.models.ocelot._
 import core.models.ocelot.stanzas._
-import core.models.admin._
+import models.admin._
 import play.api.i18n.{Messages, MessagesApi}
 import play.api.test.FakeRequest
 import views.html.admin.stanza_table

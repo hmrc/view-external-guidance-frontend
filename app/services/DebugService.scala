@@ -19,7 +19,7 @@ package services
 import play.api.Logging
 import config.AppConfig
 import javax.inject.{Inject, Singleton}
-import core.models.admin._
+import models.admin._
 import models.PageNext
 import core.models.ocelot.stanzas._
 import core.models.ocelot.{Page, SecuredProcess}

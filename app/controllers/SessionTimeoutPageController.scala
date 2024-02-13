@@ -63,7 +63,7 @@ class SessionTimeoutPageController @Inject()(appConfig: AppConfig,
         service.getCurrentGuidanceSession(processCode)(id.value).flatMap {
           case Right(session) =>
             service.deleteSession(processCode, id.value).map(_ => Ok(view(session.process.title.value(messages.lang), processCode)))
-          case Left(SessionNotFoundError) =>
+          case Left((SessionNotFoundError, _)) =>
             logger.warn(s"Session end ($id) - retrieving session with processCode $processCode returned NotFound")
             Future.successful(Ok(view(messages("session.timeout.header.title"), processCode)))
           case Left(err) =>

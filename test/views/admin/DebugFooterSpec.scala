@@ -21,7 +21,7 @@ import core.models.ocelot._
 import core.models.ocelot.stanzas._
 import play.api.i18n.{Messages, MessagesApi}
 import play.api.test.FakeRequest
-import core.models.admin._
+import models.admin._
 import views.html.admin.debug_footer_tabs
 
 class DebugFooterSpec extends BaseSpec with ViewSpec with ViewFns {
@@ -48,7 +48,7 @@ class DebugFooterSpec extends BaseSpec with ViewSpec with ViewFns {
       Seq(),
       Seq("start")
     )
-    val debugInfo = DebugInformation(Some(processPageStructure), labels, labels.update("A", "23").update("B", "46").updateList("C", List("1","2","3")))
+    val debugInfo = DebugInformation(Some(processPageStructure), Some(labels), Some(labels.update("A", "23").update("B", "46").updateList("C", List("1","2","3"))))
 
     val debugFooter = injector.instanceOf[debug_footer_tabs]
     val pageStructure = injector.instanceOf[page_structure]

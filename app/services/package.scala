@@ -14,17 +14,9 @@
  * limitations under the License.
  */
 
-package core.models.admin
+import core.models.ocelot.Labels
+import core.models.errors.Error
 
-import core.models.ocelot._
-
-case class LinkedPage(id: String, url: String, title: Option[String])
-case class ProcessPageStructure(
-  id: String,
-  url: String,
-  title: Option[String],
-  keyedStanzas: Seq[KeyedStanza],
-  nexts: Seq[LinkedPage],
-  links: Seq[LinkedPage],
-  linkedFrom: Seq[String]
-)
+package object services {
+  type RenderOutcome[T] = Either[(Error, Labels), T]
+}

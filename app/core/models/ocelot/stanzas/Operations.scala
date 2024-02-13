@@ -98,7 +98,6 @@ sealed trait Operation {
 
   protected def unsupported[A, B, D](l: A, r: B): Result[D] =
     Left(UnsupportedOperationError(getClass.getSimpleName, l.toString, r.toString, left, right))
-
 }
 
 case class AddOperation(left: String, right: String, label: String) extends Operation {

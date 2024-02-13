@@ -22,7 +22,7 @@ import play.api.mvc.Request
 import play.twirl.api.Html
 import uk.gov.hmrc.play.bootstrap.frontend.http.FrontendErrorHandler
 import views.html.{error_template, runtime_error_template}
-import core.models.admin.DebugInformation
+import models.admin.DebugInformation
 
 @Singleton
 class ErrorHandler @Inject()(val messagesApi: MessagesApi, view: error_template, runtimeErrorView: runtime_error_template, implicit val appConfig: AppConfig) extends FrontendErrorHandler {

@@ -19,7 +19,7 @@ package mocks
 import org.scalamock.handlers.CallHandler
 import org.scalamock.scalatest.MockFactory
 import services.DebugService
-import core.models.admin._
+import models.admin._
 import core.models.ocelot._
 import models.PageNext
 
@@ -34,7 +34,7 @@ trait MockDebugService extends MockFactory {
         .mapPage(_: Page, _: Map[String, PageNext]))
         .expects(page, pageMap)
 
-    def pageTitle(page: Page): CallHandler[Option[String]] =      
+    def pageTitle(page: Page): CallHandler[Option[String]] =
       (mockDebugService
         .pageTitle(_: Page))
         .expects(page)

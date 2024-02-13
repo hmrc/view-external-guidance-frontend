@@ -262,7 +262,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
     "Return INTERNAL_SERVER_ERROR after service failure" in new QuestionTest {
       MockGuidanceService
         .sessionRestart(processCode, processId)
-        .returns(Future.successful(Left(InternalServerError)))
+        .returns(Future.successful(Left((InternalServerError, None))))
 
       val result = target.sessionRestart(processCode)(fakeRequest)
       status(result) shouldBe Status.INTERNAL_SERVER_ERROR
@@ -589,7 +589,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
 
       MockGuidanceService
         .submitPage(pec, path, "0", "0")
-        .returns(Future.successful(Left(DatabaseError)))
+        .returns(Future.successful(Left((DatabaseError, None))))
 
       override val fakeRequest = FakeRequest("POST", path)
         .withSession(SessionKeys.sessionId -> processId)
@@ -645,7 +645,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
     "return a BAD_REQUEST response if trying to submit a page where url not found in process" in new QuestionTest {
       MockGuidanceService
         .getSubmitEvaluationContext(processId, "/unknown", processId)
-        .returns(Future.successful(Left(BadRequestError)))
+        .returns(Future.successful(Left((BadRequestError, None))))
 
       override val fakeRequest = FakeRequest("POST", "/unknown")
         .withSession(SessionKeys.sessionId -> processId)
@@ -692,7 +692,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
       val unknownRelativePath = unknownPath.drop(1)
       MockGuidanceService
         .getSubmitEvaluationContext(processId, unknownPath, processId)
-        .returns(Future.successful(Left(NotFoundError)))
+        .returns(Future.successful(Left((NotFoundError, None))))
 
       override val fakeRequest = FakeRequest("POST", unknownPath)
         .withSession(SessionKeys.sessionId -> processId)
@@ -706,7 +706,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
 
       MockGuidanceService
         .getSubmitEvaluationContext(processId, path, processId)
-        .returns(Future.successful(Left(InvalidProcessError)))
+        .returns(Future.successful(Left((InvalidProcessError, None))))
 
       override val fakeRequest = FakeRequest("POST", path)
         .withSession(SessionKeys.sessionId -> processId)
@@ -719,7 +719,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
     "return a INTERNAL_SERVER_ERROR response if encountering a database error when submitting a page" in new QuestionTest {
       MockGuidanceService
         .getSubmitEvaluationContext(processId, path, processId)
-        .returns(Future.successful(Left(DatabaseError)))
+        .returns(Future.successful(Left((DatabaseError, None))))
       override val fakeRequest = FakeRequest("POST", path)
         .withSession(SessionKeys.sessionId -> processId)
         .withFormUrlEncodedBody()
@@ -732,7 +732,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
       val NtpError = Error(Error.ExecutionError, List(NonTerminatingPageError), Some(Scratch), Some("1"))
       MockGuidanceService
         .getSubmitEvaluationContext(processId, path, processId)
-        .returns(Future.successful(Left(NtpError)))
+        .returns(Future.successful(Left((NtpError, None))))
 
       override val fakeRequest = FakeRequest("POST", path)
         .withSession(SessionKeys.sessionId -> processId)
@@ -1081,7 +1081,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
     "return a INTERNAL_SERVER_ERROR response if submitting to a Process containing errors is referenced" in new InputTest {
       MockGuidanceService
         .getSubmitEvaluationContext(processId, path, processId)
-        .returns(Future.successful(Left(InvalidProcessError)))
+        .returns(Future.successful(Left((InvalidProcessError, None))))
       override val fakeRequest = FakeRequest("POST", path)
         .withSession(SessionKeys.sessionId -> processId)
         .withFormUrlEncodedBody()
@@ -1093,7 +1093,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
     "return a NOT_FOUND response if trying to submit to a non-existent page" in new QuestionTest {
       MockGuidanceService
         .getSubmitEvaluationContext(processId, path, processId)
-        .returns(Future.successful(Left(NotFoundError)))
+        .returns(Future.successful(Left((NotFoundError, None))))
 
       override val fakeRequest = FakeRequest("POST", path)
         .withSession(SessionKeys.sessionId -> processId)
@@ -1107,7 +1107,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
 
       MockGuidanceService
         .getSubmitEvaluationContext(processId, path, processId)
-        .returns(Future.successful(Left(DatabaseError)))
+        .returns(Future.successful(Left((DatabaseError, None))))
 
       override val fakeRequest = FakeRequest("POST", path)
         .withSession(SessionKeys.sessionId -> processId)
@@ -1120,7 +1120,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
     "return a BAD_REQUEST response when a bad request error returned from service call" in new QuestionTest {
       MockGuidanceService
         .getSubmitEvaluationContext(processId, path, processId)
-        .returns(Future.successful(Left(BadRequestError)))
+        .returns(Future.successful(Left((BadRequestError, None))))
 
       override val fakeRequest = FakeRequest("POST", path)
         .withSession(SessionKeys.sessionId -> processId)
@@ -1204,7 +1204,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
 
       MockGuidanceService
         .getPageContext(processCode, path, false, processId)
-        .returns(Future.successful(Left(ForbiddenError)))
+        .returns(Future.successful(Left((ForbiddenError, None))))
 
       MockGuidanceService
         .getCurrentGuidanceSession(processCode)(processId)
@@ -1220,7 +1220,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
 
       MockGuidanceService
         .getPageContext(processCode, path, false, processId)
-        .returns(Future.successful(Left(ForbiddenError)))
+        .returns(Future.successful(Left((ForbiddenError, None))))
 
       MockGuidanceService
         .getCurrentGuidanceSession(processCode)(processId)
@@ -1234,11 +1234,11 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
     "Return SEE_OTHER from getPage as a result trying to access valid page illegal in the current context when session not found" in new Test {
       MockGuidanceService
         .getPageContext(processCode, path, false, processId)
-        .returns(Future.successful(Left(ForbiddenError)))
+        .returns(Future.successful(Left((ForbiddenError, None))))
 
       MockGuidanceService
         .getCurrentGuidanceSession(processCode)(processId)
-        .returns(Future.successful(Left(NotFoundError)))
+        .returns(Future.successful(Left((NotFoundError, None))))
 
       lazy val result = target.getPage(processCode, relativePath, None)(fakeRequest)
 
@@ -1248,7 +1248,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
     "Return SEE_OTHER from a getPage() as a result of an Authentication error when non authenticated" in new Test {
       MockGuidanceService
         .getPageContext(processCode, path, false, processId)
-        .returns(Future.successful(Left(AuthenticationError)))
+        .returns(Future.successful(Left((AuthenticationError, None))))
 
       lazy val result = target.getPage(processCode, relativePath, None)(fakeRequest)
 
@@ -1258,7 +1258,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
     "Return SEE_OTHER from a submit()) as a result of an Authentication error when non authenticated" in new Test {
       MockGuidanceService
         .getSubmitEvaluationContext(processCode, path, processId)
-        .returns(Future.successful(Left(AuthenticationError)))
+        .returns(Future.successful(Left((AuthenticationError, None))))
 
       lazy val result = target.submitPage(processCode, relativePath)(fakeRequest)
 
@@ -1318,7 +1318,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
       val NtpError = Error(Error.ExecutionError, List(NonTerminatingPageError), Some(Scratch), Some("1"))
       MockGuidanceService
         .getPageContext(processCode, path, previousPageByLink = false, processId)
-        .returns(Future.successful(Left(NtpError)))
+        .returns(Future.successful(Left((NtpError, None))))
 
       lazy val target =
         new GuidanceController(
@@ -1351,7 +1351,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
 
       MockGuidanceService
         .getPageContext(processCode, path, previousPageByLink = false, processId)
-        .returns(Future.successful(Left(DatabaseError)))
+        .returns(Future.successful(Left((DatabaseError, None))))
 
       lazy val target =
         new GuidanceController(
@@ -1497,7 +1497,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
 
       MockGuidanceService
         .getPageContext(processCode, unknownPath, previousPageByLink = false, processId)
-        .returns(Future.successful(Left(NotFoundError)))
+        .returns(Future.successful(Left((NotFoundError, None))))
 
       lazy val target =
         new GuidanceController(
@@ -1629,7 +1629,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
     "return a redirect response to beginning of process" in new Test {
       MockGuidanceService
         .getPageContext("otherProcessCode", path, previousPageByLink = false, sessionId)
-        .returns(Future.successful(Left(SessionNotFoundError)))
+        .returns(Future.successful(Left((SessionNotFoundError, None))))
 
       lazy val result = target.getPage("otherProcessCode", path.drop(1), None)(fakeRequest)
 
@@ -1651,7 +1651,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
 
       MockGuidanceService
         .getPageContext(processId, "/" + unknownPath, previousPageByLink = false, processId)
-        .returns(Future.successful(Left(NotFoundError)))
+        .returns(Future.successful(Left((NotFoundError, None))))
 
       lazy val target =
         new GuidanceController(
@@ -2296,7 +2296,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
   "fromRuntimeError" should {
     "translate UnsupportedOperationError" in new TestBase {
       val report = fromRuntimeError(UnsupportedOperationError("AddOperation", "lvalue", "rvalue", "left", "right"), "stanzaId")
-      report shouldBe "UnsupportedOperationError: Calculation stanza 'stanzaId' contains operation 'AddOperation' with arguments 'left'. = lvalue, 'right' = rvalue."
+      report shouldBe "UnsupportedOperationError: Calculation stanza 'stanzaId' contains operation 'AddOperation' with arguments 'left' = lvalue, 'right' = rvalue."
     }
 
     "translate NonTerminatingPageError" in new TestBase {

@@ -20,7 +20,7 @@ import config.ErrorHandler
 import core.models.RequestOutcome
 import core.models.errors.NotFoundError
 import core.models.ocelot.{Page, Process}
-import core.models.admin._
+import models.admin._
 import models.PageNext
 import play.api.Logger
 import play.api.i18n.I18nSupport

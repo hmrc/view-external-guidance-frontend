@@ -14,7 +14,7 @@
  * limitations under the License.
  *@
 
-@import core.models.admin._
+@import models.admin._
 
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 
@@ -31,7 +31,7 @@
 <h2 class="govuk-heading-l">Labels</h2>
 
 @govukTable(Table(
-    rows = dbi.labels.map{l =>
+    rows = dbi.labels().map{l =>
       Seq(
         TableRow(
           content = Text(l.name)

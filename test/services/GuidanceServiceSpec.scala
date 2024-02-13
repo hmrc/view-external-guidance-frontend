@@ -199,10 +199,10 @@ class GuidanceServiceSpec extends BaseSpec {
 
       MockPageRenderer
         .renderPage(page, labels)
-        .returns(Left(NtpError))
+        .returns(Left((NtpError, labels)))
 
       target.getSubmitPageContext(pec, NoError) match {
-        case Left(err) if err == NtpError => succeed
+        case Left((err, _)) if err == NtpError => succeed
         case _ => fail()
       }
     }
@@ -288,12 +288,12 @@ class GuidanceServiceSpec extends BaseSpec {
 
       MockPageRenderer
         .renderPage(lastPage, labels)
-        .returns(Left(nonTerminatingPageError))
+        .returns(Left((nonTerminatingPageError, labels)))
 
       private val result = target.getPageContext(processCode, lastPageUrl, previousPageByLink = false, sessionRepoId)
 
       whenReady(result) {
-        case Left(error) if error == nonTerminatingPageError => succeed
+        case Left((error, _)) if error == nonTerminatingPageError => succeed
         case _ => fail()
       }
     }
@@ -381,7 +381,7 @@ class GuidanceServiceSpec extends BaseSpec {
       private val result = target.getPageContext(processCode, url, previousPageByLink = false, processId)
 
       whenReady(result) {
-        _ shouldBe Left(NotFoundError)
+        _ shouldBe Left((NotFoundError, None))
       }
     }
   }
@@ -412,7 +412,7 @@ class GuidanceServiceSpec extends BaseSpec {
       private val result = target.getCurrentGuidanceSession(process.meta.processCode)(sessionRepoId)
 
       whenReady(result) { err =>
-        err shouldBe Left(NotFoundError)
+        err shouldBe Left((NotFoundError, None))
       }
     }
 
@@ -425,7 +425,7 @@ class GuidanceServiceSpec extends BaseSpec {
       private val result = target.getCurrentGuidanceSession(process.meta.processCode)(sessionRepoId)
 
       whenReady(result) { err =>
-        err shouldBe Left(DatabaseError)
+        err shouldBe Left((DatabaseError, None))
       }
 
     }
@@ -501,14 +501,14 @@ class GuidanceServiceSpec extends BaseSpec {
       val nonTerminatingPageError = Error(Error.ExecutionError, List(NonTerminatingPageError), Some(Scratch), Some("1"))
       MockPageRenderer
         .renderPagePostSubmit(page, labels, "yes")
-        .returns(Left(nonTerminatingPageError))
+        .returns(Left((nonTerminatingPageError, labels)))
 
       MockSessionService
         .updateAfterFormSubmission(processId, processCode, "/test-page", "yes", labels, Nil, requestId)
         .returns(Future.successful(Right({})))
 
       target.submitPage(pec, "/test-page", "yes", "yes").map{
-        case Left(error) if error == nonTerminatingPageError => succeed
+        case Left((error, _)) if error == nonTerminatingPageError => succeed
         case _ => fail()
       }
     }

@@ -131,12 +131,12 @@ class StartAdminControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
 
     "redirect the caller to another page" in new ProcessTest {
       val pageMap = Map("/bulletPoints" -> models.PageNext("start",List(),List(),Some("Bullet Point List"),None))
-      val processPageStructure: core.models.admin.ProcessPageStructure =  core.models.admin.ProcessPageStructure(
+      val processPageStructure: models.admin.ProcessPageStructure =  models.admin.ProcessPageStructure(
         "start",
         "/bulletPoints", 
         Some("Bullet Point List"),
         titlePageStanzas,
-        Seq(core.models.admin.LinkedPage("4", "/blah", Some("Blah blah")), core.models.admin.LinkedPage("5", "/Otherblah", Some("Other Blah blah"))),
+        Seq(models.admin.LinkedPage("4", "/blah", Some("Blah blah")), models.admin.LinkedPage("5", "/Otherblah", Some("Other Blah blah"))),
         Seq(),
         Seq("start")
       )
