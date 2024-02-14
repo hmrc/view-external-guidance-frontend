@@ -107,7 +107,7 @@ class PageRenderer @Inject() (appConfig: AppConfig) {
         case s: Stanza with Evaluate =>
           evalStanza(s,labels) match {
             case (nxt, updatedLabels, None) => evaluateStanzas(nxt, updatedLabels, visualStanzas, seen :+ stanzaId, stanzaCount + 1)
-            case (_, _, Some(err)) => Left((executionError(err, stanzaId, labels.runMode), labels))
+            case (_, updatedLabels, Some(err)) => Left((executionError(err, stanzaId, labels.runMode), updatedLabels))
           }
         case s: VisualStanza => evaluateStanzas(s.next.head, labels, visualStanzas :+ s.rendered(TextBuilder.expandLabels(labels)), seen :+ stanzaId, stanzaCount + 1)
         case _ => Left((executionError(ProgrammingError("Unknown stanza without Evaluate"), stanzaId, labels.runMode), labels))
