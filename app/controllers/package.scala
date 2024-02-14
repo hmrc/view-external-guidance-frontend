@@ -35,7 +35,9 @@ package object controllers {
     }
 
   def fromRuntimeError(err: RuntimeError, stanzaId: String)(implicit messages: Messages): String = err match {
-    case e: UnsupportedOperationError => messages("guidance.error.unsupported_operation", stanzaId, e.op, e.left, e.right, e.lvalue, e.rvalue)
+    case e: UnsupportedOperationError => 
+      messages("guidance.error.unsupported_operation", 
+               stanzaId, e.op, e.left, e.right, e.lvalue.getOrElse("UNINITIALISED"), e.rvalue.getOrElse("UNINITIALISED"))
     case NonTerminatingPageError => messages("guidance.error.nonterminating_loop", stanzaId)
     case UnsupportedUiPatternError => messages("guidance.error.unsupported_ui_pattern", stanzaId)
     case e: DivideByZeroError => messages("guidance.error.divide_by_zero", stanzaId, e.left, e.right)
