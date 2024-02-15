@@ -34,7 +34,7 @@
 
   <h1 class="govuk-heading-l">@title @messages("guidance.internals.page_count", rows.size)</h1>
 
-  @for(page <- rows) { @pageStructure(page) }
+  @for(page <- rows) { @pageStructure(Some(page)) }
 
 }
 @{

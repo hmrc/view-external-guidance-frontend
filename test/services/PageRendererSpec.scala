@@ -22,7 +22,7 @@ import core.models.ocelot.errors._
 import core.models.ocelot.stanzas._
 import core.services._
 import mocks.MockAppConfig
-import models.errors._
+import core.models.errors.Error
 import play.api.i18n.{Lang, Messages, MessagesApi}
 import play.api.libs.json._
 
@@ -82,7 +82,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson {
   "PageRenderer" must {
 
     "Detect non-terminating page by enforcing a max number of stanzas per page before input" in new Test {
-      val nonTerminatingPageError = executionError(NonTerminatingPageError, "2", Published)
+      val nonTerminatingPageError = Error(Error.ExecutionError, List(NonTerminatingPageError), Some(Published), Some("2"))
       val stanzas: Seq[KeyedStanza] = Seq(KeyedStanza("start", PageStanza("/start", Seq("1"), false)),
                         KeyedStanza("1", ValueStanza(List(Value(ScalarType, "X", "9")), Seq("2"), true)),
                         KeyedStanza("2", Instruction(Phrase("Hello", "Hello"), Seq("3"), None, false)),
@@ -93,13 +93,13 @@ class PageRendererSpec extends BaseSpec with ProcessJson {
       val page = Page(Process.StartStanzaId, "/test-page", stanzas, answerDestinations)
 
       renderer.renderPage(page, LabelCache()) match {
-        case Left(err) if err == nonTerminatingPageError => succeed
+        case Left((err, _)) if err == nonTerminatingPageError => succeed
         case _ => fail()
       }
     }
 
     "Detect non-terminating page by enforcing a max number of stanzas per page after input" in new Test {
-      val nonTerminatingPageError = executionError(NonTerminatingPageError, "3", Published)
+      val nonTerminatingPageError = Error(Error.ExecutionError, List(NonTerminatingPageError), Some(Published), Some("3"))
       val stanzas: Seq[KeyedStanza] = Seq(KeyedStanza("start", PageStanza("/start", Seq("1"), false)),
                         KeyedStanza("1", Instruction(Phrase("Hello", "Hello"), Seq("4"), None, false)),
                         KeyedStanza("4", Question(questionPhrase, answers, Seq("3","3","3"), None, false)),
@@ -110,13 +110,13 @@ class PageRendererSpec extends BaseSpec with ProcessJson {
       val page = Page(Process.StartStanzaId, "/test-page", stanzas, answerDestinations)
 
       renderer.renderPagePostSubmit(page, LabelCache(), "0") match {
-        case Left(err) if err == nonTerminatingPageError => succeed
+        case Left((err, _)) if err == nonTerminatingPageError => succeed
         case _ => fail()
       }
     }
 
     "Detect visual stanza after input stanza" in new Test {
-      val programmingError = executionError(ProgrammingError("Visual stanzas found after input"), "6", Published)
+      val programmingError = Error(Error.ExecutionError, List(ProgrammingError("Visual stanzas found after input")), Some(Published), Some("6"))
 
       val stanzas: Seq[KeyedStanza] = Seq(KeyedStanza("start", PageStanza("/start", Seq("1"), false)),
         KeyedStanza("1", Instruction(Phrase("Hello", "Hello"), Seq("5"), None, false)),
@@ -128,7 +128,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson {
       val page = Page(Process.StartStanzaId, "/test-page", stanzas, answerDestinations)
 
       renderer.renderPagePostSubmit(page, LabelCache(), "0") match {
-        case Left(err) if err == programmingError => succeed
+        case Left((err, _)) if err == programmingError => succeed
         case res => fail(res.toString)
       }
     }
@@ -137,7 +137,11 @@ class PageRendererSpec extends BaseSpec with ProcessJson {
       val operations: Seq[CalcOperation] = Seq(
         CalcOperation("[label:input1]", Addition, "10", "output1")
       )
-      val unsupportedOpError = executionError(UnsupportedOperationError("AddOperation", "[label:input1]", "10", "[label:input1]", "10"), "3", Published)
+      val unsupportedOpError =
+        Error(Error.ExecutionError,
+              List(UnsupportedOperationError("AddOperation", None, Some("10"), "[label:input1]",  "10")), 
+              Some(Published), 
+              Some("3"))
 
       val stanzas: Seq[KeyedStanza] = Seq(KeyedStanza("start", PageStanza("/start", Seq("1"), false)),
         KeyedStanza("1", Instruction(Phrase("Hello", "Hello"), Seq("3"), None, false)),
@@ -148,16 +152,18 @@ class PageRendererSpec extends BaseSpec with ProcessJson {
       val page = Page(Process.StartStanzaId, "/test-page", stanzas, answerDestinations)
 
       renderer.renderPage(page, LabelCache()) match {
-        case Left(err) if err == unsupportedOpError => succeed
+        case Left((err, _)) if err == unsupportedOpError => succeed
         case res => fail()
       }
     }
 
     "Detect unsupported operations after input" in new Test {
-      val operations: Seq[CalcOperation] = Seq(
-        CalcOperation("[label:input1]", Addition, "10", "output1")
-      )
-      val unsupportedOpError = executionError(UnsupportedOperationError("AddOperation", "[label:input1]", "10", "[label:input1]", "10"), "3", Published)
+      val operations: Seq[CalcOperation] = Seq(CalcOperation("[label:input1]", Addition, "10", "output1"))
+      val unsupportedOpError =
+        Error(Error.ExecutionError,
+              List(UnsupportedOperationError("AddOperation",None, Some("10"), "[label:input1]",  "10")), 
+              Some(Published), 
+              Some("3"))
 
       val stanzas: Seq[KeyedStanza] = Seq(KeyedStanza("start", PageStanza("/start", Seq("1"), false)),
                         KeyedStanza("1", Instruction(Phrase("Hello", "Hello"), Seq("4"), None, false)),
@@ -168,7 +174,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson {
       val page = Page(Process.StartStanzaId, "/test-page", stanzas, answerDestinations)
 
       renderer.renderPagePostSubmit(page, LabelCache(), "0") match {
-        case Left(err) if err == unsupportedOpError => succeed
+        case Left((err, _)) if err == unsupportedOpError => succeed
         case res => fail()
       }
     }
@@ -188,10 +194,10 @@ class PageRendererSpec extends BaseSpec with ProcessJson {
       )
       val page = Page(Process.StartStanzaId, "/test-page", stanzas, Seq("5"))
 
-      val programmingError = executionError(ProgrammingError("Unknown stanza without Evaluate"), "5", Published)
+      val programmingError = Error(Error.ExecutionError, List(ProgrammingError("Unknown stanza without Evaluate")), Some(Published), Some("5"))
 
       renderer.renderPage(page, LabelCache()) match {
-        case Left(err) if err == programmingError => succeed
+        case Left((err, _)) if err == programmingError => succeed
         case res => fail(res.toString)
       }
 

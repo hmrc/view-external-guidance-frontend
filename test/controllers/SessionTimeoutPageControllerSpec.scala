@@ -84,7 +84,7 @@ class SessionTimeoutPageControllerSpec extends BaseSpec {
         SessionKeys.sessionId -> sessionId,
         SessionKeys.lastRequestTimestamp -> now)
 
-      MockGuidanceService.getCurrentGuidanceSession(processCode)(sessionId).returns(Future.successful(Left(SessionNotFoundError)))
+      MockGuidanceService.getCurrentGuidanceSession(processCode)(sessionId).returns(Future.successful(Left((SessionNotFoundError, None))))
 
       val result: Future[Result] = target.sessionTimeout(processCode)(fakeRequest)
 
@@ -100,7 +100,7 @@ class SessionTimeoutPageControllerSpec extends BaseSpec {
         SessionKeys.sessionId -> sessionId,
         SessionKeys.lastRequestTimestamp -> now)
 
-      MockGuidanceService.getCurrentGuidanceSession(processCode)(sessionId).returns(Future.successful(Left(DatabaseError)))
+      MockGuidanceService.getCurrentGuidanceSession(processCode)(sessionId).returns(Future.successful(Left((DatabaseError, None))))
 
       val result: Future[Result] = target.sessionTimeout(processCode)(fakeRequest)
 

@@ -48,7 +48,7 @@ class DebugFooterSpec extends BaseSpec with ViewSpec with ViewFns {
       Seq(),
       Seq("start")
     )
-    val debugInfo = DebugInformation(processPageStructure, labels, labels.update("A", "23").update("B", "46").updateList("C", List("1","2","3")))
+    val debugInfo = DebugInformation(Some(processPageStructure), Some(labels), Some(labels.update("A", "23").update("B", "46").updateList("C", List("1","2","3"))))
 
     val debugFooter = injector.instanceOf[debug_footer_tabs]
     val pageStructure = injector.instanceOf[page_structure]
@@ -71,7 +71,7 @@ class DebugFooterSpec extends BaseSpec with ViewSpec with ViewFns {
   
   "page_structure" must {
     "Contain Question" in new Test {
-      asDocument(pageStructure(processPageStructure)).toString.contains("Question") shouldBe true
+      asDocument(pageStructure(Some(processPageStructure))).toString.contains("Question") shouldBe true
     }
   }
 }

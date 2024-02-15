@@ -19,7 +19,7 @@ package services
 import core.services._
 import config.AppConfig
 import javax.inject.{Inject, Singleton}
-import models.{GuidanceSession, PageDesc, PageContext, PageEvaluationContext}
+import models.{DebuggableRequestOutcome, GuidanceSession, PageDesc, PageContext, PageEvaluationContext}
 import play.api.Logger
 import uk.gov.hmrc.http.HeaderCarrier
 import core.models.errors._
@@ -47,62 +47,70 @@ class GuidanceService @Inject() (
 ) {
   val logger: Logger = Logger(getClass)
 
-  def sessionRestart(processCode: String, sessionId: String)(implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[String]] =
+  def sessionRestart(processCode: String, sessionId: String)(implicit hc: HeaderCarrier, context: ExecutionContext): 
+                                                            Future[DebuggableRequestOutcome[String]] =
     sessionService.reset(sessionId, processCode, hc.requestId.map(_.value)).map{
       case Right(session) =>
         session.pageMap.collectFirst{case (k,v) if v.id == session.process.startPageId => k}
-          .fold[RequestOutcome[String]]{
+          .fold[DebuggableRequestOutcome[String]]{
             logger.error(s"Process start pageId (${session.process.startPageId}) missing from retrieved session map" )
-            Left(InternalServerError)
+            Left((InternalServerError, None))
           }(Right(_))
-      case Left(err) => Left(err)
+      case Left(err) => Left((err, None))
     }
 
   def deleteSession(processCode: String, sessionId: String): Future[RequestOutcome[Unit]] = sessionService.delete(sessionId, processCode)
 
-  def getSubmitPageContext(pec: PageEvaluationContext, errStrategy: ErrorStrategy = NoError)(implicit messages: Messages): RequestOutcome[PageContext] =
+  def getSubmitPageContext(pec: PageEvaluationContext, errStrategy: ErrorStrategy = NoError)(implicit messages: Messages): DebuggableRequestOutcome[PageContext] =
     pageRenderer.renderPage(pec.page, pec.labels) match {
-      case Left(err) =>
-        logger.error(s"Execution error on page ${pec.page.id} of processCode ${pec.processCode}")
-        Left(err)
+      case Left((err, updatedLabels)) =>
+        logger.error(s"Execution error $err on page ${pec.page.id} of processCode ${pec.processCode}")
+        Left((err, pec.debugInformation.map(_.copy(postRenderLabels = Some(updatedLabels)))))
       case Right((visualStanzas, labels, dataInput)) =>
-        uiBuilder.buildPage(pec.page.url, visualStanzas, errStrategy)(UIContext(labels, pec.pageMapById, messages)).fold(err => Left(err), uiPage =>
-          Right(PageContext(pec.copy(dataInput = dataInput), uiPage, labels))
+        uiBuilder.buildPage(pec.page.url, visualStanzas, errStrategy)(UIContext(labels, pec.pageMapById, messages)).fold(
+          err => Left((err, pec.debugInformation.map(_.copy(postRenderLabels = Some(labels))))),
+          uiPage => Right(PageContext(pec.copy(dataInput = dataInput), uiPage, labels))
         )
     }
 
   def getPageContext(processCode: String, url: String, previousPageByLink: Boolean, sessionId: String)
-                    (implicit hc: HeaderCarrier, context: ExecutionContext, messages: Messages): Future[RequestOutcome[PageContext]] =
+                    (implicit hc: HeaderCarrier, context: ExecutionContext, messages: Messages): Future[DebuggableRequestOutcome[PageContext]] =
     getPageEvaluationContext(processCode, url, previousPageByLink, sessionId).map{
       case Right(ctx) =>
-        uiBuilder.buildPage(ctx.page.url, ctx.visualStanzas.toList)(UIContext(ctx.labels, ctx.pageMapById, messages)).fold(err => Left(err), page =>
-          Right(PageContext(ctx, page))
+        uiBuilder.buildPage(ctx.page.url, ctx.visualStanzas.toList)(UIContext(ctx.labels, ctx.pageMapById, messages)).fold(
+          err => Left((err, ctx.debugInformation)),
+          page => Right(PageContext(ctx, page))
         )
       case Left(err) => Left(err)
     }
 
-  def getCurrentGuidanceSession(processCode: String)(sessionId: String)(implicit context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] =
-    sessionService.getNoUpdate(sessionId, processCode)
+  def getCurrentGuidanceSession(processCode: String)(sessionId: String)(implicit context: ExecutionContext): 
+                                                                       Future[DebuggableRequestOutcome[GuidanceSession]] =
+    sessionService.getNoUpdate(sessionId, processCode) map {
+      case Left(err) => Left((err, None))
+      case Right(result) => Right(result)
+    }
 
   def getPageEvaluationContext(processCode: String, url: String, previousPageByLink: Boolean, sessionId: String)
-                              (implicit hc: HeaderCarrier, context: ExecutionContext, messages: Messages): Future[RequestOutcome[PageEvaluationContext]] = {
+                              (implicit hc: HeaderCarrier, context: ExecutionContext, messages: Messages): 
+                              Future[DebuggableRequestOutcome[PageEvaluationContext]] = {
     val pageUrl: Option[String] = if (isAuthenticationUrl(url)) None else Some(s"$processCode$url")
     getPageGuidanceSession(sessionId, processCode, pageUrl, previousPageByLink).map{
       case Left(err) => Left(err)
-      case Right(session) if pageUrl.isDefined && !session.secure => Left(AuthenticationError)
+      case Right(session) if pageUrl.isDefined && !session.secure => Left((AuthenticationError, None))
       case Right(session) => buildEvaluationContext(sessionId, processCode, url, session)
     }
   }
 
   def getPageGuidanceSession(key: String, processCode: String, pageUrl: Option[String], previousPageByLink: Boolean)
-                            (implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] =
+                            (implicit hc: HeaderCarrier, context: ExecutionContext): Future[DebuggableRequestOutcome[GuidanceSession]] = 
     sessionService.get(key, processCode, hc.requestId.map(_.value)).flatMap{
-      case Left(err) => Future.successful(Left(err))
+      case Left(err) => Future.successful(Left((err, None)))
       case Right(sp) =>
-      pageUrl.fold[Future[RequestOutcome[GuidanceSession]]](Future.successful(Right(sp))){url =>
-        sp.pageMap.get(url.drop(sp.process.meta.processCode.length)).fold[Future[RequestOutcome[GuidanceSession]]]{
+      pageUrl.fold[Future[DebuggableRequestOutcome[GuidanceSession]]](Future.successful(Right(sp))){url =>
+        sp.pageMap.get(url.drop(sp.process.meta.processCode.length)).fold[Future[DebuggableRequestOutcome[GuidanceSession]]]{
           logger.warn(s"Attempt to move to unknown page $url in process ${sp.process.meta.id}, page count = ${sp.pageMap.size}")
-          Future.successful(Left(NotFoundError))
+          Future.successful(Left((NotFoundError, None)))
         }{pageNext =>
           logger.debug(s"Incoming Page: ${pageNext.id}, $url, current legalPageIds: ${sp.legalPageIds}")
           val requestId: Option[String] = hc.requestId.map(_.value)
@@ -116,26 +124,27 @@ class GuidanceService @Inject() (
             sessionService.updateForNewPage(key, processCode, historyUpdate, flowStackUpdate, labelUpdates, legalPageIds, requestId).map {
               case Left(NotFoundError) =>
                 logger.warn(s"TRANSACTION FAULT(Recoverable): saveUpdates _id=$key, requestId: $requestId")
-                Left(TransactionFaultError)
+                Left((TransactionFaultError, None))
               case Left(err) =>
                 logger.error(s"Unable to update session data, error = $err")
-                Left(err)
+                Left((err, None))
               case _ => Right(sp.copy(labels = labels, flowStack = flowStackUpdate.getOrElse(sp.flowStack), backLink = backLink))
             }
           } else {
             logger.warn(s"Attempt to move to illegal page $url, LEGALPIDS ${sp.legalPageIds}")
-            Future.successful(Left(ForbiddenError))
+            Future.successful(Left((ForbiddenError, None)))
           }
         }
       }
     }
 
   def getSubmitEvaluationContext(processCode: String, url: String, sessionId: String)
-                                (implicit hc: HeaderCarrier, context: ExecutionContext, messages: Messages): Future[RequestOutcome[PageEvaluationContext]] = {
+                                (implicit hc: HeaderCarrier, context: ExecutionContext, messages: Messages): 
+                                Future[DebuggableRequestOutcome[PageEvaluationContext]] = {
     val pageUrl: Option[String] = if (isAuthenticationUrl(url)) None else Some(s"$processCode$url")
     getSubmitGuidanceSession(sessionId, processCode, pageUrl).map{
-      case Left(err) => Left(err)
-      case Right(session) if pageUrl.isDefined && !session.secure => Left(AuthenticationError)
+      case Left(err) => Left((err, None))
+      case Right(session) if pageUrl.isDefined && !session.secure => Left((AuthenticationError, None))
       case Right(session) => buildEvaluationContext(sessionId, processCode, url, session)
     }
   }
@@ -157,20 +166,27 @@ class GuidanceService @Inject() (
     }
 
   def submitPage(ctx: PageEvaluationContext, url: String, validatedAnswer: String, submittedAnswer: String)
-                (implicit hc: HeaderCarrier, context: ExecutionContext, messages: Messages): Future[RequestOutcome[(Option[String], Labels)]] =
+                (implicit hc: HeaderCarrier, context: ExecutionContext, messages: Messages): Future[DebuggableRequestOutcome[(Option[String], Labels)]] =
     pageRenderer.renderPagePostSubmit(ctx.page, ctx.labels, validatedAnswer) match {
-      case Left(err) => Future.successful(Left(err))
+
+      case Left((err, updatedLabels)) => Future.successful(Left((err, ctx.debugInformation.map(_.copy(postRenderLabels = Some(updatedLabels))))))
       case Right((optionalNext, labels)) =>
         val requestId: Option[String] = hc.requestId.map(_.value)
-        optionalNext.fold[Future[RequestOutcome[(Option[String], Labels)]]](Future.successful(Right((None, labels)))){next =>
+        optionalNext.fold[Future[DebuggableRequestOutcome[(Option[String], Labels)]]](Future.successful(Right((None, labels)))){next =>
           logger.debug(s"Next page found at stanzaId: $next")
-          sessionService.updateAfterFormSubmission(ctx.sessionId, ctx.processCode, answerStorageId(ctx.labels, url), submittedAnswer, labels, List(next), requestId).map{
+          sessionService.updateAfterFormSubmission(ctx.sessionId, 
+                                                   ctx.processCode, 
+                                                   answerStorageId(ctx.labels, url), 
+                                                   submittedAnswer, 
+                                                   labels, 
+                                                   List(next), 
+                                                   requestId).map{
             case Left(NotFoundError) =>
               logger.warn(s"TRANSACTION FAULT(Recoverable): saveFormPageState _id=${ctx.sessionId}, url: $url, answer: $validatedAnswer, requestId: ${requestId}")
-              Left(TransactionFaultError)
+              Left((TransactionFaultError, ctx.debugInformation))
             case Left(err) =>
               logger.error(s"Failed to save updated labels, error = $err")
-              Left(InternalServerError)
+              Left((InternalServerError, ctx.debugInformation))
             case Right(_) => Right((Some(next), labels))
           }
         }
@@ -188,15 +204,15 @@ class GuidanceService @Inject() (
   private def messagesFn(k: String, args: Seq[Any])(implicit messages: Messages): String = messages(k, args: _*)
 
   private def buildEvaluationContext(sessionId: String, processCode: String, url: String, gs: GuidanceSession)
-                                    (implicit messages: Messages): RequestOutcome[PageEvaluationContext] =
-    gs.pageMap.get(url).fold[RequestOutcome[PageEvaluationContext]]{
+                                    (implicit messages: Messages): DebuggableRequestOutcome[PageEvaluationContext] =
+    gs.pageMap.get(url).fold[DebuggableRequestOutcome[PageEvaluationContext]]{
       logger.error(s"Unable to find url $url within cached process ${gs.process.meta.id} using sessionId $sessionId")
-      Left(NotFoundError)
+      Left((NotFoundError, None))
     }{ pageNext =>
       pageBuilder.buildPage(pageNext.id, gs.process).fold(
         err => {
           logger.error(s"PageBuilder error $err on process ${gs.process.meta.id} with sessionId $sessionId")
-          Left(InvalidProcessError)
+          Left((InvalidProcessError, None))
         },
         page => {
           val pageMapById: Map[String, PageDesc] =
@@ -204,15 +220,20 @@ class GuidanceService @Inject() (
           val labels: Labels =
             LabelCache(gs.labels, Map(), gs.flowStack, gs.continuationPool, gs.process.timescales, messagesFn, gs.runMode, encrypter)
           pageRenderer.renderPage(page, labels) match {
-            case Left(err) => Left(err)
+            case Left((err, updatedLabels)) =>
+              Left((err, Option.when(labels.runMode.equals(Debugging))
+                                    (DebugInformation(Some(debugService.mapPage(page, gs.pageMap)), Some(labels), Some(updatedLabels)))))
             case Right((visualStanzas, updatedLabels, dataInput)) =>
               val processTitle: models.ui.Text = TextBuilder.fromPhrase(gs.process.title)(UIContext(updatedLabels, pageMapById, messages))
               Right(
                 PageEvaluationContext(
-                  page, visualStanzas, dataInput, sessionId, pageMapById, gs.process.startUrl.map(_ => s"${appConfig.baseUrl}/${processCode}/session-restart"),
-                  processTitle, gs.process.meta.id, processCode, updatedLabels, gs.backLink.map(bl => s"${appConfig.baseUrl}/$bl"), gs.answers.get(answerStorageId(updatedLabels, url)),
+                  page, visualStanzas, dataInput, sessionId, pageMapById, 
+                  gs.process.startUrl.map(_ => s"${appConfig.baseUrl}/${processCode}/session-restart"),
+                  processTitle, gs.process.meta.id, processCode, updatedLabels, 
+                  gs.backLink.map(bl => s"${appConfig.baseUrl}/$bl"), gs.answers.get(answerStorageId(updatedLabels, url)),
                   gs.process.betaPhaseBanner,
-                  Option.when(labels.runMode.equals(Debugging))(DebugInformation(debugService.mapPage(page, gs.pageMap), labels, updatedLabels))
+                  Option.when(labels.runMode.equals(Debugging))
+                             (DebugInformation(Some(debugService.mapPage(page, gs.pageMap)), Some(labels), Some(updatedLabels)))
                 )
               )
           }

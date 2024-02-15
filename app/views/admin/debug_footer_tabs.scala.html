@@ -31,7 +31,7 @@
 <h2 class="govuk-heading-l">Labels</h2>
 
 @govukTable(Table(
-    rows = dbi.labels.map{l =>
+    rows = dbi.labels().map{l =>
       Seq(
         TableRow(
           content = Text(l.name)

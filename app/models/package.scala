@@ -14,19 +14,9 @@
  * limitations under the License.
  */
 
-package models.admin
+import core.models.errors.Error
+import models.admin.DebugInformation
 
-import play.api.libs.json.{Format, Json}
-import java.time.Instant
-
-case class CachedProcessSummary(
-  id: String,
-  processVersion: Long,
-  timescalesVersion: Option[Long],
-  ratesVersion: Option[Long],
-  title: String,
-  expiryTime: Instant
-)
-object CachedProcessSummary {
-  implicit lazy val formats: Format[CachedProcessSummary] = Json.format[CachedProcessSummary]
+package object models {
+  type DebuggableRequestOutcome[T] = Either[(Error, Option[DebugInformation]), T]
 }

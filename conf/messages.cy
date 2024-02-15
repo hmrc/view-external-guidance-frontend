@@ -85,9 +85,9 @@ service.session-blocked-page.lang-switch-hidden = Change the language to English
 ## guidance error page
 guidance.error.title=Execution of the current process has encountered a problem
 guidance.error.heading=Error: There is a guidance problem
-guidance.error.solns_heading=Further explanations
+guidance.error.solns_heading=Explanation
 
-guidance.error.unsupported_operation=UnsupportedOperationError: Calculation stanza ''{0}'' contains operation ''{1}'' with invalid arguments ''{2}'', ''{3}''.
+guidance.error.unsupported_operation=UnsupportedOperationError: Calculation stanza ''{0}'' contains operation ''{1}'' with arguments ''{2}'' = {4}, ''{3}'' = {5}.
 guidance.error.unsupported_operation.soln=UnsupportedOperationError: Typically this error occurs where one or both operands are references to labels which have not been assigned a value.
 
 guidance.error.nonterminating_loop=NonTerminatingPageError: Infinite loop found on page containing stanza ''{0}''
@@ -104,3 +104,18 @@ guidance.error.divide_by_zero=DivideByZeroError: Calculation stanza ''{0}'' cont
 guidance.error.divide_by_zero.soln=DivideByZeroError: Ensure denominator is non-zero.
 
 guidance.error.programming_error=ProgrammingError: ''{0}'' on page containing stanza ''{1}''
+
+## guidance internals
+guidance.internals.heading = Page structure
+guidance.internals.id = Id
+guidance.internals.title = Title
+guidance.internals.url = Url
+guidance.internals.pagestanzas_title = Stanzas of page ''{0}''
+guidance.internals.page_count = [Page count: {0}]
+guidance.internals.page = Page ''{0}'': {1}
+guidance.internals.page_linked_from = Linked from page(s):
+guidance.internals.stanzas.id = Id
+guidance.internals.stanzas.type = Type
+guidance.internals.stanzas.properties = Properties
+
+

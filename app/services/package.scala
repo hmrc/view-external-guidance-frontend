@@ -14,13 +14,9 @@
  * limitations under the License.
  */
 
-package models
-
-import core.models.ocelot.RunMode
+import core.models.ocelot.Labels
 import core.models.errors.Error
-import core.models.ocelot.errors._
 
-package object errors {
-  def executionError(errs: List[RuntimeError], stanzId: String, runMode: RunMode): Error = Error(Error.ExecutionError, errs, Some(runMode), Some(stanzId))
-  def executionError(err: RuntimeError, stanzId: String, runMode: RunMode): Error = executionError(List(err), stanzId, runMode)
+package object services {
+  type RenderOutcome[T] = Either[(Error, Labels), T]
 }

@@ -25,47 +25,49 @@
   stable : stanza_table,
 )
 
-@(page: ProcessPageStructure, externalLinks: Boolean = true)(implicit messages: Messages)
+@(pageStructure: Option[ProcessPageStructure], externalLinks: Boolean = true)(implicit messages: Messages)
 
-@govukTable(Table(
-  rows = (Seq(
-    TableRow(content=Text("Page")),
-    TableRow(content=Text(page.id)),
-    TableRow(content=HtmlContent(page.title.getOrElse("") +
-                                 s"<p>(${messages("guidance.internals.page_linked_from")} " +
-                                 s"${page.linkedFrom.map(id => renderSimpleId(id)(externalLinks)).mkString(" ,")})")),
-    TableRow(content=Text(page.url))
-  ) +:
-  page.nexts.map(r => Seq(
-    TableRow(content=Text("=>")),
-    TableRow(content=HtmlContent(renderSimpleId(r.id)(externalLinks))),
-    TableRow(content=Text(r.title.getOrElse(""))),
-    TableRow(content=Text(r.url))
-    )
-  )) ++
-  page.links.map(r => Seq(
-    TableRow(content=Text("->")),
-    TableRow(content=HtmlContent(renderSimpleId(r.id)(externalLinks))),
-    TableRow(content=Text(r.title.getOrElse(""))),
-    TableRow(content=Text(r.url))
-    )
-  ),
-  head = Some(Seq(
-    HeadCell(content = Text("")),
-    HeadCell(content = Text(messages("guidance.internals.id"))),
-    HeadCell(content = Text(messages("guidance.internals.title"))),
-    HeadCell(content = Text(messages("guidance.internals.url")))
-    )
-  ),
-  caption = page.title.map(t => messages("guidance.internals.page", page.id, t)),
-  captionClasses = "govuk-table__caption--m",
-  firstCellIsHeader = true,
-  attributes = Map("id" -> page.id)
-))
-<details class="govuk-details" data-module="govuk-details">
-  <summary class="govuk-details__summary"><span class="govuk-details__summary-text">Stanzas</span></summary>
-  <div class="govuk-details__text">@stable(page, externalLinks)</div>
-</details>
+@pageStructure.map{page =>
+  @govukTable(Table(
+    rows = (Seq(
+      TableRow(content=Text("Page")),
+      TableRow(content=Text(page.id)),
+      TableRow(content=HtmlContent(page.title.getOrElse("") +
+                                   s"<p>(${messages("guidance.internals.page_linked_from")} " +
+                                   s"${page.linkedFrom.map(id => renderSimpleId(id)(externalLinks)).mkString(" ,")})")),
+      TableRow(content=Text(page.url))
+    ) +:
+    page.nexts.map(r => Seq(
+      TableRow(content=Text("=>")),
+      TableRow(content=HtmlContent(renderSimpleId(r.id)(externalLinks))),
+      TableRow(content=Text(r.title.getOrElse(""))),
+      TableRow(content=Text(r.url))
+      )
+    )) ++
+    page.links.map(r => Seq(
+      TableRow(content=Text("->")),
+      TableRow(content=HtmlContent(renderSimpleId(r.id)(externalLinks))),
+      TableRow(content=Text(r.title.getOrElse(""))),
+      TableRow(content=Text(r.url))
+      )
+    ),
+    head = Some(Seq(
+      HeadCell(content = Text("")),
+      HeadCell(content = Text(messages("guidance.internals.id"))),
+      HeadCell(content = Text(messages("guidance.internals.title"))),
+      HeadCell(content = Text(messages("guidance.internals.url")))
+      )
+    ),
+    caption = page.title.map(t => messages("guidance.internals.page", page.id, t)),
+    captionClasses = "govuk-table__caption--m",
+    firstCellIsHeader = true,
+    attributes = Map("id" -> page.id)
+  ))
+  <details class="govuk-details" data-module="govuk-details">
+    <summary class="govuk-details__summary"><span class="govuk-details__summary-text">Stanzas</span></summary>
+    <div class="govuk-details__text">@stable(page, externalLinks)</div>
+  </details>
+}
 @{
      //$COVERAGE-OFF$
 }

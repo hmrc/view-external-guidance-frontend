@@ -34,7 +34,7 @@ trait MockDebugService extends MockFactory {
         .mapPage(_: Page, _: Map[String, PageNext]))
         .expects(page, pageMap)
 
-    def pageTitle(page: Page): CallHandler[Option[String]] =      
+    def pageTitle(page: Page): CallHandler[Option[String]] =
       (mockDebugService
         .pageTitle(_: Page))
         .expects(page)

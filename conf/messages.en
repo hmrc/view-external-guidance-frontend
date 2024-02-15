@@ -86,7 +86,7 @@ guidance.error.title=Execution of the current process has encountered a problem
 guidance.error.heading=Error: There is a guidance problem
 guidance.error.solns_heading=Explanation
 
-guidance.error.unsupported_operation=UnsupportedOperationError: Calculation stanza ''{0}'' contains operation ''{1}'' with invalid arguments ''{2}'', ''{3}''.
+guidance.error.unsupported_operation=UnsupportedOperationError: Calculation stanza ''{0}'' contains operation ''{1}'' with arguments ''{2}'' = {4}, ''{3}'' = {5}.
 guidance.error.unsupported_operation.soln=UnsupportedOperationError: Typically this error occurs where one or both operands are references to labels which have not been assigned a value.
 
 guidance.error.nonterminating_loop=NonTerminatingPageError: Infinite loop found on page containing stanza ''{0}''

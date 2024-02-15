@@ -22,6 +22,7 @@ import play.api.mvc.Request
 import play.twirl.api.Html
 import uk.gov.hmrc.play.bootstrap.frontend.http.FrontendErrorHandler
 import views.html.{error_template, runtime_error_template}
+import models.admin.DebugInformation
 
 @Singleton
 class ErrorHandler @Inject()(val messagesApi: MessagesApi, view: error_template, runtimeErrorView: runtime_error_template, implicit val appConfig: AppConfig) extends FrontendErrorHandler {
@@ -32,13 +33,14 @@ class ErrorHandler @Inject()(val messagesApi: MessagesApi, view: error_template,
   def standardErrorTemplate(pageTitle: String, heading: String, message: String, processCode: Option[String])(implicit request: Request[_]): Html =
     view(pageTitle, heading, message, processCode, false)
 
-  def runtimeErrorHandler(processCode: String, errors: List[String], solns: List[List[String]], stanzaId: Option[String])(implicit request: Request[_]): Html =
+  def runtimeErrorHandler(processCode: String, errors: List[String], solns: List[List[String]], stanzaId: Option[String], debugInformation: Option[DebugInformation])(implicit request: Request[_]): Html =
     runtimeErrorView(
       Messages("guidance.error.title", processCode),
       Messages("guidance.error.heading", processCode),
       processCode,
       errors,
-      solns
+      solns,
+      debugInformation
     )
 
   def badRequestTemplateWithProcessCode(processCode: Option[String])(implicit request: Request[_]): Html =

@@ -46,7 +46,7 @@ class GuidanceErrorSpec extends ViewSpec with ViewFns with GuiceOneAppPerSuite {
     "Display the correct error message for a single error" in new Test {
       val errorList: List[String] = List(Messages("guidance.error.nonterminating_loop", 4))
       val solutionsList: List[List[String]] = List(List(Messages("guidance.error.nonterminating_loop.soln")))
-      val html: Html = guidanceErrorPage(pageTitle, heading, "123", errorList, solutionsList)
+      val html: Html = guidanceErrorPage(pageTitle, heading, "123", errorList, solutionsList, None)
       val doc = asDocument(html)
 
       val paragraphs: List[String] = doc.getElementsByTag("p").asScala.toList.map(_.text)
@@ -67,7 +67,7 @@ class GuidanceErrorSpec extends ViewSpec with ViewFns with GuiceOneAppPerSuite {
                                                       Messages("guidance.error.unsupported_ui_pattern.soln2"),
                                                       Messages("guidance.error.unsupported_ui_pattern.soln3"),
                                                       Messages("guidance.error.unsupported_ui_pattern.soln4")))
-    val doc = asDocument(guidanceErrorPage(pageTitle, heading, "123", errorList, solutionsList))
+    val doc = asDocument(guidanceErrorPage(pageTitle, heading, "123", errorList, solutionsList, None))
 
     val paragraphs: List[String] = doc.getElementsByTag("p").asScala.toList.map(_.text)
 
@@ -87,7 +87,7 @@ class GuidanceErrorSpec extends ViewSpec with ViewFns with GuiceOneAppPerSuite {
                                        Messages("guidance.error.unsupported_operation",4,"AddOperation","[label:X]","[label:Y]"))
     val solutionsList: List[List[String]] = List(List(Messages("guidance.error.unsupported_operation.soln")))
 
-    val doc = asDocument(guidanceErrorPage(pageTitle, heading, "123", errorList, solutionsList))
+    val doc = asDocument(guidanceErrorPage(pageTitle, heading, "123", errorList, solutionsList, None))
 
     doc.getElementsByTag("h1").text shouldBe heading
     doc.getElementsByTag("h3").text shouldBe Messages("guidance.error.solns_heading")

@@ -17,22 +17,20 @@
 package services
 
 import config.AppConfig
-import core.models.RequestOutcome
 import core.models.ocelot.errors.{NonTerminatingPageError, ProgrammingError, RuntimeError}
 import core.models.ocelot.stanzas._
-import core.models.ocelot.{Labels, Page, PageReview, Process}
-import models.errors._
+import core.models.ocelot.{Labels, Page, PageReview, Process, RunMode}
+import core.models.errors.Error
 import play.api.Logger
 import play.api.i18n.Messages
-
 import javax.inject.{Inject, Singleton}
-import scala.annotation.tailrec
+import scala.annotation.tailrec 
 
 @Singleton
 class PageRenderer @Inject() (appConfig: AppConfig) {
   val logger: Logger = Logger(getClass)
 
-  def renderPage(page: Page, labels: Labels)(implicit messages: Messages): RequestOutcome[(List[VisualStanza], Labels, Option[DataInput])] = {
+  def renderPage(page: Page, labels: Labels)(implicit messages: Messages): RenderOutcome[(List[VisualStanza], Labels, Option[DataInput])] = {
     implicit val stanzaMap: Map[String, Stanza] = page.keyedStanzas.map(ks => (ks.key, ks.stanza)).toMap ++ labels.continuationPool
     evaluateStanzas(stanzaMap(page.id).next.head, labels) match {
       case Right((visualStanzas, newLabels, _, _, optionalInput)) => Right((visualStanzas.toList, newLabels, optionalInput))
@@ -40,11 +38,11 @@ class PageRenderer @Inject() (appConfig: AppConfig) {
     }
   }
 
-  def renderPagePostSubmit(page: Page, labels: Labels, answer: String)(implicit messages: Messages): RequestOutcome[(Option[String], Labels)] = {
+  def renderPagePostSubmit(page: Page, labels: Labels, answer: String)(implicit messages: Messages): RenderOutcome[(Option[String], Labels)] = {
 
     @tailrec
     def evaluatePostInputStanzas(next: String, labels: Labels, seen: Seq[String], stanzaCount: Int = 0)
-                                (implicit stanzaMap: Map[String, Stanza]): RequestOutcome[(Option[String], Labels)] =
+                                (implicit stanzaMap: Map[String, Stanza]): RenderOutcome[(Option[String], Labels)] =
       if (seen.contains(next)) {Right((None, labels))}   // next indicates any seen id
       else {stanzaMap.get(next) match {
         case None => Right((Some(next), labels))
@@ -60,18 +58,19 @@ class PageRenderer @Inject() (appConfig: AppConfig) {
             }
           case s: Stanza with Evaluate =>
             evalStanza(s,labels) match {
-              case (nxt, updatedLabels, Nil) => evaluatePostInputStanzas(nxt, updatedLabels, seen, stanzaCount + 1)
-              case (_, _, errs) => Left(executionError(errs, next, labels.runMode))
+              case (nxt, updatedLabels, None) => evaluatePostInputStanzas(nxt, updatedLabels, seen, stanzaCount + 1)
+              case (_, updatedLabels, Some(err)) => Left((executionError(err, next, labels.runMode), updatedLabels))
+                
             }
-          case _ => Left(executionError(ProgrammingError("Visual stanzas found after input"), next, labels.runMode))
+          case _ => Left((executionError(ProgrammingError("Visual stanzas found after input"), next, labels.runMode), labels))
         }
-        case Some(s) => Left(executionError(NonTerminatingPageError, next, labels.runMode))
+        case Some(s) => Left((executionError(NonTerminatingPageError, next, labels.runMode), labels))
       }}
 
     implicit val stanzaMap: Map[String, Stanza] = page.keyedStanzas.map(ks => (ks.key, ks.stanza)).toMap ++ labels.continuationPool
     evaluateStanzas(stanzaMap(page.id).next.head, labels) match {
       case Right((_, newLabels, seen, nextPageId, optionalInput)) =>
-        optionalInput.fold[RequestOutcome[(Option[String], Labels)]](Right((Some(nextPageId), newLabels))){dataInputStanza =>
+        optionalInput.fold[RenderOutcome[(Option[String], Labels)]](Right((Some(nextPageId), newLabels))){dataInputStanza =>
           dataInputStanza.eval(answer, page, newLabels) match {
             case (Some(Process.EndStanzaId), updatedLabels) => updatedLabels.nextFlow match {
                 case Some((nxt, updatedLabels)) => evaluatePostInputStanzas(nxt, updatedLabels, seen)
@@ -88,16 +87,16 @@ class PageRenderer @Inject() (appConfig: AppConfig) {
     }
   }
 
-  private def evalStanza(s: Evaluate, labels: Labels):(String, Labels, List[RuntimeError]) =
+  private def evalStanza(s: Evaluate, labels: Labels):(String, Labels, Option[RuntimeError]) =
     (s.eval(labels), labels.runMode) match {
-      // Ignore evaluation errors when running in PageReview run mode
-      case ((nxt, updatedLabels, errs), PageReview) => (nxt, updatedLabels, Nil)
-      case ((nxt, updatedLabels, errs), _) => (nxt, updatedLabels, errs)
+      // Ignore evaluation error when running in PageReview run mode
+      case ((nxt, updatedLabels, err), PageReview) => (nxt, updatedLabels, None)
+      case ((nxt, updatedLabels, err), _) => (nxt, updatedLabels, err)
     }
 
   @tailrec
    private def evaluateStanzas(stanzaId: String, labels: Labels, visualStanzas: Seq[VisualStanza] = Nil, seen: Seq[String] = Nil, stanzaCount: Int = 0)
-                              (implicit stanzaMap: Map[String, Stanza], messages: Messages): RequestOutcome[(Seq[VisualStanza], Labels, Seq[String], String, Option[DataInput])] =
+                              (implicit stanzaMap: Map[String, Stanza], messages: Messages): RenderOutcome[(Seq[VisualStanza], Labels, Seq[String], String, Option[DataInput])] =
     stanzaMap.get(stanzaId) match {
       case None => Right((visualStanzas, labels, seen, stanzaId, None))
       case Some(s) if stanzaCount < appConfig.pageStanzaLimit  => s match { // Limit stanzas within page to catch non-terminating loops in guidance
@@ -107,12 +106,14 @@ class PageRenderer @Inject() (appConfig: AppConfig) {
           Right((visualStanzas :+ es, labels, seen :+ stanzaId, stanzaId, Some(es)))
         case s: Stanza with Evaluate =>
           evalStanza(s,labels) match {
-            case (nxt, updatedLabels, Nil) => evaluateStanzas(nxt, updatedLabels, visualStanzas, seen :+ stanzaId, stanzaCount + 1)
-            case (_, _, errs) => Left(executionError(errs, stanzaId, labels.runMode))
+            case (nxt, updatedLabels, None) => evaluateStanzas(nxt, updatedLabels, visualStanzas, seen :+ stanzaId, stanzaCount + 1)
+            case (_, updatedLabels, Some(err)) => Left((executionError(err, stanzaId, labels.runMode), updatedLabels))
           }
         case s: VisualStanza => evaluateStanzas(s.next.head, labels, visualStanzas :+ s.rendered(TextBuilder.expandLabels(labels)), seen :+ stanzaId, stanzaCount + 1)
-        case _ => Left(executionError(ProgrammingError("Unknown stanza without Evaluate"), stanzaId, labels.runMode))
+        case _ => Left((executionError(ProgrammingError("Unknown stanza without Evaluate"), stanzaId, labels.runMode), labels))
       }
-      case Some(s) => Left(executionError(NonTerminatingPageError, stanzaId, labels.runMode))
+      case Some(s) => Left((executionError(NonTerminatingPageError, stanzaId, labels.runMode), labels))
     }
+
+  private def executionError(err: RuntimeError, stanzId: String, runMode: RunMode): Error = Error(Error.ExecutionError, List(err), Some(runMode), Some(stanzId))
 }

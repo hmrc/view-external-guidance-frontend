@@ -23,7 +23,7 @@ import core.models.ocelot.stanzas._
 import core.models.ocelot.{KeyedStanza, LabelCache, Labels, Page, Phrase, Process, ProcessJson, Published, Scratch, SecuredProcess}
 import mocks._
 import models._
-import models.errors._
+import core.models.errors.Error
 import play.api.i18n.{Lang, Messages, MessagesApi}
 import repositories.{PageHistory, Session, SessionFSM, SessionKey}
 import uk.gov.hmrc.http.{HeaderCarrier, RequestId}
@@ -178,7 +178,7 @@ class GuidanceServiceSpec extends BaseSpec {
     "return an error when retrieving a non-terminating page" in new Test {
 
       override val processCode = "cup-of-tea"
-      val NtpError = executionError(NonTerminatingPageError, "1", Scratch)
+      val NtpError = Error(Error.ExecutionError, List(NonTerminatingPageError), Some(Scratch), Some("1"))
       MockSessionService
         .get(sessionRepoId, processCode, requestId)
         .returns(Future.successful(Right(
@@ -199,10 +199,10 @@ class GuidanceServiceSpec extends BaseSpec {
 
       MockPageRenderer
         .renderPage(page, labels)
-        .returns(Left(NtpError))
+        .returns(Left((NtpError, labels)))
 
       target.getSubmitPageContext(pec, NoError) match {
-        case Left(err) if err == NtpError => succeed
+        case Left((err, _)) if err == NtpError => succeed
         case _ => fail()
       }
     }
@@ -263,7 +263,7 @@ class GuidanceServiceSpec extends BaseSpec {
     "retrieve a page for the process" in new Test {
 
       override val processCode = "cup-of-tea"
-      val nonTerminatingPageError = executionError(NonTerminatingPageError, "1", Scratch)
+      val nonTerminatingPageError = Error(Error.ExecutionError, List(NonTerminatingPageError), Some(Scratch), Some("1"))
        MockSessionService
         .get(sessionRepoId, processCode, requestId)
         .returns(Future.successful(Right(
@@ -288,12 +288,12 @@ class GuidanceServiceSpec extends BaseSpec {
 
       MockPageRenderer
         .renderPage(lastPage, labels)
-        .returns(Left(nonTerminatingPageError))
+        .returns(Left((nonTerminatingPageError, labels)))
 
       private val result = target.getPageContext(processCode, lastPageUrl, previousPageByLink = false, sessionRepoId)
 
       whenReady(result) {
-        case Left(error) if error == nonTerminatingPageError => succeed
+        case Left((error, _)) if error == nonTerminatingPageError => succeed
         case _ => fail()
       }
     }
@@ -381,7 +381,7 @@ class GuidanceServiceSpec extends BaseSpec {
       private val result = target.getPageContext(processCode, url, previousPageByLink = false, processId)
 
       whenReady(result) {
-        _ shouldBe Left(NotFoundError)
+        _ shouldBe Left((NotFoundError, None))
       }
     }
   }
@@ -412,7 +412,7 @@ class GuidanceServiceSpec extends BaseSpec {
       private val result = target.getCurrentGuidanceSession(process.meta.processCode)(sessionRepoId)
 
       whenReady(result) { err =>
-        err shouldBe Left(NotFoundError)
+        err shouldBe Left((NotFoundError, None))
       }
     }
 
@@ -425,7 +425,7 @@ class GuidanceServiceSpec extends BaseSpec {
       private val result = target.getCurrentGuidanceSession(process.meta.processCode)(sessionRepoId)
 
       whenReady(result) { err =>
-        err shouldBe Left(DatabaseError)
+        err shouldBe Left((DatabaseError, None))
       }
 
     }
@@ -498,17 +498,17 @@ class GuidanceServiceSpec extends BaseSpec {
     }
 
     "Return error if page submission evaluation finds a non-terminating page" in new Test {
-      val nonTerminatingPageError = executionError(NonTerminatingPageError, "1", Scratch)
+      val nonTerminatingPageError = Error(Error.ExecutionError, List(NonTerminatingPageError), Some(Scratch), Some("1"))
       MockPageRenderer
         .renderPagePostSubmit(page, labels, "yes")
-        .returns(Left(nonTerminatingPageError))
+        .returns(Left((nonTerminatingPageError, labels)))
 
       MockSessionService
         .updateAfterFormSubmission(processId, processCode, "/test-page", "yes", labels, Nil, requestId)
         .returns(Future.successful(Right({})))
 
       target.submitPage(pec, "/test-page", "yes", "yes").map{
-        case Left(error) if error == nonTerminatingPageError => succeed
+        case Left((error, _)) if error == nonTerminatingPageError => succeed
         case _ => fail()
       }
     }
