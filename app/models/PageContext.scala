@@ -16,7 +16,7 @@
 
 package models
 
-import core.models.ocelot.{Page, LabelCache, Labels}
+import core.models.ocelot.{Page, Labels}
 import core.models.ocelot.stanzas.{VisualStanza,DataInput}
 import models.admin.DebugInformation
 
@@ -29,7 +29,7 @@ case class PageEvaluationContext(page: Page,
                                  processTitle: ui.Text,
                                  processId: String,
                                  processCode: String,
-                                 labels: Labels = LabelCache(),
+                                 labels: Labels,
                                  backLink: Option[String] = None,
                                  answer: Option[String] = None,
                                  betaPhaseBanner: Boolean = false,
@@ -45,7 +45,7 @@ case class PageContext(page: ui.Page,
                        processTitle: ui.Text,
                        processId: String,
                        processCode: String,
-                       labels: Labels = LabelCache(),
+                       labels: Labels,
                        backLink: Option[String] = None,
                        answer: Option[String] = None,
                        betaPhaseBanner: Boolean = false,

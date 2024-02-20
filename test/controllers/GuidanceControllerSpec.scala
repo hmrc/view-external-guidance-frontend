@@ -314,7 +314,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
     "return an OK response" in new QuestionTest {
       MockGuidanceService
         .getPageContext(processId, path, previousPageByLink = false, processId)
-        .returns(Future.successful(Right(PageContext(expectedPage, vStanzas, di, sessionId, Some("/"), Text(Nil), processId, processCode))))
+        .returns(Future.successful(Right(PageContext(expectedPage, vStanzas, di, sessionId, Some("/"), Text(Nil), processId, processCode, LabelCache()))))
 
       val result = target.getPage(processId, relativePath, None)(fakeRequest)
       status(result) shouldBe Status.OK
@@ -323,7 +323,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
     "be a HTML response" in new QuestionTest {
       MockGuidanceService
         .getPageContext(processId, path, previousPageByLink = false, processId)
-        .returns(Future.successful(Right(PageContext(expectedPage, vStanzas, di, sessionId, Some("/"), Text(Nil), processId, processCode))))
+        .returns(Future.successful(Right(PageContext(expectedPage, vStanzas, di, sessionId, Some("/"), Text(Nil), processId, processCode, LabelCache()))))
       val result = target.getPage(processId, relativePath, None)(fakeRequest)
       contentType(result) shouldBe Some("text/html")
     }
@@ -340,7 +340,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
 
       MockGuidanceService
         .getPageContext(processId, path, previousPageByLink = true, processId)
-        .returns(Future.successful(Right(PageContext(expectedPage, vStanzas, di, sessionId, Some("/"), Text(Nil), processId, processCode))))
+        .returns(Future.successful(Right(PageContext(expectedPage, vStanzas, di, sessionId, Some("/"), Text(Nil), processId, processCode, LabelCache()))))
 
       val result = target.getPage(processId, relativePath, Some("1"))(fakeRequest)
 
@@ -564,7 +564,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
 
       MockGuidanceService
         .getSubmitPageContext(pec, NoError)
-        .returns(Right(PageContext(expectedPage, Seq.empty, None, sessionId, Some("/hello"), Text(Nil), processId, processCode)))
+        .returns(Right(PageContext(expectedPage, Seq.empty, None, sessionId, Some("/hello"), Text(Nil), processId, processCode, LabelCache())))
 
       MockGuidanceService
         .submitPage(pec, path, "0", "0")
@@ -585,7 +585,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
 
       MockGuidanceService
         .getSubmitPageContext(pec, NoError)
-        .returns(Right(PageContext(expectedPage, Seq.empty, None, sessionId, Some("/hello"), Text(Nil), processId, processCode)))
+        .returns(Right(PageContext(expectedPage, Seq.empty, None, sessionId, Some("/hello"), Text(Nil), processId, processCode, LabelCache())))
 
       MockGuidanceService
         .submitPage(pec, path, "0", "0")
@@ -805,7 +805,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
     "be a HTML response" in new InputTest {
       MockGuidanceService
         .getPageContext(processId, path, previousPageByLink = false, processId)
-        .returns(Future.successful(Right(PageContext(expectedPage, Seq.empty, None, sessionId, Some("/"), Text(Nil), processId, processCode))))
+        .returns(Future.successful(Right(PageContext(expectedPage, Seq.empty, None, sessionId, Some("/"), Text(Nil), processId, processCode, LabelCache()))))
       val result = target.getPage(processId, relativePath, None)(fakeRequest)
       contentType(result) shouldBe Some("text/html")
     }
@@ -938,7 +938,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
 
       MockGuidanceService
         .getSubmitPageContext(pec, ValueTypeError)
-        .returns(Right(PageContext(expectedPage, Seq.empty, None, sessionId, Some("/hello"), Text(Nil), processId, processCode)))
+        .returns(Right(PageContext(expectedPage, Seq.empty, None, sessionId, Some("/hello"), Text(Nil), processId, processCode, LabelCache())))
 
       override val fakeRequest = FakeRequest("POST", path).withSession(SessionKeys.sessionId -> processId)
                                                           .withFormUrlEncodedBody(relativePath -> "150AA").withCSRFToken
@@ -1281,7 +1281,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
 
       MockGuidanceService
         .getPageContext(processCode, path, previousPageByLink = false, processId)
-        .returns(Future.successful(Right(PageContext(standardPage, Seq.empty, None, sessionId, Some("/hello"), Text(Nil), processId, processCode))))
+        .returns(Future.successful(Right(PageContext(standardPage, Seq.empty, None, sessionId, Some("/hello"), Text(Nil), processId, processCode, LabelCache()))))
 
       MockGuidanceService
         .savePageState(sessionId, processCode, LabelCache())
@@ -1420,7 +1420,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
 
       MockGuidanceService
         .getPageContext(processCode, path, previousPageByLink = false, processId)
-        .returns(Future.successful(Right(PageContext(standardPage, Seq.empty, None, sessionId, Some("/hello"), Text(Nil), processId, processCode))))
+        .returns(Future.successful(Right(PageContext(standardPage, Seq.empty, None, sessionId, Some("/hello"), Text(Nil), processId, processCode, LabelCache()))))
 
       MockGuidanceService
         .savePageState(sessionId, processCode, LabelCache())
@@ -1459,7 +1459,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
 
       MockGuidanceService
         .getPageContext(processCode, path, previousPageByLink = false, processId)
-        .returns(Future.successful(Right(PageContext(standardPage, Seq.empty, None, sessionId, Some("/hello"), Text(Nil), processId, processCode))))
+        .returns(Future.successful(Right(PageContext(standardPage, Seq.empty, None, sessionId, Some("/hello"), Text(Nil), processId, processCode, LabelCache()))))
 
       MockGuidanceService
         .savePageState(sessionId, processCode, LabelCache())
@@ -1530,7 +1530,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
 
       MockGuidanceService
         .getPageContext(processCode, path, previousPageByLink = false, processId)
-        .returns(Future.successful(Right(PageContext(expectedPage, Seq.empty, None, processId, Some("/hello"), Text(Nil), processId, processCode))))
+        .returns(Future.successful(Right(PageContext(expectedPage, Seq.empty, None, processId, Some("/hello"), Text(Nil), processId, processCode, LabelCache()))))
 
       lazy val target =
         new GuidanceController(

@@ -23,6 +23,8 @@ import play.api.i18n.{Messages, MessagesApi}
 import play.api.test.FakeRequest
 import views.html.admin.render_stanza
 
+
+
 class RenderStanzaSpec extends BaseSpec with ViewSpec with ViewFns {
 
   private trait Test {
@@ -32,8 +34,7 @@ class RenderStanzaSpec extends BaseSpec with ViewSpec with ViewFns {
     implicit val request = FakeRequest("GET", "/")
     implicit def messages: Messages = messagesApi.preferred(request)
 
-    val currencyInput = CurrencyInput(Seq("1"), Phrase("Input", "Input"), None, "label", None, false)
-
+    val currencyInput = core.models.ocelot.stanzas.CurrencyInput(Seq("1"), Phrase("Input", "Input"), None, "label", None, false)
   }
 
   "render_stanza" must {
