@@ -17,6 +17,7 @@
 package views.components
 
 import base.{ViewFns, ViewSpec}
+import core.models.ocelot.LabelCache
 import forms.providers.{StringFormProvider, StringListFormProvider}
 import models.PageContext
 import models.ui.{Answer, BulletPointList, ConfirmationPanel, CurrencyInput, CyaSummaryList, Details, FormPage, H1, InsetText, NumberedCircleList, NumberedList, Paragraph, Question, RequiredErrorMsg, Sequence, SequenceAnswer, StandardPage, Text, WarningText}
@@ -153,9 +154,9 @@ class PageSpec extends AnyWordSpec with Matchers with ViewSpec with ViewFns with
         }
       }
 
-    val pageCtx: PageContext = PageContext(simplePage, Seq.empty, None, "sessionId", Some("/"), Text("Title"), "processId", "processCode")
-    val questionPageContext: PageContext = PageContext(questionPage, Seq.empty, None, "sessionId", Some("/here"), Text("Title"), "processId", "processCode")
-    val inputPageContext: PageContext = PageContext(inputPage, Seq.empty, None, "sessionId", Some("/here"), Text("Title"), "processId", "processCode")
+    val pageCtx: PageContext = PageContext(simplePage, Seq.empty, None, "sessionId", Some("/"), Text("Title"), "processId", "processCode", LabelCache())
+    val questionPageContext: PageContext = PageContext(questionPage, Seq.empty, None, "sessionId", Some("/here"), Text("Title"), "processId", "processCode", LabelCache())
+    val inputPageContext: PageContext = PageContext(inputPage, Seq.empty, None, "sessionId", Some("/here"), Text("Title"), "processId", "processCode", LabelCache())
     val sequenceContext: PageContext = PageContext(
       sequencePage,
       Seq.empty,
@@ -164,7 +165,7 @@ class PageSpec extends AnyWordSpec with Matchers with ViewSpec with ViewFns with
       Some("selectFruit"),
       Text("Get your fruit"),
       "processId",
-      "processCode")
+      "processCode", LabelCache())
     val exclusiveSequenceContext: PageContext = PageContext(
       exclusiveSequencePage,
       Seq.empty,
@@ -173,7 +174,7 @@ class PageSpec extends AnyWordSpec with Matchers with ViewSpec with ViewFns with
       Some("/cars-you-like"),
       Text("Select a car you like"),
       "processId",
-      "processCode"
+      "processCode", LabelCache()
     )
     val detailsContext: PageContext = PageContext(
       detailsPage,
@@ -183,7 +184,7 @@ class PageSpec extends AnyWordSpec with Matchers with ViewSpec with ViewFns with
       Some("/details"),
       Text(),
       "processId",
-      "processCode"
+      "processCode", LabelCache()
     )
   }
 

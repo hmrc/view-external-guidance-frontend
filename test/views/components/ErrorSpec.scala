@@ -33,6 +33,7 @@ import play.api.test.FakeRequest
 import views.html._
 
 import scala.jdk.CollectionConverters._
+import core.models.ocelot.LabelCache
 
 class ErrorSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with ViewFns {
 
@@ -59,7 +60,7 @@ class ErrorSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with 
     
     val currencyInput: CurrencyInput = CurrencyInput(Text(), None, Seq.empty)
     val page: FormPage = FormPage("/url", currencyInput)
-    implicit val ctx: PageContext = PageContext(page, Seq.empty, None, "sessionId", None, Text(), "processId", "processCode")
+    implicit val ctx: PageContext = PageContext(page, Seq.empty, None, "sessionId", None, Text(), "processId", "processCode", LabelCache())
 
     val requiredErrMsgs: Seq[RequiredErrorMsg] = Seq(RequiredErrorMsg(Text(requiredSelectionError)))
     val requiredDateComponentsErrorMsgs: Seq[RequiredErrorMsg] = Seq(RequiredErrorMsg(Text(requiredDateComponentError)))
@@ -69,21 +70,21 @@ class ErrorSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with 
     val currencyInputWithErrorsPage: FormPage = FormPage("/currencyInput", currencyInputWithErrors)
 
     implicit val currencyInputWithErrorsCtx: PageContext = PageContext(
-      currencyInputWithErrorsPage, Seq.empty, None, "sessionId", None, Text(), "processId", "processCode"
+      currencyInputWithErrorsPage, Seq.empty, None, "sessionId", None, Text(), "processId", "processCode", LabelCache()
     )
 
     val sequenceWithErrors: Sequence = Sequence(Text(), None, Seq.empty, None, Seq.empty, requiredErrMsgs)
     val sequenceWithErrorsPage: FormPage = FormPage("/sequenceInput", sequenceWithErrors)
 
     implicit val sequenceWithErrorsCtx: PageContext = PageContext(
-      sequenceWithErrorsPage, Seq.empty, None, "sessionId", None, Text(), "processId", "processCode"
+      sequenceWithErrorsPage, Seq.empty, None, "sessionId", None, Text(), "processId", "processCode", LabelCache()
     )
 
     val dateInputWithErrors: DateInput = DateInput(Text(), None, Seq.empty, requiredDateComponentsErrorMsgs)
     val dateInputWithErrorsPage: FormPage = FormPage("/dateInput", dateInputWithErrors)
 
     implicit val dateInputWithErrorsCtx: PageContext = PageContext(
-      dateInputWithErrorsPage, Seq.empty, None, "sessionId", None, Text(), "processId", "processCode"
+      dateInputWithErrorsPage, Seq.empty, None, "sessionId", None, Text(), "processId", "processCode", LabelCache()
     )
 
   }
@@ -378,7 +379,7 @@ class ErrorSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with 
       val dateInputWithInvalidDayPage: FormPage = FormPage("/dateInput",  dateInputWithInvalidDay)
 
       implicit val dateInputWithInvalidDayCtx: PageContext = PageContext(
-        dateInputWithInvalidDayPage, Seq.empty, None, "sessionId", None, Text(), "processId", "processCode"
+        dateInputWithInvalidDayPage, Seq.empty, None, "sessionId", None, Text(), "processId", "processCode", LabelCache()
       )
 
       val form: Form[DateAnswer] = dateAnswerFormProvider()
