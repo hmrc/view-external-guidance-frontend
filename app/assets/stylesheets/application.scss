@@ -34,9 +34,12 @@ $govuk-global-styles: true;
   .govuk-back-link,
   .app-get-help-link,
   .govuk-summary-list__actions .govuk-link,
-  .hmrc-header__service-name,
   footer
   { display: none; }
+
+  a[href*='session-restart']:after {
+    content: none;
+  }
 
   .govuk-main-wrapper > .govuk-grid-row > div[class*='govuk-grid-column-'] {
       width: 100%;
