@@ -43,10 +43,11 @@ $govuk-global-styles: true;
   }
 
   .govuk-summary-list > .govuk-summary-list__row > .govuk-summary-list__key {
-    white-space: nowrap;
+    width: 75%;
   }
   .govuk-summary-list > .govuk-summary-list__row > .govuk-summary-list__value {
     text-align: right;
+    width: 25%;
   }
 
 }
