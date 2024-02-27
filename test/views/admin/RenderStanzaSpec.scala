@@ -31,7 +31,7 @@ class RenderStanzaSpec extends BaseSpec with ViewSpec with ViewFns {
     implicit val labels: Labels = LabelCache()
     def messagesApi: MessagesApi = injector.instanceOf[MessagesApi]
 
-    implicit val request = FakeRequest("GET", "/")
+    implicit val request: FakeRequest[_] = FakeRequest("GET", "/")
     implicit def messages: Messages = messagesApi.preferred(request)
 
     val currencyInput = core.models.ocelot.stanzas.CurrencyInput(Seq("1"), Phrase("Input", "Input"), None, "label", None, false)

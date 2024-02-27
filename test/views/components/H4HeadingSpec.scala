@@ -19,6 +19,7 @@ package views.components
 import base.ViewSpec
 import core.models.ocelot.{LabelCache, Labels}
 import models.ui.{H4, Text}
+import models.PageContext
 import org.jsoup.nodes.Element
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.i18n.{Messages, MessagesApi}
@@ -43,7 +44,7 @@ class H4HeadingSpec extends ViewSpec with GuiceOneAppPerSuite {
     val h4: H4 = H4(Text(englishText))
     val currencyInput = models.ui.CurrencyInput(Text(), None, Seq.empty)
     val page = models.ui.FormPage("/url", currencyInput)
-    implicit val ctx = models.PageContext(page, Seq.empty, None, "sessionId", None, Text(), "processId", "processCode", labels)
+    implicit val ctx: PageContext = PageContext(page, Seq.empty, None, "sessionId", None, Text(), "processId", "processCode", labels)
   }
 
   "Creating a level 4 heading with some content" must {

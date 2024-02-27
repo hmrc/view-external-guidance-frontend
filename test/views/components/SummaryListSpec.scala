@@ -19,6 +19,7 @@ package views.components
 import base.{ViewFns, ViewSpec}
 import core.models.ocelot.{LabelCache, Labels}
 import models.ui._
+import models.PageContext
 import org.jsoup.nodes.Element
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.i18n.{Messages, MessagesApi}
@@ -35,7 +36,7 @@ class SummaryListSpec extends ViewSpec with ViewFns with GuiceOneAppPerSuite {
     private def injector: Injector = app.injector
     def messagesApi: MessagesApi = injector.instanceOf[MessagesApi]
 
-    implicit val fakeRequest = FakeRequest("GET", "/")
+    implicit val fakeRequest: FakeRequest[_] = FakeRequest("GET", "/")
     implicit def messages: Messages = messagesApi.preferred(fakeRequest)
 
     val h1English: String = "Level 1 heading text"
@@ -60,7 +61,7 @@ class SummaryListSpec extends ViewSpec with ViewFns with GuiceOneAppPerSuite {
 
     val currencyInput = models.ui.CurrencyInput(Text(), None, Seq.empty)
     val page = models.ui.FormPage("/url", currencyInput)
-    implicit val ctx = models.PageContext(page, Seq.empty, None, "sessionId", None, Text(), "processId", "processCode", labels)
+    implicit val ctx: PageContext = PageContext(page, Seq.empty, None, "sessionId", None, Text(), "processId", "processCode", labels)
   }
 
   "Creating CYA Summary list with some content" must {

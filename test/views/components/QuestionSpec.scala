@@ -28,7 +28,7 @@ import play.api.i18n.{Lang, Messages, MessagesApi}
 import play.api.inject.Injector
 import play.api.test.FakeRequest
 import views.html._
-
+import models.PageContext
 import scala.jdk.CollectionConverters._
 
 class QuestionSpec extends AnyWordSpec with Matchers with ViewFns with GuiceOneAppPerSuite {
@@ -70,7 +70,7 @@ class QuestionSpec extends AnyWordSpec with Matchers with ViewFns with GuiceOneA
     implicit val labels: Labels = LabelCache()
     val currencyInput = models.ui.CurrencyInput(Text(), None, Seq.empty)
     val page = models.ui.FormPage("/url", currencyInput)
-    implicit val ctx = models.PageContext(page, Seq.empty, None, "sessionId", None, Text(), "processId", "processCode", labels)
+    implicit val ctx: PageContext = PageContext(page, Seq.empty, None, "sessionId", None, Text(), "processId", "processCode", labels)
   }
 
   "Question component" must {

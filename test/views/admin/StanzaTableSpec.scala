@@ -29,7 +29,7 @@ class StanzaTableSpec extends BaseSpec with ViewSpec with ViewFns {
   private trait Test {
     def messagesApi: MessagesApi = injector.instanceOf[MessagesApi]
     val stable = injector.instanceOf[stanza_table]
-    implicit val request = FakeRequest("GET", "/")
+    implicit val request: FakeRequest[_] = FakeRequest("GET", "/")
     implicit def messages: Messages = messagesApi.preferred(request)
 
     val ppm = ProcessPageStructure("1", "/url", Some("BLAH"), Seq(KeyedStanza("1", PageStanza("/usr",Seq("end"), false))), Seq.empty, Seq.empty, Seq.empty)
