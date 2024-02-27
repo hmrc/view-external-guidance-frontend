@@ -33,7 +33,7 @@ class GuidanceErrorSpec extends ViewSpec with ViewFns with GuiceOneAppPerSuite {
     def messagesApi: MessagesApi = injector.instanceOf[MessagesApi]
     val guidanceErrorPage = injector.instanceOf[runtime_error_template]
 
-    implicit val request = FakeRequest("GET", "/")
+    implicit val request: FakeRequest[_] = FakeRequest("GET", "/")
     implicit def messages: Messages = messagesApi.preferred(request)
 
     val processCode = "processCode"

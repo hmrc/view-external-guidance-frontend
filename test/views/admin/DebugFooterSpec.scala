@@ -52,7 +52,7 @@ class DebugFooterSpec extends BaseSpec with ViewSpec with ViewFns {
 
     val debugFooter = injector.instanceOf[debug_footer_tabs]
     val pageStructure = injector.instanceOf[page_structure]
-    implicit val request = FakeRequest("GET", "/")
+    implicit val request: FakeRequest[_] = FakeRequest("GET", "/")
     implicit def messages: Messages = messagesApi.preferred(request)
 
   }

@@ -19,6 +19,7 @@ package views.components
 import base.{ViewFns, ViewSpec}
 import core.models.ocelot.{LabelCache, Labels}
 import models.ui._
+import models.PageContext
 import org.jsoup.nodes.Element
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.i18n.{Messages, MessagesApi}
@@ -35,11 +36,11 @@ class TableSpec extends ViewSpec with ViewFns with GuiceOneAppPerSuite {
     private def injector: Injector = app.injector
     def messagesApi: MessagesApi = injector.instanceOf[MessagesApi]
 
-    implicit val fakeRequest = FakeRequest("GET", "/")
+    implicit val fakeRequest: FakeRequest[_] = FakeRequest("GET", "/")
     implicit def messages: Messages = messagesApi.preferred(fakeRequest)
     val currencyInput = models.ui.CurrencyInput(Text(), None, Seq.empty)
     val page = models.ui.FormPage("/url", currencyInput)
-    implicit val ctx = models.PageContext(page, Seq.empty, None, "sessionId", None, Text(), "processId", "processCode", labels)
+    implicit val ctx: PageContext = PageContext(page, Seq.empty, None, "sessionId", None, Text(), "processId", "processCode", labels)
 
     val expectedTable = Table(Text("HELLO"),
                               Seq(Text("First"), Text("Second")),
