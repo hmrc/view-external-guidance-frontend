@@ -42,4 +42,12 @@ $govuk-global-styles: true;
       width: 100%;
   }
 
+  .govuk-summary-list > .govuk-summary-list__row > .govuk-summary-list__key {
+    width: 75%;
+  }
+  .govuk-summary-list > .govuk-summary-list__row > .govuk-summary-list__value {
+    text-align: right;
+    width: 25%;
+  }
+
 }
