@@ -19,6 +19,7 @@ package views.components
 import base.ViewSpec
 import core.models.ocelot.{LabelCache, Labels}
 import models.ui._
+import models.PageContext
 import org.jsoup.Jsoup
 import org.jsoup.nodes.{Document, Element}
 import org.jsoup.select.Elements
@@ -43,7 +44,7 @@ class BulletPointListSpec extends ViewSpec with GuiceOneAppPerSuite {
     implicit def messages: Messages = messagesApi.preferred(fakeRequest)
     val currencyInput = models.ui.CurrencyInput(Text(), None, Seq.empty)
     val page = models.ui.FormPage("/url", currencyInput)
-    implicit val ctx = models.PageContext(page, Seq.empty, None, "sessionId", None, Text(), "processId", "processCode", labels)
+    implicit val ctx: PageContext = PageContext(page, Seq.empty, None, "sessionId", None, Text(), "processId", "processCode", labels)
   }
 
   "Bullet point lists" must {

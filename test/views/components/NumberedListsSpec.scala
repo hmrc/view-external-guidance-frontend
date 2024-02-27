@@ -19,6 +19,7 @@ package views.components
 import base.{ViewFns, ViewSpec}
 import core.models.ocelot.{LabelCache, Labels}
 import models.ui._
+import models.PageContext
 import org.jsoup.nodes.Element
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.i18n.{Messages, MessagesApi}
@@ -35,12 +36,12 @@ class NumberedListsSpec extends ViewSpec with ViewFns with GuiceOneAppPerSuite {
     private def injector: Injector = app.injector
     def messagesApi: MessagesApi = injector.instanceOf[MessagesApi]
 
-    implicit val request = FakeRequest("GET", "/")
+    implicit val request: FakeRequest[_] = FakeRequest("GET", "/")
     implicit def messages: Messages = messagesApi.preferred(request)
 
     val currencyInput = models.ui.CurrencyInput(Text(), None, Seq.empty)
     val page = models.ui.StandardPage("/url", Seq(currencyInput))
-    implicit val ctx = models.PageContext(page, Seq.empty, None, "sessionId", None, Text(), "processId", "processCode", labels)
+    implicit val ctx: PageContext = PageContext(page, Seq.empty, None, "sessionId", None, Text(), "processId", "processCode", labels)
     val numberedList: NumberedList = NumberedList(Seq(Text("Line1"), Text("Line2")))
     val numberedCircleList: NumberedCircleList = NumberedCircleList(Seq(Text("Line1"), Text("Line2")))
   }

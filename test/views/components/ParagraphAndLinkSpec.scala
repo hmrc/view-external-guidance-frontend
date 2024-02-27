@@ -27,6 +27,7 @@ import play.api.inject.Injector
 import play.api.test.FakeRequest
 import views.html.components.{link, link_withHint, paragraph}
 import scala.jdk.CollectionConverters._
+import models.PageContext
 
 class ParagraphAndLinkSpec extends AnyWordSpec with Matchers with base.ViewFns with GuiceOneAppPerSuite {
 
@@ -56,7 +57,7 @@ class ParagraphAndLinkSpec extends AnyWordSpec with Matchers with base.ViewFns w
     val paraWithMultipleLinks = Paragraph(paraText1 + link1 + paraText2 + link2 + pageLink + linkWithHint)
     val currencyInput = models.ui.CurrencyInput(Text(), None, Seq.empty)
     val page = models.ui.FormPage("/url", currencyInput)
-    implicit val ctx = models.PageContext(page, Seq.empty, None, "sessionId", None, Text(), "processId", "processCode", labels)
+    implicit val ctx: PageContext = PageContext(page, Seq.empty, None, "sessionId", None, Text(), "processId", "processCode", labels)
   }
 
   "Paragraph component" should {
@@ -194,7 +195,7 @@ class ParagraphAndLinkSpec extends AnyWordSpec with Matchers with base.ViewFns w
 
       val destination: String = "/guidance/test/page-7"
 
-      override implicit val ctx: models.PageContext = models.PageContext(
+      override implicit val ctx: PageContext = PageContext(
         page,
         Seq.empty,
         None,

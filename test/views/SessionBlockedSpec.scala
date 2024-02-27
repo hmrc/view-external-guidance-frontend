@@ -32,7 +32,7 @@ class SessionBlockedSpec extends ViewSpec with ViewFns with GuiceOneAppPerSuite 
     private def injector: Injector = app.injector
     def messagesApi: MessagesApi = injector.instanceOf[MessagesApi]
     val session_blocked = injector.instanceOf[session_blocked]
-    implicit val request = FakeRequest("GET", "/")
+    implicit val request: FakeRequest[_] = FakeRequest("GET", "/")
   }
 
   private trait EnTest extends Test {

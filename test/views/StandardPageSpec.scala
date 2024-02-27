@@ -19,6 +19,7 @@ package views
 import base.{ViewFns, ViewSpec}
 import core.models.ocelot.{LabelCache, Labels}
 import models.ui._
+import models.PageContext
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.i18n.{Messages, MessagesApi}
 import play.api.inject.Injector
@@ -34,12 +35,12 @@ class StandardPageSpec extends ViewSpec with ViewFns with GuiceOneAppPerSuite {
     def messagesApi: MessagesApi = injector.instanceOf[MessagesApi]
     val standard_page = injector.instanceOf[standard_page]
 
-    implicit val request = FakeRequest("GET", "/")
+    implicit val request: FakeRequest[_] = FakeRequest("GET", "/")
     implicit def messages: Messages = messagesApi.preferred(request)
 
     val currencyInput = models.ui.CurrencyInput(Text(), None, Seq.empty)
     val page = models.ui.StandardPage("/url", Seq(currencyInput))
-    implicit val ctx = models.PageContext(page, Seq.empty, None, "sessionId", None, Text(), "processId", "processCode", labels, Some("/previousPage"))
+    implicit val ctx: PageContext = PageContext(page, Seq.empty, None, "sessionId", None, Text(), "processId", "processCode", labels, Some("/previousPage"))
   }
 
   "Standard Page" must {
