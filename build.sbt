@@ -18,7 +18,7 @@ val appName = "view-external-guidance-frontend"
 
 ThisBuild / majorVersion := 0
 ThisBuild / scalaVersion := "2.13.12"
-libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
+
 lazy val microservice = Project(appName, file("."))
   .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin)
   .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427
