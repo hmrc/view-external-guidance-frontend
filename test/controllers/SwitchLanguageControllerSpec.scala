@@ -47,7 +47,7 @@ class SwitchLanguageControllerSpec extends BaseSpec {
 
   "GET /language/cy" should {
     "return 303 and set lang to cy" in {
-      val result = controller.switchToLanguage("cymraeg")(fakeRequest)
+      val result = controller.switchToLanguage("cy")(fakeRequest)
       status(result) shouldBe Status.SEE_OTHER
       confirmLangCookie(cookies(result), "cy")
     }
@@ -55,7 +55,7 @@ class SwitchLanguageControllerSpec extends BaseSpec {
 
   "GET /language/en" should {
     "return 303 and set lang to en" in {
-      val result = controller.switchToLanguage("english")(fakeRequest)
+      val result = controller.switchToLanguage("en")(fakeRequest)
       status(result) shouldBe Status.SEE_OTHER
       confirmLangCookie(cookies(result), "en")
     }

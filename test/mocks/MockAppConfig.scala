@@ -25,7 +25,7 @@ import scala.collection.immutable.ListMap
 
 object MockAppConfig extends AppConfig {
   val assetsPrefix: String = "someUrl"
-  val languageMap: Map[String, Lang] = ListMap("english" -> Lang("en"), "cymraeg" -> Lang("cy"))
+  val languageMap: Map[String, Lang] = ListMap("en" -> Lang("en"), "cy" -> Lang("cy"))
   val config: Configuration = Configuration()
   val analyticsToken: String = "token"
   val analyticsHost: String = "host"

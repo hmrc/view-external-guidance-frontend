@@ -21,15 +21,18 @@ import mocks.{MockAppConfig, MockRetrieveAndCacheService}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.Status
 import play.api.mvc._
-import play.api.mvc.{BodyParsers,AnyContentAsEmpty}
+import play.api.mvc.{AnyContentAsEmpty, BodyParsers}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import play.api.test.Helpers.stubMessagesControllerComponents
 import models.ui._
 import core.models.errors._
+
 import scala.concurrent.{ExecutionContext, Future}
 import controllers.actions.SessionIdAction
+import play.api.i18n.MessagesApi
 import uk.gov.hmrc.http.SessionKeys
+import uk.gov.hmrc.play.language.LanguageUtils
 
 class StartGuidanceControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
 
@@ -67,12 +70,14 @@ class StartGuidanceControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
     lazy val errorHandler = app.injector.instanceOf[config.ErrorHandler]
     lazy val view = app.injector.instanceOf[views.html.standard_page]
     lazy val questionView = app.injector.instanceOf[views.html.form_page]
+    lazy val langUtils = app.injector.instanceOf[LanguageUtils]
 
   }
 
 
   trait ProcessTest extends MockRetrieveAndCacheService with TestData {
     lazy val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("GET", "/")
+    val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
 
     lazy val target =
       new StartGuidanceController(
@@ -80,7 +85,8 @@ class StartGuidanceControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
         mockRetrieveAndCacheService,
         fakeSessionIdAction,
         stubMessagesControllerComponents(),
-        MockAppConfig
+        MockAppConfig,
+        langUtils
       )
   }
 
@@ -93,7 +99,8 @@ class StartGuidanceControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
         mockRetrieveAndCacheService,
         fakeSessionIdAction,
         stubMessagesControllerComponents(),
-        MockAppConfig
+        MockAppConfig,
+        langUtils
       )
   }
 
@@ -177,6 +184,7 @@ class StartGuidanceControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
       MockRetrieveAndCacheService
         .retrieveAndCachePublished(processCode, sessionId)
         .returns(Future.successful(Right((expectedUrl,processCode))))
+
       val result = target.published(processCode)(fakeRequest)
       redirectLocation(result) shouldBe Some(s"$pageViewBaseUrl/$processCode$expectedUrl")
     }
@@ -187,6 +195,50 @@ class StartGuidanceControllerSpec extends BaseSpec with GuiceOneAppPerSuite {
         .returns(Future.successful(Left(DuplicateKeyError)))
       val result = target.published(processCode)(fakeRequest)
       redirectLocation(result) shouldBe Some(s"$pageViewBaseUrl/$processCode")
+    }
+
+    "providing a lang code of 'en' as a query parameter " should {
+      "set the language cookie to English" in new ProcessTest {
+        MockRetrieveAndCacheService
+          .retrieveAndCachePublished(processCode, sessionId)
+          .returns(Future.successful(Right((expectedUrl,processCode))))
+
+        val result = target.published(processCode, lang = Some("en"))(fakeRequest)
+        cookies(result).get(messagesApi.langCookieName).fold(fail("No lang cookie found"))(_.value shouldBe "en")
+      }
+    }
+
+    "providing a lang code of 'zx' as a query parameter " should {
+      "set the language cookie to the current language" in new ProcessTest {
+        MockRetrieveAndCacheService
+          .retrieveAndCachePublished(processCode, sessionId)
+          .returns(Future.successful(Right((expectedUrl, processCode))))
+
+        val result = target.published(processCode, lang = Some("zx"))(fakeRequest)
+        cookies(result).get(messagesApi.langCookieName).fold(fail("No lang cookie found"))(_.value shouldBe "en")
+      }
+    }
+
+    "providing a lang code of 'cy' as a query parameter " should {
+      "set the language cookie to Welsh" in new ProcessTest {
+        MockRetrieveAndCacheService
+          .retrieveAndCachePublished(processCode, sessionId)
+          .returns(Future.successful(Right((expectedUrl,processCode))))
+
+        val result = target.published(processCode, lang = Some("cy"))(fakeRequest)
+        cookies(result).get(messagesApi.langCookieName).fold(fail("No lang cookie found"))(_.value shouldBe "cy")
+      }
+    }
+
+    "providing no lang code as a query parameter" should {
+      "not set the language cookie if no lang code is supplied as a query parameter" in new ProcessTest {
+        MockRetrieveAndCacheService
+          .retrieveAndCachePublished(processCode, sessionId)
+          .returns(Future.successful(Right((expectedUrl, processCode))))
+
+        val result = target.published(processCode)(fakeRequest)
+        cookies(result).get(messagesApi.langCookieName) shouldBe None
+      }
     }
   }
 
