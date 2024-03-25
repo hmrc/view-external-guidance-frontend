@@ -91,8 +91,8 @@ class StartGuidanceController @Inject() (
       case Right((url, processCode)) =>
         val target = controllers.routes.GuidanceController.getPage(processCode, url.drop(1), None, c, lang).url
         logger.warn(s"Redirecting to begin viewing process $id/$processCode at ${target} using sessionId $sessionId, EG_NEW_SESSIONID = $egNewSessionId")
-        lang.foldLeft(egNewSessionId.fold(Redirect(target))(newId =>
-          Redirect(target)
+        lang.foldLeft(egNewSessionId.foldLeft(Redirect(target))((redirect, newId) =>
+          redirect
             .addingToSession(sessionIdAction.EgNewSessionIdName -> newId, SessionKeys.sessionId -> sessionId)
             .withHeaders(HeaderNames.xSessionId -> sessionId)
         ))((redirect, l) => {
