@@ -27,6 +27,7 @@ import play.api.mvc._
 import services.RetrieveAndCacheService
 import uk.gov.hmrc.http.{HeaderNames, SessionKeys}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
+import uk.gov.hmrc.play.language.LanguageUtils
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -37,7 +38,8 @@ class StartGuidanceController @Inject() (
     service: RetrieveAndCacheService,
     sessionIdAction: SessionIdAction,
     mcc: MessagesControllerComponents,
-    appConfig: AppConfig
+    appConfig: AppConfig,
+    languageUtils: LanguageUtils
 )(implicit ec: ExecutionContext) extends FrontendController(mcc)
     with I18nSupport {
 
@@ -78,24 +80,27 @@ class StartGuidanceController @Inject() (
                                              errHandler: (Error, String, String) => Result,
                                              c: Option[String] = None,
                                              lang: Option[String] = None)(
-      implicit request: Request[_]
-  ): Future[Result] = {
+                                              implicit request: Request[_]
+                                            ): Future[Result] = {
     val (sessionId, egNewSessionId) = existingOrNewSessionId()
     logger.warn(s"Calling Retrieve and cache service for process $id using sessionId = $sessionId, EG = ${egNewSessionId}, request id: ${hc.requestId.map(_.value)}")
     validateUrl(id).fold {
       logger.warn(s"Invalid process code $id, code contains unsupported characters. Returning NotFound")
       Future.successful(NotFound(errorHandler.notFoundTemplateWithProcessCode(None)))
     } { _ => retrieveAndCache(id, sessionId).map {
-        case Right((url, processCode)) =>
-          val target = controllers.routes.GuidanceController.getPage(processCode, url.drop(1), None, c, lang).url
-          logger.warn(s"Redirecting to begin viewing process $id/$processCode at ${target} using sessionId $sessionId, EG_NEW_SESSIONID = $egNewSessionId")
-          egNewSessionId.fold(Redirect(target))(newId =>
-            Redirect(target)
-              .addingToSession(sessionIdAction.EgNewSessionIdName -> newId, SessionKeys.sessionId -> sessionId)
-              .withHeaders(HeaderNames.xSessionId -> sessionId)
-          )
-        case Left(err) => errHandler(err, id, sessionId)
-      }
+      case Right((url, processCode)) =>
+        val target = controllers.routes.GuidanceController.getPage(processCode, url.drop(1), None, c, lang).url
+        logger.warn(s"Redirecting to begin viewing process $id/$processCode at ${target} using sessionId $sessionId, EG_NEW_SESSIONID = $egNewSessionId")
+        lang.foldLeft(egNewSessionId.foldLeft(Redirect(target))((redirect, newId) =>
+          redirect
+            .addingToSession(sessionIdAction.EgNewSessionIdName -> newId, SessionKeys.sessionId -> sessionId)
+            .withHeaders(HeaderNames.xSessionId -> sessionId)
+        ))((redirect, l) => {
+          val langToUse = appConfig.languageMap.getOrElse(l, languageUtils.getCurrentLang)
+          redirect.withLang(langToUse)
+        })
+      case Left(err) => errHandler(err, id, sessionId)
+    }
     }
   }
 
