@@ -3,7 +3,7 @@ $hmrc-assets-path: "/guidance/assets/lib/hmrc-frontend/hmrc/";
 
 $govuk-global-styles: true;
 
-@import "lib/govuk-frontend/dist/govuk/all";
+@import "lib/govuk-frontend/govuk/all";
 @import "lib/hmrc-frontend/hmrc/all";
 
 .app-reference-number {
