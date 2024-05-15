@@ -18,14 +18,19 @@ package services
 
 import play.api.Logging
 import config.AppConfig
+
 import javax.inject.{Inject, Singleton}
 import models.GuidanceSession
 import core.models.RequestOutcome
+
 import scala.concurrent.{ExecutionContext, Future}
-import repositories.{PageHistory, Session, SessionRepository, ProcessCacheRepository}
+import repositories.{PageHistory, ProcessCacheRepository, RawPageHistory, Session, SessionRepository}
 import models.PageNext
-import core.models.ocelot.{Process, RunMode, Label, Labels, FlowStage}
+import core.models.ocelot.{FlowStage, Label, Labels, Process, RunMode}
 import core.models.ocelot.Debugging
+
+import scala.annotation.tailrec
+import core.models.ocelot.errors.RuntimeError
 
 @Singleton
 class SessionService @Inject() (appConfig: AppConfig, sessionRepository: SessionRepository, processCacheRepository: ProcessCacheRepository) extends Logging {
@@ -66,8 +71,23 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
   }
 
   def updateForNewPage(key: String, processCode: String, pageHistory: Option[List[PageHistory]], flowStack: Option[List[FlowStage]],
-                       labelUpdates: List[Label], legalPageIds: List[String], requestId: Option[String]): Future[RequestOutcome[Unit]] =
-    sessionRepository.updateForNewPage(key, processCode, pageHistory, flowStack, labelUpdates, legalPageIds, requestId)
+                       labelUpdates: List[Label], legalPageIds: List[String], requestId: Option[String], pageMap: Map[String, PageNext]): Future[RequestOutcome[Unit]] = {
+    @tailrec
+    def getRPH(pH: List[PageHistory], rPH: List[RawPageHistory]): (List[RawPageHistory], Option[RuntimeError]) =
+    pH match {
+      case Nil => (rPH, None)
+//      case ph :: xs => RawPageHistory(pageMap.get(ph.url.drop(processCode.length)).map(_.id).get, ph.flowStack) match {
+      case ph :: xs => pageMap.get(ph.url.drop(processCode.length)).map(_.id).get match {
+        case Left(err) => (rPH, Some(err))
+        case Right(stanzId) => getRPH(xs, RawPageHistory(stanzId, ph.flowStack))
+    }
+
+//    val rawPageHistory = pageHistory.map(phl => phl.map{ph =>
+//      val stanzId = pageMap.get(ph.url.drop(processCode.length)).map(_.id).get
+//      println(stanzId) // Either [Error, List[RPH]]  edit specs
+//      RawPageHistory(stanzId, ph.flowStack)})
+    sessionRepository.updateForNewPage(key, processCode, pageHistory, rawPageHistory, flowStack, labelUpdates, legalPageIds, requestId)
+  }
 
   def updateAfterStandardPage(key: String, processCode: String, labels: Labels, requestId: Option[String]): Future[RequestOutcome[Unit]] =
     sessionRepository.updateAfterStandardPage(key, processCode, labels, requestId)
