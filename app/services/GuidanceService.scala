@@ -122,7 +122,7 @@ class GuidanceService @Inject() (
             val legalPageIds = (pageNext.id :: Process.StartStanzaId :: pageNext.linked ++
                                 backLink.fold(List.empty[String])(bl => List(sp.pageMap(bl.drop(sp.process.meta.processCode.length)).id))).distinct
 
-            sessionService.updateForNewPage(key, processCode, historyUpdate, flowStackUpdate, labelUpdates, legalPageIds, requestId, sp.pageMap).map {
+            sessionService.updateForNewPage(key, processCode, historyUpdate, flowStackUpdate, labelUpdates, legalPageIds, requestId).map {
               case Left(NotFoundError) =>
                 logger.warn(s"TRANSACTION FAULT(Recoverable): saveUpdates _id=$key, requestId: $requestId")
                 Left((TransactionFaultError, None))

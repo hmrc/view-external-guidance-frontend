@@ -71,22 +71,22 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
   }
 
   def updateForNewPage(key: String, processCode: String, pageHistory: Option[List[PageHistory]], flowStack: Option[List[FlowStage]],
-                       labelUpdates: List[Label], legalPageIds: List[String], requestId: Option[String], pageMap: Map[String, PageNext]): Future[RequestOutcome[Unit]] = {
-    @tailrec
-    def getRPH(pH: List[PageHistory], rPH: List[RawPageHistory]): (List[RawPageHistory], Option[RuntimeError]) =
-    pH match {
-      case Nil => (rPH, None)
-//      case ph :: xs => RawPageHistory(pageMap.get(ph.url.drop(processCode.length)).map(_.id).get, ph.flowStack) match {
-      case ph :: xs => pageMap.get(ph.url.drop(processCode.length)).map(_.id).get match {
-        case Left(err) => (rPH, Some(err))
-        case Right(stanzId) => getRPH(xs, RawPageHistory(stanzId, ph.flowStack))
-    }
+                       labelUpdates: List[Label], legalPageIds: List[String], requestId: Option[String]): Future[RequestOutcome[Unit]] = {
+
+//      match {
+//        case None => (rPH, Some(err))
+//        case Right(stanzId) => getRPH(xs, RawPageHistory(stanzId, ph.flowStack))
+//    }
 
 //    val rawPageHistory = pageHistory.map(phl => phl.map{ph =>
 //      val stanzId = pageMap.get(ph.url.drop(processCode.length)).map(_.id).get
 //      println(stanzId) // Either [Error, List[RPH]]  edit specs
 //      RawPageHistory(stanzId, ph.flowStack)})
-    sessionRepository.updateForNewPage(key, processCode, pageHistory, rawPageHistory, flowStack, labelUpdates, legalPageIds, requestId)
+    sessionRepository.updateForNewPage(key, processCode, pageHistory, flowStack, labelUpdates, legalPageIds, requestId)
+//  def test(rawPageHistory: List[RawPageHistory]): (String, List[RawPageHistory], Option[RuntimeError]) =
+//    getRPH(pageHistory.get, rawPageHistory) match {
+//      case (rawPH, err) => (pageMap.get(pH, rawPH, err)
+//    }
   }
 
   def updateAfterStandardPage(key: String, processCode: String, labels: Labels, requestId: Option[String]): Future[RequestOutcome[Unit]] =
@@ -101,6 +101,18 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
     processCacheRepository.get(processId, session.processVersion, session.timescalesVersion, session.ratesVersion).map{
       case Right(cachedProcess) => Right(GuidanceSession(session, cachedProcess.process, cachedProcess.pageMap))
       case Left(err) => Left(err)
+    }
+  }
+
+  @tailrec
+  final private[services] def getRPH(pageHistory: List[PageHistory], pageMap: Map[String, PageNext], processCode: String, acc: List[RawPageHistory] = Nil): Option[List[RawPageHistory]] = {
+    pageHistory match {
+      case Nil => Some(acc.reverse)
+      case x :: xs =>
+        pageMap.get(x.url.drop(processCode.length)).map(_.id) match {
+          case None => None
+          case Some(id) => getRPH(xs, pageMap, processCode, RawPageHistory(id, x.flowStack) :: acc)
+      }
     }
   }
 
