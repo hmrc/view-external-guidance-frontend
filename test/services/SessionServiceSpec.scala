@@ -21,7 +21,7 @@ import core.models.errors.DatabaseError
 import core.models.ocelot.{Process, Published, ProcessJson}
 import mocks._
 import models._
-import repositories.{SessionKey, Session}
+import repositories.{SessionKey, Session, PageHistory}
 import uk.gov.hmrc.http.{HeaderCarrier, RequestId}
 import scala.concurrent.Future
 import java.time.Instant
@@ -133,4 +133,31 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
     }
   }
 
+  "SessionService rawPageHistory" should {
+    "Convert valid pageHistory" in new Test {
+      val pageHistory = List(PageHistory(s"$processCode/start", Nil), PageHistory(s"$processCode/next", Nil), PageHistory(s"$processCode/somepage", Nil), PageHistory(s"$processCode/another", Nil))
+      val pageMap = Map("/start" -> PageNext("start"), "/next" -> PageNext("1"), "/somepage" -> PageNext("2"), "/another" -> PageNext("3"))
+
+      val result = target.rawPageHistory(pageHistory, pageMap, processCode)
+
+      result match {
+        case None => fail()
+        case Some(rph) =>
+          rph.length shouldBe pageHistory.length
+          println(rph)
+      }
+    }
+
+    "Fail to convert invalid pageHistory" in new Test {
+      val pageHistory = List(PageHistory(s"$processCode/start", Nil), PageHistory(s"$processCode/unknown", Nil), PageHistory(s"$processCode/somepage", Nil), PageHistory(s"$processCode/another", Nil))
+      val pageMap = Map("/start" -> PageNext("start"), "/somepage" -> PageNext("2"), "/another" -> PageNext("3"))
+
+      val result = target.rawPageHistory(pageHistory, pageMap, processCode)
+
+      result match {
+        case None => succeed
+        case Some(rph) => fail()
+      }
+    }
+  }
 }

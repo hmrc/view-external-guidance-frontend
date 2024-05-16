@@ -36,3 +36,17 @@ object PageHistory {
       (__ \ "flowStack").write[List[FlowStage]]
   )(unlift(PageHistory.unapply))
 }
+
+final case class RawPageHistory(id: String, flowStack: List[FlowStage])
+
+object RawPageHistory {
+  implicit val reads: Reads[RawPageHistory] = (
+    (__ \ "id").read[String] and
+      (__ \ "flowStack").read[List[FlowStage]]
+  )(RawPageHistory.apply _)
+
+  implicit val writes: Writes[RawPageHistory] = (
+    (__ \ "id").write[String] and
+      (__ \ "flowStack").write[List[FlowStage]]
+  )(unlift(RawPageHistory.unapply))
+}

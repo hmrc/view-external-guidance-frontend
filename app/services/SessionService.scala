@@ -22,10 +22,11 @@ import javax.inject.{Inject, Singleton}
 import models.GuidanceSession
 import core.models.RequestOutcome
 import scala.concurrent.{ExecutionContext, Future}
-import repositories.{PageHistory, Session, SessionRepository, ProcessCacheRepository}
+import repositories.{PageHistory, RawPageHistory, Session, SessionRepository, ProcessCacheRepository}
 import models.PageNext
 import core.models.ocelot.{Process, RunMode, Label, Labels, FlowStage}
 import core.models.ocelot.Debugging
+import scala.annotation.tailrec
 
 @Singleton
 class SessionService @Inject() (appConfig: AppConfig, sessionRepository: SessionRepository, processCacheRepository: ProcessCacheRepository) extends Logging {
@@ -82,5 +83,17 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
       case Left(err) => Left(err)
     }
   }
+
+  @tailrec
+  final private[services] def rawPageHistory(pageHistory: List[PageHistory], pageMap: Map[String, PageNext], processCode: String, acc: List[RawPageHistory] = Nil): Option[List[RawPageHistory]] =
+    pageHistory match {
+      case Nil => Some(acc.reverse)
+      case x :: xs =>
+        pageMap.get(x.url.drop(processCode.length)).map(_.id) match {
+          case None => None
+          case Some(id) => rawPageHistory(xs, pageMap, processCode, RawPageHistory(id, x.flowStack) :: acc)
+        }
+    }
+
 
 }
