@@ -30,7 +30,6 @@ import core.models.ocelot.{FlowStage, Label, Labels, Process, RunMode}
 import core.models.ocelot.Debugging
 
 import scala.annotation.tailrec
-import core.models.ocelot.errors.RuntimeError
 
 @Singleton
 class SessionService @Inject() (appConfig: AppConfig, sessionRepository: SessionRepository, processCacheRepository: ProcessCacheRepository) extends Logging {
@@ -72,21 +71,7 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
 
   def updateForNewPage(key: String, processCode: String, pageHistory: Option[List[PageHistory]], flowStack: Option[List[FlowStage]],
                        labelUpdates: List[Label], legalPageIds: List[String], requestId: Option[String]): Future[RequestOutcome[Unit]] = {
-
-//      match {
-//        case None => (rPH, Some(err))
-//        case Right(stanzId) => getRPH(xs, RawPageHistory(stanzId, ph.flowStack))
-//    }
-
-//    val rawPageHistory = pageHistory.map(phl => phl.map{ph =>
-//      val stanzId = pageMap.get(ph.url.drop(processCode.length)).map(_.id).get
-//      println(stanzId) // Either [Error, List[RPH]]  edit specs
-//      RawPageHistory(stanzId, ph.flowStack)})
     sessionRepository.updateForNewPage(key, processCode, pageHistory, flowStack, labelUpdates, legalPageIds, requestId)
-//  def test(rawPageHistory: List[RawPageHistory]): (String, List[RawPageHistory], Option[RuntimeError]) =
-//    getRPH(pageHistory.get, rawPageHistory) match {
-//      case (rawPH, err) => (pageMap.get(pH, rawPH, err)
-//    }
   }
 
   def updateAfterStandardPage(key: String, processCode: String, labels: Labels, requestId: Option[String]): Future[RequestOutcome[Unit]] =
