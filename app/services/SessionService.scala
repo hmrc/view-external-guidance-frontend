@@ -84,7 +84,9 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
   private[services] def guidanceSession(session: Session)(implicit context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] = {
     val processId = if (session.runMode.equals(Some(Debugging))) s"${session.processId}${processCacheRepository.DebugIdSuffix}" else session.processId
     processCacheRepository.get(processId, session.processVersion, session.timescalesVersion, session.ratesVersion).map{
-      case Right(cachedProcess) => Right(GuidanceSession(session, cachedProcess.process, cachedProcess.pageMap))
+      case Right(cachedProcess) =>
+        val realPageHistoryList = getRPH(session.pageHistory, cachedProcess.pageMap, cachedProcess.process.meta.processCode)
+        Right(GuidanceSession(session, cachedProcess.process, cachedProcess.pageMap))
       case Left(err) => Left(err)
     }
   }
