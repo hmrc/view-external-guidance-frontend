@@ -69,9 +69,9 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
     }
   }
 
-  def updateForNewPage(key: String, processCode: String, pageHistory: Option[List[PageHistory]], flowStack: Option[List[FlowStage]],
+  def updateForNewPage(key: String, processCode: String, pageMap:Map[String, PageNext], pageHistory: Option[List[PageHistory]], flowStack: Option[List[FlowStage]],
                        labelUpdates: List[Label], legalPageIds: List[String], requestId: Option[String]): Future[RequestOutcome[Unit]] = {
-    sessionRepository.updateForNewPage(key, processCode, pageHistory, flowStack, labelUpdates, legalPageIds, requestId)
+    sessionRepository.updateForNewPage(key, processCode, pageHistory, transformPageHistory(pageHistory, pageMap, processCode), flowStack, labelUpdates, legalPageIds, requestId)
   }
 
   def updateAfterStandardPage(key: String, processCode: String, labels: Labels, requestId: Option[String]): Future[RequestOutcome[Unit]] =
@@ -84,23 +84,25 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
   private[services] def guidanceSession(session: Session)(implicit context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] = {
     val processId = if (session.runMode.equals(Some(Debugging))) s"${session.processId}${processCacheRepository.DebugIdSuffix}" else session.processId
     processCacheRepository.get(processId, session.processVersion, session.timescalesVersion, session.ratesVersion).map{
-      case Right(cachedProcess) =>
-        val realPageHistoryList = getRPH(session.pageHistory, cachedProcess.pageMap, cachedProcess.process.meta.processCode)
-        Right(GuidanceSession(session, cachedProcess.process, cachedProcess.pageMap))
+      case Right(cachedProcess) => Right(GuidanceSession(session, cachedProcess.process, cachedProcess.pageMap))
       case Left(err) => Left(err)
     }
   }
 
-  @tailrec
-  final private[services] def getRPH(pageHistory: List[PageHistory], pageMap: Map[String, PageNext], processCode: String, acc: List[RawPageHistory] = Nil): Option[List[RawPageHistory]] = {
-    pageHistory match {
-      case Nil => Some(acc.reverse)
-      case x :: xs =>
-        pageMap.get(x.url.drop(processCode.length)).map(_.id) match {
-          case None => None
-          case Some(id) => getRPH(xs, pageMap, processCode, RawPageHistory(id, x.flowStack) :: acc)
+
+  final private[services] def transformPageHistory(pageHistory: Option[List[PageHistory]], pageMap: Map[String, PageNext], processCode: String): Option[List[RawPageHistory]] = {
+    @tailrec
+    def rawPageHistory(ph: List[PageHistory], acc: List[RawPageHistory] = Nil): Option[List[RawPageHistory]] = {
+      ph match {
+        case Nil => Some(acc.reverse)
+        case x :: xs =>
+          pageMap.get(x.url.drop(processCode.length)) match {
+            case None => None
+            case Some(pg) => rawPageHistory(xs, RawPageHistory(pg.id, x.flowStack) :: acc)
+          }
       }
     }
+    pageHistory.flatMap(rawPageHistory(_))
   }
 
 }
