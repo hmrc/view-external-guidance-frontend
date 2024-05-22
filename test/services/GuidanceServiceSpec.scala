@@ -65,6 +65,7 @@ class GuidanceServiceSpec extends BaseSpec {
 
     val processId = "oct90001"
     val processCode = "CupOfTea"
+    val pageMap: Map[String, PageNext] = Map("/first-page" -> PageNext("start"), "/page-1" -> PageNext("1"), "/last-page" -> PageNext("2"))
     val uuid = "683d9aa0-2a0e-4e28-9ac8-65ce453d2730"
     val sessionRepoId = "683d9aa0-2a0e-4e28-9ac8-65ce453d2731"
     val requestId: Option[String] = Some(rId)
@@ -214,6 +215,7 @@ class GuidanceServiceSpec extends BaseSpec {
     "retrieve a page for the process" in new Test {
 
       override val processCode = "cup-of-tea"
+      override val pageMap = Map(lastPageUrl -> PageNext("2",List(),List(),None,None))
 
       MockSessionService
         .get(sessionRepoId, processCode, requestId)
@@ -246,7 +248,7 @@ class GuidanceServiceSpec extends BaseSpec {
         .returns(Right(lastUiPage))
 
       MockSessionService
-        .updateForNewPage(sessionRepoId, processCode, Some(List(PageHistory("cup-of-tea/last-page",Nil))), None, Nil, List("2", "start"), requestId)
+        .updateForNewPage(sessionRepoId, processCode, pageMap, Some(List(PageHistory("cup-of-tea/last-page",Nil))), None, Nil, List("2", "start"), requestId)
         .returns(Future.successful(Right(())))
 
       private val result = target.getPageContext(processCode, lastPageUrl, previousPageByLink = false, sessionRepoId)
@@ -263,6 +265,8 @@ class GuidanceServiceSpec extends BaseSpec {
     "retrieve a page for the process" in new Test {
 
       override val processCode = "cup-of-tea"
+      override val pageMap = Map(lastPageUrl -> PageNext("2",List(),List(),None,None))
+
       val nonTerminatingPageError = Error(Error.ExecutionError, List(NonTerminatingPageError), Some(Scratch), Some("1"))
        MockSessionService
         .get(sessionRepoId, processCode, requestId)
@@ -279,7 +283,7 @@ class GuidanceServiceSpec extends BaseSpec {
         )))
 
       MockSessionService
-        .updateForNewPage(sessionRepoId, processCode, Some(List(PageHistory("cup-of-tea/last-page",Nil))), None, Nil, List("2", "start"), requestId)
+        .updateForNewPage(sessionRepoId, processCode, pageMap, Some(List(PageHistory("cup-of-tea/last-page",Nil))), None, Nil, List("2", "start"), requestId)
         .returns(Future.successful(Right(())))
 
       MockPageBuilder
@@ -307,6 +311,8 @@ class GuidanceServiceSpec extends BaseSpec {
 
       override val processCode = "tell-hmrc"
 
+      override val pageMap = Map(lastPageUrl -> PageNext("2",List(),List(),None,None))
+
       MockSessionService
         .get(sessionRepoId, processCode, requestId)
         .returns(Future.successful(Right(
@@ -322,7 +328,7 @@ class GuidanceServiceSpec extends BaseSpec {
         )))
 
       MockSessionService
-        .updateForNewPage(sessionRepoId, processCode, Some(List(PageHistory("tell-hmrc/last-page",Nil))), None, Nil, List("2", "start"), requestId)
+        .updateForNewPage(sessionRepoId, processCode, pageMap, Some(List(PageHistory("tell-hmrc/last-page",Nil))), None, Nil, List("2", "start"), requestId)
         .returns(Future.successful(Right(())))
 
       MockPageBuilder

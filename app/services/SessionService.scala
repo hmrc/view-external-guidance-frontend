@@ -69,7 +69,7 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
     }
   }
 
-  def updateForNewPage(key: String, processCode: String, pageMap:Map[String, PageNext], pageHistory: Option[List[PageHistory]], flowStack: Option[List[FlowStage]],
+  def updateForNewPage(key: String, processCode: String, pageMap: Map[String, PageNext], pageHistory: Option[List[PageHistory]], flowStack: Option[List[FlowStage]],
                        labelUpdates: List[Label], legalPageIds: List[String], requestId: Option[String]): Future[RequestOutcome[Unit]] = {
     sessionRepository.updateForNewPage(key, processCode, pageHistory, transformPageHistory(pageHistory, pageMap, processCode), flowStack, labelUpdates, legalPageIds, requestId)
   }
