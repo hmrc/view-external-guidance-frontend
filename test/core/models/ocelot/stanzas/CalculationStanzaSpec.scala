@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -469,7 +469,7 @@ class CalculationStanzaSpec extends BaseSpec {
         case JsSuccess(_, _) => fail("A process should not be created from invalid JSON")
         case JsError(errs) => GuidanceError.fromJsonValidationErrors(errs) match {
             case Nil => fail("Nothing to match from guidance error conversion")
-            case UnknownCalcOperationType("3", sqrt) +: _ => succeed
+            case UnknownCalcOperationType("3", this.sqrt) +: _ => succeed
             case _ => fail("An error occurred processing Json validation errors")
           }
       }
@@ -487,7 +487,7 @@ class CalculationStanzaSpec extends BaseSpec {
           error match {
             case Nil => fail("Nothing to match from guidance error conversion")
             case UnknownCalcOperationType("3", "false") +: _ => succeed
-            case errs => fail("An error occurred processing Json validation errors")
+            case _ => fail("An error occurred processing Json validation errors")
           }
       }
     }

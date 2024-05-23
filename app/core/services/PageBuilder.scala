@@ -23,8 +23,6 @@ import core.models.ocelot.errors._
 import play.api.Logger
 import scala.annotation.tailrec
 
-
-
 @Singleton
 class PageBuilder @Inject() (val timescales: Timescales) extends ProcessPopulation(timescales) {
   val logger: Logger = Logger(getClass)
