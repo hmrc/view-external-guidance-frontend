@@ -30,7 +30,8 @@ import core.models.ocelot.Debugging
 @Singleton
 class SessionService @Inject() (appConfig: AppConfig, sessionRepository: SessionRepository, processCacheRepository: ProcessCacheRepository) extends Logging {
 
-  def create(id: String, runMode: RunMode, process: Process, pageMap: Map[String, PageNext], legalPageIds: List[String])(implicit ec: ExecutionContext): Future[RequestOutcome[Unit]] = {
+  def create(id: String, runMode: RunMode, process: Process, pageMap: Map[String, PageNext], legalPageIds: List[String])
+            (implicit ec: ExecutionContext): Future[RequestOutcome[Unit]] = {
     logger.warn(s"Attempting to create a session sessionId: $id and processId: ${process.meta.id}")
     sessionRepository.create(id, process.meta, runMode, legalPageIds).flatMap{
       case Right(_) => processCacheRepository.create(process, pageMap, runMode).map{

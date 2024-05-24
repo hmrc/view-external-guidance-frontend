@@ -96,7 +96,10 @@ class PageRenderer @Inject() (appConfig: AppConfig) {
 
   @tailrec
    private def evaluateStanzas(stanzaId: String, labels: Labels, visualStanzas: Seq[VisualStanza] = Nil, seen: Seq[String] = Nil, stanzaCount: Int = 0)
-                              (implicit stanzaMap: Map[String, Stanza], messages: Messages): RenderOutcome[(Seq[VisualStanza], Labels, Seq[String], String, Option[DataInput])] =
+                              (implicit stanzaMap: Map[String, Stanza], messages: Messages): RenderOutcome[(Seq[VisualStanza],
+                                                                                                            Labels, Seq[String],
+                                                                                                            String,
+                                                                                                            Option[DataInput])] =
     stanzaMap.get(stanzaId) match {
       case None => Right((visualStanzas, labels, seen, stanzaId, None))
       case Some(s) if stanzaCount < appConfig.pageStanzaLimit  => s match { // Limit stanzas within page to catch non-terminating loops in guidance
@@ -109,11 +112,16 @@ class PageRenderer @Inject() (appConfig: AppConfig) {
             case (nxt, updatedLabels, None) => evaluateStanzas(nxt, updatedLabels, visualStanzas, seen :+ stanzaId, stanzaCount + 1)
             case (_, updatedLabels, Some(err)) => Left((executionError(err, stanzaId, labels.runMode), updatedLabels))
           }
-        case s: VisualStanza => evaluateStanzas(s.next.head, labels, visualStanzas :+ s.rendered(TextBuilder.expandLabels(labels)), seen :+ stanzaId, stanzaCount + 1)
+        case s: VisualStanza => evaluateStanzas(s.next.head,
+                                                labels,
+                                                visualStanzas :+ s.rendered(TextBuilder.expandLabels(labels)),
+                                                seen :+ stanzaId,
+                                                stanzaCount + 1)
         case _ => Left((executionError(ProgrammingError("Unknown stanza without Evaluate"), stanzaId, labels.runMode), labels))
       }
       case Some(s) => Left((executionError(NonTerminatingPageError, stanzaId, labels.runMode), labels))
     }
 
-  private def executionError(err: RuntimeError, stanzId: String, runMode: RunMode): Error = Error(Error.ExecutionError, List(err), Some(runMode), Some(stanzId))
+  private def executionError(err: RuntimeError, stanzId: String, runMode: RunMode): Error =
+    Error(Error.ExecutionError, List(err), Some(runMode), Some(stanzId))
 }

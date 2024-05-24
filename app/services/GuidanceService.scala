@@ -61,7 +61,8 @@ class GuidanceService @Inject() (
 
   def deleteSession(processCode: String, sessionId: String): Future[RequestOutcome[Unit]] = sessionService.delete(sessionId, processCode)
 
-  def getSubmitPageContext(pec: PageEvaluationContext, errStrategy: ErrorStrategy = NoError)(implicit messages: Messages): DebuggableRequestOutcome[PageContext] =
+  def getSubmitPageContext(pec: PageEvaluationContext, errStrategy: ErrorStrategy = NoError)
+                          (implicit messages: Messages): DebuggableRequestOutcome[PageContext] =
     pageRenderer.renderPage(pec.page, pec.labels) match {
       case Left((err, updatedLabels)) =>
         logger.error(s"Execution error $err on page ${pec.page.id} of processCode ${pec.processCode}")
@@ -168,7 +169,6 @@ class GuidanceService @Inject() (
   def submitPage(ctx: PageEvaluationContext, url: String, validatedAnswer: String, submittedAnswer: String)
                 (implicit hc: HeaderCarrier, context: ExecutionContext, messages: Messages): Future[DebuggableRequestOutcome[(Option[String], Labels)]] =
     pageRenderer.renderPagePostSubmit(ctx.page, ctx.labels, validatedAnswer) match {
-
       case Left((err, updatedLabels)) => Future.successful(Left((err, ctx.debugInformation.map(_.copy(postRenderLabels = Some(updatedLabels))))))
       case Right((optionalNext, labels)) =>
         val requestId: Option[String] = hc.requestId.map(_.value)
@@ -182,7 +182,7 @@ class GuidanceService @Inject() (
                                                    List(next), 
                                                    requestId).map{
             case Left(NotFoundError) =>
-              logger.warn(s"TRANSACTION FAULT(Recoverable): saveFormPageState _id=${ctx.sessionId}, url: $url, answer: $validatedAnswer, requestId: ${requestId}")
+              logger.warn(s"TRANSACTION FAULT(Recoverable): saveFormPageState _id=${ctx.sessionId}, url:$url, answer:$validatedAnswer, requestId:${requestId}")
               Left((TransactionFaultError, ctx.debugInformation))
             case Left(err) =>
               logger.error(s"Failed to save updated labels, error = $err")

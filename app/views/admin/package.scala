@@ -19,7 +19,6 @@ package views
 import core.models.ocelot.stanzas._
 
 // $COVERAGE-OFF$
-
 package object admin {
   def stanzaTypeName(s: PopulatedStanza): String =
     s match {
@@ -75,8 +74,10 @@ package object admin {
       case _: ContainsTest => "contains"
     }
 
-  def renderIds(ids: Seq[String], pageStanzaIds: Seq[String])(implicit externalLinks: Boolean): String = ids.map(renderId(_, pageStanzaIds)).mkString(", ")
-  def renderNext(nxt: Seq[String], pageStanzaIds: Seq[String])(implicit externalLinks: Boolean): String = nxt.headOption.fold("")(id => renderId(id, pageStanzaIds))
+  def renderIds(ids: Seq[String], pageStanzaIds: Seq[String])
+               (implicit externalLinks: Boolean): String = ids.map(renderId(_, pageStanzaIds)).mkString(", ")
+  def renderNext(nxt: Seq[String], pageStanzaIds: Seq[String])
+                (implicit externalLinks: Boolean): String = nxt.headOption.fold("")(id => renderId(id, pageStanzaIds))
   def renderId(id: String, pageStanzaIds: Seq[String])(implicit externalLinks: Boolean): String = 
     (pageStanzaIds.contains(id), externalLinks) match {
       case (true, true) => s"<a href='#$id'>$id</a>"

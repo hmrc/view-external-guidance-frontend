@@ -115,7 +115,13 @@ class GuidanceController @Inject() (
     }
   }
 
-  private def translateGetPageError(err: Error, processCode: String, path: String, c: Option[String], lang: Option[String], sessionId: Option[String], debugInformation: Option[DebugInformation])
+  private def translateGetPageError(err: Error,
+                                    processCode: String,
+                                    path: String,
+                                    c: Option[String],
+                                    lang: Option[String],
+                                    sessionId: Option[String],
+                                    debugInformation: Option[DebugInformation])
                                    (implicit request: Request[_]): Future[Result] = err match {
     case ForbiddenError =>
       redirectToActiveSessionFallbackRestart(processCode, "ForbiddenError")
@@ -138,7 +144,8 @@ class GuidanceController @Inject() (
       logger.warn(s"ExpectationFailed error on getPage. Redirecting to ${appConfig.baseUrl}/$processCode")
       Future.successful(redirectToGuidanceStartWhenNoSession(processCode, lang))
     case Error(Error.ExecutionError, errs, Some(errorRunMode), stanzaId) =>
-      Future.successful(translateExecutionError(err.errors.collect{case e: RuntimeError => e}, processCode, path, errorRunMode, stanzaId, sessionId, debugInformation))
+      Future.successful(translateExecutionError(err.errors.collect{case e: RuntimeError => e},
+                                                processCode, path, errorRunMode, stanzaId, sessionId, debugInformation))
     case err =>
       logger.error(s"Request for PageContext at /$path returned $err, returning InternalServerError")
       Future.successful(InternalServerError(errorHandler.internalServerErrorTemplate))
@@ -189,7 +196,11 @@ class GuidanceController @Inject() (
     }
   }
 
-  private def translateSubmitError(err: Error, processCode: String, path: String, sessionId: Option[String], debugInformation: Option[DebugInformation])(implicit request: Request[_]): Future[Result] = err match {
+  private def translateSubmitError(err: Error,
+                                   processCode: String,
+                                   path: String,
+                                   sessionId: Option[String],
+                                   debugInformation: Option[DebugInformation])(implicit request: Request[_]): Future[Result] = err match {
     case IllegalPageSubmissionError =>
       redirectToActiveSessionFallbackRestart(processCode, "IllegalPageSubmissionError")
     case TransactionFaultError =>
@@ -209,7 +220,8 @@ class GuidanceController @Inject() (
       logger.warn(s"Request for page at /$path returned SessionNotFound. Redirect to ${appConfig.baseUrl}/$processCode")
       Future.successful(redirectToGuidanceStart(processCode))
     case Error(Error.ExecutionError, errs, Some(errorRunMode), stanzaId) =>
-      Future.successful(translateExecutionError(err.errors.collect{case e: RuntimeError => e}, processCode, path, errorRunMode, stanzaId, sessionId, debugInformation))
+      Future.successful(translateExecutionError(err.errors.collect{case e: RuntimeError => e},
+                                                processCode, path, errorRunMode, stanzaId, sessionId, debugInformation))
     case err =>
       logger.error(s"Request for PageContext at /$path returned $err during form submission, returning InternalServerError")
       Future.successful(InternalServerError(errorHandler.internalServerErrorTemplate))
@@ -230,7 +242,8 @@ class GuidanceController @Inject() (
         errorMsgs.foreach{err => logger.error(s"RuntimeError: $err within page /$path of processCode ${processCode}, sessionId=$sessionId")}
         InternalServerError(errorHandler.internalServerErrorTemplate)
       case Debugging =>
-        InternalServerError(errorHandler.runtimeErrorHandler(processCode, errorMsgs, errorSolutions(errors, stanzaId.getOrElse("UNKNOWN")), stanzaId, debugInformation))
+        InternalServerError(errorHandler.runtimeErrorHandler(processCode, errorMsgs,
+                                                             errorSolutions(errors, stanzaId.getOrElse("UNKNOWN")), stanzaId, debugInformation))
       case _ =>
         errorMsgs.foreach{err => logger.warn(s"RuntimeError: $err within page /$path of processCode ${processCode}, sessionId=$sessionId")}
         InternalServerError(errorHandler.runtimeErrorHandler(processCode, errorMsgs, errorSolutions(errors, stanzaId.getOrElse("UNKNOWN")), stanzaId, None))

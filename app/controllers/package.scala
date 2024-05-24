@@ -22,7 +22,6 @@ import core.models.ocelot.UrlPathPattern
 import uk.gov.hmrc.http.SessionKeys
 import play.api.mvc.Request
 
-
 package object controllers {
   val SessionIdPrefix: String = "session-"
   val RedirectWhenNoSessionUrlParam: String = "c=1"
