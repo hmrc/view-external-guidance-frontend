@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package core.models
+package core.services
 
-trait GuidanceCheckLevel
+import core.models.ocelot.Process
 
-case object Tolerant extends GuidanceCheckLevel
-case object Strict extends GuidanceCheckLevel
+trait LabelledDataExpansion{
+  def expand(text: String, process: Process): String
+}

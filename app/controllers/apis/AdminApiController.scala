@@ -27,7 +27,6 @@ import play.api.Logging
 import models.admin.CachedProcessSummary
 import core.models.errors.CachedProcessNotFoundError
 
-
 @Singleton
 class AdminApiController @Inject() (appConfig: AppConfig, processCacheRepository: ProcessCacheRepository, mcc: MessagesControllerComponents) 
   extends FrontendController(mcc) with Logging {

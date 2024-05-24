@@ -84,7 +84,11 @@ class RetrieveAndCacheService @Inject() (
         )
     }
 
-  private def retrieveAndCache(processCode: String, docId: String, retrieveProcessById: Retrieve[Process], runMode: RunMode, url: Option[String] = None): Future[RequestOutcome[(String,String)]] =
+  private def retrieveAndCache(processCode: String,
+                               docId: String,
+                               retrieveProcessById: Retrieve[Process],
+                               runMode: RunMode,
+                               url: Option[String] = None): Future[RequestOutcome[(String,String)]] =
     retrieve(processCode, retrieveProcessById).flatMap {
       case Left(err) =>
         logger.warn(s"Unable to process using identifier $processCode, received $err")

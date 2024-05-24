@@ -23,5 +23,3 @@ object ConfirmationPanel {
   def apply(text: Text) : ConfirmationPanel = ConfirmationPanel(text, Nil)
   
 }
-
-

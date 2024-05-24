@@ -70,7 +70,9 @@ class StartGuidanceController @Inject() (
     retrieveCacheAndRedirectToView(processId, service.retrieveAndCacheApprovalDebugging, defaultErrorHandler)
   }
 
-  def publishedWithDebugging(processCode: String, c: Option[String] = None, lang: Option[String] = None): Action[AnyContent] = Action.async { implicit request =>
+  def publishedWithDebugging(processCode: String,
+                             c: Option[String] = None,
+                             lang: Option[String] = None): Action[AnyContent] = Action.async { implicit request =>
     logger.warn(s"ST: Starting publish journey for $processCode, lang = $lang")
     retrieveCacheAndRedirectToView(processCode, service.retrieveAndCachePublishedDebugging, publishedErrorHandler, c, lang)
   }
@@ -83,7 +85,7 @@ class StartGuidanceController @Inject() (
                                               implicit request: Request[_]
                                             ): Future[Result] = {
     val (sessionId, egNewSessionId) = existingOrNewSessionId()
-    logger.warn(s"Calling Retrieve and cache service for process $id using sessionId = $sessionId, EG = ${egNewSessionId}, request id: ${hc.requestId.map(_.value)}")
+    logger.warn(s"Retrieve and cache service for process $id using sessionId = $sessionId, EG = ${egNewSessionId}, request id: ${hc.requestId.map(_.value)}")
     validateUrl(id).fold {
       logger.warn(s"Invalid process code $id, code contains unsupported characters. Returning NotFound")
       Future.successful(NotFound(errorHandler.notFoundTemplateWithProcessCode(None)))

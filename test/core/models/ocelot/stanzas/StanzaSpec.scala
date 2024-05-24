@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,7 +83,7 @@ class StanzaSpec extends BaseSpec {
 
       val stanza: Stanza = validValueStanzaJson.as[Stanza]
 
-      stanza shouldBe ValueStanza(List(Value(ScalarType, pageNameLabel, pageName), Value(ScalarType, pageUrlLabel, pageUrl)), Seq(next), false)
+      stanza shouldBe ValueStanza(List(Value(ScalarType, pageNameLabel, pageName), Value(ScalarType, pageUrlLabel, pageUrl)), Seq(next), stack = false)
     }
 
   }

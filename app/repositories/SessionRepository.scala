@@ -122,7 +122,14 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
 
   def create(id: String, meta: Meta, runMode: RunMode, legalPageIds: List[String]): Future[RequestOutcome[Unit]] =
     collection.findOneAndReplace(equal("_id", SessionKey(id, meta.processCode)),
-                                 Session(SessionKey(id, meta.processCode), runMode, meta.id, meta.lastUpdate, legalPageIds, Instant.now, meta.timescalesVersion, meta.ratesVersion),
+                                 Session(SessionKey(id, meta.processCode),
+                                         runMode,
+                                         meta.id,
+                                         meta.lastUpdate,
+                                         legalPageIds,
+                                         Instant.now,
+                                         meta.timescalesVersion,
+                                         meta.ratesVersion),
                                  FindOneAndReplaceOptions().upsert(true))
     .toFutureOption()
     .map{
@@ -241,7 +248,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
       case _ => Right({})
     }
     .recover{ case lastError =>
-      logger.error(s"Error $lastError while trying to update question answers and labels within session repo with _id=$key, answerId: $answerId, answer: $answer")
+      logger.error(s"Error $lastError updating question answers and labels within session repo with _id=$key, answerId: $answerId, answer: $answer")
       Left(DatabaseError)
     }
 
