@@ -284,7 +284,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
 
     val brokenLinkPhrase = Phrase(Vector("Hello [link:Blah Blah:htts://www.bbc.co.uk]", "Welsh: Hello [link:Blah Blah:htts://www.bbc.co.uk]"))
     // for multi page testing
-    val pageBuilder: PageBuilder = new PageBuilder(new Timescales(new DefaultTodayProvider))
+    val pageBuilder: PageBuilder = new PageBuilder(new LabelledData(new Timescales(new DefaultTodayProvider), new Rates()))
     val stanzaPages = pageBuilder.pages(prototypeJson.as[Process]).getOrElse(Seq.empty)
     val prototypeUrlMap = stanzaPages.map(p => (p.id, p.url)).toMap
 
