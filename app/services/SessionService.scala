@@ -71,7 +71,7 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
 
   def updateForNewPage(key: String, processCode: String, pageMap: Map[String, PageNext], pageHistory: Option[List[PageHistory]], flowStack: Option[List[FlowStage]],
                        labelUpdates: List[Label], legalPageIds: List[String], requestId: Option[String]): Future[RequestOutcome[Unit]] = {
-    sessionRepository.updateForNewPage(key, processCode, pageHistory, transformPageHistory(pageHistory, pageMap, processCode), flowStack, labelUpdates, legalPageIds, requestId)
+    sessionRepository.updateForNewPage(key, processCode, pageHistory, toRawPageHistory(pageHistory, pageMap, processCode), flowStack, labelUpdates, legalPageIds, requestId)
   }
 
   def updateAfterStandardPage(key: String, processCode: String, labels: Labels, requestId: Option[String]): Future[RequestOutcome[Unit]] =
@@ -82,15 +82,35 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
     sessionRepository.updateAfterFormSubmission(key, processCode, answerId, answer, labels, nextLegalPageIds, requestId)
 
   private[services] def guidanceSession(session: Session)(implicit context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] = {
+
+    def toPageHistory(rawPageHistory: Option[List[RawPageHistory]], pageMap: Map[String, PageNext]): Option[List[PageHistory]] = {
+      @tailrec
+      def pageHistory(rph: List[RawPageHistory], acc: List[PageHistory] = Nil): Option[List[PageHistory]] = {
+        rph match {
+          case Nil => Some(acc.reverse)
+          case x :: xs =>
+            pageMap.get(x.stanzId) match {
+              case None => None
+              case Some(pg) => pageHistory(xs, PageHistory(pg.url.get, x.flowStack) :: acc)
+            }
+        }
+      }
+      rawPageHistory.flatMap(pageHistory(_))
+    }
+
     val processId = if (session.runMode.equals(Some(Debugging))) s"${session.processId}${processCacheRepository.DebugIdSuffix}" else session.processId
     processCacheRepository.get(processId, session.processVersion, session.timescalesVersion, session.ratesVersion).map{
-      case Right(cachedProcess) => Right(GuidanceSession(session, cachedProcess.process, cachedProcess.pageMap))
+      case Right(cachedProcess) =>
+        if(session.rawPageHistory.nonEmpty) {
+          toPageHistory(Some(session.rawPageHistory), cachedProcess.pageMap)
+        }
+        Right(GuidanceSession(session, cachedProcess.process, cachedProcess.pageMap))
       case Left(err) => Left(err)
     }
   }
 
 
-  final private[services] def transformPageHistory(pageHistory: Option[List[PageHistory]], pageMap: Map[String, PageNext], processCode: String): Option[List[RawPageHistory]] = {
+  final private[services] def toRawPageHistory(pageHistory: Option[List[PageHistory]], pageMap: Map[String, PageNext], processCode: String): Option[List[RawPageHistory]] = {
     @tailrec
     def rawPageHistory(ph: List[PageHistory], acc: List[RawPageHistory] = Nil): Option[List[RawPageHistory]] = {
       ph match {

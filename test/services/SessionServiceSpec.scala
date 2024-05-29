@@ -18,14 +18,14 @@ package services
 
 import base.BaseSpec
 import core.models.errors.DatabaseError
-import core.models.ocelot.{Process, Published, ProcessJson}
+import core.models.ocelot.{Process, ProcessJson, Published}
 import mocks._
 import models._
-import repositories.{SessionKey, Session, PageHistory}
+import repositories.{CachedProcess, PageHistory, RawPageHistory, Session, SessionKey}
 import uk.gov.hmrc.http.{HeaderCarrier, RequestId}
+
 import scala.concurrent.Future
 import java.time.Instant
-import repositories.CachedProcess
 import core.models.RequestOutcome
 
 class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with MockSessionRepository {
@@ -140,11 +140,13 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
       PageHistory(s"$processCode/another", Nil))
       val pageMap = Map("/start" -> PageNext("start"), "/next" -> PageNext("1"), "/somepage" -> PageNext("2"), "/another" -> PageNext("3"))
 
-      val result = target.transformPageHistory(Some(pageHistory), pageMap, processCode)
+      val result = target.toRawPageHistory(Some(pageHistory), pageMap, processCode)
+      val expectedRawPageHistory = List(RawPageHistory("start",List()), RawPageHistory("1",List()), RawPageHistory("2",List()), RawPageHistory("3",List()))
 
       result match {
         case None => fail()
         case Some (rph) =>
+          rph shouldBe expectedRawPageHistory
           rph.length shouldBe pageHistory.length
       }
     }
@@ -153,7 +155,7 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
       val pageHistory = List(PageHistory(s"$processCode/start", Nil), PageHistory(s"$processCode/unknown", Nil), PageHistory(s"$processCode/somepage", Nil), PageHistory(s"$processCode/another", Nil))
       val pageMap = Map("/start" -> PageNext("start"), "/somepage" -> PageNext("2"), "/another" -> PageNext("3"))
 
-      val result = target.transformPageHistory(Some(pageHistory), pageMap, processCode)
+      val result = target.toRawPageHistory(Some(pageHistory), pageMap, processCode)
 
       result match {
         case None => succeed
