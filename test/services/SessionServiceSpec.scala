@@ -18,10 +18,10 @@ package services
 
 import base.BaseSpec
 import core.models.errors.DatabaseError
-import core.models.ocelot.{Process, ProcessJson, Published}
+import core.models.ocelot.{Process, Published, ProcessJson}
 import mocks._
 import models._
-import repositories.{CachedProcess, PageHistory, RawPageHistory, Session, SessionKey}
+import repositories.{SessionKey, Session, CachedProcess, PageHistory, RawPageHistory}
 import uk.gov.hmrc.http.{HeaderCarrier, RequestId}
 
 import scala.concurrent.Future

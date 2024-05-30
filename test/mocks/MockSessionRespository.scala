@@ -16,13 +16,12 @@
 
 package mocks
 
-import repositories.{PageHistory, RawPageHistory, Session, SessionRepository}
+import repositories.{Session, SessionRepository, PageHistory, RawPageHistory}
 import core.models.ocelot._
 import core.models.RequestOutcome
 import core.models.ocelot.RunMode
 import org.scalamock.handlers.CallHandler
 import org.scalamock.scalatest.MockFactory
-
 import scala.concurrent.Future
 
 trait MockSessionRepository extends MockFactory {

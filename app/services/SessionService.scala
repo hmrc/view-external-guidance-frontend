@@ -24,9 +24,9 @@ import models.GuidanceSession
 import core.models.RequestOutcome
 
 import scala.concurrent.{ExecutionContext, Future}
-import repositories.{PageHistory, ProcessCacheRepository, RawPageHistory, Session, SessionRepository}
+import repositories.{PageHistory, Session, SessionRepository, ProcessCacheRepository, RawPageHistory}
 import models.PageNext
-import core.models.ocelot.{FlowStage, Label, Labels, Process, RunMode}
+import core.models.ocelot.{Process, RunMode, Label, Labels, FlowStage}
 import core.models.ocelot.Debugging
 
 import scala.annotation.tailrec
@@ -91,7 +91,7 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
           case x :: xs =>
             pageMap.get(x.stanzId) match {
               case None => None
-              case Some(pg) => pageHistory(xs, PageHistory(pg.url.get, x.flowStack) :: acc)
+              case Some(pg) => pageHistory(xs, PageHistory(pg.url.getOrElse(""), x.flowStack) :: acc)
             }
         }
       }
@@ -102,7 +102,7 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
     processCacheRepository.get(processId, session.processVersion, session.timescalesVersion, session.ratesVersion).map{
       case Right(cachedProcess) =>
         if(session.rawPageHistory.nonEmpty) {
-          toPageHistory(Some(session.rawPageHistory), cachedProcess.pageMap)
+          toPageHistory(Some(session.rawPageHistory), cachedProcess.pageMap).getOrElse(_) :: session.pageHistory
         }
         Right(GuidanceSession(session, cachedProcess.process, cachedProcess.pageMap))
       case Left(err) => Left(err)
