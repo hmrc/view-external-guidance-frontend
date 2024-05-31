@@ -83,26 +83,23 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
 
   private[services] def guidanceSession(session: Session)(implicit context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] = {
 
-    def toPageHistory(rawPageHistory: Option[List[RawPageHistory]], pageMap: Map[String, PageNext]): Option[List[PageHistory]] = {
+    def toPageHistory(rawPageHistory: Option[List[RawPageHistory]], pageMap: Map[String, PageNext]): List[PageHistory] = {
       @tailrec
-      def pageHistory(rph: List[RawPageHistory], acc: List[PageHistory] = Nil): Option[List[PageHistory]] = {
+      def pageHistory(rph: List[RawPageHistory], acc: List[PageHistory] = Nil): List[PageHistory] = {
         rph match {
-          case Nil => Some(acc.reverse)
+          case Nil => acc.reverse
           case x :: xs =>
-            pageMap.get(x.stanzId) match {
-              case None => None
-              case Some(pg) => pageHistory(xs, PageHistory(pg.url.getOrElse(""), x.flowStack) :: acc)
-            }
+              pageHistory(xs, PageHistory(pageMap(x.stanzId).url.getOrElse(""), x.flowStack) :: acc)
         }
       }
-      rawPageHistory.flatMap(pageHistory(_))
+      rawPageHistory.flatMap(pageHistory(_)).toList
     }
 
     val processId = if (session.runMode.equals(Some(Debugging))) s"${session.processId}${processCacheRepository.DebugIdSuffix}" else session.processId
     processCacheRepository.get(processId, session.processVersion, session.timescalesVersion, session.ratesVersion).map{
       case Right(cachedProcess) =>
         if(session.rawPageHistory.nonEmpty) {
-          toPageHistory(Some(session.rawPageHistory), cachedProcess.pageMap).getOrElse(_) :: session.pageHistory
+          toPageHistory(Some(session.rawPageHistory), cachedProcess.pageMap) :: session.pageHistory
         }
         Right(GuidanceSession(session, cachedProcess.process, cachedProcess.pageMap))
       case Left(err) => Left(err)
