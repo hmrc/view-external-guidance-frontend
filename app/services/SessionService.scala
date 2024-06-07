@@ -82,34 +82,30 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
     sessionRepository.updateAfterFormSubmission(key, processCode, answerId, answer, labels, nextLegalPageIds, requestId)
 
   private[services] def guidanceSession(session: Session)(implicit context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] = {
-
-    def toPageHistory(rawPageHistory: Option[List[RawPageHistory]], pageMap: Map[String, PageNext]): List[PageHistory] = {
-      @tailrec
-      def pageHistory(rph: List[RawPageHistory], acc: List[PageHistory] = Nil): List[PageHistory] = {
-        rph match {
-          case Nil => acc.reverse
-          case x :: xs =>
-              pageHistory(xs, PageHistory(pageMap(x.stanzId).url.getOrElse(""), x.flowStack) :: acc)
-        }
-      }
-      rawPageHistory.flatMap(pageHistory(_)).toList
-    }
-
     val processId = if (session.runMode.equals(Some(Debugging))) s"${session.processId}${processCacheRepository.DebugIdSuffix}" else session.processId
     processCacheRepository.get(processId, session.processVersion, session.timescalesVersion, session.ratesVersion).map{
-      case Right(cachedProcess) =>
-        if(session.rawPageHistory.nonEmpty) {
-          toPageHistory(Some(session.rawPageHistory), cachedProcess.pageMap) :: session.pageHistory
-        }
+      case Right(cachedProcess) if session.rawPageHistory.size > session.pageHistory.size =>
+        Right(GuidanceSession(session.copy(pageHistory = toPageHistory(session.rawPageHistory, cachedProcess.pageMap)), cachedProcess.process, cachedProcess.pageMap))
+      case Right(cachedProcess) => // In-flight journey
         Right(GuidanceSession(session, cachedProcess.process, cachedProcess.pageMap))
       case Left(err) => Left(err)
     }
   }
 
+  private[services] def toPageHistory(rawPageHistory: List[RawPageHistory], pageMap: Map[String, PageNext]): List[PageHistory] = {
+    @tailrec
+    def pageHistory(rph: List[RawPageHistory], reversePageMap: Map[String, String], acc: List[PageHistory] = Nil): List[PageHistory] =
+      rph match {
+        case Nil => acc.reverse
+        case x :: xs => pageHistory(xs, reversePageMap, PageHistory(reversePageMap(x.stanzId), x.flowStack) :: acc)
+      }
+
+    pageHistory(rawPageHistory, pageMap.flatMap{case (k,v) => List((v.id, k))})
+  }
 
   final private[services] def toRawPageHistory(pageHistory: Option[List[PageHistory]], pageMap: Map[String, PageNext], processCode: String): Option[List[RawPageHistory]] = {
     @tailrec
-    def rawPageHistory(ph: List[PageHistory], acc: List[RawPageHistory] = Nil): Option[List[RawPageHistory]] = {
+    def rawPageHistory(ph: List[PageHistory], acc: List[RawPageHistory] = Nil): Option[List[RawPageHistory]] =
       ph match {
         case Nil => Some(acc.reverse)
         case x :: xs =>
@@ -118,7 +114,7 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
             case Some(pg) => rawPageHistory(xs, RawPageHistory(pg.id, x.flowStack) :: acc)
           }
       }
-    }
+
     pageHistory.flatMap(rawPageHistory(_))
   }
 

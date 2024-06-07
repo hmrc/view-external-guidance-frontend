@@ -51,7 +51,7 @@ case class GuidanceSession(process: Process,
 }
 
 object GuidanceSession {
-  def apply(sp: Session, process: Process, pageMap: Map[String, PageNext]): GuidanceSession = 
+  def apply(sp: Session, process: Process, pageMap: Map[String, PageNext]): GuidanceSession =
     GuidanceSession(process,
                     sp.answers,
                     sp.labels,
