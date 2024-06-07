@@ -19,7 +19,7 @@ package services
 import base.BaseSpec
 import core.models.ocelot._
 import core.models.ocelot.stanzas.Stanza
-import core.services.{DefaultTodayProvider, PageBuilder, Timescales}
+import core.services._
 import play.api.i18n.MessagesApi
 import play.api.libs.json._
 
@@ -34,7 +34,7 @@ class SecuredProcessBuilderSpec extends BaseSpec with ProcessJson {
   val process: Process = prototypeJson.as[Process]
   val passphraseProcess: Process = validOnePageProcessWithPassPhrase.as[Process]
   val securedProcessBuilder = new SecuredProcessBuilder(messagesApi)
-  val pageBuilder = new PageBuilder(new Timescales(new DefaultTodayProvider))
+  val pageBuilder = new PageBuilder(new LabelledData(new Timescales(new DefaultTodayProvider), new Rates()))
 
   "SecuredProcessBuilder" must {
     "create a secured process with an additional passphrase page" in {

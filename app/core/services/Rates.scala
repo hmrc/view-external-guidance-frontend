@@ -21,11 +21,14 @@ import core.models.ocelot._
 import scala.util.matching.Regex
 
 @Singleton
-class Rates @Inject() (tp: TodayProvider) extends LabelledDataExpansion {
+class Rates @Inject() () extends LabelledDataExpansion with LabelledDataReferencing{
+  val KeySeparator: String = "!"
   private val SectionId: Int = 1
   private val RateId: Int = 2
   private val YearId: Int = 3
   private val RateRegex: Regex = "\\[rate:([^:]+):([^:]+)(?::(\\d\\d\\d\\d))?\\]".r
+  private val RateIdRegex: Regex = s"^([^$KeySeparator]+)$KeySeparator([^$KeySeparator]+)(?:$KeySeparator([^$KeySeparator]+))?$$".r
+  private val RateIdFixedYearRegex: Regex = s"^([^$KeySeparator]+)$KeySeparator([^$KeySeparator]+)$KeySeparator([^$KeySeparator]+)$$".r
 
   private[services] def referencedIds(s: String): List[String] =
     RateRegex.findAllMatchIn(s).toList.flatMap{m =>
@@ -39,11 +42,12 @@ class Rates @Inject() (tp: TodayProvider) extends LabelledDataExpansion {
   def expand(str: String, process: Process): String =
     RateRegex.replaceAllIn(str, m => {
       (Option(m.group(SectionId)), Option(m.group(RateId)), Option(m.group(YearId))) match {
-        case (Some(s), Some(r), None)    => process.rates.get(rateId(s, r, Some(tp.now.getYear.toString))).fold(m.group(0))(_.bigDecimal.toPlainString)
-        case (Some(s), Some(r), Some(y)) => process.rates.get(rateId(s, r, Some(y))).fold(m.group(0))(_.bigDecimal.toPlainString)
+        case (Some(s), Some(r), year) => process.rates.get(rateId(s, r, year)).fold(m.group(0))(_.bigDecimal.toPlainString)
         case _ => m.group(0)
       }
     })
 
-  private def rateId(s: String, r: String, y: Option[String] = None): String = y.fold(s"$s-$r")(year => s"$s-$r-$year")
+  def rateId(s: String, r: String, y: Option[String] = None): String = y.fold(s"$s$KeySeparator$r")(year => s"$s$KeySeparator$r$KeySeparator$year")
+  def reverseRateId(id: String): Option[(String, String, Option[String])] = RateIdRegex.findFirstMatchIn(id).map(m => (m.group(SectionId), m.group(RateId), Option(m.group(YearId))))
+  def reverseRateFixedYearId(id: String): Option[(String, String, String)] = RateIdFixedYearRegex.findFirstMatchIn(id).map(m => (m.group(SectionId), m.group(RateId), m.group(YearId)))
 }
