@@ -90,8 +90,9 @@ object TextBuilder {
 
   private[services] def expandLabels(text: String, labels: Labels)(implicit messages: Messages): String = {
     def labelValue(name: String): Option[String] = labels.displayValue(name)(messages.lang).map(Regex.quoteReplacement)
+    def listLabelValue(name: String): Option[List[String]] = labels.displayListValue(name)(messages.lang).map(_.map(Regex.quoteReplacement))
     def expand(s: String): String = UiExpansionRegex.replaceAllIn(s, {m =>
-                                      OutputFormat(Option(m.group(LabelOutputFormatGroup))).asString(scalarMatch(matchGroup(m), labelValue)(labels), messages)
+                                      OutputFormat(Option(m.group(LabelOutputFormatGroup))).asString(scalarMatch(matchGroup(m), labelValue, listLabelValue)(labels), messages)
                                     })
     expand(expand(text)) // Double expansion to allow for labels as arguments to lists and functions
   }
