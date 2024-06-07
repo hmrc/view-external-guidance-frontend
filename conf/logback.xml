@@ -26,10 +26,6 @@
     <logger name="services" level="DEBUG"/>
     <logger name="repositories" level="DEBUG"/>
 
-    <logger name="accesslog" level="INFO" additivity="false">
-        <appender-ref ref="ACCESS_LOG_FILE" />
-    </logger>
-
     <logger name="ch.qos" level="ERROR"/>
 
     <logger name="com.google.inject" level="ERROR"/>
