@@ -29,7 +29,7 @@ import play.api.libs.json._
 class PageRendererSpec extends BaseSpec with ProcessJson {
 
   // Define instance of class used in testing
-  val pageBuilder = new PageBuilder(new Timescales(new DefaultTodayProvider))
+  val pageBuilder = new PageBuilder(new LabelledData(new Timescales(new DefaultTodayProvider), new Rates()))
   val renderer: PageRenderer = new PageRenderer(MockAppConfig)
   val messagesApi: MessagesApi = injector.instanceOf[MessagesApi]
   implicit val messages: Messages = messagesApi.preferred(Seq())
