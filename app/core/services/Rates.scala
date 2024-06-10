@@ -21,7 +21,7 @@ import core.models.ocelot._
 import scala.util.matching.Regex
 
 @Singleton
-class Rates @Inject() () extends LabelledDataExpansion with LabelledDataReferencing{<<<<<<< HEAD
+class Rates @Inject() () extends LabelledDataExpansion with LabelledDataReferencing {
   val KeySeparator: String = "!"
   private val SectionId: Int = 1
   private val RateId: Int = 2
