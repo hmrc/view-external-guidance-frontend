@@ -20,8 +20,8 @@ import base.BaseSpec
 import core.models.errors.DatabaseError
 import core.models.ocelot.{Process, Published, ProcessJson}
 import mocks._
-import models._
-import repositories.{SessionKey, Session, CachedProcess, PageHistory, RawPageHistory}
+import repositories.CachedProcess
+import models.{SessionKey, Session, PageHistory, RawPageHistory, GuidanceSession, PageNext}
 import uk.gov.hmrc.http.{HeaderCarrier, RequestId}
 
 import scala.concurrent.Future
@@ -110,7 +110,7 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
       val newSession: Session = Session(
                         SessionKey(processId, process.meta.processCode),
                         Some(Published), process.meta.id,
-                        Map(), Nil, Map(), Map(), Nil, Nil, Nil, None, Instant.now,
+                        Map(), Nil, Map(), Map(), Nil, None, Nil, None, Instant.now,
                         process.meta.lastUpdate,
                         process.meta.timescalesVersion,
                         process.meta.ratesVersion

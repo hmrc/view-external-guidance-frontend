@@ -16,7 +16,8 @@
 
 package mocks
 
-import repositories.{Session, SessionRepository, PageHistory, RawPageHistory}
+import models.{Session, PageHistory, RawPageHistory}
+import repositories.SessionRepository
 import core.models.ocelot._
 import core.models.RequestOutcome
 import core.models.ocelot.RunMode

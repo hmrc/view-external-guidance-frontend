@@ -20,14 +20,13 @@ package repositories
 
 import config.AppConfig
 import com.google.inject.{Inject, Singleton}
-import play.api.libs.json.{Format, Json}
 import core.models.ocelot._
-import core.models.ocelot.stanzas.{PopulatedStanza, Stanza}
 import core.models.errors._
+import core.models.ocelot.stanzas.PopulatedStanza
 import core.models.RequestOutcome
 import java.util.concurrent.TimeUnit
 import play.api.Logger
-import java.time.{Instant}
+import java.time.Instant
 import org.mongodb.scala._
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Filters._
@@ -38,45 +37,7 @@ import org.mongodb.scala.result.DeleteResult
 import uk.gov.hmrc.mongo._
 import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 import scala.concurrent.{ExecutionContext, Future}
-import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats.Implicits._
-
-case class SessionKey(id: String, processCode: String)
-
-object SessionKey {
-  implicit lazy val format: Format[SessionKey] = Json.format[SessionKey]
-}
-
-final case class Session(
-    _id: SessionKey,
-   runMode: Option[RunMode],
-   processId: String,
-   labels: Map[String, Label],
-   flowStack: List[FlowStage],
-   continuationPool: Map[String, Stanza],
-   answers: Map[String, String],
-   pageHistory: List[PageHistory],
-   rawPageHistory: List[RawPageHistory],
-   legalPageIds: List[String],
-   requestId: Option[String],
-   lastAccessed: Instant, // expiry time
-   processVersion: Long,
-   timescalesVersion : Option[Long],
-   ratesVersion : Option[Long]
-)
-
-object Session {
-  def apply(key: SessionKey,
-            runMode: RunMode,
-            processId: String,
-            processVersion: Long,
-            legalPageIds: List[String],
-            lastAccessed: Instant = Instant.now,
-            timescalesVersion : Option[Long],
-            ratesVersion : Option[Long]): Session =
-    Session(key, Some(runMode), processId, Map(), Nil, Map(), Map(), Nil, Nil, legalPageIds, None, lastAccessed, processVersion, timescalesVersion, ratesVersion)
-
-  implicit lazy val format: Format[Session] = Json.format[Session]
-}
+import models._
 
 trait SessionRepositoryConstants {
   val FlowStackKey: String = "flowStack"

@@ -20,6 +20,7 @@ import scala.annotation.tailrec
 import javax.inject.{Inject, Singleton}
 import core.models.ocelot.{Flow, Continuation, LabelValue, FlowStage}
 import core.models.ocelot.{Label, ScalarLabel}
+import models._
 
 @Singleton
 class SessionFSM @Inject() () {

@@ -18,6 +18,7 @@ package repositories
 
 import base.BaseSpec
 import core.models.ocelot.stanzas.{ValueStanza, Value, ScalarType}
+import models.{PageHistory, Session, SessionKey}
 import core.models.ocelot.{Process, ProcessJson, SequenceJson, FlowStage, ScalarLabel, ListLabel, Flow, Continuation, Label, LabelValue, Phrase, Published}
 import java.time.Instant
 
@@ -61,7 +62,7 @@ class SessionFSMSpec extends BaseSpec {
         Map(),
         Map(),
         List(PageHistory("/start", Nil)),
-        Nil,
+        None,
         Nil,
         None,
         Instant.now,
@@ -208,7 +209,7 @@ class SessionFSMSpec extends BaseSpec {
         Map("6" -> ValueStanza(List(Value(ScalarType,"SecondSeqChoice","Loop value = [label:Choice]")),Vector("end"),false)),
         Map("/start" -> "2,3"),
         List(PageHistory("/start", Nil)),
-        Nil,
+        None,
         Nil,
         None,
         Instant.now,

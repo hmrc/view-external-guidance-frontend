@@ -25,7 +25,8 @@ import mocks._
 import models._
 import core.models.errors.Error
 import play.api.i18n.{Lang, Messages, MessagesApi}
-import repositories.{PageHistory, Session, SessionFSM, SessionKey}
+import repositories.SessionFSM
+import models.{PageHistory, Session, SessionKey}
 import uk.gov.hmrc.http.{HeaderCarrier, RequestId}
 
 import java.time.Instant
@@ -147,7 +148,7 @@ class GuidanceServiceSpec extends BaseSpec {
           GuidanceSession(
             Session(
               SessionKey(sessionRepoId, processCode), 
-              Some(Published), process.meta.id, Map(), Nil, Map(), Map(), Nil, Nil, Nil, None, Instant.now, process.meta.lastUpdate,
+              Some(Published), process.meta.id, Map(), Nil, Map(), Map(), Nil, None, Nil, None, Instant.now, process.meta.lastUpdate,
               process.meta.timescalesVersion,
               process.meta.ratesVersion
             ), process, Map(page.url -> PageNext("2", Nil))
@@ -186,7 +187,7 @@ class GuidanceServiceSpec extends BaseSpec {
           GuidanceSession(
             Session(
               SessionKey(sessionRepoId, processCode), 
-              Some(Published), process.meta.id, Map(), Nil, Map(), Map(), Nil, Nil, Nil, None, Instant.now, process.meta.lastUpdate,
+              Some(Published), process.meta.id, Map(), Nil, Map(), Map(), Nil, None, Nil, None, Instant.now, process.meta.lastUpdate,
               process.meta.timescalesVersion,
               process.meta.ratesVersion
             ), 
@@ -223,7 +224,7 @@ class GuidanceServiceSpec extends BaseSpec {
           GuidanceSession(
             Session(
               SessionKey(sessionRepoId, processCode), 
-              Some(Published), process.meta.id, Map(), Nil, Map(), Map(), Nil, Nil, Nil, None, Instant.now, process.meta.lastUpdate,
+              Some(Published), process.meta.id, Map(), Nil, Map(), Map(), Nil, None, Nil, None, Instant.now, process.meta.lastUpdate,
               process.meta.timescalesVersion,
               process.meta.ratesVersion
             ), 
@@ -274,7 +275,7 @@ class GuidanceServiceSpec extends BaseSpec {
           GuidanceSession(
             Session(
               SessionKey(sessionRepoId, processCode), 
-              Some(Published), process.meta.id, Map(), Nil, Map(), Map(), Nil, Nil, Nil, None, Instant.now, process.meta.lastUpdate,
+              Some(Published), process.meta.id, Map(), Nil, Map(), Map(), Nil, None, Nil, None, Instant.now, process.meta.lastUpdate,
               process.meta.timescalesVersion,
               process.meta.ratesVersion
             ), 
@@ -319,7 +320,7 @@ class GuidanceServiceSpec extends BaseSpec {
           GuidanceSession(
             Session(
               SessionKey(sessionRepoId, processCode), 
-              Some(Published), fullProcess.meta.id, Map(), Nil, Map(), Map(lastPageUrl -> "answer"), Nil, Nil, Nil, None, Instant.now, fullProcess.meta.lastUpdate,
+              Some(Published), fullProcess.meta.id, Map(), Nil, Map(), Map(lastPageUrl -> "answer"), Nil, None, Nil, None, Instant.now, fullProcess.meta.lastUpdate,
               process.meta.timescalesVersion,
               process.meta.ratesVersion
             ), 
@@ -372,7 +373,7 @@ class GuidanceServiceSpec extends BaseSpec {
           GuidanceSession(
             Session(
               SessionKey(sessionRepoId, processCode), 
-              Some(Published), fullProcess.meta.id, Map(), Nil, Map(), Map(), Nil, Nil, Nil, None, Instant.now, fullProcess.meta.lastUpdate,
+              Some(Published), fullProcess.meta.id, Map(), Nil, Map(), Map(), Nil, None, Nil, None, Instant.now, fullProcess.meta.lastUpdate,
               process.meta.timescalesVersion,
               process.meta.ratesVersion
             ), 
@@ -395,7 +396,7 @@ class GuidanceServiceSpec extends BaseSpec {
   "Calling getCurrentGuidanceSession" should {
 
     "successfully retrieve a process context when the session data contains a single process" in new Test {
-      val expectedSession = Session(SessionKey(sessionRepoId, processCode), Some(Published), process.meta.id, Map(), Nil, Map(), Map(), Nil, Nil, Nil, None, Instant.now, process.meta.lastUpdate, process.meta.timescalesVersion, process.meta.ratesVersion)
+      val expectedSession = Session(SessionKey(sessionRepoId, processCode), Some(Published), process.meta.id, Map(), Nil, Map(), Map(), Nil, None, Nil, None, Instant.now, process.meta.lastUpdate, process.meta.timescalesVersion, process.meta.ratesVersion)
       val expectedGuidanceSession: GuidanceSession = GuidanceSession(expectedSession, process, Map())
 
       MockSessionService
@@ -442,7 +443,7 @@ class GuidanceServiceSpec extends BaseSpec {
     "When passed a url to the passphrase page should send no pageHistory url to the repository" in new Test {
       val expectedSession: Session = Session(SessionKey(sessionRepoId, process.meta.processCode), 
                                              Some(Published), 
-                                             process.meta.id, Map(), Nil, Map(), Map(), Nil, Nil, Nil, None,
+                                             process.meta.id, Map(), Nil, Map(), Map(), Nil, None, Nil, None,
                                              Instant.now, process.meta.lastUpdate,
                                              process.meta.timescalesVersion,
                                              process.meta.ratesVersion)
@@ -457,7 +458,7 @@ class GuidanceServiceSpec extends BaseSpec {
     "When passed a url to a standard page should send pageHistory url to the repository" in new Test {
     val expectedSession: Session = Session(SessionKey(sessionRepoId, process.meta.processCode), 
                                              Some(Published), 
-                                             process.meta.id, Map(), Nil, Map(), Map(), Nil, Nil, Nil, None,
+                                             process.meta.id, Map(), Nil, Map(), Map(), Nil, None, Nil, None,
                                              Instant.now, process.meta.lastUpdate,
                                              process.meta.timescalesVersion,
                                              process.meta.ratesVersion)

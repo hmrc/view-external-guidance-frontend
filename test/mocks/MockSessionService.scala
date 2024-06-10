@@ -22,7 +22,7 @@ import core.models.ocelot.{Process, RunMode, Label, Labels, FlowStage}
 import org.scalamock.handlers.CallHandler
 import org.scalamock.scalatest.MockFactory
 import services.SessionService
-import repositories.PageHistory
+import models.PageHistory
 import models.GuidanceSession
 import scala.concurrent.{ExecutionContext, Future}
 

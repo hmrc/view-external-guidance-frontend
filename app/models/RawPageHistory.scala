@@ -16,7 +16,7 @@
 
 // $COVERAGE-OFF$
 
-package repositories
+package models
 
 import core.models.ocelot.FlowStage
 import play.api.libs.functional.syntax._

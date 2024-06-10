@@ -20,11 +20,11 @@ import play.api.Logging
 import config.AppConfig
 
 import javax.inject.{Inject, Singleton}
-import models.GuidanceSession
+import models._
 import core.models.RequestOutcome
 
 import scala.concurrent.{ExecutionContext, Future}
-import repositories.{PageHistory, Session, SessionRepository, ProcessCacheRepository, RawPageHistory}
+import repositories.{SessionRepository, ProcessCacheRepository}
 import models.PageNext
 import core.models.ocelot.{Process, RunMode, Label, Labels, FlowStage}
 import core.models.ocelot.Debugging
@@ -84,10 +84,7 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
   private[services] def guidanceSession(session: Session)(implicit context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] = {
     val processId = if (session.runMode.equals(Some(Debugging))) s"${session.processId}${processCacheRepository.DebugIdSuffix}" else session.processId
     processCacheRepository.get(processId, session.processVersion, session.timescalesVersion, session.ratesVersion).map{
-      case Right(cachedProcess) if session.rawPageHistory.size > session.pageHistory.size =>
-        Right(GuidanceSession(session.copy(pageHistory = toPageHistory(session.rawPageHistory, cachedProcess.pageMap)), cachedProcess.process, cachedProcess.pageMap))
-      case Right(cachedProcess) => // In-flight journey
-        Right(GuidanceSession(session, cachedProcess.process, cachedProcess.pageMap))
+      case Right(cachedProcess) => Right(GuidanceSession(session, cachedProcess.process, cachedProcess.pageMap))
       case Left(err) => Left(err)
     }
   }
