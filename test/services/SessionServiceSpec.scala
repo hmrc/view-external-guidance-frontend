@@ -133,6 +133,21 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
     }
   }
 
+  "Session Service pageHistory" should {
+    "Convert valid rawPageHistory" in new Test {
+      val rawPageHistory = List(RawPageHistory("start", Nil),
+        RawPageHistory("1", Nil), RawPageHistory("2", Nil),
+        RawPageHistory("3", Nil))
+      val pageMap = Map("/start" -> PageNext("start"), "/next" -> PageNext("1"), "/somepage" -> PageNext("2"), "/another" -> PageNext("3"))
+
+      val result = target.toPageHistory(rawPageHistory, pageMap, processCode)
+      val expectedPageHistory = List(PageHistory(s"$processCode/start",List()), PageHistory(s"$processCode/next",List()), PageHistory(s"$processCode/somepage",List()), PageHistory(s"$processCode/another",List()))
+
+      result shouldBe expectedPageHistory
+      result.length shouldBe rawPageHistory.length
+    }
+  }
+
   "Session Service rawPageHistory" should {
     "Convert valid pageHistory" in new Test {
       val pageHistory = List(PageHistory(s"$processCode/start", Nil),
