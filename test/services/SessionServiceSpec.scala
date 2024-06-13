@@ -18,11 +18,11 @@ package services
 
 import base.BaseSpec
 import core.models.errors.DatabaseError
-import core.models.ocelot.{Process, Published, ProcessJson}
+import core.models.ocelot.{ProcessJson, Published, Process}
 import mocks._
 import repositories.CachedProcess
-import models.{SessionKey, Session, PageHistory, RawPageHistory, GuidanceSession, PageNext}
-import uk.gov.hmrc.http.{HeaderCarrier, RequestId}
+import models.{SessionKey, GuidanceSession, Session, RawPageHistory, PageNext, PageHistory}
+import uk.gov.hmrc.http.{RequestId, HeaderCarrier}
 
 import scala.concurrent.Future
 import java.time.Instant
@@ -42,9 +42,27 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
     val lastPageUrl = "/last-page"
     val processId = "oct90001"
     val processCode = "CupOfTea"
+    val processVersion = 1500298931016L
     val uuid = "683d9aa0-2a0e-4e28-9ac8-65ce453d2730"
     val sessionRepoId = "683d9aa0-2a0e-4e28-9ac8-65ce453d2731"
     val sessionId = "session-2882605c-8e96-494a-a497-98ae90f52539"
+    val requestId: Option[String] = Some(rId)
+
+    val expiry: Instant = Instant.now
+    val session = Session(
+      SessionKey(processId, process.meta.processCode),
+      Some(Published), process.meta.id,
+      Map(), Nil, Map(), Map(), Nil, None, Nil, None, Instant.now,
+      process.meta.lastUpdate,
+      process.meta.timescalesVersion,
+      process.meta.ratesVersion
+    )
+    val cachedProcess: CachedProcess = CachedProcess(
+      repositories.CacheKey(processId, process.meta.lastUpdate, process.meta.timescalesVersion, process.meta.ratesVersion),
+      process,
+      Map(),
+      expiry
+    )
 
     lazy val target = new SessionService(
       MockAppConfig,
@@ -108,10 +126,50 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
     "Find the session without updating" in new Test {
 
       MockSessionRepository
-        .create(sessionRepoId, process.meta, Published, List())
-        .returns(Future.successful(Right(())))
+        .getNoUpdate(sessionId, processCode)
+        .returns(Future.successful(Right(session)))
+
+      MockProcessCacheRepository
+        .get(processId, processVersion, None, None)
+        .returns(Future.successful(Right(cachedProcess)))
 
        whenReady(target.getNoUpdate(sessionId, processCode)) {
+        case Right(session) => succeed
+        case Left(err) => Future.successful(Left(err))
+      }
+    }
+  }
+
+  "SessionService get" should {
+    "Find the session" in new Test {
+
+      MockSessionRepository
+        .get(sessionId, processCode, requestId)
+        .returns(Future.successful(Right(session)))
+
+      MockProcessCacheRepository
+        .get(processId, processVersion, None, None)
+        .returns(Future.successful(Right(cachedProcess)))
+
+      whenReady(target.get(sessionId, processCode, requestId)) {
+        case Right(session) => succeed
+        case Left(err) => Future.successful(Left(err))
+      }
+    }
+  }
+
+  "SessionService reset" should {
+    "Find the session" in new Test {
+
+      MockSessionRepository
+        .reset(sessionId, processCode, requestId)
+        .returns(Future.successful(Right(session)))
+
+      MockProcessCacheRepository
+        .get(processId, processVersion, None, None)
+        .returns(Future.successful(Right(cachedProcess)))
+
+      whenReady(target.reset(sessionId, processCode, requestId)) {
         case Right(session) => succeed
         case Left(err) => Future.successful(Left(err))
       }
@@ -121,28 +179,13 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
   "SessionService guidanceSession" should {
 
     "Query process cache for Sessions containg only dynamic items" in new Test {
-      val expiry: Instant = Instant.now
-      val newSession: Session = Session(
-                        SessionKey(processId, process.meta.processCode),
-                        Some(Published), process.meta.id,
-                        Map(), Nil, Map(), Map(), Nil, None, Nil, None, Instant.now,
-                        process.meta.lastUpdate,
-                        process.meta.timescalesVersion,
-                        process.meta.ratesVersion
-                      )
-      val cachedProcess: CachedProcess = CachedProcess(
-                            repositories.CacheKey(processId, process.meta.lastUpdate, process.meta.timescalesVersion, process.meta.ratesVersion),
-                            process,
-                            Map(),
-                            expiry
-                          )
 
       MockProcessCacheRepository
         .get(processId, process.meta.lastUpdate, process.meta.timescalesVersion, process.meta.ratesVersion)
         .returns(Future.successful(Right(cachedProcess)))
 
-      whenReady(target.guidanceSession(newSession)) {
-        case Right(gSession) if gSession == GuidanceSession(newSession, process, Map()) => succeed
+      whenReady(target.guidanceSession(session)) {
+        case Right(gSession) if gSession == GuidanceSession(session, process, Map()) => succeed
         case _ => fail()
       }
     }
