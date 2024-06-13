@@ -19,7 +19,7 @@ package services
 import base.BaseSpec
 import core.models.ocelot._
 import core.models.ocelot.stanzas.Stanza
-import core.services.{DefaultTodayProvider, PageBuilder, Timescales, LabelledData, Rates}
+import core.services._
 import play.api.i18n.MessagesApi
 import play.api.libs.json._
 
