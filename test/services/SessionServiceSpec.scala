@@ -44,6 +44,7 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
     val processCode = "CupOfTea"
     val uuid = "683d9aa0-2a0e-4e28-9ac8-65ce453d2730"
     val sessionRepoId = "683d9aa0-2a0e-4e28-9ac8-65ce453d2731"
+    val sessionId = "session-2882605c-8e96-494a-a497-98ae90f52539"
 
     lazy val target = new SessionService(
       MockAppConfig,
@@ -101,6 +102,20 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
 
     }
 
+  }
+
+  "SessionService getNoUpdate" should {
+    "Find the session without updating" in new Test {
+
+      MockSessionRepository
+        .create(sessionRepoId, process.meta, Published, List())
+        .returns(Future.successful(Right(())))
+
+      target.getNoUpdate(sessionId, processCode) {
+        case Right(session) => succeed
+        case Left(err) => Future.successful(Left(err))
+      }
+    }
   }
 
   "SessionService guidanceSession" should {
