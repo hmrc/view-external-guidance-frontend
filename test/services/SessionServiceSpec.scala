@@ -111,7 +111,7 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
         .create(sessionRepoId, process.meta, Published, List())
         .returns(Future.successful(Right(())))
 
-      target.getNoUpdate(sessionId, processCode) {
+       whenReady(target.getNoUpdate(sessionId, processCode)) {
         case Right(session) => succeed
         case Left(err) => Future.successful(Left(err))
       }
