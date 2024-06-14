@@ -18,7 +18,7 @@ package services
 
 import base.BaseSpec
 import core.models.errors.DatabaseError
-import core.models.ocelot.{ProcessJson, Published, Process}
+import core.models.ocelot.{Published, LabelCache, Label, ScalarLabel, Process, ProcessJson}
 import mocks._
 import repositories.CachedProcess
 import models.{SessionKey, GuidanceSession, Session, RawPageHistory, PageNext, PageHistory}
@@ -159,7 +159,7 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
   }
 
   "SessionService reset" should {
-    "Find the session" in new Test {
+    "Reset the session" in new Test {
 
       MockSessionRepository
         .reset(sessionId, processCode, requestId)
@@ -176,9 +176,54 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
     }
   }
 
+  "SessionService updateForNewPage" should {
+    "Update the session repository for the new page" in new Test {
+
+      MockSessionRepository
+        .updateForNewPage(sessionRepoId, process.meta.processCode, None, None, None, Nil, Nil, requestId)
+        .returns(Future.successful(Right(())))
+
+      whenReady(
+        target.updateForNewPage(sessionRepoId, process.meta.processCode, Map(), None, None, Nil, Nil, requestId)) {
+        case Right(session) => succeed
+        case Left(err) => Future.successful(Left(err))
+      }
+    }
+  }
+
+  "SessionService updateAfterStandardPage" should {
+    "Update the session repository after a standard page" in new Test {
+
+      val input1: Label = ScalarLabel( "input1", List("Hello"))
+      val input2: Label = ScalarLabel( "input2", List(" "))
+      val input3: Label = ScalarLabel( "input3", List("World"))
+      val input4: Label = ScalarLabel( "input4", List("!"))
+
+      val labelMap: Map[String, Label] = Map(
+        input1.name -> input1,
+        input2.name -> input2,
+        input3.name -> input3,
+        input4.name -> input4
+      )
+
+      val labelCache = LabelCache(labelMap)
+
+
+      MockSessionRepository
+        .updateAfterStandardPage(sessionRepoId, process.meta.processCode, labelCache, requestId)
+        .returns(Future.successful(Right(())))
+
+      whenReady(
+        target.updateAfterStandardPage(sessionRepoId, process.meta.processCode, labelCache, requestId)) {
+        case Right(session) => succeed
+        case Left(err) => Future.successful(Left(err))
+      }
+    }
+  }
+
   "SessionService guidanceSession" should {
 
-    "Query process cache for Sessions containg only dynamic items" in new Test {
+    "Query process cache for Sessions containing only dynamic items" in new Test {
 
       MockProcessCacheRepository
         .get(processId, process.meta.lastUpdate, process.meta.timescalesVersion, process.meta.ratesVersion)
