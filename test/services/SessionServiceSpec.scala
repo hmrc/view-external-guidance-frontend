@@ -47,6 +47,8 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
     val sessionRepoId = "683d9aa0-2a0e-4e28-9ac8-65ce453d2731"
     val sessionId = "session-2882605c-8e96-494a-a497-98ae90f52539"
     val requestId: Option[String] = Some(rId)
+    val docId: String = s"$processCode" + "-debug"
+    val answer: String = "Some Text 1"
 
     val expiry: Instant = Instant.now
     val session = Session(
@@ -185,7 +187,8 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
 
       whenReady(
         target.updateForNewPage(sessionRepoId, process.meta.processCode, Map(), None, None, Nil, Nil, requestId)) {
-        case Right(session) => succeed
+        case Right(session) =>
+          succeed
         case Left(err) => Future.successful(Left(err))
       }
     }
@@ -215,7 +218,39 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
 
       whenReady(
         target.updateAfterStandardPage(sessionRepoId, process.meta.processCode, labelCache, requestId)) {
-        case Right(session) => succeed
+        case Right(session) =>
+          succeed
+        case Left(err) => Future.successful(Left(err))
+      }
+    }
+  }
+
+  "SessionService updateAfterFormSubmission" should {
+    "Update the session repository after the for is submitted" in new Test {
+
+      val input1: Label = ScalarLabel( "input1", List("Hello"))
+      val input2: Label = ScalarLabel( "input2", List(" "))
+      val input3: Label = ScalarLabel( "input3", List("World"))
+      val input4: Label = ScalarLabel( "input4", List("!"))
+
+      val labelMap: Map[String, Label] = Map(
+        input1.name -> input1,
+        input2.name -> input2,
+        input3.name -> input3,
+        input4.name -> input4
+      )
+
+      val labelCache = LabelCache(labelMap)
+
+
+      MockSessionRepository
+        .updateAfterFormSubmission(docId, processCode, firstPageUrl, answer, labelCache, Nil, requestId)
+        .returns(Future.successful(Right(())))
+
+      whenReady(
+        target.updateAfterFormSubmission(docId, processCode, firstPageUrl, answer, labelCache, Nil, requestId)) {
+        case Right(session) =>
+          succeed
         case Left(err) => Future.successful(Left(err))
       }
     }
