@@ -36,8 +36,7 @@ final case class Session(
    flowStack: List[FlowStage],
    continuationPool: Map[String, Stanza],
    answers: Map[String, String],
-   pageHistory: List[PageHistory],
-   rawPageHistory: Option[List[RawPageHistory]],
+   rawPageHistory: List[RawPageHistory],
    legalPageIds: List[String],
    requestId: Option[String],
    lastAccessed: Instant, // expiry time
@@ -55,7 +54,7 @@ object Session {
             lastAccessed: Instant = Instant.now,
             timescalesVersion : Option[Long],
             ratesVersion : Option[Long]): Session =
-    Session(key, Some(runMode), processId, Map(), Nil, Map(), Map(), Nil, None, legalPageIds, None, lastAccessed, processVersion, timescalesVersion, ratesVersion)
+    Session(key, Some(runMode), processId, Map(), Nil, Map(), Map(), Nil, legalPageIds, None, lastAccessed, processVersion, timescalesVersion, ratesVersion)
 
   implicit lazy val format: Format[Session] = Json.format[Session]
 }

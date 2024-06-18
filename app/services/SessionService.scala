@@ -22,7 +22,7 @@ import config.AppConfig
 import javax.inject.{Inject, Singleton}
 import models._
 import core.models.RequestOutcome
-import core.models.errors.PageHistoryError
+import core.models.errors.{PageHistoryError, RawPageHistoryError}
 import scala.concurrent.{ExecutionContext, Future}
 import repositories.{SessionRepository, ProcessCacheRepository}
 import models.PageNext
@@ -88,7 +88,14 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
   private[services] def guidanceSession(session: Session)(implicit context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] = {
     val processId = if (session.runMode.equals(Some(Debugging))) s"${session.processId}${processCacheRepository.DebugIdSuffix}" else session.processId
     processCacheRepository.get(processId, session.processVersion, session.timescalesVersion, session.ratesVersion).map{
-      case Right(cachedProcess) => Right(GuidanceSession(session, cachedProcess.process, cachedProcess.pageMap))
+      case Right(cachedProcess) =>
+        toPageHistory(Some(session.rawPageHistory), cachedProcess.pageMap, cachedProcess.process.meta.processCode) match {
+          case None =>
+            logger.error(s"ERROR:Conversion of RawPageHistory to PageHistory failed (None return)")
+            Left(RawPageHistoryError)
+          case pageHistoryOption =>
+            Right(GuidanceSession(session, cachedProcess.process, cachedProcess.pageMap, pageHistoryOption.get))
+        }
       case Left(err) => Left(err)
     }
   }
