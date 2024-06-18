@@ -18,14 +18,17 @@ package services
 
 import play.api.Logging
 import config.AppConfig
+
 import javax.inject.{Inject, Singleton}
-import models.GuidanceSession
+import models._
 import core.models.RequestOutcome
+import core.models.errors.PageHistoryError
 import scala.concurrent.{ExecutionContext, Future}
-import repositories.{PageHistory, Session, SessionRepository, ProcessCacheRepository}
+import repositories.{SessionRepository, ProcessCacheRepository}
 import models.PageNext
 import core.models.ocelot.{Process, RunMode, Label, Labels, FlowStage}
 import core.models.ocelot.Debugging
+import scala.annotation.tailrec
 
 @Singleton
 class SessionService @Inject() (appConfig: AppConfig, sessionRepository: SessionRepository, processCacheRepository: ProcessCacheRepository) extends Logging {
@@ -65,9 +68,15 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
     }
   }
 
-  def updateForNewPage(key: String, processCode: String, pageHistory: Option[List[PageHistory]], flowStack: Option[List[FlowStage]],
+  def updateForNewPage(key: String, processCode: String, pageMap: Map[String, PageNext], pageHistory: Option[List[PageHistory]], flowStack: Option[List[FlowStage]],
                        labelUpdates: List[Label], legalPageIds: List[String], requestId: Option[String]): Future[RequestOutcome[Unit]] =
-    sessionRepository.updateForNewPage(key, processCode, pageHistory, flowStack, labelUpdates, legalPageIds, requestId)
+    toRawPageHistory(pageHistory, pageMap, processCode) match {
+      case None if pageHistory.isDefined =>
+        logger.error(s"ERROR:Conversion of PageHistory to RawPageHistory failed (None return)")
+        Future.successful(Left(PageHistoryError))
+      case rawPageHistoryOption =>
+        sessionRepository.updateForNewPage(key, processCode, pageHistory, rawPageHistoryOption, flowStack, labelUpdates, legalPageIds, requestId)
+    }
 
   def updateAfterStandardPage(key: String, processCode: String, labels: Labels, requestId: Option[String]): Future[RequestOutcome[Unit]] =
     sessionRepository.updateAfterStandardPage(key, processCode, labels, requestId)
@@ -82,6 +91,35 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
       case Right(cachedProcess) => Right(GuidanceSession(session, cachedProcess.process, cachedProcess.pageMap))
       case Left(err) => Left(err)
     }
+  }
+
+  private[services] def toPageHistory(rawPageHistory: Option[List[RawPageHistory]], pageMap: Map[String, PageNext], processCode: String): Option[List[PageHistory]] = {
+    @tailrec
+    def pageHistory(rph: List[RawPageHistory], reversePageMap: Map[String, String], acc: List[PageHistory] = Nil): Option[List[PageHistory]] =
+      rph match {
+        case Nil => Some(acc.reverse)
+        case x :: xs =>
+          reversePageMap.get(x.stanzId) match {
+            case None => None
+            case Some(pg) => pageHistory(xs, reversePageMap, PageHistory(processCode.concat(pg), x.flowStack) :: acc)
+          }
+      }
+    pageHistory(rawPageHistory.get, pageMap.flatMap{case (k,v) => List((v.id, k))})
+  }
+
+  final private[services] def toRawPageHistory(pageHistory: Option[List[PageHistory]], pageMap: Map[String, PageNext], processCode: String): Option[List[RawPageHistory]] = {
+    @tailrec
+    def rawPageHistory(ph: List[PageHistory], acc: List[RawPageHistory] = Nil): Option[List[RawPageHistory]] =
+      ph match {
+        case Nil => Some(acc.reverse)
+        case x :: xs =>
+          pageMap.get(x.url.drop(processCode.length)) match {
+            case None => None
+            case Some(pg) => rawPageHistory(xs, RawPageHistory(pg.id, x.flowStack) :: acc)
+          }
+      }
+
+    pageHistory.flatMap(rawPageHistory(_))
   }
 
 }

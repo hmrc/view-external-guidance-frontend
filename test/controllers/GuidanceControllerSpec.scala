@@ -38,7 +38,8 @@ import play.api.mvc._
 import play.api.test.CSRFTokenHelper._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import repositories.{PageHistory, Session, SessionFSM, SessionKey}
+import models.{PageHistory, Session, SessionKey}
+import repositories.SessionFSM
 import services._
 import uk.gov.hmrc.http.{HeaderCarrier, HeaderNames, RequestId, SessionKeys}
 import views.html._
@@ -414,7 +415,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
 
     "return a NOT_FOUND response" in new QuestionSubmissionTest {
       val url = "/rent/less-than-1000/do-you-receive-any-income"
-      val session = Session(SessionKey(processId, process.meta.processCode), Some(Published), process.meta.id, Map(), Nil, Map(), Map(), List(PageHistory(s"tell-hmrc$url",Nil)), Nil, None, Instant.now, process.meta.lastUpdate, process.meta.timescalesVersion, process.meta.ratesVersion)
+      val session = Session(SessionKey(processId, process.meta.processCode), Some(Published), process.meta.id, Map(), Nil, Map(), Map(), List(PageHistory(s"tell-hmrc$url",Nil)), None, Nil, None, Instant.now, process.meta.lastUpdate, process.meta.timescalesVersion, process.meta.ratesVersion)
       val guidanceSession = GuidanceSession(session, process, Map())
 
       MockSessionService
@@ -453,14 +454,14 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
         .get(processId, process.meta.processCode, requestId)
         .returns(Future.successful(Right(
           GuidanceSession(Session(SessionKey(processId, process.meta.processCode), Some(Published), process.meta.id, Map(), Nil, Map(), Map(),
-                  List(PageHistory(s"tell-hmrc$url",Nil)), Nil, None, Instant.now, process.meta.lastUpdate, process.meta.timescalesVersion, process.meta.ratesVersion), process, Map(url -> PageNext("36", Nil, Nil), outOfSequence -> PageNext("80", Nil, Nil)))
+                  List(PageHistory(s"tell-hmrc$url",Nil)), None, Nil, None, Instant.now, process.meta.lastUpdate, process.meta.timescalesVersion, process.meta.ratesVersion), process, Map(url -> PageNext("36", Nil, Nil), outOfSequence -> PageNext("80", Nil, Nil)))
         )))
 
       MockSessionService
         .getNoUpdate(processId, process.meta.processCode)
         .returns(Future.successful(Right(
           GuidanceSession(Session(SessionKey(processId, process.meta.processCode), Some(Published), process.meta.id,Map(), Nil, Map(), Map(),
-                  List(PageHistory(s"tell-hmrc$url",Nil)), Nil, None, Instant.now, process.meta.lastUpdate, process.meta.timescalesVersion, process.meta.ratesVersion), process, Map(url -> PageNext("36", Nil, Nil), outOfSequence -> PageNext("80", Nil, Nil)))
+                  List(PageHistory(s"tell-hmrc$url",Nil)), None, Nil, None, Instant.now, process.meta.lastUpdate, process.meta.timescalesVersion, process.meta.ratesVersion), process, Map(url -> PageNext("36", Nil, Nil), outOfSequence -> PageNext("80", Nil, Nil)))
         )))
 
       override val fakeRequest = FakeRequest("POST", outOfSequence)
@@ -483,14 +484,14 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
         .get(processId, process.meta.processCode, requestId)
         .returns(Future.successful(Right(
           GuidanceSession(Session(SessionKey(processId, process.meta.processCode), Some(Published), process.meta.id, Map(), Nil, Map(), Map(),
-                  List(), Nil, None, Instant.now, process.meta.lastUpdate, process.meta.timescalesVersion, process.meta.ratesVersion), process, Map())
+                  List(), None, Nil, None, Instant.now, process.meta.lastUpdate, process.meta.timescalesVersion, process.meta.ratesVersion), process, Map())
         )))
 
       MockSessionService
         .getNoUpdate(processId, process.meta.processCode)
         .returns(Future.successful(Right(
           GuidanceSession(Session(SessionKey(processId, process.meta.processCode), Some(Published), process.meta.id, Map(), Nil, Map(), Map(),
-                  List(), Nil, None, Instant.now, process.meta.lastUpdate, process.meta.timescalesVersion, process.meta.ratesVersion), process, Map())
+                  List(), None, Nil, None, Instant.now, process.meta.lastUpdate, process.meta.timescalesVersion, process.meta.ratesVersion), process, Map())
         )))
 
       override val fakeRequest = FakeRequest("POST", "some-other-url")
@@ -506,7 +507,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
     "Sync process when process code doesnt match current session" in new QuestionSubmissionTest with MockGuidanceService {
       val session = Session(SessionKey(processId, process.meta.processCode), Some(Published), process.meta.id,Map(), Nil, Map(),
                             Map(),
-                            List(PageHistory(s"tell-hmrc$url",Nil)), Nil, None, Instant.now, process.meta.lastUpdate, process.meta.timescalesVersion, process.meta.ratesVersion)
+                            List(PageHistory(s"tell-hmrc$url",Nil)), None, Nil, None, Instant.now, process.meta.lastUpdate, process.meta.timescalesVersion, process.meta.ratesVersion)
 
       val guidanceSession = GuidanceSession(process, Map(), Map(), Nil, Map(), Map(), Nil, Some("/current-page-url"), None, Published, Nil)
       MockGuidanceService
@@ -1563,7 +1564,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
 
       val process = prototypeJson.as[Process]
       val session = GuidanceSession(Session(SessionKey(processId, process.meta.processCode), Some(Published), process.meta.id, Map(), Nil, Map(), Map(),
-                  List(PageHistory(s"${process.meta.processCode}$path", Nil)), Nil, None, Instant.now, process.meta.lastUpdate, process.meta.timescalesVersion, process.meta.ratesVersion), process, Map())
+                  List(PageHistory(s"${process.meta.processCode}$path", Nil)), None, Nil, None, Instant.now, process.meta.lastUpdate, process.meta.timescalesVersion, process.meta.ratesVersion), process, Map())
 
       MockSessionService
         .get(sessionId, process.meta.processCode, requestId)
@@ -1593,7 +1594,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
         .getNoUpdate(sessionId, processCode)
         .returns(Future.successful(Right(
           GuidanceSession(Session(SessionKey(processId, process.meta.processCode), Some(Published), process.meta.id, Map(), Nil, Map(), Map(),
-                  List(), Nil, None, Instant.now, process.meta.lastUpdate, process.meta.timescalesVersion, process.meta.ratesVersion), process, Map())
+                  List(), None, Nil, None, Instant.now, process.meta.lastUpdate, process.meta.timescalesVersion, process.meta.ratesVersion), process, Map())
         )))
 
       val result = target.getPage(processCode, path.drop(1), None)(fakeRequest)

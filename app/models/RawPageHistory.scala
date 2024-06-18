@@ -16,23 +16,23 @@
 
 // $COVERAGE-OFF$
 
-package repositories
+package models
 
+import core.models.ocelot.FlowStage
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
 import play.api.libs.json._
-import core.models.ocelot.FlowStage
 
-final case class PageHistory(url: String, flowStack: List[FlowStage])
+final case class RawPageHistory(stanzId: String, flowStack: List[FlowStage])
 
-object PageHistory {
-  implicit val reads: Reads[PageHistory] = (
-    (__ \ "url").read[String] and
+object RawPageHistory {
+  implicit val reads: Reads[RawPageHistory] = (
+    (__ \ "stanzId").read[String] and
       (__ \ "flowStack").read[List[FlowStage]]
-  )(PageHistory.apply _)
+  )(RawPageHistory.apply _)
 
-  implicit val writes: Writes[PageHistory] = (
-    (__ \ "url").write[String] and
+  implicit val writes: Writes[RawPageHistory] = (
+    (__ \ "stanzId").write[String] and
       (__ \ "flowStack").write[List[FlowStage]]
-  )(unlift(PageHistory.unapply))
+  )(unlift(RawPageHistory.unapply))
 }
