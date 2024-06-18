@@ -22,13 +22,12 @@ import config.AppConfig
 import javax.inject.{Inject, Singleton}
 import models._
 import core.models.RequestOutcome
-
+import core.models.errors.PageHistoryError
 import scala.concurrent.{ExecutionContext, Future}
 import repositories.{SessionRepository, ProcessCacheRepository}
 import models.PageNext
 import core.models.ocelot.{Process, RunMode, Label, Labels, FlowStage}
 import core.models.ocelot.Debugging
-
 import scala.annotation.tailrec
 
 @Singleton
@@ -70,9 +69,14 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
   }
 
   def updateForNewPage(key: String, processCode: String, pageMap: Map[String, PageNext], pageHistory: Option[List[PageHistory]], flowStack: Option[List[FlowStage]],
-                       labelUpdates: List[Label], legalPageIds: List[String], requestId: Option[String]): Future[RequestOutcome[Unit]] = {
-    sessionRepository.updateForNewPage(key, processCode, pageHistory, toRawPageHistory(pageHistory, pageMap, processCode), flowStack, labelUpdates, legalPageIds, requestId)
-  }
+                       labelUpdates: List[Label], legalPageIds: List[String], requestId: Option[String]): Future[RequestOutcome[Unit]] =
+    toRawPageHistory(pageHistory, pageMap, processCode) match {
+      case None if pageHistory.isDefined =>
+        logger.error(s"ERROR:Conversion of PageHistory to RawPageHistory failed (None return)")
+        Future.successful(Left(PageHistoryError))
+      case rawPageHistoryOption =>
+        sessionRepository.updateForNewPage(key, processCode, pageHistory, rawPageHistoryOption, flowStack, labelUpdates, legalPageIds, requestId)
+    }
 
   def updateAfterStandardPage(key: String, processCode: String, labels: Labels, requestId: Option[String]): Future[RequestOutcome[Unit]] =
     sessionRepository.updateAfterStandardPage(key, processCode, labels, requestId)
