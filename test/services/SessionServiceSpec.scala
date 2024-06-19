@@ -54,7 +54,7 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
     val session = Session(
       SessionKey(processId, process.meta.processCode),
       Some(Published), process.meta.id,
-      Map(), Nil, Map(), Map(), Nil, None, Nil, None, Instant.now,
+      Map(), Nil, Map(), Map(), Nil, Nil, None, Instant.now,
       process.meta.lastUpdate,
       process.meta.timescalesVersion,
       process.meta.ratesVersion
@@ -265,7 +265,7 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
         .returns(Future.successful(Right(cachedProcess)))
 
       whenReady(target.guidanceSession(session)) {
-        case Right(gSession) if gSession == GuidanceSession(session, process, Map()) => succeed
+        case Right(gSession) if gSession == GuidanceSession(session, process, Map(), Nil) => succeed
         case _ => fail()
       }
     }
