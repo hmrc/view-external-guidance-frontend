@@ -93,8 +93,8 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
           case None =>
             logger.error(s"ERROR:Conversion of RawPageHistory to PageHistory failed (None return)")
             Left(RawPageHistoryError)
-          case Some(pageHistoryOption) =>
-            Right(GuidanceSession(session, cachedProcess.process, cachedProcess.pageMap, pageHistoryOption))
+          case Some(pageHistory) =>
+            Right(GuidanceSession(session, cachedProcess.process, cachedProcess.pageMap, pageHistory))
         }
       case Left(err) => Left(err)
     }
