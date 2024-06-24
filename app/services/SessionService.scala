@@ -75,7 +75,7 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
         logger.error(s"ERROR:Conversion of PageHistory to RawPageHistory failed (None return)")
         Future.successful(Left(PageHistoryError))
       case rawPageHistoryOption =>
-        sessionRepository.updateForNewPage(key, processCode, pageHistory, rawPageHistoryOption, flowStack, labelUpdates, legalPageIds, requestId)
+        sessionRepository.updateForNewPage(key, processCode, rawPageHistoryOption, flowStack, labelUpdates, legalPageIds, requestId)
     }
 
   def updateAfterStandardPage(key: String, processCode: String, labels: Labels, requestId: Option[String]): Future[RequestOutcome[Unit]] =

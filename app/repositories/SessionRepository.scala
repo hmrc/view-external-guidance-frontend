@@ -58,7 +58,7 @@ trait SessionRepository extends SessionRepositoryConstants {
   def getNoUpdate(key: String, processCode: String): Future[RequestOutcome[Session]]
   def get(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[Session]]
   def reset(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[Session]]
-  def updateForNewPage(key: String, processCode: String, pageHistory: Option[List[PageHistory]], rawpageHistory: Option[List[RawPageHistory]], flowStack: Option[List[FlowStage]],
+  def updateForNewPage(key: String, processCode: String, rawpageHistory: Option[List[RawPageHistory]], flowStack: Option[List[FlowStage]],
                                labelUpdates: List[Label], legalPageIds: List[String], requestId: Option[String]): Future[RequestOutcome[Unit]]
   def updateAfterStandardPage(key: String, processCode: String, labels: Labels, requestId: Option[String]): Future[RequestOutcome[Unit]]
   def updateAfterFormSubmission(key: String, processCode: String, answerId: String, answer: String, labels: Labels, nextLegalPageIds: List[String],
@@ -237,7 +237,6 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
 
   def updateForNewPage(key: String,
                        processCode: String,
-                       pageHistory: Option[List[PageHistory]],
                        rawPageHistory: Option[List[RawPageHistory]],
                        flowStack: Option[List[FlowStage]],
                        labelUpdates: List[Label],
@@ -247,7 +246,6 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
         requestId.fold(equal("_id", SessionKey(key, processCode)))(rId => and(equal("_id", SessionKey(key, processCode)), equal(RequestId, rId))),
         combine((List(
           Updates.set(TtlExpiryFieldName, Instant.now()), Updates.set(LegalPageIdsKey, Codecs.toBson(legalPageIds))) ++
-          pageHistory.fold[List[Bson]](Nil)(ph => List(Updates.set(PageHistoryKey, Codecs.toBson(ph)))) ++
           rawPageHistory.fold[List[Bson]](Nil)(ph => List(Updates.set(RawPageHistoryKey, Codecs.toBson(ph)))) ++
           labelUpdates.map(l => Updates.set(s"${LabelsKey}.${l.name}", Codecs.toBson(l))) ++
           flowStack.fold[List[Bson]](Nil)(stack => List(Updates.set(FlowStackKey, Codecs.toBson(stack))))).toIndexedSeq: _*

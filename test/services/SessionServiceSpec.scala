@@ -182,7 +182,7 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
     "Update the session repository for the new page" in new Test {
 
       MockSessionRepository
-        .updateForNewPage(sessionRepoId, process.meta.processCode, None, None, None, Nil, Nil, requestId)
+        .updateForNewPage(sessionRepoId, process.meta.processCode, None, None, Nil, Nil, requestId)
         .returns(Future.successful(Right(())))
 
       whenReady(

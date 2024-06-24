@@ -16,7 +16,7 @@
 
 package mocks
 
-import models.{Session, PageHistory, RawPageHistory}
+import models.{Session, RawPageHistory}
 import repositories.SessionRepository
 import core.models.ocelot._
 import core.models.RequestOutcome
@@ -67,15 +67,14 @@ trait MockSessionRepository extends MockFactory {
         .expects(key, processCode, *, requestId)
 
     def updateForNewPage(key: String,
-                                 processCode: String,
-                                 pageHistory: Option[List[PageHistory]],
-                                 rawPageHistory: Option[List[RawPageHistory]],
-                                 flowStack: Option[List[FlowStage]],
-                                 labelUpdates: List[Label],
-                                 legalPageIds: List[String],
-                                 requestId: Option[String]): CallHandler[Future[RequestOutcome[Unit]]] =
+                         processCode: String,
+                         rawPageHistory: Option[List[RawPageHistory]],
+                         flowStack: Option[List[FlowStage]],
+                         labelUpdates: List[Label],
+                         legalPageIds: List[String],
+                         requestId: Option[String]): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockSessionRepository
-        .updateForNewPage(_: String, _: String, _: Option[List[PageHistory]], _: Option[List[RawPageHistory]], _: Option[List[FlowStage]], _: List[Label], _: List[String], _: Option[String]))
-        .expects(key, processCode, pageHistory, rawPageHistory, flowStack, labelUpdates, legalPageIds, requestId)
+        .updateForNewPage(_: String, _: String, _: Option[List[RawPageHistory]], _: Option[List[FlowStage]], _: List[Label], _: List[String], _: Option[String]))
+        .expects(key, processCode, rawPageHistory, flowStack, labelUpdates, legalPageIds, requestId)
   }
 }
