@@ -50,7 +50,7 @@ case class GuidanceSession(process: Process,
 }
 
 object GuidanceSession {
-  def apply(sp: Session, process: Process, pageMap: Map[String, PageNext]): GuidanceSession =
+  def apply(sp: Session, process: Process, pageMap: Map[String, PageNext], pageHistory: List[PageHistory]): GuidanceSession =
     GuidanceSession(process,
                     sp.answers,
                     sp.labels,
@@ -58,10 +58,10 @@ object GuidanceSession {
                     sp.continuationPool,
                     pageMap,
                     sp.legalPageIds,
-                    sp.pageHistory.reverse.headOption.map(_.url.drop(process.meta.processCode.length)),
+                    pageHistory.reverse.headOption.map(_.url.drop(process.meta.processCode.length)),
                     None,
                     sp.runMode.getOrElse(Published),
-                    sp.pageHistory)
+                    pageHistory)
 }
 
 case class PageNext(id: String, next: List[String] = Nil, linked: List[String] = Nil, title: Option[String] = None, url: Option[String] = None)
