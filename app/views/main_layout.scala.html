@@ -56,8 +56,8 @@
 }
 
 @head = {
-    <link href='@controllers.routes.Assets.versioned("stylesheets/application.css")' media="all" rel="stylesheet" type="text/css" />
-    <script @CSPNonce.attr src='@controllers.routes.Assets.versioned("javascripts/initSequenceAndPrintEventHandlers.js")'></script>
+  <link href='@controllers.routes.Assets.versioned("stylesheets/application.css")' media="all" rel="stylesheet" type="text/css" />
+  <script @CSPNonce.attr type='module' src='@controllers.routes.Assets.versioned("javascripts/initSequenceAndPrintEventHandlers.js")'></script>
 
   @if(enableTimeout) {
       @timeoutDialog(
@@ -110,13 +110,6 @@
  </div>
 }
 
-@scripts = {
-    <script @CSPNonce.attr src='@controllers.routes.Assets.versioned("lib/govuk-frontend/govuk/all.js")'></script>
-    <script @CSPNonce.attr src='@controllers.routes.Assets.versioned("lib/hmrc-frontend/hmrc/all.js")'></script>
-    <script @CSPNonce.attr>window.GOVUKFrontend.initAll();</script>
-    <script @CSPNonce.attr>window.HMRCFrontend.initAll();</script>
-}
-
 @hmrcExtendedPage(
   HmrcStandardPageParams(
     banners = Banners(
@@ -129,7 +122,7 @@
     ),
     templateOverrides = TemplateOverrides(
       additionalHeadBlock = Some(head),
-      additionalScriptsBlock = Some(scripts),
+      additionalScriptsBlock = None,
       beforeContentBlock = Some(beforeContentBlock),
       mainContentLayout = layoutFormat
     ),

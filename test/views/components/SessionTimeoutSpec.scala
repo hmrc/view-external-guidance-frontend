@@ -53,7 +53,7 @@ class SessionTimeoutSpec extends BaseSpec with ViewFns with ViewSpec {
         Some(processCode),
         buttonTarget)(fakeRequest, messages))
 
-      val pageTitleElement: Element = getSingleElementByTag(doc, "title")
+      val pageTitleElement: Element = getTitleTag(doc)
 
       pageTitleElement.text shouldBe s"${messages("session.timeout.session.has.expired")} – ${messages("service.name")} – ${messages("service.govuk")}"
 
@@ -91,7 +91,7 @@ class SessionTimeoutSpec extends BaseSpec with ViewFns with ViewSpec {
         Some(processCode),
         buttonTarget)(fakeRequest, messages))
 
-      val pageTitleElement: Element = getSingleElementByTag(doc, "title")
+      val pageTitleElement: Element = getTitleTag(doc)
 
       pageTitleElement.text shouldBe s"${messages("session.timeout.delete.your.answers")} – ${messages("service.name")} – ${messages("service.govuk")}"
 
