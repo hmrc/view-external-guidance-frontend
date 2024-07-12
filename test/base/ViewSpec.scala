@@ -43,6 +43,13 @@ trait ViewSpec extends AnyWordSpecLike with Matchers {
     getMultipleElementsByTag(document, htmlTag, expectedNumberOfElements)
   }
 
+  def getTitleTag(document: Element): Element = {
+
+    val elements: Elements = document.getElementsByTag("title")
+
+    elements.first()
+  }
+
   def getSingleElementByTag(document: Element, htmlTag: String): Element = {
 
     val elements: Elements = document.getElementsByTag(htmlTag)

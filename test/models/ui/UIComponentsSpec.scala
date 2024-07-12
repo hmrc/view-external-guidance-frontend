@@ -110,17 +110,17 @@ class UIComponentsSpec extends BaseSpec with TestConstants {
       val bulletPointList: BulletPointList = BulletPointList(text, Seq(bulletPointOne, bulletPointTwo))
 
       bulletPointList.text match {
-        case text: Text => text shouldBe text
+        case txt: Text => txt shouldBe text
         case _ => fail("The first text item in leading text is not an instance of the class Text")
       }
 
       bulletPointList.listItems.head match {
-        case text: Text => text shouldBe bulletPointOne
+        case txt: Text => txt shouldBe bulletPointOne
         case _ => fail("The first text item in the first bullet point is not an instance of the class Text")
       }
 
       bulletPointList.listItems(1) match {
-        case text: Text => text shouldBe bulletPointTwo
+        case txt: Text => txt shouldBe bulletPointTwo
         case _ => fail("The first text item in the second bullet point is not an instance of the class Text")
       }
     }
