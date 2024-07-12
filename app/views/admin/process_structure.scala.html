@@ -26,11 +26,17 @@
 
 @(title: String, rows: List[ProcessPageStructure])(implicit request: Request[_], messages: Messages)
 
-@layout(title + " " + messages("guidance.internals.heading"),
-        title + " " + messages("guidance.internals.heading"),
-        None, None, None, false, true,
-        Some(wideLayout(_)),
-        false) {
+@layout(pageTitle = title + " " + messages("guidance.internals.heading"),
+        processTitle = title + " " + messages("guidance.internals.heading"),
+        processCode = None,
+        startUrl = None,
+        backUrl = None,
+        betaPhaseBanner = false,
+        enableTimeout = false,
+        layoutFormat = Some(wideLayout(_)),
+        enableLanguageSelect = false,
+        urlLangSwitch = None,
+        debugInformation = None) {
 
   <h1 class="govuk-heading-l">@title @messages("guidance.internals.page_count", rows.size)</h1>
 
