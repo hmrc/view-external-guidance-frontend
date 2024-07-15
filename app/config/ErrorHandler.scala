@@ -18,53 +18,54 @@ package config
 
 import javax.inject.{Inject, Singleton}
 import play.api.i18n.{Messages, MessagesApi}
-import play.api.mvc.Request
+import play.api.mvc.RequestHeader
 import play.twirl.api.Html
 import uk.gov.hmrc.play.bootstrap.frontend.http.FrontendErrorHandler
 import views.html.{error_template, runtime_error_template}
 import models.admin.DebugInformation
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class ErrorHandler @Inject()(val messagesApi: MessagesApi,
                              view: error_template,
                              runtimeErrorView: runtime_error_template,
-                             implicit val appConfig: AppConfig) extends FrontendErrorHandler {
+                             implicit val appConfig: AppConfig, val ec: ExecutionContext) extends FrontendErrorHandler {
 
-  override def standardErrorTemplate(pageTitle: String, heading: String, message: String)(implicit request: Request[_]): Html =
-    view(pageTitle, heading, message, None, false)
+  override def standardErrorTemplate(pageTitle: String, heading: String, message: String)(implicit request: RequestHeader): Future[Html] =
+    Future.successful(view(pageTitle, heading, message, None, false))
 
-  def standardErrorTemplate(pageTitle: String, heading: String, message: String, processCode: Option[String])(implicit request: Request[_]): Html =
-    view(pageTitle, heading, message, processCode, false)
+  def standardErrorTemplate(pageTitle: String, heading: String, message: String, processCode: Option[String])(implicit request: RequestHeader): Future[Html] =
+    Future.successful(view(pageTitle, heading, message, processCode, false))
 
   def runtimeErrorHandler(processCode: String,
                           errors: List[String],
                           solns: List[List[String]],
                           stanzaId: Option[String],
-                          debugInformation: Option[DebugInformation])(implicit request: Request[_]): Html =
-    runtimeErrorView(
+                          debugInformation: Option[DebugInformation])(implicit request: RequestHeader): Future[Html] =
+    Future.successful(runtimeErrorView(
       Messages("guidance.error.title", processCode),
       Messages("guidance.error.heading", processCode),
       processCode,
       errors,
       solns,
       debugInformation
-    )
+    ))
 
-  def badRequestTemplateWithProcessCode(processCode: Option[String])(implicit request: Request[_]): Html =
+  def badRequestTemplateWithProcessCode(processCode: Option[String])(implicit request: RequestHeader): Future[Html] =
     standardErrorTemplate(
       Messages("global.error.badRequest400.title"),
       Messages("global.error.badRequest400.heading"),
       Messages("global.error.badRequest400.message"),
       processCode)
 
-  def notFoundTemplateWithProcessCode(processCode: Option[String])(implicit request: Request[_]): Html =
+  def notFoundTemplateWithProcessCode(processCode: Option[String])(implicit request: RequestHeader): Future[Html] =
     standardErrorTemplate(
       Messages("global.error.pageNotFound404.title"),
       Messages("global.error.pageNotFound404.heading"),
       Messages("global.error.pageNotFound404.message"),
       processCode)
 
-  def internalServerErrorTemplateWithProcessCode(processCode: Option[String])(implicit request: Request[_]): Html =
+  def internalServerErrorTemplateWithProcessCode(processCode: Option[String])(implicit request: RequestHeader): Future[Html] =
     standardErrorTemplate(
       Messages("global.error.InternalServerError500.title"),
       Messages("global.error.InternalServerError500.heading"),

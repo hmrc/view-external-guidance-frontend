@@ -23,7 +23,7 @@
 hmrcHeading: HmrcPageHeading,
 appConfig: AppConfig)
 
-@(pageTitle: String, heading: String, processCode: String, errorMessages: List[String], solns: List[List[String]], debugInformation: Option[DebugInformation])(implicit request: Request[_], messages: Messages)
+@(pageTitle: String, heading: String, processCode: String, errorMessages: List[String], solns: List[List[String]], debugInformation: Option[DebugInformation])(implicit request: RequestHeader, messages: Messages)
 
 @layout(pageTitle, messages("service.name"), Some(processCode), betaPhaseBanner = false, enableTimeout = false, debugInformation = debugInformation) {
 @hmrcHeading(PageHeading(heading))

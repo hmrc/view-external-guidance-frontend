@@ -19,31 +19,23 @@ package connectors
 import base.BaseSpec
 import core.models.RequestOutcome
 import core.models.ocelot.Process
-import mocks.{MockAppConfig, MockHttpClient}
+import mocks.MockAppConfig
 import play.api.libs.json.Json
-import play.api.test.{DefaultAwaitTimeout, FutureAwaits}
-import uk.gov.hmrc.http.HeaderCarrier
-
+import org.mockito.Mockito.when
 import scala.concurrent.Future
 
-class GuidanceConnectorSpec extends BaseSpec with MockHttpClient {
+class GuidanceConnectorSpec extends BaseSpec {
 
-  private trait Test extends MockHttpClient with FutureAwaits with DefaultAwaitTimeout {
+  private trait Test extends ConnectorTest {
     val process: Process = Json.parse(core.models.ocelot.PrototypeJson.json).as[Process]
-    implicit val hc: HeaderCarrier = HeaderCarrier()
     val gc: GuidanceConnector = new GuidanceConnector(mockHttpClient, MockAppConfig)
-    val scratchEndPoint: String = MockAppConfig.externalGuidanceBaseUrl + "/external-guidance/scratch/"
-    val publishedEndPoint: String = MockAppConfig.externalGuidanceBaseUrl + "/external-guidance/published/"
-    val approvalEndPoint: String = MockAppConfig.externalGuidanceBaseUrl + "/external-guidance/approval/"
   }
 
   "Calling the scratchProcess with an existing scratch process UUID" should {
 
     "return a model representing a Scatch Process" in new Test {
 
-      MockedHttpClient
-        .get(scratchEndPoint + "683d9aa0-2a0e-4e28-9ac8-65ce453d2730")
-        .returns(Future.successful(Right(process)))
+      when(requestBuilderExecute[RequestOutcome[Process]]).thenReturn(Future.successful(Right(process)))
 
       val response: RequestOutcome[Process] =
         await(gc.scratchProcess("683d9aa0-2a0e-4e28-9ac8-65ce453d2730")(hc, implicitly))
@@ -56,9 +48,7 @@ class GuidanceConnectorSpec extends BaseSpec with MockHttpClient {
 
     "return a model representing a published Process" in new Test {
 
-      MockedHttpClient
-        .get(publishedEndPoint + "ext90002")
-        .returns(Future.successful(Right(process)))
+      when(requestBuilderExecute[RequestOutcome[Process]]).thenReturn(Future.successful(Right(process)))
 
       val response: RequestOutcome[Process] =
         await(gc.publishedProcess("ext90002")(hc, implicitly))
@@ -71,9 +61,7 @@ class GuidanceConnectorSpec extends BaseSpec with MockHttpClient {
 
     "return a model representing an approval Process" in new Test {
 
-      MockedHttpClient
-        .get(approvalEndPoint + "ext90002")
-        .returns(Future.successful(Right(process)))
+      when(requestBuilderExecute[RequestOutcome[Process]]).thenReturn(Future.successful(Right(process)))
 
       val response: RequestOutcome[Process] =
         await(gc.approvalProcess("ext90002")(hc, implicitly))

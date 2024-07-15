@@ -47,7 +47,7 @@
   enableLanguageSelect: Boolean = true,
   urlLangSwitch: Option[Html] = None,
   debugInformation: Option[DebugInformation] = None
-)(contentBlock: Html)(implicit request: Request[_], messages: Messages)
+)(contentBlock: Html)(implicit request: RequestHeader, messages: Messages)
 
 @processCodeUrl(processCode: Option[String], url: String) = @{
   processCode.fold[Option[String]](None){ pc =>
