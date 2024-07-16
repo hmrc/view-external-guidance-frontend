@@ -53,14 +53,14 @@ class StartAdminController @Inject() (
 
   private[entry] def retrieveAndView(processCode: String,
                                      retrieve: String => Future[RequestOutcome[(Process, Seq[Page])]])(implicit request: Request[_]): Future[Result] =
-    retrieve(processCode).map{
-      case Right((process, Nil)) => Ok(view(process.title.english, Nil))
+    retrieve(processCode).flatMap{
+      case Right((process, Nil)) => Future.successful(Ok(view(process.title.english, Nil)))
       case Right((process, pages)) =>
         val pageMap: Map[String, PageNext] = pages.map(p => p.url -> PageNext(p.id, p.next.toList, p.linked.toList, debugService.pageTitle(p))).toMap
         val processPageMaps: List[ProcessPageStructure] = pages.map(debugService.mapPage(_, pageMap)).toList
-        Ok(view(process.title.english, processPageMaps))
-      case Left(NotFoundError) => NotFound(errorHandler.notFoundTemplate)
-      case Left(err) => InternalServerError(errorHandler.internalServerErrorTemplate)
+        Future.successful(Ok(view(process.title.english, processPageMaps)))
+      case Left(NotFoundError) => errorHandler.notFoundTemplate.map(NotFound(_))
+      case Left(err) => errorHandler.internalServerErrorTemplate.map(InternalServerError(_))
     }
 
 }

@@ -16,13 +16,8 @@
 
 @import config.AppConfig
 @import models.admin.DebugInformation
-@import uk.gov.hmrc.hmrcfrontend.views.config.StandardBetaBanner
-@import uk.gov.hmrc.hmrcfrontend.views.html.helpers.HmrcStandardPage
 @import uk.gov.hmrc.hmrcfrontend.views.viewmodels.hmrcstandardpage._
-@import uk.gov.hmrc.govukfrontend.views.html.components.{Meta => HmrcMeta}
 @import uk.gov.hmrc.hmrcfrontend.views.viewmodels.language.{En, Cy}
-@import uk.gov.hmrc.govukfrontend.views.viewmodels.header.Header
-@import uk.gov.hmrc.hmrcfrontend.views.html.helpers.HmrcTrackingConsentSnippet
 @import views.html.helper.CSPNonce
 
 @this(
@@ -47,7 +42,7 @@
   enableLanguageSelect: Boolean = true,
   urlLangSwitch: Option[Html] = None,
   debugInformation: Option[DebugInformation] = None
-)(contentBlock: Html)(implicit request: Request[_], messages: Messages)
+)(contentBlock: Html)(implicit request: RequestHeader, messages: Messages)
 
 @processCodeUrl(processCode: Option[String], url: String) = @{
   processCode.fold[Option[String]](None){ pc =>

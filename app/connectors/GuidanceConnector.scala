@@ -19,13 +19,14 @@ package connectors
 import javax.inject.{Inject, Singleton}
 import core.models.ocelot._
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.HttpClient
+import uk.gov.hmrc.http.client.HttpClientV2
 import config.AppConfig
 import core.models.RequestOutcome
 import scala.concurrent.{ExecutionContext, Future}
+import uk.gov.hmrc.http.StringContextOps
 
 @Singleton
-class GuidanceConnector @Inject() (httpClient: HttpClient, appConfig: AppConfig) {
+class GuidanceConnector @Inject() (httpClient: HttpClientV2, appConfig: AppConfig) {
 
   def scratchProcess(uuid: String)(implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[Process]] =
     retrieveProcess(appConfig.externalGuidanceBaseUrl + s"/external-guidance/scratch/$uuid")
@@ -42,7 +43,7 @@ class GuidanceConnector @Inject() (httpClient: HttpClient, appConfig: AppConfig)
   private def retrieveProcess(endPoint: String)(implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[Process]] = {
     import connectors.httpParsers.GetProcessHttpParser.getProcessHttpReads
 
-    httpClient.GET[RequestOutcome[Process]](endPoint, Seq.empty, Seq.empty)
+    httpClient.get(url"$endPoint").execute[RequestOutcome[Process]]
   }
 
 }

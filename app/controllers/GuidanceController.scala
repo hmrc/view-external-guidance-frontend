@@ -70,7 +70,7 @@ class GuidanceController @Inject() (
         Future.successful(redirectToGuidanceStart(processCode))
       case Left((err, _)) =>
         logger.error(s"Request for Reset GuidanceSession returned $err, returning InternalServerError")
-        Future.successful(InternalServerError(errorHandler.internalServerErrorTemplate))
+        errorHandler.internalServerErrorTemplate.map(InternalServerError(_))
     }
   }
 
@@ -88,7 +88,7 @@ class GuidanceController @Inject() (
 
     validateUrl(s"$processCode/$path").fold {
       logger.warn(s"Request for PageContext at /$path returned NotFound, returning NotFound")
-      Future.successful(NotFound(errorHandler.notFoundTemplateWithProcessCode(None)))
+      errorHandler.notFoundTemplateWithProcessCode(None).map(NotFound(_))
     } { _ =>
       withExistingSession[PageContext](service.getPageContext(processCode, s"/$path", p.isDefined, _)).flatMap {
         case Left((err, debugInformation)) => translateGetPageError(err, processCode, path, c, lang, sId, debugInformation)
@@ -108,7 +108,7 @@ class GuidanceController @Inject() (
                 Future.successful(Ok(formView(page, pageCtx, inputName, formProvider(input).populated(inputName, pageCtx.answer))))
               case _ =>
                 logger.error(s"Unable to locate input stanza for process ${pageCtx.processCode} on page load")
-                Future.successful(BadRequest(errorHandler.badRequestTemplateWithProcessCode(Some(processCode))))
+                errorHandler.badRequestTemplateWithProcessCode(Some(processCode)).map(BadRequest(_))
             }
           }
       }
@@ -136,7 +136,7 @@ class GuidanceController @Inject() (
       Future.successful(redirectToGuidanceStart(processCode))
     case NotFoundError =>
       logger.warn(s"Request for PageContext at /$path returned NotFound, returning NotFound")
-      Future.successful(NotFound(errorHandler.notFoundTemplateWithProcessCode(Some(processCode))))
+      errorHandler.notFoundTemplateWithProcessCode(Some(processCode)).map(NotFound(_))
     case ExpectationFailedError if c.isDefined =>
       logger.warn(s"ExpectationFailed error on getPage after similar redirect to process start. Log ISE")
       Future.successful(Redirect(s"${appConfig.baseUrl}/$processCode/session-blocked${lang.fold("")(l => s"?lang=$l")}"))
@@ -144,11 +144,11 @@ class GuidanceController @Inject() (
       logger.warn(s"ExpectationFailed error on getPage. Redirecting to ${appConfig.baseUrl}/$processCode")
       Future.successful(redirectToGuidanceStartWhenNoSession(processCode, lang))
     case Error(Error.ExecutionError, errs, Some(errorRunMode), stanzaId) =>
-      Future.successful(translateExecutionError(err.errors.collect{case e: RuntimeError => e},
-                                                processCode, path, errorRunMode, stanzaId, sessionId, debugInformation))
+      translateExecutionError(err.errors.collect{case e: RuntimeError => e},
+                                                processCode, path, errorRunMode, stanzaId, sessionId, debugInformation)
     case err =>
       logger.error(s"Request for PageContext at /$path returned $err, returning InternalServerError")
-      Future.successful(InternalServerError(errorHandler.internalServerErrorTemplate))
+      errorHandler.internalServerErrorTemplate.map(InternalServerError(_))
   }
 
   def submitPage(processCode: String, path: String): Action[AnyContent] = Action.async { implicit request =>
@@ -162,27 +162,27 @@ class GuidanceController @Inject() (
       case Left((err, debugInformation)) => translateSubmitError(err, processCode, path, sId, debugInformation)
       case Right(ctx) => ctx.dataInput.fold{
           logger.error( s"Unable to locate input stanza for process ${ctx.processCode} on submission")
-          Future.successful(BadRequest(errorHandler.badRequestTemplateWithProcessCode(Some(processCode))))
+          errorHandler.badRequestTemplateWithProcessCode(Some(processCode)).map(BadRequest(_))
         }{ input =>
           val inputName: String = formInputName(path)
           formProvider(input).bind(inputName) match {
             case Left((formWithErrors: Form[_], errorStrategy: ErrorStrategy)) =>
-              Future.successful(BadRequest(createErrorView(service.getSubmitPageContext(ctx, errorStrategy), inputName, formWithErrors)))
+              createErrorView(service.getSubmitPageContext(ctx, errorStrategy), inputName, formWithErrors).map(BadRequest(_))
             case Right((form: Form[_], submittedAnswer: SubmittedAnswer)) =>
               (input.validInput(submittedAnswer.text), input) match {
                 case (Left(fieldErrors), dateInput: DateInput) =>
                   val missingFieldNames = fieldErrors.map(id => messages(s"${dateInput.FieldMsgBase}.${dateInput.FieldNames(id)}"))
                   val pageCtx = service.getSubmitPageContext(ctx, ValueTypeGroupError(missingFieldNames, fieldErrors.map(dateInput.FieldNames)))
                   // Answer didn't pass DateInput stanza validation
-                  Future.successful(BadRequest(createErrorView(pageCtx, inputName, form)))
+                  createErrorView(pageCtx, inputName, form).map(BadRequest(_))
                 case (Left(fieldErrors), _) =>
                   // Answer didn't pass other DataInput stanza validation
-                  Future.successful(BadRequest(createErrorView(service.getSubmitPageContext(ctx, ValueTypeError), inputName, form)))
+                  createErrorView(service.getSubmitPageContext(ctx, ValueTypeError), inputName, form).map(BadRequest(_))
                 case (Right(answer), _) =>
                   service.submitPage(ctx, s"/$path", answer, submittedAnswer.text).flatMap {
                     case Right((None, labels)) =>      // No valid next page id indicates page should be re-displayed
                       logger.info(s"Post submit page evaluation indicates guidance detected input error")
-                      Future.successful(BadRequest(createErrorView(service.getSubmitPageContext(ctx.copy(labels = labels)), inputName, form)))
+                      createErrorView(service.getSubmitPageContext(ctx.copy(labels = labels)), inputName, form).map(BadRequest(_))
                     case Right((Some(stanzaId), _)) => // Some(stanzaId) here indicates a redirect to the page with id "stanzaId"
                       val url = ctx.pageMapById(stanzaId).url
                       val pageUrl = url.drop(appConfig.baseUrl.length + processCode.length + 2)
@@ -209,10 +209,10 @@ class GuidanceController @Inject() (
       Future.successful(Redirect(routes.GuidanceController.getPage(processCode, SecuredProcess.SecuredProcessStartUrl)))
     case NotFoundError =>
       logger.warn(s"Request for PageContext at /$path returned NotFound during form submission, returning NotFound")
-      Future.successful(NotFound(errorHandler.notFoundTemplateWithProcessCode(Some(processCode))))
+      errorHandler.notFoundTemplateWithProcessCode(Some(processCode)).map(NotFound(_))
     case BadRequestError =>
       logger.warn(s"Request for PageContext at /$path returned BadRequest during form submission, returning BadRequest")
-      Future.successful(BadRequest(errorHandler.badRequestTemplateWithProcessCode(Some(processCode))))
+      errorHandler.badRequestTemplateWithProcessCode(Some(processCode)).map(BadRequest(_))
     case ExpectationFailedError =>
       logger.warn(s"ExpectationFailed error on submitPage. Redirect to ${appConfig.baseUrl}/$processCode")
       Future.successful(redirectToGuidanceStart(processCode))
@@ -220,11 +220,11 @@ class GuidanceController @Inject() (
       logger.warn(s"Request for page at /$path returned SessionNotFound. Redirect to ${appConfig.baseUrl}/$processCode")
       Future.successful(redirectToGuidanceStart(processCode))
     case Error(Error.ExecutionError, errs, Some(errorRunMode), stanzaId) =>
-      Future.successful(translateExecutionError(err.errors.collect{case e: RuntimeError => e},
-                                                processCode, path, errorRunMode, stanzaId, sessionId, debugInformation))
+      translateExecutionError(err.errors.collect{case e: RuntimeError => e},
+                                                processCode, path, errorRunMode, stanzaId, sessionId, debugInformation)
     case err =>
       logger.error(s"Request for PageContext at /$path returned $err during form submission, returning InternalServerError")
-      Future.successful(InternalServerError(errorHandler.internalServerErrorTemplate))
+      errorHandler.internalServerErrorTemplate.map(InternalServerError(_))
   }
 
   private def translateExecutionError(errors: List[RuntimeError],
@@ -234,19 +234,21 @@ class GuidanceController @Inject() (
                                       stanzaId: Option[String],
                                       sessionId: Option[String],
                                       debugInformation: Option[DebugInformation])
-                                           (implicit request: Request[_]): Result = {
+                                           (implicit request: Request[_]): Future[Result] = {
     implicit val messages: Messages = mcc.messagesApi.preferred(request)
     val errorMsgs = errors.map(err => fromRuntimeError(err, stanzaId.getOrElse("UNKNOWN")))
     runMode match {
       case Published =>
         errorMsgs.foreach{err => logger.error(s"RuntimeError: $err within page /$path of processCode ${processCode}, sessionId=$sessionId")}
-        InternalServerError(errorHandler.internalServerErrorTemplate)
+        errorHandler.internalServerErrorTemplate.map(InternalServerError(_))
       case Debugging =>
-        InternalServerError(errorHandler.runtimeErrorHandler(processCode, errorMsgs,
-                                                             errorSolutions(errors, stanzaId.getOrElse("UNKNOWN")), stanzaId, debugInformation))
+        errorHandler
+          .runtimeErrorHandler(processCode, errorMsgs,
+                               errorSolutions(errors, stanzaId.getOrElse("UNKNOWN")), stanzaId, debugInformation)
+          .map(InternalServerError(_))
       case _ =>
         errorMsgs.foreach{err => logger.warn(s"RuntimeError: $err within page /$path of processCode ${processCode}, sessionId=$sessionId")}
-        InternalServerError(errorHandler.runtimeErrorHandler(processCode, errorMsgs, errorSolutions(errors, stanzaId.getOrElse("UNKNOWN")), stanzaId, None))
+        errorHandler.runtimeErrorHandler(processCode, errorMsgs, errorSolutions(errors, stanzaId.getOrElse("UNKNOWN")), stanzaId, None).map(InternalServerError(_))
     }
   }
 
@@ -270,12 +272,12 @@ class GuidanceController @Inject() (
     Redirect(s"${appConfig.baseUrl}/$processCode?$RedirectWhenNoSessionUrlParam${lang.fold("")(l => s"&lang=$l")}")
 
   private def createErrorView(ctxOutcome: DebuggableRequestOutcome[PageContext], inputName: String, form: Form[_])
-                                  (implicit request: Request[_], messages: Messages): Html =
+                                  (implicit request: Request[_], messages: Messages): Future[Html] =
     ctxOutcome match {
       case Left(err) => errorHandler.internalServerErrorTemplateWithProcessCode(None)
       case Right(ctx) =>
         ctx.page match {
-          case page: FormPage => formView(page, ctx, inputName, form)
+          case page: FormPage => Future.successful(formView(page, ctx, inputName, form))
           case page => 
             logger.error(s"ERROR: Expected a form page, but standard page created $page")
             errorHandler.badRequestTemplateWithProcessCode(Some(ctx.processCode))

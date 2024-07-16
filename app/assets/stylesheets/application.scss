@@ -6,11 +6,6 @@ $govuk-global-styles: true;
 @import "lib/govuk-frontend/dist/govuk/all";
 @import "lib/hmrc-frontend/hmrc/all";
 
-.app-reference-number {
-  display: block;
-  font-weight: bold;
-}
-
 .app-get-help-link {
   padding-top: 30px;
   font-size: 1rem;
