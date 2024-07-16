@@ -14,13 +14,8 @@ object AppDependencies {
   val test: Seq[ModuleID] = Seq(
     "uk.gov.hmrc.mongo"            %% "hmrc-mongo-test-play-30"    % hmrcMongoVersion   % Test,
     "org.scalamock"                %% "scalamock"                  % "5.2.0"            % Test,
-    "uk.gov.hmrc"                  %% "bootstrap-test-play-30"     % bootstrapVersion   % Test,
-    "org.scalatestplus"            %% "mockito-3-4"                % "3.2.10.0"         % Test,
-    "org.mockito"                  %  "mockito-core"               % "5.12.0"           % Test
-
+    "uk.gov.hmrc"                  %% "bootstrap-test-play-30"     % bootstrapVersion   % Test
   )
 
-  val itDependencies: Seq[ModuleID] = Seq(
-    "uk.gov.hmrc"                   %% "bootstrap-test-play-30" % bootstrapVersion  % Test,
-  )
+  val itDependencies: Seq[ModuleID] = Seq.empty
 }
