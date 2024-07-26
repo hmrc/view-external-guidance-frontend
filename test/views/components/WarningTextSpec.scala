@@ -52,11 +52,11 @@ class WarningTextSpec extends ViewSpec with ViewFns with GuiceOneAppPerSuite {
       div.hasClass("govuk-warning-text") shouldBe true
       val doc = asDocument(html)
 
-      val lis = getSingleElementByClass(doc,"govuk-warning-text__assistive").toString
-      lis shouldBe "<span class=\"govuk-warning-text__assistive\">Warning</span>"
+      val lis = getSingleElementByClass(doc,"govuk-visually-hidden").toString
+      lis shouldBe "<span class=\"govuk-visually-hidden\">Warning</span>"
 
       val warntxt = getSingleElementByClass(doc,"govuk-warning-text__text").toString
-      warntxt shouldBe "<strong class=\"govuk-warning-text__text\"> <span class=\"govuk-warning-text__assistive\">Warning</span> Line1 </strong>"
+      warntxt shouldBe "<strong class=\"govuk-warning-text__text\"> <span class=\"govuk-visually-hidden\">Warning</span> Line1 </strong>"
     }
   }
 }
