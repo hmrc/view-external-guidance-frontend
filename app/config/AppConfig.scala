@@ -26,8 +26,6 @@ import uk.gov.hmrc.http.StringContextOps
 import scala.collection.immutable.ListMap
 
 trait AppConfig {
-  val analyticsToken: String
-  val analyticsHost: String
   val reportAProblemPartialUrl: String
   val reportAProblemNonJSUrl: String
   val languageMap: Map[String, Lang]
@@ -62,8 +60,6 @@ class AppConfigImpl @Inject() (val config: Configuration, servicesConfig: Servic
   lazy val adminHost: String = servicesConfig.getString("adminHost")
   lazy val betaFeedback: String = servicesConfig.getString("betafeedback")
 
-  val analyticsToken: String = config.get[String](s"google-analytics.token")
-  val analyticsHost: String = config.get[String](s"google-analytics.host")
   val reportAProblemPartialUrl: String = s"$contactBaseUrl/contact/problem_reports_ajax?service=$serviceIdentifier"
   val reportAProblemNonJSUrl: String = s"$contactBaseUrl/contact/problem_reports_nonjs?service=$serviceIdentifier"
   val languageMap: Map[String, Lang] = ListMap("en" -> Lang("en"), "cy" -> Lang("cy"))
