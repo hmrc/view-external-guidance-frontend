@@ -23,9 +23,11 @@ import core.models.ocelot._
 import core.models.RequestOutcome
 import org.scalamock.handlers.CallHandler
 import org.scalamock.scalatest.MockFactory
+import org.scalatest.TestSuite
+
 import scala.concurrent.Future
 
-trait MockProcessCacheRepository extends MockFactory {
+trait MockProcessCacheRepository extends TestSuite with MockFactory {
 
   val mockProcessCacheRepository: ProcessCacheRepository = mock[ProcessCacheRepository]
 

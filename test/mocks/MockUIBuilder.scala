@@ -21,8 +21,9 @@ import org.scalamock.scalatest.MockFactory
 import core.models.ocelot.stanzas.VisualStanza
 import services.{ErrorStrategy, UIBuilder, UIContext}
 import core.models.RequestOutcome
+import org.scalatest.TestSuite
 
-trait MockUIBuilder extends MockFactory {
+trait MockUIBuilder extends TestSuite with MockFactory {
 
   val mockUIBuilder: UIBuilder = mock[UIBuilder]
 

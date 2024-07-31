@@ -21,10 +21,12 @@ import org.scalamock.handlers.CallHandler
 import org.scalamock.scalatest.MockFactory
 import services.RetrieveAndCacheService
 import uk.gov.hmrc.http.HeaderCarrier
-import scala.concurrent.Future
-import core.models.ocelot.{Process, Page}
 
-trait MockRetrieveAndCacheService extends MockFactory {
+import scala.concurrent.Future
+import core.models.ocelot.{Page, Process}
+import org.scalatest.TestSuite
+
+trait MockRetrieveAndCacheService extends TestSuite with MockFactory {
 
   val mockRetrieveAndCacheService: RetrieveAndCacheService = mock[RetrieveAndCacheService]
 

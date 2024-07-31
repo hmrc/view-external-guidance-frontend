@@ -16,16 +16,18 @@
 
 package mocks
 
-import models.{Session, RawPageHistory}
+import models.{RawPageHistory, Session}
 import repositories.SessionRepository
 import core.models.ocelot._
 import core.models.RequestOutcome
 import core.models.ocelot.RunMode
 import org.scalamock.handlers.CallHandler
 import org.scalamock.scalatest.MockFactory
+import org.scalatest.TestSuite
+
 import scala.concurrent.Future
 
-trait MockSessionRepository extends MockFactory {
+trait MockSessionRepository extends TestSuite with MockFactory {
 
   val mockSessionRepository: SessionRepository = mock[SessionRepository]
 

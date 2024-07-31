@@ -18,15 +18,17 @@ package mocks
 
 import models.PageNext
 import core.models.RequestOutcome
-import core.models.ocelot.{Process, RunMode, Label, Labels, FlowStage}
+import core.models.ocelot.{FlowStage, Label, Labels, Process, RunMode}
 import org.scalamock.handlers.CallHandler
 import org.scalamock.scalatest.MockFactory
 import services.SessionService
 import models.PageHistory
 import models.GuidanceSession
+import org.scalatest.TestSuite
+
 import scala.concurrent.{ExecutionContext, Future}
 
-trait MockSessionService extends MockFactory {
+trait MockSessionService extends TestSuite with MockFactory {
 
   val mockSessionService: SessionService = mock[SessionService]
 

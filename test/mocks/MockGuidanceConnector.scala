@@ -22,10 +22,11 @@ import org.scalamock.handlers.CallHandler
 import org.scalamock.scalatest.MockFactory
 import uk.gov.hmrc.http.HeaderCarrier
 import core.models.RequestOutcome
+import org.scalatest.TestSuite
 
 import scala.concurrent.{ExecutionContext, Future}
 
-trait MockGuidanceConnector extends MockFactory {
+trait MockGuidanceConnector extends TestSuite with MockFactory {
 
   val mockGuidanceConnector: GuidanceConnector = mock[GuidanceConnector]
 

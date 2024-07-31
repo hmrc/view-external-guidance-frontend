@@ -22,8 +22,9 @@ import services.DebugService
 import models.admin._
 import core.models.ocelot._
 import models.PageNext
+import org.scalatest.TestSuite
 
-trait MockDebugService extends MockFactory {
+trait MockDebugService extends TestSuite with MockFactory {
 
   val mockDebugService: DebugService = mock[DebugService]
 
