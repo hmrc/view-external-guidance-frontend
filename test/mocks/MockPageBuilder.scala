@@ -21,8 +21,9 @@ import core.services.PageBuilder
 import core.models.ocelot.errors.GuidanceError
 import org.scalamock.handlers.CallHandler
 import org.scalamock.scalatest.MockFactory
+import org.scalatest.TestSuite
 
-trait MockPageBuilder extends MockFactory {
+trait MockPageBuilder extends TestSuite with MockFactory {
 
   val mockPageBuilder: PageBuilder = mock[PageBuilder]
 

@@ -17,13 +17,14 @@
 package mocks
 
 import core.models.ocelot.stanzas.{DataInput, VisualStanza}
-import core.models.ocelot.{Page, Labels}
-import services.{RenderOutcome, PageRenderer}
+import core.models.ocelot.{Labels, Page}
+import services.{PageRenderer, RenderOutcome}
 import org.scalamock.handlers.CallHandler
 import org.scalamock.scalatest.MockFactory
+import org.scalatest.TestSuite
 import play.api.i18n.Messages
 
-trait MockPageRenderer extends MockFactory {
+trait MockPageRenderer extends TestSuite with MockFactory {
   val mockPageRenderer: PageRenderer = mock[PageRenderer]
 
   object MockPageRenderer {

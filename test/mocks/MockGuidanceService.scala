@@ -16,7 +16,7 @@
 
 package mocks
 
-import models.{PageEvaluationContext, PageContext}
+import models.{PageContext, PageEvaluationContext}
 import core.models.RequestOutcome
 import models.DebuggableRequestOutcome
 import org.scalamock.handlers.CallHandler
@@ -24,11 +24,13 @@ import org.scalamock.scalatest.MockFactory
 import services.{ErrorStrategy, GuidanceService}
 import models.GuidanceSession
 import core.models.ocelot.Labels
+import org.scalatest.TestSuite
+
 import scala.concurrent.{ExecutionContext, Future}
 import play.api.i18n.Messages
 import uk.gov.hmrc.http.HeaderCarrier
 
-trait MockGuidanceService extends MockFactory {
+trait MockGuidanceService extends TestSuite with MockFactory {
 
   val mockGuidanceService: GuidanceService = mock[GuidanceService]
 
