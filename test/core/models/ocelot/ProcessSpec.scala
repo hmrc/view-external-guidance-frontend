@@ -102,4 +102,33 @@ class ProcessSpec extends BaseSpec with ProcessJson {
     }
   }
 
+  "Ocelot Backlink Behaviour" must {
+
+    "Be disabled by default" in {
+      Process(meta, flow, phrases, links).ocelotBacklinkBehaviour shouldBe false
+    }
+
+    "Be enabled when process contains a Value named _GuidanceBacklinkBehaviour and set to ocelot" in {
+      //case class Process(meta: Meta, flow: Map[String, Stanza], phrases: Vector[Phrase], links: Vector[Link], timescales: Map[String, Int] = Map())
+      val newValueStanza = flow(blankValueStanzaID) match {
+        case v: ValueStanza => v.copy(values = List(Value(ScalarType, s"${Process.BacklinkBehaviourLabelName}", "Ocelot")))
+        case _ => fail()
+      }
+      val newFlow = flow + (blankValueStanzaID -> newValueStanza)
+      Process(meta, newFlow, phrases, links).ocelotBacklinkBehaviour shouldBe true
+
+    }
+
+    "Be disabled when process contains a Value named _GuidanceBacklinkBehaviour and set to a value other than ocelot" in {
+      //case class Process(meta: Meta, flow: Map[String, Stanza], phrases: Vector[Phrase], links: Vector[Link], timescales: Map[String, Int] = Map())
+      val newValueStanza = flow(blankValueStanzaID) match {
+        case v: ValueStanza => v.copy(values = List(Value(ScalarType, s"${Process.BacklinkBehaviourLabelName}", "anything")))
+        case _ => fail()
+      }
+      val newFlow = flow + (blankValueStanzaID -> newValueStanza)
+      Process(meta, newFlow, phrases, links).ocelotBacklinkBehaviour shouldBe false
+
+    }
+  }
+
 }
