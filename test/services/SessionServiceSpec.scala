@@ -278,7 +278,7 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
         RawPageHistory("3", Nil))
       val pageMap = Map("/start" -> PageNext("start"), "/next" -> PageNext("1"), "/somepage" -> PageNext("2"), "/another" -> PageNext("3"))
 
-      val result = target.toPageHistory(Some(rawPageHistory), pageMap, processCode)
+      val result = target.toPageHistory(rawPageHistory, pageMap, processCode)
       val expectedPageHistory = List(PageHistory(s"$processCode/start",List()), PageHistory(s"$processCode/next",List()), PageHistory(s"$processCode/somepage",List()), PageHistory(s"$processCode/another",List()))
 
       result match {
@@ -293,7 +293,7 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
       val rawPageHistory = List(RawPageHistory("start", Nil), RawPageHistory("unknown", Nil), RawPageHistory("2", Nil), RawPageHistory("3", Nil))
       val pageMap = Map("/start" -> PageNext("start"), "/somepage" -> PageNext("2"), "/another" -> PageNext("3"))
 
-      val result = target.toPageHistory(Some(rawPageHistory), pageMap, processCode)
+      val result = target.toPageHistory(rawPageHistory, pageMap, processCode)
 
       result match {
         case None => succeed
