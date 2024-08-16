@@ -89,7 +89,7 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
     val processId = if (session.runMode.equals(Some(Debugging))) s"${session.processId}${processCacheRepository.DebugIdSuffix}" else session.processId
     processCacheRepository.get(processId, session.processVersion, session.timescalesVersion, session.ratesVersion).map{
       case Right(cachedProcess) =>
-        toPageHistory(Some(session.rawPageHistory), cachedProcess.pageMap, cachedProcess.process.meta.processCode) match {
+        toPageHistory(session.rawPageHistory, cachedProcess.pageMap, cachedProcess.process.meta.processCode) match {
           case None =>
             logger.error(s"ERROR:Conversion of RawPageHistory to PageHistory failed (None return)")
             Left(RawPageHistoryError)
@@ -100,7 +100,7 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
     }
   }
 
-  private[services] def toPageHistory(rawPageHistory: Option[List[RawPageHistory]], pageMap: Map[String, PageNext], processCode: String): Option[List[PageHistory]] = {
+  private[services] def toPageHistory(rawPageHistory: List[RawPageHistory], pageMap: Map[String, PageNext], processCode: String): Option[List[PageHistory]] = {
     @tailrec
     def pageHistory(rph: List[RawPageHistory], reversePageMap: Map[String, String], acc: List[PageHistory] = Nil): Option[List[PageHistory]] =
       rph match {
@@ -111,7 +111,7 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
             case Some(pg) => pageHistory(xs, reversePageMap, PageHistory(processCode.concat(pg), x.flowStack) :: acc)
           }
       }
-    pageHistory(rawPageHistory.get, pageMap.flatMap{case (k,v) => List((v.id, k))})
+    pageHistory(rawPageHistory, pageMap.flatMap{case (k,v) => List((v.id, k))})
   }
 
   final private[services] def toRawPageHistory(pageHistory: Option[List[PageHistory]], pageMap: Map[String, PageNext], processCode: String): Option[List[RawPageHistory]] = {
