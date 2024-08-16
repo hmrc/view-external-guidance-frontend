@@ -80,7 +80,6 @@ class ProcessSpec extends BaseSpec with ProcessJson {
     }
 
     "Be enabled when process contains a Value named _BetaPhaseBanner and set to yes" in {
-      //case class Process(meta: Meta, flow: Map[String, Stanza], phrases: Vector[Phrase], links: Vector[Link], timescales: Map[String, Int] = Map())
       val newValueStanza = flow(blankValueStanzaID) match {
         case v: ValueStanza => v.copy(values = List(Value(ScalarType, s"${Process.PhaseBannerPhase}", "Yes")))
         case _ => fail()
@@ -91,7 +90,6 @@ class ProcessSpec extends BaseSpec with ProcessJson {
     }
 
     "Be disabled when process contains a Value named _BetaPhaseBanner and set to a value other than yes" in {
-      //case class Process(meta: Meta, flow: Map[String, Stanza], phrases: Vector[Phrase], links: Vector[Link], timescales: Map[String, Int] = Map())
       val newValueStanza = flow(blankValueStanzaID) match {
         case v: ValueStanza => v.copy(values = List(Value(ScalarType, s"${Process.PhaseBannerPhase}", "no")))
         case _ => fail()
@@ -109,7 +107,6 @@ class ProcessSpec extends BaseSpec with ProcessJson {
     }
 
     "Be enabled when process contains a Value named _GuidanceBacklinkBehaviour and set to ocelot" in {
-      //case class Process(meta: Meta, flow: Map[String, Stanza], phrases: Vector[Phrase], links: Vector[Link], timescales: Map[String, Int] = Map())
       val newValueStanza = flow(blankValueStanzaID) match {
         case v: ValueStanza => v.copy(values = List(Value(ScalarType, s"${Process.BacklinkBehaviourLabelName}", "Ocelot")))
         case _ => fail()
@@ -120,7 +117,6 @@ class ProcessSpec extends BaseSpec with ProcessJson {
     }
 
     "Be disabled when process contains a Value named _GuidanceBacklinkBehaviour and set to a value other than ocelot" in {
-      //case class Process(meta: Meta, flow: Map[String, Stanza], phrases: Vector[Phrase], links: Vector[Link], timescales: Map[String, Int] = Map())
       val newValueStanza = flow(blankValueStanzaID) match {
         case v: ValueStanza => v.copy(values = List(Value(ScalarType, s"${Process.BacklinkBehaviourLabelName}", "anything")))
         case _ => fail()
