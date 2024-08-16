@@ -107,18 +107,25 @@ class ProcessSpec extends BaseSpec with ProcessJson {
     }
 
     "Be enabled when process contains a Value named _GuidanceBacklinkBehaviour and set to ocelot" in {
-      val newValueStanza = flow(blankValueStanzaID) match {
-        case v: ValueStanza => v.copy(values = List(Value(ScalarType, s"${Process.BacklinkBehaviourLabelName}", "Ocelot")))
-        case _ => fail()
-      }
-      val newFlow = flow + (blankValueStanzaID -> newValueStanza)
-      Process(meta, newFlow, phrases, links).ocelotBacklinkBehaviour shouldBe true
 
+      def testWorkingBacklinkBehaviour(caseVariation: String): Unit = {
+        val newValueStanza = flow(blankValueStanzaID) match {
+          case v: ValueStanza => v.copy(values = List(Value(ScalarType, s"${Process.BacklinkBehaviourLabelName}", caseVariation)))
+          case _ => fail()
+        }
+        val newFlow = flow + (blankValueStanzaID -> newValueStanza)
+        Process(meta, newFlow, phrases, links).ocelotBacklinkBehaviour shouldBe true
+      }
+
+      testWorkingBacklinkBehaviour("ocelot")
+      testWorkingBacklinkBehaviour("Ocelot")
+      testWorkingBacklinkBehaviour("ocelOT")
+      testWorkingBacklinkBehaviour("OCELot")
     }
 
     "Be disabled when process contains a Value named _GuidanceBacklinkBehaviour and set to a value other than ocelot" in {
       val newValueStanza = flow(blankValueStanzaID) match {
-        case v: ValueStanza => v.copy(values = List(Value(ScalarType, s"${Process.BacklinkBehaviourLabelName}", "anything")))
+        case v: ValueStanza => v.copy(values = List(Value(ScalarType, s"${Process.BacklinkBehaviourLabelName}", "not Ocelot")))
         case _ => fail()
       }
       val newFlow = flow + (blankValueStanzaID -> newValueStanza)
