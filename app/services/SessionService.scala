@@ -111,7 +111,22 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
             case Some(pg) => pageHistory(xs, reversePageMap, PageHistory(processCode.concat(pg), x.flowStack) :: acc)
           }
       }
-    pageHistory(rawPageHistory, pageMap.flatMap{case (k,v) => List((v.id, k))})
+
+    @tailrec
+    def pageHistoryInFlight(rph: List[RawPageHistory], reversePageMap: Map[String, String], acc: List[PageHistory] = Nil): Option[List[PageHistory]] =
+      rph match {
+        case Nil => Some(acc.reverse)
+        case x :: xs =>
+          reversePageMap.get(x.stanzId) match {
+            case None => None
+            case Some(pg) => pageHistoryInFlight(xs, reversePageMap, PageHistory(processCode.concat(pg), x.flowStack) :: acc)
+          }
+      }
+
+    rawPageHistory.headOption.map(page => page.stanzId).getOrElse("") match {
+      case "start" => pageHistoryInFlight(rawPageHistory, pageMap.flatMap { case (k, v) => List((v.id, k)) })
+      case _ => pageHistory(rawPageHistory, pageMap.flatMap { case (k, v) => List((v.id, k)) })
+    }
   }
 
   final private[services] def toRawPageHistory(pageHistory: Option[List[PageHistory]], pageMap: Map[String, PageNext], processCode: String): Option[List[RawPageHistory]] = {
