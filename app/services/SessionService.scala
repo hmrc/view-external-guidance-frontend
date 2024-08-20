@@ -118,7 +118,7 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
     @tailrec
     def rawPageHistory(ph: List[PageHistory], acc: List[RawPageHistory] = Nil): Option[List[RawPageHistory]] =
       ph match {
-        case Nil => Some(acc.reverse)
+        case Nil => Some(acc)
         case x :: xs =>
           pageMap.get(x.url.drop(processCode.length)) match {
             case None => None
