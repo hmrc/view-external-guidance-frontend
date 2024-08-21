@@ -48,12 +48,6 @@ class SessionFSM @Inject() () {
       // REFRESH: new url equals current url with same flowPath
       case x :: xs if x.url == url => (xs.headOption.map(_.url), None, None, Nil)
 
-      // This identifies refresh when back is not possible i.e. current and previous page have same url and flowPath. However a refresh
-      // where the current url is the same as the previous and the flowPaths are different will be missed and interpretted as a BACK
-      // Real soln is to ensure all URLs are unique by including the Sequence label value in the URL
-      //case x :: Nil if x.url == url => (None, None, None, Nil)
-      //case x :: y :: xs if x.url == url && flowPath(x.flowStack).equals(flowPath(y.flowStack)) => (xs.headOption.map(_.url), None, None, Nil)
-
       // BACK: new url equals previous url and prior flowStack equals the previous flowStack
       case _ :: y :: xs if y.url == url && !forceForward && priorFlowStack == y.flowStack =>
         (xs.headOption.map(_.url), Some((y :: xs).reverse), None, Nil)
