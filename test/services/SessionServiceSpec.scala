@@ -315,7 +315,6 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
         case None => fail()
         case Some(rph) =>
           rph shouldBe rawPageHistory
-          rph.length shouldBe rawPageHistory.length
       }
     }
 
@@ -364,7 +363,6 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
         case None => fail()
         case Some (ph) =>
           ph shouldBe pageHistory
-          ph.length shouldBe pageHistory.length
       }
     }
   }
