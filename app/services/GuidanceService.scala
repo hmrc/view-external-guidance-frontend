@@ -117,12 +117,12 @@ class GuidanceService @Inject() (
           val requestId: Option[String] = hc.requestId.map(_.value)
           if (sp.legalPageIds.isEmpty || sp.legalPageIds.contains(pageNext.id)){ // Wild card or fixed list of valid page ids
             val firstPageUrl: String = s"${sp.process.meta.processCode}${sp.process.startUrl.getOrElse("")}"
-            val (backLink, historyUpdate, flowStackUpdate, labelUpdates) = transition(url, sp.pageHistory, sp.flowStack, previousPageByLink, firstPageUrl)
+            val (backLink, updatedPageHistory, flowStackUpdate, labelUpdates) = transition(url, sp.pageHistory, sp.flowStack, previousPageByLink, firstPageUrl)
             val labels: Map[String, Label] = sp.labels ++ labelUpdates.map(l => l.name -> l).toMap
             val legalPageIds = (pageNext.id :: Process.StartStanzaId :: pageNext.linked ++
                                 backLink.fold(List.empty[String])(bl => List(sp.pageMap(bl.drop(sp.process.meta.processCode.length)).id))).distinct
 
-            sessionService.updateForNewPage(key, processCode, sp.pageMap, historyUpdate, flowStackUpdate, labelUpdates, legalPageIds, requestId).map {
+            sessionService.updateForNewPage(key, processCode, sp.pageMap, updatedPageHistory, flowStackUpdate, labelUpdates, legalPageIds, requestId).map {
               case Left(NotFoundError) =>
                 logger.warn(s"TRANSACTION FAULT(Recoverable): saveUpdates _id=$key, requestId: $requestId")
                 Left((TransactionFaultError, None))
