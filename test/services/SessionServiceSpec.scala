@@ -273,9 +273,9 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
 
   "Session Service pageHistory" should {
     "Convert valid rawPageHistory" in new Test {
-      val rawPageHistory = List(RawPageHistory("start", Nil),
-        RawPageHistory("1", Nil), RawPageHistory("2", Nil),
-        RawPageHistory("3", Nil))
+      val rawPageHistory = List(RawPageHistory("3", Nil),
+        RawPageHistory("2", Nil), RawPageHistory("1", Nil),
+        RawPageHistory("start", Nil))
       val pageMap = Map("/start" -> PageNext("start"), "/next" -> PageNext("1"), "/somepage" -> PageNext("2"), "/another" -> PageNext("3"))
 
       val result = target.toPageHistory(rawPageHistory, pageMap, processCode)
@@ -290,7 +290,7 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
     }
 
     "Fail to convert invalid rawPageHistory" in new Test {
-      val rawPageHistory = List(RawPageHistory("start", Nil), RawPageHistory("unknown", Nil), RawPageHistory("2", Nil), RawPageHistory("3", Nil))
+      val rawPageHistory = List(RawPageHistory("3", Nil), RawPageHistory("unknown", Nil), RawPageHistory("1", Nil), RawPageHistory("start", Nil))
       val pageMap = Map("/start" -> PageNext("start"), "/somepage" -> PageNext("2"), "/another" -> PageNext("3"))
 
       val result = target.toPageHistory(rawPageHistory, pageMap, processCode)
@@ -300,6 +300,24 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
         case Some(rph) => fail()
       }
     }
+
+    "Convert valid page history to raw page history and back again" in new Test {
+      val rawPageHistory = List(RawPageHistory("3", Nil),
+        RawPageHistory("2", Nil), RawPageHistory("1", Nil),
+        RawPageHistory("start", Nil))
+      val pageMap = Map("/start" -> PageNext("start"), "/next" -> PageNext("1"), "/somepage" -> PageNext("2"), "/another" -> PageNext("3"))
+
+      val pageHistory = target.toPageHistory(rawPageHistory, pageMap, processCode)
+
+      val result = target.toRawPageHistory(pageHistory, pageMap, processCode)
+
+      result match {
+        case None => fail()
+        case Some(rph) =>
+          rph shouldBe rawPageHistory
+      }
+    }
+
   }
 
   "Session Service rawPageHistory" should {
@@ -310,7 +328,7 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
       val pageMap = Map("/start" -> PageNext("start"), "/next" -> PageNext("1"), "/somepage" -> PageNext("2"), "/another" -> PageNext("3"))
 
       val result = target.toRawPageHistory(Some(pageHistory), pageMap, processCode)
-      val expectedRawPageHistory = List(RawPageHistory("start",List()), RawPageHistory("1",List()), RawPageHistory("2",List()), RawPageHistory("3",List()))
+      val expectedRawPageHistory = List(RawPageHistory("3",List()), RawPageHistory("2",List()), RawPageHistory("1",List()), RawPageHistory("start",List()))
 
       result match {
         case None => fail()
@@ -331,5 +349,43 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
         case Some(rph) => fail()
       }
     }
+
+    "Convert valid page history to raw page history and back again" in new Test {
+      val pageHistory = List(PageHistory(s"$processCode/start", Nil),
+        PageHistory(s"$processCode/next", Nil), PageHistory(s"$processCode/somepage", Nil),
+        PageHistory(s"$processCode/another", Nil))
+      val pageMap = Map("/start" -> PageNext("start"), "/next" -> PageNext("1"), "/somepage" -> PageNext("2"), "/another" -> PageNext("3"))
+
+      val rawPageHistory = target.toRawPageHistory(Some(pageHistory), pageMap, processCode)
+      val result = target.toPageHistory(rawPageHistory.getOrElse(List()), pageMap, processCode)
+
+      result match {
+        case None => fail()
+        case Some (ph) =>
+          ph shouldBe pageHistory
+      }
+    }
   }
+
+  "Session service rawPageHistories in in-flight sessions" should {
+
+    "Convert correctly to in order page histories" in new Test {
+
+      val inOrderRawPageHistory = List(RawPageHistory("start", Nil),
+        RawPageHistory("1", Nil), RawPageHistory("2", Nil),
+        RawPageHistory("3", Nil))
+      val pageMap = Map("/start" -> PageNext("start"), "/next" -> PageNext("1"), "/somepage" -> PageNext("2"), "/another" -> PageNext("3"))
+
+      val result = target.toPageHistory(inOrderRawPageHistory, pageMap, processCode)
+      val expectedPageHistory = List(PageHistory(s"$processCode/start",List()), PageHistory(s"$processCode/next",List()), PageHistory(s"$processCode/somepage",List()), PageHistory(s"$processCode/another",List()))
+
+      result match {
+        case None => fail()
+        case Some (ph) =>
+          ph shouldBe expectedPageHistory
+          ph.length shouldBe inOrderRawPageHistory.length
+      }
+    }
+  }
+
 }

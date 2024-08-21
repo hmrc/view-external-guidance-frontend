@@ -104,21 +104,23 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
     @tailrec
     def pageHistory(rph: List[RawPageHistory], reversePageMap: Map[String, String], acc: List[PageHistory] = Nil): Option[List[PageHistory]] =
       rph match {
-        case Nil => Some(acc.reverse)
+        case Nil if rawPageHistory.headOption.map(_.stanzId).contains(Process.StartStanzaId) => Some(acc.reverse)
+        case Nil => Some(acc)
         case x :: xs =>
           reversePageMap.get(x.stanzId) match {
             case None => None
             case Some(pg) => pageHistory(xs, reversePageMap, PageHistory(processCode.concat(pg), x.flowStack) :: acc)
           }
       }
-    pageHistory(rawPageHistory, pageMap.flatMap{case (k,v) => List((v.id, k))})
+
+    pageHistory(rawPageHistory, pageMap.flatMap { case (k, v) => List((v.id, k)) })
   }
 
   final private[services] def toRawPageHistory(pageHistory: Option[List[PageHistory]], pageMap: Map[String, PageNext], processCode: String): Option[List[RawPageHistory]] = {
     @tailrec
     def rawPageHistory(ph: List[PageHistory], acc: List[RawPageHistory] = Nil): Option[List[RawPageHistory]] =
       ph match {
-        case Nil => Some(acc.reverse)
+        case Nil => Some(acc)
         case x :: xs =>
           pageMap.get(x.url.drop(processCode.length)) match {
             case None => None
