@@ -4,7 +4,7 @@ import base.BaseSpec
 import core.models.ocelot.{Label, ScalarLabel}
 import play.api.libs.json.Json
 
-class LabelOperationTest extends BaseSpec {
+class LabelOperationSpec extends BaseSpec {
 
   trait Test {
     val deleteLabelOperation = """{"t":"D","name":"LabelToDelete"}"""
