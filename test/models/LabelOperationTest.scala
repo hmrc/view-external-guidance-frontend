@@ -1,12 +1,14 @@
 package models
 
 import base.BaseSpec
+import core.models.ocelot.{Label, ScalarLabel}
 import play.api.libs.json.Json
 
 class LabelOperationTest extends BaseSpec {
 
   trait Test {
     val deleteLabelOperation = """{"action":"D","name":"LabelToDelete"}"""
+    val updateLabelOperation = """{"action":"U","label":{"type":"scalar","name":"LabelToUpdate","english":[],"welsh":[]}}"""
   }
 
   "Delete LabelOperation" must {
@@ -19,6 +21,20 @@ class LabelOperationTest extends BaseSpec {
 
     "Deserialise from JSON" in new Test {
       val labelOperation: LabelOperation = Delete("LabelToDelete")
+
+      Json.parse(deleteLabelOperation).as[Delete] shouldBe labelOperation
+    }
+  }
+  "Update LabelOperation" must {
+
+    "Serialise to JSON" in new Test {
+      val labelOperation: LabelOperation = Update(ScalarLabel("LabelToUpdate"))
+
+      Json.toJson(labelOperation).toString() shouldBe updateLabelOperation
+    }
+
+    "Deserialise from JSON" in new Test {
+      val labelOperation: LabelOperation = Update(ScalarLabel("LabelToUpdate"))
 
       Json.parse(deleteLabelOperation).as[Delete] shouldBe labelOperation
     }
