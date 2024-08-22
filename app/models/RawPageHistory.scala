@@ -32,14 +32,14 @@ sealed trait LabelOperation
     implicit lazy val formats: OFormat[Delete] = Json.format[Delete]
   }
 
-  final case class Update(label: Label) extends LabelOperation
+  final case class Update(l: Label) extends LabelOperation
   object Update {
     implicit lazy val formats: OFormat[Update] = Json.format[Update]
 }
 
 object LabelOperation {
   implicit val reads: Reads[LabelOperation] = (js: JsValue) => {
-    (js \ "action").validate[String] match {
+    (js \ "t").validate[String] match {
       case err @ JsError(_) => err
       case JsSuccess(typ, _) => typ match {
         case "D" => js.validate[Delete]
@@ -49,8 +49,8 @@ object LabelOperation {
   }
 
   implicit val writes: Writes[LabelOperation] = {
-    case d: Delete => Json.obj("action" -> "D") ++ Json.toJsObject[Delete](d)
-    case u: Update => Json.obj("action" -> "U") ++ Json.toJsObject[Update](u)  }
+    case d: Delete => Json.obj("t" -> "D") ++ Json.toJsObject[Delete](d)
+    case u: Update => Json.obj("t" -> "U") ++ Json.toJsObject[Update](u)  }
 }
 
 object RawPageHistory {

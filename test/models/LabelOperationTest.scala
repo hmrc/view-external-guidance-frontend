@@ -7,8 +7,8 @@ import play.api.libs.json.Json
 class LabelOperationTest extends BaseSpec {
 
   trait Test {
-    val deleteLabelOperation = """{"action":"D","name":"LabelToDelete"}"""
-    val updateLabelOperation = """{"action":"U","label":{"type":"scalar","name":"LabelToUpdate","english":[],"welsh":[]}}"""
+    val deleteLabelOperation = """{"t":"D","name":"LabelToDelete"}"""
+    val updateLabelOperation = """{"t":"U","l":{"type":"scalar","name":"LabelToUpdate","english":[],"welsh":[]}}"""
   }
 
   "Delete LabelOperation" must {
