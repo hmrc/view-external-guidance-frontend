@@ -23,16 +23,45 @@ import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
 import play.api.libs.json._
 
-final case class RawPageHistory(stanzId: String, flowStack: List[FlowStage])
+final case class RawPageHistory(stanzId: String, flowStack: List[FlowStage], revertOps: List[LabelOperation] = Nil)
+
+sealed trait LabelOperation
+
+final case class Delete(name: String) extends LabelOperation
+
+object Delete {
+  implicit lazy val formats: OFormat[Delete] = Json.format[Delete]
+}
+
+object LabelOperation {
+  implicit val reads: Reads[LabelOperation] = (js: JsValue) => {
+    (js \ "action").validate[String] match {
+      case err @ JsError(_) => err
+      case JsSuccess(typ, _) => typ match {
+        case "D" => js.validate[Delete]
+      }
+    }
+  }
+
+  implicit val writes: Writes[LabelOperation] = {
+    case u: Delete => Json.obj("action" -> "D") ++ Json.toJsObject[Delete](u)
+  }
+}
 
 object RawPageHistory {
   implicit val reads: Reads[RawPageHistory] = (
     (__ \ "stanzId").read[String] and
-      (__ \ "flowStack").read[List[FlowStage]]
-  )(RawPageHistory.apply _)
+      (__ \ "flowStack").read[List[FlowStage]] and
+        (__ \ "revertOps").readNullable[List[LabelOperation]]
+    )(RawPageHistory.applyOptionalRevertOps _)
 
   implicit val writes: Writes[RawPageHistory] = (
     (__ \ "stanzId").write[String] and
-      (__ \ "flowStack").write[List[FlowStage]]
-  )(unlift(RawPageHistory.unapply))
+      (__ \ "flowStack").write[List[FlowStage]] and
+        (__ \ "revertOps").write[List[LabelOperation]]
+    )(unlift(RawPageHistory.unapply))
+
+  private def applyOptionalRevertOps(stanzId: String, flowStack: List[FlowStage], revertOps: Option[List[LabelOperation]]): RawPageHistory =
+    RawPageHistory(stanzId, flowStack, revertOps.getOrElse(Nil))
+
 }
