@@ -36,7 +36,7 @@ class LabelOperationSpec extends BaseSpec {
     "Deserialise from JSON" in new Test {
       val labelOperation: LabelOperation = Update(ScalarLabel("LabelToUpdate"))
 
-      Json.parse(deleteLabelOperation).as[Delete] shouldBe labelOperation
+      Json.parse(updateLabelOperation).as[Update] shouldBe labelOperation
     }
   }
 }
