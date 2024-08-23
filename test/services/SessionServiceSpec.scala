@@ -279,7 +279,7 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
       val pageMap = Map("/start" -> PageNext("start"), "/next" -> PageNext("1"), "/somepage" -> PageNext("2"), "/another" -> PageNext("3"))
 
       val result = target.toPageHistory(rawPageHistory, pageMap, processCode)
-      val expectedPageHistory = List(PageHistory(s"$processCode/start",List()), PageHistory(s"$processCode/next",List()), PageHistory(s"$processCode/somepage",List()), PageHistory(s"$processCode/another",List()))
+      val expectedPageHistory = List(PageHistory(s"$processCode/start", Nil, List()), PageHistory(s"$processCode/next", Nil, List()), PageHistory(s"$processCode/somepage", Nil, List()), PageHistory(s"$processCode/another", Nil, List()))
 
       result match {
         case None => fail()
@@ -322,9 +322,9 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
 
   "Session Service rawPageHistory" should {
     "Convert valid pageHistory" in new Test {
-      val pageHistory = List(PageHistory(s"$processCode/start", Nil),
-      PageHistory(s"$processCode/next", Nil), PageHistory(s"$processCode/somepage", Nil),
-      PageHistory(s"$processCode/another", Nil))
+      val pageHistory = List(PageHistory(s"$processCode/start", Nil, Nil),
+      PageHistory(s"$processCode/next", Nil, Nil), PageHistory(s"$processCode/somepage", Nil, Nil),
+      PageHistory(s"$processCode/another", Nil, Nil))
       val pageMap = Map("/start" -> PageNext("start"), "/next" -> PageNext("1"), "/somepage" -> PageNext("2"), "/another" -> PageNext("3"))
 
       val result = target.toRawPageHistory(Some(pageHistory), pageMap, processCode)
@@ -339,7 +339,7 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
     }
 
     "Fail to convert invalid pageHistory" in new Test {
-      val pageHistory = List(PageHistory(s"$processCode/start", Nil), PageHistory(s"$processCode/unknown", Nil), PageHistory(s"$processCode/somepage", Nil), PageHistory(s"$processCode/another", Nil))
+      val pageHistory = List(PageHistory(s"$processCode/start", Nil, Nil), PageHistory(s"$processCode/unknown", Nil, Nil), PageHistory(s"$processCode/somepage", Nil, Nil), PageHistory(s"$processCode/another", Nil, Nil))
       val pageMap = Map("/start" -> PageNext("start"), "/somepage" -> PageNext("2"), "/another" -> PageNext("3"))
 
       val result = target.toRawPageHistory(Some(pageHistory), pageMap, processCode)
@@ -351,9 +351,9 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
     }
 
     "Convert valid page history to raw page history and back again" in new Test {
-      val pageHistory = List(PageHistory(s"$processCode/start", Nil),
-        PageHistory(s"$processCode/next", Nil), PageHistory(s"$processCode/somepage", Nil),
-        PageHistory(s"$processCode/another", Nil))
+      val pageHistory = List(PageHistory(s"$processCode/start", Nil, Nil),
+        PageHistory(s"$processCode/next", Nil, Nil), PageHistory(s"$processCode/somepage", Nil, Nil),
+        PageHistory(s"$processCode/another", Nil, Nil))
       val pageMap = Map("/start" -> PageNext("start"), "/next" -> PageNext("1"), "/somepage" -> PageNext("2"), "/another" -> PageNext("3"))
 
       val rawPageHistory = target.toRawPageHistory(Some(pageHistory), pageMap, processCode)
@@ -377,7 +377,7 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
       val pageMap = Map("/start" -> PageNext("start"), "/next" -> PageNext("1"), "/somepage" -> PageNext("2"), "/another" -> PageNext("3"))
 
       val result = target.toPageHistory(inOrderRawPageHistory, pageMap, processCode)
-      val expectedPageHistory = List(PageHistory(s"$processCode/start",List()), PageHistory(s"$processCode/next",List()), PageHistory(s"$processCode/somepage",List()), PageHistory(s"$processCode/another",List()))
+      val expectedPageHistory = List(PageHistory(s"$processCode/start", Nil, List()), PageHistory(s"$processCode/next", Nil, List()), PageHistory(s"$processCode/somepage", Nil, List()), PageHistory(s"$processCode/another", Nil, List()))
 
       result match {
         case None => fail()
