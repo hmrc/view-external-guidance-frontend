@@ -18,40 +18,12 @@
 
 package models
 
-import core.models.ocelot.{FlowStage, Label}
+import core.models.ocelot.{FlowStage, LabelOperation}
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
 import play.api.libs.json._
 
 final case class RawPageHistory(stanzId: String, revertOps: List[LabelOperation], flowStack: List[FlowStage])
-
-sealed trait LabelOperation
-
-  final case class Delete(name: String) extends LabelOperation
-  object Delete {
-    implicit lazy val formats: OFormat[Delete] = Json.format[Delete]
-  }
-
-  final case class Update(l: Label) extends LabelOperation
-  object Update {
-    implicit lazy val formats: OFormat[Update] = Json.format[Update]
-}
-
-object LabelOperation {
-  implicit val reads: Reads[LabelOperation] = (js: JsValue) => {
-    (js \ "t").validate[String] match {
-      case err @ JsError(_) => err
-      case JsSuccess(typ, _) => typ match {
-        case "D" => js.validate[Delete]
-        case "U" => js.validate[Update]
-      }
-    }
-  }
-
-  implicit val writes: Writes[LabelOperation] = {
-    case d: Delete => Json.obj("t" -> "D") ++ Json.toJsObject[Delete](d)
-    case u: Update => Json.obj("t" -> "U") ++ Json.toJsObject[Update](u)  }
-}
 
 object RawPageHistory {
   implicit val reads: Reads[RawPageHistory] = (

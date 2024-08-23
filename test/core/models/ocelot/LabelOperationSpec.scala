@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package models
+package core.models.ocelot
 
 import base.BaseSpec
-import core.models.ocelot.{Label, ScalarLabel}
 import play.api.libs.json.Json
 
 class LabelOperationSpec extends BaseSpec {
