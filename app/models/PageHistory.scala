@@ -18,21 +18,7 @@
 
 package models
 
-import play.api.libs.functional.syntax._
-import play.api.libs.json.Reads._
-import play.api.libs.json._
 import core.models.ocelot.FlowStage
 
 final case class PageHistory(url: String, flowStack: List[FlowStage])
 
-object PageHistory {
-  implicit val reads: Reads[PageHistory] = (
-    (__ \ "url").read[String] and
-      (__ \ "flowStack").read[List[FlowStage]]
-  )(PageHistory.apply _)
-
-  implicit val writes: Writes[PageHistory] = (
-    (__ \ "url").write[String] and
-      (__ \ "flowStack").write[List[FlowStage]]
-  )(unlift(PageHistory.unapply))
-}
