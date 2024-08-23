@@ -124,7 +124,7 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
         case x :: xs =>
           pageMap.get(x.url.drop(processCode.length)) match {
             case None => None
-            case Some(pg) => rawPageHistory(xs, RawPageHistory(pg.id, x.flowStack) :: acc)
+            case Some(pg) => rawPageHistory(xs, RawPageHistory(pg.id, Nil, x.flowStack) :: acc)
           }
       }
 

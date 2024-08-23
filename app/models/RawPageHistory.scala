@@ -23,7 +23,7 @@ import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
 import play.api.libs.json._
 
-final case class RawPageHistory(stanzId: String, flowStack: List[FlowStage], revertOps: List[LabelOperation] = Nil)
+final case class RawPageHistory(stanzId: String, revertOps: List[LabelOperation], flowStack: List[FlowStage])
 
 sealed trait LabelOperation
 
@@ -56,17 +56,17 @@ object LabelOperation {
 object RawPageHistory {
   implicit val reads: Reads[RawPageHistory] = (
     (__ \ "stanzId").read[String] and
-      (__ \ "flowStack").read[List[FlowStage]] and
-        (__ \ "revertOps").readNullable[List[LabelOperation]]
+      (__ \ "revertOps").readNullable[List[LabelOperation]] and
+      (__ \ "flowStack").read[List[FlowStage]]
     )(RawPageHistory.applyOptionalRevertOps _)
 
   implicit val writes: Writes[RawPageHistory] = (
     (__ \ "stanzId").write[String] and
-      (__ \ "flowStack").write[List[FlowStage]] and
-        (__ \ "revertOps").write[List[LabelOperation]]
+      (__ \ "revertOps").write[List[LabelOperation]] and
+      (__ \ "flowStack").write[List[FlowStage]]
     )(unlift(RawPageHistory.unapply))
 
-  private def applyOptionalRevertOps(stanzId: String, flowStack: List[FlowStage], revertOps: Option[List[LabelOperation]]): RawPageHistory =
-    RawPageHistory(stanzId, flowStack, revertOps.getOrElse(Nil))
+  private def applyOptionalRevertOps(stanzId: String, revertOps: Option[List[LabelOperation]], flowStack: List[FlowStage]): RawPageHistory =
+    RawPageHistory(stanzId, revertOps.getOrElse(Nil), flowStack)
 
 }
