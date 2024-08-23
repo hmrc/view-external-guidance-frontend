@@ -18,7 +18,7 @@
 
 package models
 
-import core.models.ocelot.FlowStage
+import core.models.ocelot.{FlowStage, LabelOperation}
 
-final case class PageHistory(url: String, flowStack: List[FlowStage])
+final case class PageHistory(url: String, revertOps: List[LabelOperation], flowStack: List[FlowStage])
 
