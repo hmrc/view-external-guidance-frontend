@@ -601,6 +601,7 @@ class LabelSpec extends BaseSpec with ProcessJson {
     }
 
   }
+
   "Reverting operations to changes of labels" must {
     "Be an empty list if no labels are present" in new Test {
       // LabelCache with no label updates
@@ -608,6 +609,7 @@ class LabelSpec extends BaseSpec with ProcessJson {
 
       labels.changingLabelsRevertOps(LabelCache()) shouldBe Nil
     }
+
     "Be a single Delete if one label is deleted" in new Test {
       // LabelCache with no label updates
       val labels = LabelCache()
@@ -615,5 +617,15 @@ class LabelSpec extends BaseSpec with ProcessJson {
       labels.changingLabelsRevertOps(LabelCache().update("labelName", "labelValue")) shouldBe List(Delete("labelName"))
     }
 
+    "Be a single Update if one label is updated" in new Test {
+      // LabelCache with no label updates
+      val labels = LabelCache(List(ScalarLabel("labelName")))
+
+      labels.changingLabelsRevertOps(labels.update("labelName", "updatedValue")) shouldBe List(Update(ScalarLabel("labelName")))
+    }
+
   }
+
+
+
 }
