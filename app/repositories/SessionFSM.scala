@@ -43,7 +43,7 @@ class SessionFSM @Inject() () {
   def apply(url: String, priorHistory: List[PageHistory], priorFlowStack: List[FlowStage], forceForward: Boolean, sentinelUrl: String): BackLinkAndStateUpdate =
     priorHistory.reverse match {
       // Initial page
-      case Nil => (None, Some(List(PageHistory(url, Nil))), None, Nil)
+      case Nil => (None, Some(List(PageHistory(url, Nil, Nil))), None, Nil)
 
       // REFRESH: new url equals current url with same flowPath
       case x :: xs if x.url == url => (xs.headOption.map(_.url), None, None, Nil)
@@ -59,30 +59,30 @@ class SessionFSM @Inject() () {
       // FORWARD to first page of guidance
       case _ :: _ if url == sentinelUrl =>
         findPreviousFlowAndLabelState(url, priorHistory).fold[BackLinkAndStateUpdate](
-          (None, Some(List(PageHistory(url, Nil))), Some(Nil), Nil)
+          (None, Some(List(PageHistory(url, Nil, Nil))), Some(Nil), Nil)
         ){t =>
           val (labelValue, flowStack) = t
-          (None, Some(List(PageHistory(url, flowStack))), Some(flowStack), labelValue)
+          (None, Some(List(PageHistory(url, Nil, flowStack))), Some(flowStack), labelValue)
         }
 
       // FORWARD from a non-empty flowStack
       case x :: xs if priorFlowStack.nonEmpty => // Check for forward  movement to a previous page (possibly from CYA)
         findPreviousFlowAndLabelState(url, priorHistory).fold[BackLinkAndStateUpdate]{
-          (Some(x.url), Some((PageHistory(url, priorFlowStack) :: x :: xs).reverse), None, Nil)
+          (Some(x.url), Some((PageHistory(url, Nil, priorFlowStack) :: x :: xs).reverse), None, Nil)
         }{
-          case (_, Nil) => (Some(x.url), Some((PageHistory(url, Nil) :: x :: xs).reverse), Some(Nil), Nil)
-          case _ => (Some(x.url), Some((PageHistory(url, priorFlowStack) :: x :: xs).reverse), None, Nil)
+          case (_, Nil) => (Some(x.url), Some((PageHistory(url, Nil, Nil) :: x :: xs).reverse), Some(Nil), Nil)
+          case _ => (Some(x.url), Some((PageHistory(url, Nil, priorFlowStack) :: x :: xs).reverse), None, Nil)
         }
 
       // FORWARD from empty flowStack
       case x :: xs => // Check for forward  movement to a previous page (CYA)
         findPreviousFlowAndLabelState(url, priorHistory).fold[BackLinkAndStateUpdate]{
-          (Some(x.url), Some((PageHistory(url, priorFlowStack) :: x :: xs).reverse), None, Nil)
+          (Some(x.url), Some((PageHistory(url, Nil, priorFlowStack) :: x :: xs).reverse), None, Nil)
         }{
           case (_, Nil) =>
-            (Some(x.url), Some((PageHistory(url, Nil) :: x :: xs).reverse), None, Nil)
+            (Some(x.url), Some((PageHistory(url, Nil, Nil) :: x :: xs).reverse), None, Nil)
           case (labels, flowStack) =>
-            (Some(x.url), Some((PageHistory(url, flowStack) :: x :: xs).reverse), Some(flowStack), labels)
+            (Some(x.url), Some((PageHistory(url, Nil, flowStack) :: x :: xs).reverse), Some(flowStack), labels)
         }
   }
 

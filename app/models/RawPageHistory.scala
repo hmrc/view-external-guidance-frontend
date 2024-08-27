@@ -18,21 +18,27 @@
 
 package models
 
-import core.models.ocelot.FlowStage
+import core.models.ocelot.{FlowStage, LabelOperation}
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
 import play.api.libs.json._
 
-final case class RawPageHistory(stanzId: String, flowStack: List[FlowStage])
+final case class RawPageHistory(stanzId: String, revertOps: List[LabelOperation], flowStack: List[FlowStage])
 
 object RawPageHistory {
   implicit val reads: Reads[RawPageHistory] = (
     (__ \ "stanzId").read[String] and
+      (__ \ "revertOps").readNullable[List[LabelOperation]] and
       (__ \ "flowStack").read[List[FlowStage]]
-  )(RawPageHistory.apply _)
+    )(RawPageHistory.applyOptionalRevertOps _)
 
   implicit val writes: Writes[RawPageHistory] = (
     (__ \ "stanzId").write[String] and
+      (__ \ "revertOps").write[List[LabelOperation]] and
       (__ \ "flowStack").write[List[FlowStage]]
-  )(unlift(RawPageHistory.unapply))
+    )(unlift(RawPageHistory.unapply))
+
+  private def applyOptionalRevertOps(stanzId: String, revertOps: Option[List[LabelOperation]], flowStack: List[FlowStage]): RawPageHistory =
+    RawPageHistory(stanzId, revertOps.getOrElse(Nil), flowStack)
+
 }
