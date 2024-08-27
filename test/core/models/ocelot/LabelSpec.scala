@@ -601,4 +601,12 @@ class LabelSpec extends BaseSpec with ProcessJson {
     }
 
   }
+  "Reverting operations to changes of labels" must {
+    "Be an empty list if no labels are present" in new Test {
+      // LabelCache with no label updates
+      val labels = LabelCache()
+
+      labels.changingLabelsRevertOps(LabelCache()) shouldBe Nil
+    }
+  }
 }
