@@ -153,7 +153,7 @@ private[ocelot] class LabelCacheImpl(labels: Map[String, Label],
                                   runMode,
                                   encrypter))
         )
-    }cd e
+    }
 
   def nextFlow: Option[(String, Labels)] = // Remove head of flow stack and update flow label if required
     stack match {

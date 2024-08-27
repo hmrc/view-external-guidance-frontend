@@ -608,5 +608,12 @@ class LabelSpec extends BaseSpec with ProcessJson {
 
       labels.changingLabelsRevertOps(LabelCache()) shouldBe Nil
     }
+    "Be a single Delete if one label is deleted" in new Test {
+      // LabelCache with no label updates
+      val labels = LabelCache()
+
+      labels.changingLabelsRevertOps(LabelCache().update("labelName", "labelValue")) shouldBe List(Delete("labelName"))
+    }
+
   }
 }
