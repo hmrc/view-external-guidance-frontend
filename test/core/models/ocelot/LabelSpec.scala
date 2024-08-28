@@ -603,11 +603,18 @@ class LabelSpec extends BaseSpec with ProcessJson {
   }
 
   "Reverting operations to changes of labels" must {
-    "Be an empty list if no labels are present" in new Test {
+    "Be an empty list if on empty LabelCache" in new Test {
       val labels: Labels = LabelCache()
 
       labels.revertOps shouldBe Nil
     }
+
+    "Be an empty list if no changes are made to a non-empty LabelCache" in new Test {
+      val labels: Labels = LabelCache(List(ScalarLabel("labelOne", List("valueOne")), ScalarLabel("labelTwo", List("valueTwo"))))
+
+      labels.revertOps shouldBe Nil
+    }
+
 
     "Be a single Delete if one label is deleted" in new Test {
       val labels: Labels = LabelCache()
