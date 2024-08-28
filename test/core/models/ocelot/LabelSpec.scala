@@ -607,21 +607,21 @@ class LabelSpec extends BaseSpec with ProcessJson {
       // LabelCache with no label updates
       val labels = emptyLabelCache()
 
-      labels.changingLabelsRevertOps(LabelCache()) shouldBe Nil
+      labels.revertOps shouldBe Nil
     }
 
     "Be a single Delete if one label is deleted" in new Test {
       // LabelCache with no label updates
       val labels = emptyLabelCache()
 
-      labels.changingLabelsRevertOps(LabelCache().update("labelName", "labelValue")) shouldBe List(Delete("labelName"))
+      labels.update("labelName", "labelValue").revertOps shouldBe List(Delete("labelName"))
     }
 
     "Be a single Update if one label is updated" in new Test {
       // LabelCache with one scalar label and empty cache
       val labels = labelCacheWithOnlyOneScalarLabelAndEmptyCache("labelName")
 
-      labels.changingLabelsRevertOps(labels.update("labelName", "updatedValue")) shouldBe List(Update(ScalarLabel("labelName")))
+      labels.update("labelName", "updatedValue").revertOps shouldBe List(Update(ScalarLabel("labelName")))
     }
 
     "Mark correctly for update and deletion of labels" in new Test {
@@ -629,7 +629,7 @@ class LabelSpec extends BaseSpec with ProcessJson {
       val labels = labelCacheWithFiveScalarLabels()
 
       // we change the value of labelTwo, and add a new labelSix -> and expect compensating operations to be computed
-      labels.changingLabelsRevertOps(labels.update("labelTwo", "newValueForTwo").update("labelSix", "labelSixValue")) shouldBe List(Update(ScalarLabel("labelTwo")), Delete("labelSix"))
+      labels.update("labelTwo", "newValueForTwo").update("labelSix", "labelSixValue").revertOps shouldBe List(Update(ScalarLabel("labelTwo")), Delete("labelSix"))
 
     }
 
