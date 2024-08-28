@@ -606,20 +606,20 @@ class LabelSpec extends BaseSpec with ProcessJson {
     "Be an empty list if on empty LabelCache" in new Test {
       val labels: Labels = LabelCache()
 
-      labels.revertOps shouldBe Nil
+      labels.revertOperations() shouldBe Nil
     }
 
     "Be an empty list if no changes are made to a non-empty LabelCache" in new Test {
       val labels: Labels = LabelCache(List(ScalarLabel("labelOne", List("valueOne")), ScalarLabel("labelTwo", List("valueTwo"))))
 
-      labels.revertOps shouldBe Nil
+      labels.revertOperations() shouldBe Nil
     }
 
 
     "Be a single Delete if one label is deleted" in new Test {
       val labels: Labels = LabelCache()
 
-      val result: List[LabelOperation] = labels.update("labelName", "labelValue").revertOps
+      val result: List[LabelOperation] = labels.update("labelName", "labelValue").revertOperations()
 
       result shouldBe List(Delete("labelName"))
     }
@@ -627,7 +627,7 @@ class LabelSpec extends BaseSpec with ProcessJson {
     "Be a single Update if one label is updated" in new Test {
       val labels: Labels = LabelCache(List(ScalarLabel("labelName", List("initialValue"))))
 
-      val result: List[LabelOperation] = labels.update("labelName", "updatedValue").revertOps
+      val result: List[LabelOperation] = labels.update("labelName", "updatedValue").revertOperations()
 
       result shouldBe List(Update(ScalarLabel("labelName", List("initialValue"))))
     }
@@ -639,7 +639,7 @@ class LabelSpec extends BaseSpec with ProcessJson {
         ScalarLabel("labelThree", List("valueThree")))
       )
       // we change the value of labelTwo, and add a new labelFour -> and expect compensating operations to be computed
-      val result: List[LabelOperation] = labels.update("labelTwo", "newValueForTwo").update("labelFour", "labelFourValue").revertOps
+      val result: List[LabelOperation] = labels.update("labelTwo", "newValueForTwo").update("labelFour", "labelFourValue").revertOperations()
 
        result shouldBe List(Update(ScalarLabel("labelTwo", List("valueTwo"))), Delete("labelFour"))
 
