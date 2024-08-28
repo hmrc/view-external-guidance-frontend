@@ -618,13 +618,14 @@ class LabelSpec extends BaseSpec with ProcessJson {
     }
 
     "Be a single Update if one label is updated" in new Test {
-      // LabelCache with no label updates
-      val labels = LabelCache(List(ScalarLabel("labelName")))
+      // LabelCache with one scalar label and empty cache
+      val labels = labelCacheWithOnlyOneScalarLabelAndEmptyCache("labelName")
 
       labels.changingLabelsRevertOps(labels.update("labelName", "updatedValue")) shouldBe List(Update(ScalarLabel("labelName")))
     }
 
     def emptyLabelCache(): Labels = LabelCache()
+    def labelCacheWithOnlyOneScalarLabelAndEmptyCache(labelName: String): Labels = LabelCache(List(ScalarLabel(labelName)))
 
   }
 
