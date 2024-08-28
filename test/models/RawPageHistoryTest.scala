@@ -71,10 +71,6 @@ class RawPageHistoryTest extends BaseSpec {
     "Deserialise from JSON when having empty revert operations" in new Test {
       Json.parse(rawPageHistoryWithEmptyRevertOperationsJson.stripMargin).as[RawPageHistory] shouldBe rawPageHistoryWithEmptyRevertOperation
     }
-
-    "Deserialise from JSON when having no revert operations" in new Test {
-      Json.parse(rawPageHistoryWithMissingRevertOperationsJson.stripMargin).as[RawPageHistory] shouldBe rawPageHistoryWithEmptyRevertOperation
-    }
   }
 
 }

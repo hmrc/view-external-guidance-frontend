@@ -367,25 +367,4 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
     }
   }
 
-  "Session service rawPageHistories in in-flight sessions" should {
-
-    "Convert correctly to in order page histories" in new Test {
-
-      val inOrderRawPageHistory = List(RawPageHistory("start", Nil, Nil),
-        RawPageHistory("1", Nil, Nil), RawPageHistory("2", Nil, Nil),
-        RawPageHistory("3", Nil, Nil))
-      val pageMap = Map("/start" -> PageNext("start"), "/next" -> PageNext("1"), "/somepage" -> PageNext("2"), "/another" -> PageNext("3"))
-
-      val result = target.toPageHistory(inOrderRawPageHistory, pageMap, processCode)
-      val expectedPageHistory = List(PageHistory(s"$processCode/start", Nil, List()), PageHistory(s"$processCode/next", Nil, List()), PageHistory(s"$processCode/somepage", Nil, List()), PageHistory(s"$processCode/another", Nil, List()))
-
-      result match {
-        case None => fail()
-        case Some (ph) =>
-          ph shouldBe expectedPageHistory
-          ph.length shouldBe inOrderRawPageHistory.length
-      }
-    }
-  }
-
 }

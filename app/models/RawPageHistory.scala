@@ -28,17 +28,14 @@ final case class RawPageHistory(stanzId: String, revertOps: List[LabelOperation]
 object RawPageHistory {
   implicit val reads: Reads[RawPageHistory] = (
     (__ \ "stanzId").read[String] and
-      (__ \ "revertOps").readNullable[List[LabelOperation]] and
+      (__ \ "revertOps").read[List[LabelOperation]] and
       (__ \ "flowStack").read[List[FlowStage]]
-    )(RawPageHistory.applyOptionalRevertOps _)
+    )(RawPageHistory.apply _)
 
   implicit val writes: Writes[RawPageHistory] = (
     (__ \ "stanzId").write[String] and
       (__ \ "revertOps").write[List[LabelOperation]] and
       (__ \ "flowStack").write[List[FlowStage]]
     )(unlift(RawPageHistory.unapply))
-
-  private def applyOptionalRevertOps(stanzId: String, revertOps: Option[List[LabelOperation]], flowStack: List[FlowStage]): RawPageHistory =
-    RawPageHistory(stanzId, revertOps.getOrElse(Nil), flowStack)
 
 }
