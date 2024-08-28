@@ -624,9 +624,26 @@ class LabelSpec extends BaseSpec with ProcessJson {
       labels.changingLabelsRevertOps(labels.update("labelName", "updatedValue")) shouldBe List(Update(ScalarLabel("labelName")))
     }
 
+    "Mark correctly for update and deletion of labels" in new Test {
+
+      val labels = labelCacheWithFiveScalarLabels()
+
+      // we change the value of labelTwo, and add a new labelSix -> and expect compensating operations to be computed
+      labels.changingLabelsRevertOps(labels.update("labelTwo", "newValueForTwo").update("labelSix", "labelSixValue")) shouldBe List(Update(ScalarLabel("labelTwo")), Delete("labelSix"))
+
+    }
+
     def emptyLabelCache(): Labels = LabelCache()
     def labelCacheWithOnlyOneScalarLabelAndEmptyCache(labelName: String): Labels = LabelCache(List(ScalarLabel(labelName)))
+    def labelCacheWithFiveScalarLabels(): Labels = {
+      val labelOne = ScalarLabel("labelOne")
+      val labelTwo = ScalarLabel("labelTwo")
+      val labelThree = ScalarLabel("labelThree")
+      val labelFour = ScalarLabel("labelFour")
+      val labelFive = ScalarLabel("labelFive")
 
+      LabelCache(List(labelOne, labelTwo, labelThree, labelFour, labelFive))
+    }
   }
 
 
