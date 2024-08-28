@@ -604,48 +604,39 @@ class LabelSpec extends BaseSpec with ProcessJson {
 
   "Reverting operations to changes of labels" must {
     "Be an empty list if no labels are present" in new Test {
-      // LabelCache with no label updates
-      val labels = emptyLabelCache()
+      val labels: Labels = LabelCache()
 
       labels.revertOps shouldBe Nil
     }
 
     "Be a single Delete if one label is deleted" in new Test {
-      // LabelCache with no label updates
-      val labels = emptyLabelCache()
+      val labels: Labels = LabelCache()
 
-      labels.update("labelName", "labelValue").revertOps shouldBe List(Delete("labelName"))
+      val result: List[LabelOperation] = labels.update("labelName", "labelValue").revertOps
+
+      result shouldBe List(Delete("labelName"))
     }
 
     "Be a single Update if one label is updated" in new Test {
-      // LabelCache with one scalar label and empty cache
-      val labels = labelCacheWithOnlyOneScalarLabelAndEmptyCache("labelName")
+      val labels: Labels = LabelCache(List(ScalarLabel("labelName", List("initialValue"))))
 
-      labels.update("labelName", "updatedValue").revertOps shouldBe List(Update(ScalarLabel("labelName")))
+      val result: List[LabelOperation] = labels.update("labelName", "updatedValue").revertOps
+
+      result shouldBe List(Update(ScalarLabel("labelName", List("initialValue"))))
     }
 
     "Mark correctly for update and deletion of labels" in new Test {
 
-      val labels = labelCacheWithFiveScalarLabels()
+      val labels: Labels = LabelCache(List(ScalarLabel("labelOne", List("valueOne")),
+        ScalarLabel("labelTwo", List("valueTwo")),
+        ScalarLabel("labelThree", List("valueThree")))
+      )
+      // we change the value of labelTwo, and add a new labelFour -> and expect compensating operations to be computed
+      val result: List[LabelOperation] = labels.update("labelTwo", "newValueForTwo").update("labelFour", "labelFourValue").revertOps
 
-      // we change the value of labelTwo, and add a new labelSix -> and expect compensating operations to be computed
-      labels.update("labelTwo", "newValueForTwo").update("labelSix", "labelSixValue").revertOps shouldBe List(Update(ScalarLabel("labelTwo")), Delete("labelSix"))
+       result shouldBe List(Update(ScalarLabel("labelTwo", List("valueTwo"))), Delete("labelFour"))
 
-    }
-
-    def emptyLabelCache(): Labels = LabelCache()
-    def labelCacheWithOnlyOneScalarLabelAndEmptyCache(labelName: String): Labels = LabelCache(List(ScalarLabel(labelName)))
-    def labelCacheWithFiveScalarLabels(): Labels = {
-      val labelOne = ScalarLabel("labelOne")
-      val labelTwo = ScalarLabel("labelTwo")
-      val labelThree = ScalarLabel("labelThree")
-      val labelFour = ScalarLabel("labelFour")
-      val labelFive = ScalarLabel("labelFive")
-
-      LabelCache(List(labelOne, labelTwo, labelThree, labelFour, labelFive))
     }
   }
-
-
 
 }
