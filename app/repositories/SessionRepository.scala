@@ -224,6 +224,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
       combine((
         (labels.poolUpdates.toList.map(l => Updates.set(s"${ContinuationPoolKey}.${l._1}", Codecs.toBson(l._2))) ++
          labels.updatedLabels.values.map(l => Updates.set(s"${LabelsKey}.${l.name}", Codecs.toBson(l)))).toIndexedSeq :+
+         Updates.set(s"${RawPageHistoryKey}.0.revertOps", Codecs.toBson(revertOperations)) :+
          Updates.set(FlowStackKey, Codecs.toBson(labels.flowStack)) : _*)
       )
     )
