@@ -68,8 +68,9 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
     }
   }
 
-  def updateForNewPage(key: String, processCode: String, pageMap: Map[String, PageNext], pageHistory: Option[List[PageHistory]], flowStack: Option[List[FlowStage]],
-                       labelUpdates: List[Label], deletions: List[String], legalPageIds: List[String], requestId: Option[String]): Future[RequestOutcome[Unit]] =
+  def updateForNewPage(key: String, processCode: String, pageMap: Map[String, PageNext], pageHistory: Option[List[PageHistory]],
+                       flowStack: Option[List[FlowStage]], labelUpdates: List[Label], deletions: List[String], legalPageIds: List[String],
+                      requestId: Option[String]): Future[RequestOutcome[Unit]] =
     toRawPageHistory(pageHistory, pageMap, processCode) match {
       case None if pageHistory.isDefined =>
         logger.error(s"ERROR:Conversion of PageHistory to RawPageHistory failed (None return)")
@@ -79,12 +80,21 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
     }
   
 
-  def updateAfterStandardPage(key: String, processCode: String, labels: Labels, requestId: Option[String]): Future[RequestOutcome[Unit]] =
-    sessionRepository.updateAfterStandardPage(key, processCode, labels, labels.revertOperations(), requestId)
+  def updateAfterStandardPage(key: String, processCode: String, labels: Labels,
+                              ocelotBacklinkBehaviour: Boolean, requestId: Option[String]): Future[RequestOutcome[Unit]] =
+    sessionRepository.updateAfterStandardPage(key, processCode, labels, if (ocelotBacklinkBehaviour) labels.revertOperations() else Nil, requestId)
 
   def updateAfterFormSubmission(key: String, processCode: String, answerId: String, answer: String, labels: Labels, nextLegalPageIds: List[String],
-                                requestId: Option[String]): Future[RequestOutcome[Unit]] =
-    sessionRepository.updateAfterFormSubmission(key, processCode, answerId, answer, labels, labels.revertOperations(), nextLegalPageIds, requestId)
+                                ocelotBacklinkBehaviour: Boolean, requestId: Option[String]): Future[RequestOutcome[Unit]] =
+    sessionRepository.updateAfterFormSubmission(
+      key,
+      processCode,
+      answerId,
+      answer,
+      labels,
+      if (ocelotBacklinkBehaviour) labels.revertOperations() else Nil,
+      nextLegalPageIds,
+      requestId)
 
   private[services] def guidanceSession(session: Session)(implicit context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] = {
     val processId = if (session.runMode.equals(Some(Debugging))) s"${session.processId}${processCacheRepository.DebugIdSuffix}" else session.processId

@@ -23,7 +23,6 @@ import mocks._
 import repositories.CachedProcess
 import models.{SessionKey, GuidanceSession, Session, RawPageHistory, PageNext, PageHistory}
 import uk.gov.hmrc.http.{RequestId, HeaderCarrier}
-
 import scala.concurrent.Future
 import java.time.Instant
 import core.models.RequestOutcome
@@ -217,7 +216,7 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
         .returns(Future.successful(Right(())))
 
       whenReady(
-        target.updateAfterStandardPage(sessionRepoId, process.meta.processCode, labelCache, requestId)) {
+        target.updateAfterStandardPage(sessionRepoId, process.meta.processCode, labelCache, ocelotBacklinkBehaviour = false, requestId)) {
         case Right(session) =>
           succeed
         case Left(err) => Future.successful(Left(err))
@@ -248,7 +247,7 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
         .returns(Future.successful(Right(())))
 
       whenReady(
-        target.updateAfterFormSubmission(docId, processCode, firstPageUrl, answer, labelCache, Nil, requestId)) {
+        target.updateAfterFormSubmission(docId, processCode, firstPageUrl, answer, labelCache, Nil,  false, requestId)) {
         case Right(session) =>
           succeed
         case Left(err) => Future.successful(Left(err))

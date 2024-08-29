@@ -194,7 +194,8 @@ class GuidanceService @Inject() (
                                                    answerStorageId(ctx.labels, url), 
                                                    submittedAnswer, 
                                                    labels, 
-                                                   List(next), 
+                                                   List(next),
+                                                   ocelotBacklinkBehaviour = ctx.ocelotBacklinkBehaviour,
                                                    requestId).map{
             case Left(NotFoundError) =>
               logger.warn(s"TRANSACTION FAULT(Recoverable): saveFormPageState _id=${ctx.sessionId}, url:$url, answer:$validatedAnswer, requestId:${requestId}")
@@ -207,9 +208,8 @@ class GuidanceService @Inject() (
         }
     }
 
-  def savePageState(ctx: PageContext)
-                   (implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[Unit]] =
-    sessionService.updateAfterStandardPage(ctx.processId, ctx.processCode, ctx.labels, hc.requestId.map(_.value)).map{
+  def savePageState(ctx: PageContext)(implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[Unit]] =
+    sessionService.updateAfterStandardPage(ctx.processId, ctx.processCode, ctx.labels, ctx.ocelotBacklinkBehaviour, hc.requestId.map(_.value)).map{
       case Left(NotFoundError) =>
         logger.warn(s"TRANSACTION FAULT(Recoverable): saveLabels _id=${ctx.sessionId}, requestId: ${hc.requestId.map(_.value)}")
         Left(TransactionFaultError)
