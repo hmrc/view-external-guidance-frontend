@@ -1279,14 +1279,14 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
 
     trait Test extends MockGuidanceService with TestBase {
       lazy val fakeRequest = FakeRequest(GET, path).withSession(SessionKeys.sessionId -> processId).withCSRFToken
-
+      val ctx = PageContext(standardPage, Seq.empty, None, sessionId, Some("/hello"), Text(Nil), processId, processCode, LabelCache())
       MockGuidanceService
         .getPageContext(processCode, path, previousPageByLink = false, processId)
-        .returns(Future.successful(Right(PageContext(standardPage, Seq.empty, None, sessionId, Some("/hello"), Text(Nil), processId, processCode, LabelCache()))))
+        .returns(Future.successful(Right(ctx)))
 
       MockGuidanceService
         .savePageState(sessionId, processCode, LabelCache())
-        .returns(Future.successful(Right({})))
+        .returns(Future.successful(Right(())))
 
       lazy val target =
         new GuidanceController(
@@ -1418,10 +1418,11 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
   "Calling a valid URL path for a page and encountering a TransactionFault error" should {
     trait Test extends MockGuidanceService with TestBase {
       lazy val fakeRequest = FakeRequest(GET, path).withSession(SessionKeys.sessionId -> processId).withCSRFToken
+      val ctx = PageContext(standardPage, Seq.empty, None, sessionId, Some("/hello"), Text(Nil), processId, processCode, LabelCache())
 
       MockGuidanceService
         .getPageContext(processCode, path, previousPageByLink = false, processId)
-        .returns(Future.successful(Right(PageContext(standardPage, Seq.empty, None, sessionId, Some("/hello"), Text(Nil), processId, processCode, LabelCache()))))
+        .returns(Future.successful(Right(ctx)))
 
       MockGuidanceService
         .savePageState(sessionId, processCode, LabelCache())
@@ -1458,9 +1459,11 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
     trait Test extends MockGuidanceService with TestBase {
       lazy val fakeRequest = FakeRequest(GET, path).withSession(SessionKeys.sessionId -> processId).withCSRFToken
 
+      val ctx = PageContext(standardPage, Seq.empty, None, sessionId, Some("/hello"), Text(Nil), processId, processCode, LabelCache())
+
       MockGuidanceService
         .getPageContext(processCode, path, previousPageByLink = false, processId)
-        .returns(Future.successful(Right(PageContext(standardPage, Seq.empty, None, sessionId, Some("/hello"), Text(Nil), processId, processCode, LabelCache()))))
+        .returns(Future.successful(Right(ctx)))
 
       MockGuidanceService
         .savePageState(sessionId, processCode, LabelCache())
@@ -1564,7 +1567,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
 
       val process = prototypeJson.as[Process]
       val session = GuidanceSession(Session(SessionKey(processId, process.meta.processCode), Some(Published), process.meta.id, Map(), Nil, Map(), Map(),
-        List(RawPageHistory("start", Nil, Nil)), Nil, None, Instant.now, process.meta.lastUpdate, process.meta.timescalesVersion, process.meta.ratesVersion), process, Map(), List(PageHistory(s"${process.meta.processCode}$path", Nil, Nil)))
+        List(RawPageHistory("start", Nil, Nil)), Nil, None, Instant.now, process.meta.lastUpdate, process.meta.timescalesVersion, process.meta.ratesVersion), process, Map(), List(PageHistory(s"${process.meta.processCode}$path",Nil,Nil)))
 
       MockSessionService
         .get(sessionId, process.meta.processCode, requestId)

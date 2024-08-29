@@ -18,13 +18,13 @@ package repositories
 
 import scala.annotation.tailrec
 import javax.inject.{Inject, Singleton}
-import core.models.ocelot.{Flow, Continuation, LabelValue, FlowStage}
+import core.models.ocelot.{Flow, Continuation, LabelValue, FlowStage, LabelOperation}
 import core.models.ocelot.{Label, ScalarLabel}
 import models._
 
 @Singleton
 class SessionFSM @Inject() () {
-  type BackLinkAndStateUpdate = (Option[String], Option[List[PageHistory]], Option[List[FlowStage]], List[Label])
+  type BackLinkAndStateUpdate = (Option[String], Option[List[PageHistory]], Option[List[FlowStage]], List[Label], List[LabelOperation])
   // Input
   // url: incoming url
   // priorHistory: prior Session pageHistory corresponding to the previous url processed.
@@ -43,50 +43,54 @@ class SessionFSM @Inject() () {
   def apply(url: String, priorHistory: List[PageHistory], priorFlowStack: List[FlowStage], forceForward: Boolean, sentinelUrl: String): BackLinkAndStateUpdate =
     priorHistory.reverse match {
       // Initial page
-      case Nil => (None, Some(List(PageHistory(url, Nil, Nil))), None, Nil)
+      case Nil => (None, Some(List(PageHistory(url, Nil, Nil))), None, Nil, Nil)
 
       // REFRESH: new url equals current url with same flowPath
-      case x :: xs if x.url == url => (xs.headOption.map(_.url), None, None, Nil)
+      case x :: xs if x.url == url => (xs.headOption.map(_.url), None, None, Nil, x.revertOps)
 
       // BACK: new url equals previous url and prior flowStack equals the previous flowStack
-      case _ :: y :: xs if y.url == url && !forceForward && priorFlowStack == y.flowStack =>
-        (xs.headOption.map(_.url), Some((y :: xs).reverse), None, Nil)
+      case x :: y :: xs if y.url == url && !forceForward && priorFlowStack == y.flowStack =>
+        (xs.headOption.map(_.url), Some((y :: xs).reverse), None, Nil, mergeRevertOperations(x.revertOps, y.revertOps))
 
       // BACK: flowStack change
-      case _ :: y :: xs if y.url == url && !forceForward =>
-        (xs.headOption.map(_.url), Some((y :: xs).reverse), Some(y.flowStack), pageHistoryLabelValues(y.flowStack))
+      case x :: y :: xs if y.url == url && !forceForward =>
+        (xs.headOption.map(_.url), Some((y :: xs).reverse), Some(y.flowStack), pageHistoryLabelValues(y.flowStack), mergeRevertOperations(x.revertOps, y.revertOps))
 
       // FORWARD to first page of guidance
-      case _ :: _ if url == sentinelUrl =>
+      case x :: _ if url == sentinelUrl =>
         findPreviousFlowAndLabelState(url, priorHistory).fold[BackLinkAndStateUpdate](
-          (None, Some(List(PageHistory(url, Nil, Nil))), Some(Nil), Nil)
+          (None, Some(List(PageHistory(url, Nil, Nil))), Some(Nil), Nil, x.revertOps)
         ){t =>
           val (labelValue, flowStack) = t
-          (None, Some(List(PageHistory(url, Nil, flowStack))), Some(flowStack), labelValue)
+          (None, Some(List(PageHistory(url, Nil, flowStack))), Some(flowStack), labelValue, Nil)
         }
 
       // FORWARD from a non-empty flowStack
       case x :: xs if priorFlowStack.nonEmpty => // Check for forward  movement to a previous page (possibly from CYA)
         findPreviousFlowAndLabelState(url, priorHistory).fold[BackLinkAndStateUpdate]{
-          (Some(x.url), Some((PageHistory(url, Nil, priorFlowStack) :: x :: xs).reverse), None, Nil)
+          (Some(x.url), Some((PageHistory(url, Nil, priorFlowStack) :: x :: xs).reverse), None, Nil, Nil)
         }{
-          case (_, Nil) => (Some(x.url), Some((PageHistory(url, Nil, Nil) :: x :: xs).reverse), Some(Nil), Nil)
-          case _ => (Some(x.url), Some((PageHistory(url, Nil, priorFlowStack) :: x :: xs).reverse), None, Nil)
+          case (_, Nil) => (Some(x.url), Some((PageHistory(url, Nil, Nil) :: x :: xs).reverse), Some(Nil), Nil, Nil)
+          case _ => (Some(x.url), Some((PageHistory(url, Nil, priorFlowStack) :: x :: xs).reverse), None, Nil, Nil)
         }
 
       // FORWARD from empty flowStack
       case x :: xs => // Check for forward  movement to a previous page (CYA)
         findPreviousFlowAndLabelState(url, priorHistory).fold[BackLinkAndStateUpdate]{
-          (Some(x.url), Some((PageHistory(url, Nil, priorFlowStack) :: x :: xs).reverse), None, Nil)
+          (Some(x.url), Some((PageHistory(url, Nil, priorFlowStack) :: x :: xs).reverse), None, Nil, Nil)
         }{
           case (_, Nil) =>
-            (Some(x.url), Some((PageHistory(url, Nil, Nil) :: x :: xs).reverse), None, Nil)
+            (Some(x.url), Some((PageHistory(url, Nil, Nil) :: x :: xs).reverse), None, Nil, Nil)
           case (labels, flowStack) =>
-            (Some(x.url), Some((PageHistory(url, Nil, flowStack) :: x :: xs).reverse), Some(flowStack), labels)
+            (Some(x.url), Some((PageHistory(url, Nil, flowStack) :: x :: xs).reverse), Some(flowStack), labels, Nil)
         }
   }
 
   private type LabelAndFlowStack = Option[(List[Label], List[FlowStage])]
+
+  // Merge two lists of revert operations without duplicates with one (priorityOps) taking precedence
+  private[repositories] def mergeRevertOperations(priorityOps: List[LabelOperation], othersOps: List[LabelOperation]): List[LabelOperation] =
+    priorityOps ++ othersOps.filterNot(o => priorityOps.exists(_.name == o.name))
 
   private def findPreviousFlowAndLabelState(url: String, pageHistory: List[PageHistory]): LabelAndFlowStack =
     pageHistory.find(_.url == url).fold[LabelAndFlowStack](None){ph => Some((pageHistoryLabelValues(ph.flowStack), ph.flowStack))}

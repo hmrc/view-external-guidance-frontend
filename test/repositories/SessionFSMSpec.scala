@@ -19,12 +19,13 @@ package repositories
 import base.BaseSpec
 import core.models.ocelot.stanzas.{ScalarType, Value, ValueStanza}
 import models.{SessionKey, PageHistory, Session, RawPageHistory}
-import core.models.ocelot.{SequenceJson, Published, LabelValue, Continuation, Phrase, ListLabel, FlowStage, Label, ScalarLabel, Flow, Process, ProcessJson}
+import core.models.ocelot.{SequenceJson, Published, LabelValue, Continuation, Phrase, ListLabel, FlowStage, Label}
+import core.models.ocelot.{ScalarLabel, Flow, Process, ProcessJson, LabelOperation, Update, Delete}
 
 import java.time.Instant
 
 class SessionFSMSpec extends BaseSpec {
-  type BackLinkAndStateUpdate = (Option[String], Option[List[PageHistory]], Option[List[FlowStage]], List[Label])
+  type BackLinkAndStateUpdate = (Option[String], Option[List[PageHistory]], Option[List[FlowStage]], List[Label], List[LabelOperation])
   val fsm = new SessionFSM
   def verify(fsmOutput: BackLinkAndStateUpdate, bl: Option[String], ph: Option[List[PageHistory]], fs: Option[List[FlowStage]], l: List[Label]): Unit = {
     fsmOutput._1 shouldBe bl
@@ -390,6 +391,39 @@ class SessionFSMSpec extends BaseSpec {
                Nil)
     }
 
+  }
+
+  "SessionFSM mergeRevertOperations" must {
+
+    def lbl(name: String, v: String): Label = ScalarLabel(name, List(v), List(v))
+
+    "order priority and other operations correctly" in {
+
+      val priority = List(
+        Update(lbl("X","1")),
+        Update(lbl("Y","2")),
+        Update(lbl("Z","3")),
+        Delete("A")
+      )
+      val others = List(
+        Update(lbl("A","4")),
+        Update(lbl("B","5")),
+        Update(lbl("Z","17")),
+        Delete("D")
+      )
+
+      val expected = List(
+        Update(lbl("X","1")),
+        Update(lbl("Y","2")),
+        Update(lbl("Z","3")),
+        Delete("A"),
+        Update(lbl("B","5")),
+        Delete("D")
+      )
+
+      fsm.mergeRevertOperations(priority, others) shouldBe expected
+
+    }
   }
 
 }

@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// $COVERAGE-OFF$
-
 package models
 
 import core.models.ocelot.{FlowStage, LabelOperation}

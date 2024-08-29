@@ -43,7 +43,6 @@ trait SessionRepositoryConstants {
   val FlowStackKey: String = "flowStack"
   val ContinuationPoolKey: String = "continuationPool"
   val AnswersKey: String = "answers"
-  val PageHistoryKey: String = "pageHistory"
   val RawPageHistoryKey: String = "rawPageHistory"
   val LabelsKey: String = "labels"
   val LegalPageIdsKey: String = "legalPageIds"
@@ -59,9 +58,9 @@ trait SessionRepository extends SessionRepositoryConstants {
   def get(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[Session]]
   def reset(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[Session]]
   def updateForNewPage(key: String, processCode: String, rawpageHistory: Option[List[RawPageHistory]], flowStack: Option[List[FlowStage]],
-                               labelUpdates: List[Label], legalPageIds: List[String], requestId: Option[String]): Future[RequestOutcome[Unit]]
-  def updateAfterStandardPage(key: String, processCode: String, labels: Labels, requestId: Option[String]): Future[RequestOutcome[Unit]]
-  def updateAfterFormSubmission(key: String, processCode: String, answerId: String, answer: String, labels: Labels, nextLegalPageIds: List[String],
+                               labelUpdates: List[Label], deletions: List[String], legalPageIds: List[String], requestId: Option[String]): Future[RequestOutcome[Unit]]
+  def updateAfterStandardPage(key: String, processCode: String, labels: Labels, revertOps: List[LabelOperation], requestId: Option[String]): Future[RequestOutcome[Unit]]
+  def updateAfterFormSubmission(key: String, processCode: String, answerId: String, answer: String, labels: Labels, revertOps: List[LabelOperation], nextLegalPageIds: List[String],
                                 requestId: Option[String]): Future[RequestOutcome[Unit]]
 }
 
@@ -171,7 +170,6 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
         Updates.set(TtlExpiryFieldName, Instant.now()),
         Updates.set(LegalPageIdsKey, List[String]()),
         Updates.set(FlowStackKey, List[FlowStage]()),
-        Updates.set(PageHistoryKey, List[PageHistory]()),
         Updates.set(RawPageHistoryKey, List[RawPageHistory]()),
         Updates.set(ContinuationPoolKey, Map[String, PopulatedStanza]()),
         Updates.set(s"${AnswersKey}./${SecuredProcess.SecuredProcessStartUrl}", ""),
@@ -193,12 +191,14 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
                                  answerId: String,
                                  answer: String,
                                  labels: Labels,
+                                 revertOps: List[LabelOperation],
                                  nextLegalPageIds: List[String],
                                  requestId: Option[String]): Future[RequestOutcome[Unit]] =
     collection.findOneAndUpdate(
       requestId.fold(equal("_id", SessionKey(key, processCode)))(rId => and(equal("_id", SessionKey(key, processCode)), equal(RequestId, rId))),
       combine((List(
         Updates.set(TtlExpiryFieldName, Instant.now()),
+        Updates.set(s"${RawPageHistoryKey}.0.revertOps", Codecs.toBson(revertOps)),
         Updates.set(FlowStackKey, Codecs.toBson(labels.flowStack)),
         Updates.set(s"${AnswersKey}.$answerId", Codecs.toBson(answer)),
         Updates.set(LegalPageIdsKey, Codecs.toBson(nextLegalPageIds))) ++
@@ -209,21 +209,22 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
     .toFutureOption()
     .map{
       case None => Left(NotFoundError)
-      case _ => Right({})
+      case _ => Right(())
     }
     .recover{ case lastError =>
       logger.error(s"Error $lastError updating question answers and labels within session repo with _id=$key, answerId: $answerId, answer: $answer")
       Left(DatabaseError)
     }
 
-  def updateAfterStandardPage(key: String, processCode: String, labels: Labels, requestId: Option[String]): Future[RequestOutcome[Unit]] =
+  def updateAfterStandardPage(key: String, processCode: String, labels: Labels, revertOps: List[LabelOperation], requestId: Option[String]): Future[RequestOutcome[Unit]] =
     collection.findOneAndUpdate(
       requestId.fold(equal("_id", SessionKey(key, processCode)))(rId => and(equal("_id", SessionKey(key, processCode)), equal(RequestId, rId))),
       combine((
         (labels.poolUpdates.toList.map(l => Updates.set(s"${ContinuationPoolKey}.${l._1}", Codecs.toBson(l._2))) ++
          labels.updatedLabels.values.map(l => Updates.set(s"${LabelsKey}.${l.name}", Codecs.toBson(l)))).toIndexedSeq :+
-         Updates.set(FlowStackKey, Codecs.toBson(labels.flowStack)) : _*)
-      )
+         Updates.set(s"${RawPageHistoryKey}.0.revertOps", Codecs.toBson(revertOps)) :+
+         Updates.set(FlowStackKey, Codecs.toBson(labels.flowStack)): _*
+      ))
     )
     .toFutureOption()
     .map{
@@ -240,6 +241,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
                        rawPageHistory: Option[List[RawPageHistory]],
                        flowStack: Option[List[FlowStage]],
                        labelUpdates: List[Label],
+                       deletions: List[String],
                        legalPageIds: List[String],
                        requestId: Option[String]): Future[RequestOutcome[Unit]] =
     collection.findOneAndUpdate(
@@ -248,6 +250,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
           Updates.set(TtlExpiryFieldName, Instant.now()), Updates.set(LegalPageIdsKey, Codecs.toBson(legalPageIds))) ++
           rawPageHistory.fold[List[Bson]](Nil)(ph => List(Updates.set(RawPageHistoryKey, Codecs.toBson(ph)))) ++
           labelUpdates.map(l => Updates.set(s"${LabelsKey}.${l.name}", Codecs.toBson(l))) ++
+          deletions.map(l => Updates.unset(s"${LabelsKey}.${l}")) ++
           flowStack.fold[List[Bson]](Nil)(stack => List(Updates.set(FlowStackKey, Codecs.toBson(stack))))).toIndexedSeq: _*
         )
       )

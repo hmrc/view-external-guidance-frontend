@@ -69,21 +69,22 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
   }
 
   def updateForNewPage(key: String, processCode: String, pageMap: Map[String, PageNext], pageHistory: Option[List[PageHistory]], flowStack: Option[List[FlowStage]],
-                       labelUpdates: List[Label], legalPageIds: List[String], requestId: Option[String]): Future[RequestOutcome[Unit]] =
+                       labelUpdates: List[Label], deletions: List[String], legalPageIds: List[String], requestId: Option[String]): Future[RequestOutcome[Unit]] =
     toRawPageHistory(pageHistory, pageMap, processCode) match {
       case None if pageHistory.isDefined =>
         logger.error(s"ERROR:Conversion of PageHistory to RawPageHistory failed (None return)")
         Future.successful(Left(PageHistoryError))
       case rawPageHistoryOption =>
-        sessionRepository.updateForNewPage(key, processCode, rawPageHistoryOption, flowStack, labelUpdates, legalPageIds, requestId)
+        sessionRepository.updateForNewPage(key, processCode, rawPageHistoryOption, flowStack, labelUpdates, deletions, legalPageIds, requestId)
     }
+  
 
   def updateAfterStandardPage(key: String, processCode: String, labels: Labels, requestId: Option[String]): Future[RequestOutcome[Unit]] =
-    sessionRepository.updateAfterStandardPage(key, processCode, labels, requestId)
+    sessionRepository.updateAfterStandardPage(key, processCode, labels, labels.revertOperations(), requestId)
 
   def updateAfterFormSubmission(key: String, processCode: String, answerId: String, answer: String, labels: Labels, nextLegalPageIds: List[String],
                                 requestId: Option[String]): Future[RequestOutcome[Unit]] =
-    sessionRepository.updateAfterFormSubmission(key, processCode, answerId, answer, labels, nextLegalPageIds, requestId)
+    sessionRepository.updateAfterFormSubmission(key, processCode, answerId, answer, labels, labels.revertOperations(), nextLegalPageIds, requestId)
 
   private[services] def guidanceSession(session: Session)(implicit context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] = {
     val processId = if (session.runMode.equals(Some(Debugging))) s"${session.processId}${processCacheRepository.DebugIdSuffix}" else session.processId

@@ -60,10 +60,10 @@ trait MockSessionService extends TestSuite with MockFactory {
         .expects(key, processCode, requestId, *)
 
     def updateForNewPage(key: String, processCode: String, pageMap: Map[String, PageNext], pageHistory: Option[List[PageHistory]], flowStack: Option[List[FlowStage]],
-                         labelUpdates: List[Label], legalPageIds: List[String], requestId: Option[String]): CallHandler[Future[RequestOutcome[Unit]]] =
+                         labelUpdates: List[Label], labelDeletions: List[String], legalPageIds: List[String], requestId: Option[String]): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockSessionService
-        .updateForNewPage(_: String, _: String, _: Map[String, PageNext], _: Option[List[PageHistory]], _: Option[List[FlowStage]], _: List[Label], _: List[String], _: Option[String]))
-        .expects(key, processCode, pageMap, pageHistory, flowStack, labelUpdates, legalPageIds, requestId)
+        .updateForNewPage(_: String, _: String, _: Map[String, PageNext], _: Option[List[PageHistory]], _: Option[List[FlowStage]], _: List[Label], _: List[String], _: List[String], _: Option[String]))
+        .expects(key, processCode, pageMap, pageHistory, flowStack, labelUpdates, labelDeletions, legalPageIds, requestId)
 
     def updateAfterStandardPage(key: String, processCode: String, labels: Labels, requestId: Option[String]): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockSessionService

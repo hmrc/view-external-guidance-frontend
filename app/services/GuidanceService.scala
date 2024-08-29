@@ -27,7 +27,7 @@ import core.models.RequestOutcome
 import play.api.i18n.{MessagesApi, Messages}
 import scala.concurrent.{ExecutionContext, Future}
 import repositories.SessionFSM
-import core.models.ocelot.{LabelCache, Labels, Process, Label, flowPath, Debugging}
+import core.models.ocelot.{LabelCache, Labels, Process, Label, flowPath, Debugging, LabelOperation, Update, Delete}
 import core.models.ocelot.SecuredProcess
 import core.services.EncrypterService
 import models.admin.DebugInformation
@@ -117,19 +117,31 @@ class GuidanceService @Inject() (
           val requestId: Option[String] = hc.requestId.map(_.value)
           if (sp.legalPageIds.isEmpty || sp.legalPageIds.contains(pageNext.id)){ // Wild card or fixed list of valid page ids
             val firstPageUrl: String = s"${sp.process.meta.processCode}${sp.process.startUrl.getOrElse("")}"
-            val (backLink, updatedPageHistory, flowStackUpdate, labelUpdates) = transition(url, sp.pageHistory, sp.flowStack, previousPageByLink, firstPageUrl)
-            val labels: Map[String, Label] = sp.labels ++ labelUpdates.map(l => l.name -> l).toMap
+
+            println(s" ####### Last page revertOps prior to transition ${sp.pageHistory.reverse.headOption}")
+
+            val (backLink, updatedPageHistory, flowStackUpdate, flowLabelUpdates, revertOps) = transition(url, sp.pageHistory, sp.flowStack, previousPageByLink, firstPageUrl)
+
+            println(s" ### revertOps: $revertOps")
+            // Labels from DB + flowstack related updates
+            val (updatedFlowAndRevertedLabels, labelDeletions) = mergeFlowLabelUpdatesAndRevertOperations(flowLabelUpdates, revertOps)
+
+            println(s" ### labelDeletions: $labelDeletions")
+            println(s" ### updatedFlowAndRevertedLabels: $updatedFlowAndRevertedLabels")
+            val labels: Map[String, Label] = sp.labels ++ updatedFlowAndRevertedLabels.map(l => l.name -> l).toMap
+            val labelsWithDeletions = labelDeletions.foldLeft(labels)((lbls, n) => lbls - n)
             val legalPageIds = (pageNext.id :: Process.StartStanzaId :: pageNext.linked ++
                                 backLink.fold(List.empty[String])(bl => List(sp.pageMap(bl.drop(sp.process.meta.processCode.length)).id))).distinct
 
-            sessionService.updateForNewPage(key, processCode, sp.pageMap, updatedPageHistory, flowStackUpdate, labelUpdates, legalPageIds, requestId).map {
+
+            sessionService.updateForNewPage(key, processCode, sp.pageMap, updatedPageHistory, flowStackUpdate, updatedFlowAndRevertedLabels, labelDeletions, legalPageIds, requestId).map {
               case Left(NotFoundError) =>
                 logger.warn(s"TRANSACTION FAULT(Recoverable): saveUpdates _id=$key, requestId: $requestId")
                 Left((TransactionFaultError, None))
               case Left(err) =>
                 logger.error(s"Unable to update session data, error = $err")
                 Left((err, None))
-              case _ => Right(sp.copy(labels = labels, flowStack = flowStackUpdate.getOrElse(sp.flowStack), backLink = backLink))
+              case _ => Right(sp.copy(labels = labelsWithDeletions, flowStack = flowStackUpdate.getOrElse(sp.flowStack), backLink = backLink))
             }
           } else {
             logger.warn(s"Attempt to move to illegal page $url, LEGALPIDS ${sp.legalPageIds}")
@@ -138,6 +150,9 @@ class GuidanceService @Inject() (
         }
       }
     }
+
+  private def mergeFlowLabelUpdatesAndRevertOperations(updates: List[Label], revertOps: List[LabelOperation]):(List[Label], List[String]) =
+    ((revertOps.collect{case u: Update => u.l} ++ updates).distinct, revertOps.collect{case d: Delete => d.name})
 
   def getSubmitEvaluationContext(processCode: String, url: String, sessionId: String)
                                 (implicit hc: HeaderCarrier, context: ExecutionContext, messages: Messages): 
@@ -232,6 +247,7 @@ class GuidanceService @Inject() (
                   processTitle, gs.process.meta.id, processCode, updatedLabels, 
                   gs.backLink.map(bl => s"${appConfig.baseUrl}/$bl"), gs.answers.get(answerStorageId(updatedLabels, url)),
                   gs.process.betaPhaseBanner,
+                  gs.process.ocelotBacklinkBehaviour,
                   Option.when(labels.runMode.equals(Debugging))
                              (DebugInformation(Some(debugService.mapPage(page, gs.pageMap)), Some(labels), Some(updatedLabels)))
                 )
