@@ -195,7 +195,7 @@ class GuidanceService @Inject() (
 
   def savePageState(sessionId: String, processCode: String, labels: Labels)
                    (implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[Unit]] =
-    sessionService.updateAfterStandardPage(sessionId, processCode, labels, hc.requestId.map(_.value)).map{
+    sessionService.updateAfterStandardPage(sessionId, processCode, labels, hc.requestId.map(_.value), labels.revertOperations()).map{
       case Left(NotFoundError) =>
         logger.warn(s"TRANSACTION FAULT(Recoverable): saveLabels _id=$sessionId, requestId: ${hc.requestId.map(_.value)}")
         Left(TransactionFaultError)

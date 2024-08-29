@@ -65,10 +65,10 @@ trait MockSessionService extends TestSuite with MockFactory {
         .updateForNewPage(_: String, _: String, _: Map[String, PageNext], _: Option[List[PageHistory]], _: Option[List[FlowStage]], _: List[Label], _: List[String], _: Option[String]))
         .expects(key, processCode, pageMap, pageHistory, flowStack, labelUpdates, legalPageIds, requestId)
 
-    def updateAfterStandardPage(key: String, processCode: String, labels: Labels, requestId: Option[String]): CallHandler[Future[RequestOutcome[Unit]]] =
+    def updateAfterStandardPage(key: String, processCode: String, labels: Labels, requestId: Option[String], revertOperations: List[LabelOperation]): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockSessionService
-        .updateAfterStandardPage(_: String, _: String, _: Labels, _: Option[String]))
-        .expects(key, processCode, *, requestId)
+        .updateAfterStandardPage(_: String, _: String, _: Labels, _: Option[String], _: List[LabelOperation]))
+        .expects(key, processCode, *, requestId, revertOperations)
 
     def updateAfterFormSubmission(key: String, processCode: String, answerId: String, answer: String, labels: Labels, nextLegalPageIds: List[String],
                                 requestId: Option[String], revertOperations: List[LabelOperation]): CallHandler[Future[RequestOutcome[Unit]]] =

@@ -124,7 +124,7 @@ class GuidanceServiceSpec extends BaseSpec {
       val changedLabels = labels.update("LabelName", "New value")
 
       MockSessionService
-        .updateAfterStandardPage(sessionRepoId, processCode, changedLabels, requestId)
+        .updateAfterStandardPage(sessionRepoId, processCode, changedLabels, requestId, changedLabels.revertOperations())
         .returns(Future.successful(Right({})))
 
       private val result = target.savePageState(sessionRepoId, processCode, changedLabels)
@@ -165,7 +165,7 @@ class GuidanceServiceSpec extends BaseSpec {
         .returns(Right((page.stanzas.toList.collect{case s: VisualStanza => s}, labels, None)))
 
       MockSessionService
-        .updateAfterStandardPage(sessionRepoId, processCode, labels, requestId)
+        .updateAfterStandardPage(sessionRepoId, processCode, labels, requestId, labels.revertOperations())
         .returns(Future.successful(Right({})))
 
       MockUIBuilder
@@ -244,7 +244,7 @@ class GuidanceServiceSpec extends BaseSpec {
         .returns(Right((lastPage.stanzas.toList.collect{case s: VisualStanza => s}, labels, None)))
 
       MockSessionService
-        .updateAfterStandardPage(sessionRepoId, processCode, labels, requestId)
+        .updateAfterStandardPage(sessionRepoId, processCode, labels, requestId, labels.revertOperations())
         .returns(Future.successful(Right({})))
 
       MockUIBuilder
@@ -346,7 +346,7 @@ class GuidanceServiceSpec extends BaseSpec {
         .returns(Right((lastPage.stanzas.toList.collect{case s: VisualStanza => s}, labels, None)))
 
       MockSessionService
-        .updateAfterStandardPage(sessionRepoId, processCode, labels, requestId)
+        .updateAfterStandardPage(sessionRepoId, processCode, labels, requestId, labels.revertOperations())
         .returns(Future.successful(Right({})))
 
       MockUIBuilder
@@ -530,7 +530,7 @@ class GuidanceServiceSpec extends BaseSpec {
   "Calling saveLabels" should {
     "Success when labels saved successfully" in new Test {
       MockSessionService
-        .updateAfterStandardPage(processId, processCode, labels, requestId)
+        .updateAfterStandardPage(processId, processCode, labels, requestId, labels.revertOperations())
         .returns(Future.successful(Right({})))
 
       target.savePageState(processId, processCode, LabelCache()).map{
@@ -541,7 +541,7 @@ class GuidanceServiceSpec extends BaseSpec {
 
     "An error when labels not saved successfully" in new Test {
       MockSessionService
-        .updateAfterStandardPage(processId, processCode, labels, requestId)
+        .updateAfterStandardPage(processId, processCode, labels, requestId, labels.revertOperations())
         .returns(Future.successful(Left(DatabaseError)))
 
       target.savePageState(processId, processCode, LabelCache()).map{

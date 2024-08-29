@@ -213,11 +213,11 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
 
 
       MockSessionRepository
-        .updateAfterStandardPage(sessionRepoId, process.meta.processCode, labelCache, requestId)
+        .updateAfterStandardPage(sessionRepoId, process.meta.processCode, labelCache, requestId, labelCache.revertOperations())
         .returns(Future.successful(Right(())))
 
       whenReady(
-        target.updateAfterStandardPage(sessionRepoId, process.meta.processCode, labelCache, requestId)) {
+        target.updateAfterStandardPage(sessionRepoId, process.meta.processCode, labelCache, requestId, labelCache.revertOperations())) {
         case Right(session) =>
           succeed
         case Left(err) => Future.successful(Left(err))

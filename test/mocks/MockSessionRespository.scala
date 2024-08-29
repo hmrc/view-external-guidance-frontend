@@ -64,10 +64,10 @@ trait MockSessionRepository extends TestSuite with MockFactory {
         .reset(_: String, _: String, _: Option[String]))
         .expects(key, processCode, requestId)
 
-    def updateAfterStandardPage(key: String, processCode: String, labels: Labels, requestId: Option[String]): CallHandler[Future[RequestOutcome[Unit]]] =
+    def updateAfterStandardPage(key: String, processCode: String, labels: Labels, requestId: Option[String], revertOperations: List[LabelOperation]): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockSessionRepository
-        .updateAfterStandardPage(_: String, _: String, _: Labels, _: Option[String]))
-        .expects(key, processCode, *, requestId)
+        .updateAfterStandardPage(_: String, _: String, _: Labels, _: Option[String], _: List[LabelOperation]))
+        .expects(key, processCode, *, requestId, revertOperations)
 
     def updateForNewPage(key: String,
                          processCode: String,

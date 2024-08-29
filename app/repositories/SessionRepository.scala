@@ -60,7 +60,7 @@ trait SessionRepository extends SessionRepositoryConstants {
   def reset(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[Session]]
   def updateForNewPage(key: String, processCode: String, rawpageHistory: Option[List[RawPageHistory]], flowStack: Option[List[FlowStage]],
                                labelUpdates: List[Label], legalPageIds: List[String], requestId: Option[String]): Future[RequestOutcome[Unit]]
-  def updateAfterStandardPage(key: String, processCode: String, labels: Labels, requestId: Option[String]): Future[RequestOutcome[Unit]]
+  def updateAfterStandardPage(key: String, processCode: String, labels: Labels, requestId: Option[String], revertOperations: List[LabelOperation]): Future[RequestOutcome[Unit]]
   def updateAfterFormSubmission(key: String, processCode: String, answerId: String, answer: String, labels: Labels, nextLegalPageIds: List[String],
                                 requestId: Option[String], revertOperations: List[LabelOperation]): Future[RequestOutcome[Unit]]
 }
@@ -218,7 +218,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
       Left(DatabaseError)
     }
 
-  def updateAfterStandardPage(key: String, processCode: String, labels: Labels, requestId: Option[String]): Future[RequestOutcome[Unit]] =
+  def updateAfterStandardPage(key: String, processCode: String, labels: Labels, requestId: Option[String], revertOperations: List[LabelOperation]): Future[RequestOutcome[Unit]] =
     collection.findOneAndUpdate(
       requestId.fold(equal("_id", SessionKey(key, processCode)))(rId => and(equal("_id", SessionKey(key, processCode)), equal(RequestId, rId))),
       combine((
