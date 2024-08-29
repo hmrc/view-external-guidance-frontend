@@ -483,7 +483,7 @@ class GuidanceServiceSpec extends BaseSpec {
         .returns(Right((None, LabelCache())))
 
       MockSessionService
-        .updateAfterFormSubmission(processId, processCode, "/test-page", "yes", LabelCache(), List("2"), requestId)
+        .updateAfterFormSubmission(processId, processCode, "/test-page", "yes", LabelCache(), List("2"), requestId, labels.revertOperations())
         .returns(Future.successful(Right({})))
 
       target.submitPage(pec, "/test-page", "yes", "yes").map{
@@ -499,7 +499,7 @@ class GuidanceServiceSpec extends BaseSpec {
         .returns(Right((Some("2"), LabelCache())))
 
       MockSessionService
-        .updateAfterFormSubmission(processId, pec.processCode, "/last-page", "yes", labels, List("2"), requestId)
+        .updateAfterFormSubmission(processId, pec.processCode, "/last-page", "yes", labels, List("2"), requestId, labels.revertOperations())
         .returns(Future.successful(Right({})))
 
       target.submitPage(pec, "/last-page", "yes", "yes").map{
@@ -516,7 +516,7 @@ class GuidanceServiceSpec extends BaseSpec {
         .returns(Left((nonTerminatingPageError, labels)))
 
       MockSessionService
-        .updateAfterFormSubmission(processId, processCode, "/test-page", "yes", labels, Nil, requestId)
+        .updateAfterFormSubmission(processId, processCode, "/test-page", "yes", labels, Nil, requestId, labels.revertOperations())
         .returns(Future.successful(Right({})))
 
       target.submitPage(pec, "/test-page", "yes", "yes").map{

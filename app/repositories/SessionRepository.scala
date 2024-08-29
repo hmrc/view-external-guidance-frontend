@@ -62,7 +62,7 @@ trait SessionRepository extends SessionRepositoryConstants {
                                labelUpdates: List[Label], legalPageIds: List[String], requestId: Option[String]): Future[RequestOutcome[Unit]]
   def updateAfterStandardPage(key: String, processCode: String, labels: Labels, requestId: Option[String]): Future[RequestOutcome[Unit]]
   def updateAfterFormSubmission(key: String, processCode: String, answerId: String, answer: String, labels: Labels, nextLegalPageIds: List[String],
-                                requestId: Option[String]): Future[RequestOutcome[Unit]]
+                                requestId: Option[String], revertOperations: List[LabelOperation]): Future[RequestOutcome[Unit]]
 }
 
 object DefaultSessionRepository extends SessionRepositoryConstants
@@ -194,11 +194,13 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
                                  answer: String,
                                  labels: Labels,
                                  nextLegalPageIds: List[String],
-                                 requestId: Option[String]): Future[RequestOutcome[Unit]] =
+                                 requestId: Option[String],
+                                 revertOperations: List[LabelOperation]): Future[RequestOutcome[Unit]] =
     collection.findOneAndUpdate(
       requestId.fold(equal("_id", SessionKey(key, processCode)))(rId => and(equal("_id", SessionKey(key, processCode)), equal(RequestId, rId))),
       combine((List(
         Updates.set(TtlExpiryFieldName, Instant.now()),
+        Updates.set(s"${RawPageHistoryKey}.0.revertOps", Codecs.toBson(revertOperations)),
         Updates.set(FlowStackKey, Codecs.toBson(labels.flowStack)),
         Updates.set(s"${AnswersKey}.$answerId", Codecs.toBson(answer)),
         Updates.set(LegalPageIdsKey, Codecs.toBson(nextLegalPageIds))) ++

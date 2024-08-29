@@ -180,7 +180,8 @@ class GuidanceService @Inject() (
                                                    submittedAnswer, 
                                                    labels, 
                                                    List(next), 
-                                                   requestId).map{
+                                                   requestId,
+                                                   labels.revertOperations()).map{
             case Left(NotFoundError) =>
               logger.warn(s"TRANSACTION FAULT(Recoverable): saveFormPageState _id=${ctx.sessionId}, url:$url, answer:$validatedAnswer, requestId:${requestId}")
               Left((TransactionFaultError, ctx.debugInformation))

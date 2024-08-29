@@ -18,7 +18,7 @@ package mocks
 
 import models.PageNext
 import core.models.RequestOutcome
-import core.models.ocelot.{FlowStage, Label, Labels, Process, RunMode}
+import core.models.ocelot.{FlowStage, Label, LabelOperation, Labels, Process, RunMode}
 import org.scalamock.handlers.CallHandler
 import org.scalamock.scalatest.MockFactory
 import services.SessionService
@@ -71,9 +71,9 @@ trait MockSessionService extends TestSuite with MockFactory {
         .expects(key, processCode, *, requestId)
 
     def updateAfterFormSubmission(key: String, processCode: String, answerId: String, answer: String, labels: Labels, nextLegalPageIds: List[String],
-                                requestId: Option[String]): CallHandler[Future[RequestOutcome[Unit]]] =
+                                requestId: Option[String], revertOperations: List[LabelOperation]): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockSessionService
-        .updateAfterFormSubmission(_: String, _: String, _: String, _: String, _: Labels, _: List[String], _: Option[String]))
-        .expects(key, processCode, answerId, answer, *, nextLegalPageIds, requestId)
+        .updateAfterFormSubmission(_: String, _: String, _: String, _: String, _: Labels, _: List[String], _: Option[String], _: List[LabelOperation]))
+        .expects(key, processCode, answerId, answer, *, nextLegalPageIds, requestId, revertOperations)
   }
 }

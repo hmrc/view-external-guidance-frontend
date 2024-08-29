@@ -23,11 +23,12 @@ import javax.inject.{Inject, Singleton}
 import models._
 import core.models.RequestOutcome
 import core.models.errors.{PageHistoryError, RawPageHistoryError}
+
 import scala.concurrent.{ExecutionContext, Future}
-import repositories.{SessionRepository, ProcessCacheRepository}
+import repositories.{ProcessCacheRepository, SessionRepository}
 import models.PageNext
-import core.models.ocelot.{Process, RunMode, Label, Labels, FlowStage}
-import core.models.ocelot.Debugging
+import core.models.ocelot.{Debugging, FlowStage, Label, LabelOperation, Labels, Process, RunMode}
+
 import scala.annotation.tailrec
 
 @Singleton
@@ -82,8 +83,8 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
     sessionRepository.updateAfterStandardPage(key, processCode, labels, requestId)
 
   def updateAfterFormSubmission(key: String, processCode: String, answerId: String, answer: String, labels: Labels, nextLegalPageIds: List[String],
-                                requestId: Option[String]): Future[RequestOutcome[Unit]] =
-    sessionRepository.updateAfterFormSubmission(key, processCode, answerId, answer, labels, nextLegalPageIds, requestId)
+                                requestId: Option[String], revertOperations: List[LabelOperation]): Future[RequestOutcome[Unit]] =
+    sessionRepository.updateAfterFormSubmission(key, processCode, answerId, answer, labels, nextLegalPageIds, requestId, revertOperations)
 
   private[services] def guidanceSession(session: Session)(implicit context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] = {
     val processId = if (session.runMode.equals(Some(Debugging))) s"${session.processId}${processCacheRepository.DebugIdSuffix}" else session.processId

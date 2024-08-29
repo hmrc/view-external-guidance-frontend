@@ -43,10 +43,11 @@ trait MockSessionRepository extends TestSuite with MockFactory {
         .delete(_: String, _: String))
         .expects(key, processCode)
 
-    def updateAfterFormSubmission(docId: String, processCode: String, url: String, answer: String, labels: Labels, nextLegalPageIds: List[String], requestId: Option[String]): CallHandler[Future[RequestOutcome[Unit]]] =
+    def updateAfterFormSubmission(docId: String, processCode: String, url: String, answer: String, labels: Labels, nextLegalPageIds: List[String], requestId: Option[String],
+                                  revertOperations: List[LabelOperation]): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockSessionRepository
-        .updateAfterFormSubmission(_: String, _: String, _: String, _: String, _: Labels, _: List[String], _: Option[String]))
-        .expects(docId, processCode, url, answer, *, nextLegalPageIds, requestId)
+        .updateAfterFormSubmission(_: String, _: String, _: String, _: String, _: Labels, _: List[String], _: Option[String], _: List[LabelOperation]))
+        .expects(docId, processCode, url, answer, *, nextLegalPageIds, requestId, revertOperations)
 
     def getNoUpdate(key: String, processCode: String): CallHandler[Future[RequestOutcome[Session]]] =
       (mockSessionRepository

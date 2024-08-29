@@ -244,11 +244,11 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
 
 
       MockSessionRepository
-        .updateAfterFormSubmission(docId, processCode, firstPageUrl, answer, labelCache, Nil, requestId)
+        .updateAfterFormSubmission(docId, processCode, firstPageUrl, answer, labelCache, Nil, requestId, labelCache.revertOperations())
         .returns(Future.successful(Right(())))
 
       whenReady(
-        target.updateAfterFormSubmission(docId, processCode, firstPageUrl, answer, labelCache, Nil, requestId)) {
+        target.updateAfterFormSubmission(docId, processCode, firstPageUrl, answer, labelCache, Nil, requestId, labelCache.revertOperations())) {
         case Right(session) =>
           succeed
         case Left(err) => Future.successful(Left(err))
