@@ -80,11 +80,11 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
     }
 
   def updateAfterStandardPage(key: String, processCode: String, labels: Labels, requestId: Option[String], revertOperations: List[LabelOperation]): Future[RequestOutcome[Unit]] =
-    sessionRepository.updateAfterStandardPage(key, processCode, labels, requestId, revertOperations)
+    sessionRepository.updateAfterStandardPage(key, processCode, labels, revertOperations, requestId)
 
   def updateAfterFormSubmission(key: String, processCode: String, answerId: String, answer: String, labels: Labels, nextLegalPageIds: List[String],
                                 requestId: Option[String], revertOperations: List[LabelOperation]): Future[RequestOutcome[Unit]] =
-    sessionRepository.updateAfterFormSubmission(key, processCode, answerId, answer, labels, nextLegalPageIds, requestId, revertOperations)
+    sessionRepository.updateAfterFormSubmission(key, processCode, answerId, answer, labels, nextLegalPageIds, revertOperations, requestId)
 
   private[services] def guidanceSession(session: Session)(implicit context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] = {
     val processId = if (session.runMode.equals(Some(Debugging))) s"${session.processId}${processCacheRepository.DebugIdSuffix}" else session.processId

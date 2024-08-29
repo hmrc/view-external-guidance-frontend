@@ -46,8 +46,8 @@ trait MockSessionRepository extends TestSuite with MockFactory {
     def updateAfterFormSubmission(docId: String, processCode: String, url: String, answer: String, labels: Labels, nextLegalPageIds: List[String], requestId: Option[String],
                                   revertOperations: List[LabelOperation]): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockSessionRepository
-        .updateAfterFormSubmission(_: String, _: String, _: String, _: String, _: Labels, _: List[String], _: Option[String], _: List[LabelOperation]))
-        .expects(docId, processCode, url, answer, *, nextLegalPageIds, requestId, revertOperations)
+        .updateAfterFormSubmission(_: String, _: String, _: String, _: String, _: Labels, _: List[String], _: List[LabelOperation], _: Option[String]))
+        .expects(docId, processCode, url, answer, *, nextLegalPageIds, revertOperations, requestId)
 
     def getNoUpdate(key: String, processCode: String): CallHandler[Future[RequestOutcome[Session]]] =
       (mockSessionRepository
@@ -66,8 +66,8 @@ trait MockSessionRepository extends TestSuite with MockFactory {
 
     def updateAfterStandardPage(key: String, processCode: String, labels: Labels, requestId: Option[String], revertOperations: List[LabelOperation]): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockSessionRepository
-        .updateAfterStandardPage(_: String, _: String, _: Labels, _: Option[String], _: List[LabelOperation]))
-        .expects(key, processCode, *, requestId, revertOperations)
+        .updateAfterStandardPage(_: String, _: String, _: Labels, _: List[LabelOperation], _: Option[String]))
+        .expects(key, processCode, *, revertOperations, requestId)
 
     def updateForNewPage(key: String,
                          processCode: String,
