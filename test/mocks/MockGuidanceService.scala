@@ -97,9 +97,9 @@ trait MockGuidanceService extends TestSuite with MockFactory {
         .submitPage(_: PageEvaluationContext, _: String, _: String, _: String)(_: HeaderCarrier, _: ExecutionContext, _: Messages))
         .expects(ctx, url, validatedAnswer, submittedAnswer, *, *, *)
 
-    def savePageState(docId: String, processCode: String, labels: Labels): CallHandler[Future[RequestOutcome[Unit]]] =
+    def savePageState(ctx: PageContext): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockGuidanceService
-        .savePageState(_: String, _: String, _: Labels)(_: HeaderCarrier, _: ExecutionContext))
-        .expects(docId, processCode, *, *, *)
+        .savePageState(_: PageContext)(_: HeaderCarrier, _: ExecutionContext))
+        .expects(ctx, *, *)
   }
 }

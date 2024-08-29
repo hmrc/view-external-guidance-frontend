@@ -28,7 +28,7 @@ import play.api.i18n.{Lang, Messages, MessagesApi}
 import repositories.SessionFSM
 import models.{PageHistory, Session, SessionKey}
 import uk.gov.hmrc.http.{HeaderCarrier, RequestId}
-
+import models.ui.Text
 import java.time.Instant
 import scala.concurrent.Future
 import core.services.EncrypterService
@@ -123,11 +123,14 @@ class GuidanceServiceSpec extends BaseSpec {
     "save updated labels" in new Test {
       val changedLabels = labels.update("LabelName", "New value")
 
-      MockSessionService
-        .updateAfterStandardPage(sessionRepoId, processCode, changedLabels, requestId)
-        .returns(Future.successful(Right({})))
+      val uiPage: models.ui.Page = models.ui.StandardPage("/url", Seq(models.ui.H1(Text())))
+      val pageContext: PageContext = PageContext(uiPage, Seq.empty, None, sessionRepoId, None, Text(), processId, processCode, changedLabels, Some("/previousPage"))
 
-      private val result = target.savePageState(sessionRepoId, processCode, changedLabels)
+      MockSessionService
+        .updateAfterStandardPage(processId, processCode, changedLabels, requestId)
+        .returns(Future.successful(Right(())))
+
+      private val result = target.savePageState(pageContext)
 
       whenReady(result) {
         case Right(pc) => succeed
@@ -529,22 +532,29 @@ class GuidanceServiceSpec extends BaseSpec {
 
   "Calling saveLabels" should {
     "Success when labels saved successfully" in new Test {
+
+      val uiPage: models.ui.Page = models.ui.StandardPage("/url", Seq(models.ui.H1(Text())))
+      val pageContext: PageContext = PageContext(uiPage, Seq.empty, None, sessionRepoId, None, Text(), processId, processCode, labels, Some("/previousPage"))
+
       MockSessionService
         .updateAfterStandardPage(processId, processCode, labels, requestId)
         .returns(Future.successful(Right({})))
 
-      target.savePageState(processId, processCode, LabelCache()).map{
+      target.savePageState(pageContext).map{
         case Right(())  => succeed
         case Left(_) => fail()
       }
     }
 
     "An error when labels not saved successfully" in new Test {
+      val uiPage: models.ui.Page = models.ui.StandardPage("/url", Seq(models.ui.H1(Text())))
+      val pageContext: PageContext = PageContext(uiPage, Seq.empty, None, sessionRepoId, None, Text(), processId, processCode, labels, Some("/previousPage"))
+
       MockSessionService
         .updateAfterStandardPage(processId, processCode, labels, requestId)
         .returns(Future.successful(Left(DatabaseError)))
 
-      target.savePageState(processId, processCode, LabelCache()).map{
+      target.savePageState(pageContext).map{
         case Left(err) if err == DatabaseError => succeed
         case _ => fail()
       }

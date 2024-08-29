@@ -1285,7 +1285,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
         .returns(Future.successful(Right(ctx)))
 
       MockGuidanceService
-        .savePageState(sessionId, processCode, LabelCache())
+        .savePageState(ctx)
         .returns(Future.successful(Right(())))
 
       lazy val target =
@@ -1425,7 +1425,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
         .returns(Future.successful(Right(ctx)))
 
       MockGuidanceService
-        .savePageState(sessionId, processCode, LabelCache())
+        .savePageState(ctx)
         .returns(Future.successful(Left(TransactionFaultError)))
 
       MockGuidanceService
@@ -1466,7 +1466,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
         .returns(Future.successful(Right(ctx)))
 
       MockGuidanceService
-        .savePageState(sessionId, processCode, LabelCache())
+        .savePageState(ctx)
         .returns(Future.successful(Left(DatabaseError)))
 
       lazy val target =
