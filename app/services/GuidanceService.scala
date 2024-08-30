@@ -118,17 +118,11 @@ class GuidanceService @Inject() (
             val requestId: Option[String] = hc.requestId.map(_.value)
             if (sp.legalPageIds.isEmpty || sp.legalPageIds.contains(pageNext.id)){ // Wild card or fixed list of valid page ids
               val firstPageUrl: String = s"${sp.process.meta.processCode}${sp.process.startUrl.getOrElse("")}"
-
-              println(s" ####### Last page revertOps prior to transition ${sp.pageHistory.reverse.headOption}")
-
               val (backLink, updatedPageHistory, flowStackUpdate, flowLabelUpdates, revertOps) = transition(url, sp.pageHistory, sp.flowStack, previousPageByLink, firstPageUrl)
 
-              println(s" ### revertOps: $revertOps")
               // Labels from DB + flowstack related updates
               val (updatedFlowAndRevertedLabels, labelDeletions) = mergeFlowLabelUpdatesAndRevertOperations(flowLabelUpdates, revertOps)
 
-              println(s" ### labelDeletions: $labelDeletions")
-              println(s" ### updatedFlowAndRevertedLabels: $updatedFlowAndRevertedLabels")
               val labels: Map[String, Label] = sp.labels ++ updatedFlowAndRevertedLabels.map(l => l.name -> l).toMap
               val labelsWithDeletions = labelDeletions.foldLeft(labels)((lbls, n) => lbls - n)
               val legalPageIds = (pageNext.id :: Process.StartStanzaId :: pageNext.linked ++
