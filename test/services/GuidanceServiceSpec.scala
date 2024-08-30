@@ -127,7 +127,7 @@ class GuidanceServiceSpec extends BaseSpec {
       val pageContext: PageContext = PageContext(uiPage, Seq.empty, None, sessionRepoId, None, Text(), processId, processCode, changedLabels, Some("/previousPage"))
 
       MockSessionService
-        .updateAfterStandardPage(processId, processCode, changedLabels, None, requestId)
+        .updateAfterStandardPage(processId, processCode, changedLabels, Some(Nil), requestId)
         .returns(Future.successful(Right(())))
 
       private val result = target.savePageState(pageContext)
@@ -497,12 +497,13 @@ class GuidanceServiceSpec extends BaseSpec {
     }
 
     "Return the id of the page to follow" in new Test {
+      val emptyLabels = LabelCache()
       MockPageRenderer
-        .renderPagePostSubmit(page, labels, "yes")
+        .renderPagePostSubmit(page, emptyLabels, "yes")
         .returns(Right((Some("2"), LabelCache())))
 
       MockSessionService
-        .updateAfterFormSubmission(processId, pec.processCode, "/last-page", "yes", labels, List("2"), None, requestId)
+        .updateAfterFormSubmission(processId, pec.processCode, "/last-page", "yes", emptyLabels, List("2"), Some(Nil), requestId)
         .returns(Future.successful(Right({})))
 
       target.submitPage(pec, "/last-page", "yes", "yes").map{
@@ -537,7 +538,7 @@ class GuidanceServiceSpec extends BaseSpec {
       val pageContext: PageContext = PageContext(uiPage, Seq.empty, None, sessionRepoId, None, Text(), processId, processCode, labels, Some("/previousPage"))
 
       MockSessionService
-        .updateAfterStandardPage(processId, processCode, labels, None, requestId)
+        .updateAfterStandardPage(processId, processCode, labels, Some(Nil), requestId)
         .returns(Future.successful(Right({})))
 
       target.savePageState(pageContext).map{
@@ -551,7 +552,7 @@ class GuidanceServiceSpec extends BaseSpec {
       val pageContext: PageContext = PageContext(uiPage, Seq.empty, None, sessionRepoId, None, Text(), processId, processCode, labels, Some("/previousPage"))
 
       MockSessionService
-        .updateAfterStandardPage(processId, processCode, labels, None, requestId)
+        .updateAfterStandardPage(processId, processCode, labels, Some(Nil), requestId)
         .returns(Future.successful(Left(DatabaseError)))
 
       target.savePageState(pageContext).map{
