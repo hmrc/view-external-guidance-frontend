@@ -18,7 +18,7 @@ package mocks
 
 import models.PageNext
 import core.models.RequestOutcome
-import core.models.ocelot.{FlowStage, Label, Labels, Process, RunMode}
+import core.models.ocelot.{FlowStage, Label, LabelOperation, Labels, Process, RunMode}
 import org.scalamock.handlers.CallHandler
 import org.scalamock.scalatest.MockFactory
 import services.SessionService

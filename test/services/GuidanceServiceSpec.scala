@@ -127,7 +127,7 @@ class GuidanceServiceSpec extends BaseSpec {
       val pageContext: PageContext = PageContext(uiPage, Seq.empty, None, sessionRepoId, None, Text(), processId, processCode, changedLabels, Some("/previousPage"))
 
       MockSessionService
-        .updateAfterStandardPage(processId, processCode, changedLabels, Some(Nil), requestId)
+        .updateAfterStandardPage(sessionRepoId, processCode, changedLabels, Some(Nil), requestId)
         .returns(Future.successful(Right(())))
 
       private val result = target.savePageState(pageContext)
@@ -538,7 +538,7 @@ class GuidanceServiceSpec extends BaseSpec {
       val pageContext: PageContext = PageContext(uiPage, Seq.empty, None, sessionRepoId, None, Text(), processId, processCode, labels, Some("/previousPage"))
 
       MockSessionService
-        .updateAfterStandardPage(processId, processCode, labels, Some(Nil), requestId)
+        .updateAfterStandardPage(sessionRepoId, processCode, labels, Some(Nil), requestId)
         .returns(Future.successful(Right({})))
 
       target.savePageState(pageContext).map{
@@ -552,7 +552,7 @@ class GuidanceServiceSpec extends BaseSpec {
       val pageContext: PageContext = PageContext(uiPage, Seq.empty, None, sessionRepoId, None, Text(), processId, processCode, labels, Some("/previousPage"))
 
       MockSessionService
-        .updateAfterStandardPage(processId, processCode, labels, Some(Nil), requestId)
+        .updateAfterStandardPage(sessionRepoId, processCode, labels, Some(Nil), requestId)
         .returns(Future.successful(Left(DatabaseError)))
 
       target.savePageState(pageContext).map{

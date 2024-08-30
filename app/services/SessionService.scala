@@ -79,7 +79,6 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
       case rawPageHistoryOption =>
         sessionRepository.updateForNewPage(key, processCode, rawPageHistoryOption, flowStack, labelUpdates, deletions, legalPageIds, requestId)
     }
-  
 
   def updateAfterStandardPage(key: String, processCode: String, labels: Labels,
                               revertOperations: Option[List[LabelOperation]], requestId: Option[String]): Future[RequestOutcome[Unit]] =

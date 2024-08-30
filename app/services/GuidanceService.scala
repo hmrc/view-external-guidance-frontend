@@ -267,7 +267,7 @@ class GuidanceService @Inject() (
   private def isAuthenticationUrl(url: String): Boolean = url.drop(1).equals(SecuredProcess.SecuredProcessStartUrl)
 
   // The revertOperations will be None if this the pasphrase page, otherwise it will be Some(Nil) or Some of the LabelCache revertOperations
-  // depending on how the value of the ctx
+  // depending on how the value of the ocelotBacklinkBehaviour setting
   private def optionalRevertOperations(url: String, ocelotBacklinkBehaviour: Boolean, labels: Labels): Option[List[LabelOperation]] =
     (isAuthenticationUrl(url), ocelotBacklinkBehaviour) match {
       case (true, _) => None
