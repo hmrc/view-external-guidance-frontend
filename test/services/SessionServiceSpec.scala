@@ -181,11 +181,11 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
     "Update the session repository for the new page" in new Test {
 
       MockSessionRepository
-        .updateForNewPage(sessionRepoId, process.meta.processCode, None, None, Nil, Nil, requestId)
+        .updateForNewPage(sessionRepoId, process.meta.processCode, None, None, Nil, Nil, Nil, requestId)
         .returns(Future.successful(Right(())))
 
       whenReady(
-        target.updateForNewPage(sessionRepoId, process.meta.processCode, Map(), None, None, Nil, Nil, requestId)) {
+        target.updateForNewPage(sessionRepoId, process.meta.processCode, Map(), None, None, Nil, Nil, Nil, requestId)) {
         case Right(session) =>
           succeed
         case Left(err) => Future.successful(Left(err))
@@ -383,5 +383,4 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
       }
     }
   }
-
 }

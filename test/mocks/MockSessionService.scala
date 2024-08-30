@@ -18,7 +18,7 @@ package mocks
 
 import models.PageNext
 import core.models.RequestOutcome
-import core.models.ocelot.{FlowStage, Label, LabelOperation, Labels, Process, RunMode}
+import core.models.ocelot.{FlowStage, Label, Labels, Process, RunMode}
 import org.scalamock.handlers.CallHandler
 import org.scalamock.scalatest.MockFactory
 import services.SessionService
@@ -27,6 +27,7 @@ import models.GuidanceSession
 import org.scalatest.TestSuite
 
 import scala.concurrent.{ExecutionContext, Future}
+import core.models.ocelot.LabelOperation
 
 trait MockSessionService extends TestSuite with MockFactory {
 
@@ -60,10 +61,10 @@ trait MockSessionService extends TestSuite with MockFactory {
         .expects(key, processCode, requestId, *)
 
     def updateForNewPage(key: String, processCode: String, pageMap: Map[String, PageNext], pageHistory: Option[List[PageHistory]], flowStack: Option[List[FlowStage]],
-                         labelUpdates: List[Label], legalPageIds: List[String], requestId: Option[String]): CallHandler[Future[RequestOutcome[Unit]]] =
+                         labelUpdates: List[Label], labelDeletions: List[String], legalPageIds: List[String], requestId: Option[String]): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockSessionService
-        .updateForNewPage(_: String, _: String, _: Map[String, PageNext], _: Option[List[PageHistory]], _: Option[List[FlowStage]], _: List[Label], _: List[String], _: Option[String]))
-        .expects(key, processCode, pageMap, pageHistory, flowStack, labelUpdates, legalPageIds, requestId)
+        .updateForNewPage(_: String, _: String, _: Map[String, PageNext], _: Option[List[PageHistory]], _: Option[List[FlowStage]], _: List[Label], _: List[String], _: List[String], _: Option[String]))
+        .expects(key, processCode, pageMap, pageHistory, flowStack, labelUpdates, labelDeletions, legalPageIds, requestId)
 
     def updateAfterStandardPage(key: String, processCode: String, labels: Labels, revertOperations: Option[List[LabelOperation]], requestId: Option[String]): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockSessionService

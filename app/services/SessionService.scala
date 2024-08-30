@@ -70,16 +70,15 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
   }
 
   def updateForNewPage(key: String, processCode: String, pageMap: Map[String, PageNext], pageHistory: Option[List[PageHistory]],
-                       flowStack: Option[List[FlowStage]], labelUpdates: List[Label], legalPageIds: List[String],
+                       flowStack: Option[List[FlowStage]], labelUpdates: List[Label], deletions: List[String], legalPageIds: List[String],
                       requestId: Option[String]): Future[RequestOutcome[Unit]] =
     toRawPageHistory(pageHistory, pageMap, processCode) match {
       case None if pageHistory.isDefined =>
         logger.error(s"ERROR:Conversion of PageHistory to RawPageHistory failed (None return)")
         Future.successful(Left(PageHistoryError))
       case rawPageHistoryOption =>
-        sessionRepository.updateForNewPage(key, processCode, rawPageHistoryOption, flowStack, labelUpdates, legalPageIds, requestId)
+        sessionRepository.updateForNewPage(key, processCode, rawPageHistoryOption, flowStack, labelUpdates, deletions, legalPageIds, requestId)
     }
-
 
   def updateAfterStandardPage(key: String, processCode: String, labels: Labels,
                               revertOperations: Option[List[LabelOperation]], requestId: Option[String]): Future[RequestOutcome[Unit]] =

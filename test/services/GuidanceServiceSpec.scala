@@ -255,7 +255,7 @@ class GuidanceServiceSpec extends BaseSpec {
         .returns(Right(lastUiPage))
 
       MockSessionService
-        .updateForNewPage(sessionRepoId, processCode, pageMap, Some(List(PageHistory("cup-of-tea/last-page", Nil, Nil))), None, Nil, List("2", "start"), requestId)
+        .updateForNewPage(sessionRepoId, processCode, pageMap, Some(List(PageHistory("cup-of-tea/last-page", Nil, Nil))), None, Nil, Nil, List("2", "start"), requestId)
         .returns(Future.successful(Right(())))
 
       private val result = target.getPageContext(processCode, lastPageUrl, previousPageByLink = false, sessionRepoId)
@@ -291,7 +291,7 @@ class GuidanceServiceSpec extends BaseSpec {
         )))
 
       MockSessionService
-        .updateForNewPage(sessionRepoId, processCode, pageMap, Some(List(PageHistory("cup-of-tea/last-page", Nil, Nil))), None, Nil, List("2", "start"), requestId)
+        .updateForNewPage(sessionRepoId, processCode, pageMap, Some(List(PageHistory("cup-of-tea/last-page", Nil, Nil))), None, Nil, Nil, List("2", "start"), requestId)
         .returns(Future.successful(Right(())))
 
       MockPageBuilder
@@ -337,7 +337,7 @@ class GuidanceServiceSpec extends BaseSpec {
         )))
 
       MockSessionService
-        .updateForNewPage(sessionRepoId, processCode, pageMap, Some(List(PageHistory("tell-hmrc/last-page", Nil, Nil))), None, Nil, List("2", "start"), requestId)
+        .updateForNewPage(sessionRepoId, processCode, pageMap, Some(List(PageHistory("tell-hmrc/last-page", Nil, Nil))), None, Nil, Nil, List("2", "start"), requestId)
         .returns(Future.successful(Right(())))
 
       MockPageBuilder
@@ -360,7 +360,7 @@ class GuidanceServiceSpec extends BaseSpec {
 
       whenReady(result) { pageCtx =>
         pageCtx match {
-          case Right(PageContext(_, _, _, _, _, _, _, _, _, _, Some(answer), _, _)) => succeed
+          case Right(PageContext(_, _, _, _, _, _, _, _, _, _, Some(answer), _, _, _)) => succeed
           case Right(wrongContext) => fail(s"Previous answer missing from PageContext, $wrongContext")
           case Left(err) => fail(s"Previous answer missing from PageContext, $err")
         }

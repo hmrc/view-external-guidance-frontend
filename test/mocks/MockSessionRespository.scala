@@ -73,10 +73,11 @@ trait MockSessionRepository extends TestSuite with MockFactory {
                          rawPageHistory: Option[List[RawPageHistory]],
                          flowStack: Option[List[FlowStage]],
                          labelUpdates: List[Label],
+                         labelDeletions: List[String],
                          legalPageIds: List[String],
                          requestId: Option[String]): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockSessionRepository
-        .updateForNewPage(_: String, _: String, _: Option[List[RawPageHistory]], _: Option[List[FlowStage]], _: List[Label], _: List[String], _: Option[String]))
-        .expects(key, processCode, rawPageHistory, flowStack, labelUpdates, legalPageIds, requestId)
+        .updateForNewPage(_: String, _: String, _: Option[List[RawPageHistory]], _: Option[List[FlowStage]], _: List[Label], _: List[String], _: List[String], _: Option[String]))
+        .expects(key, processCode, rawPageHistory, flowStack, labelUpdates, labelDeletions, legalPageIds, requestId)
   }
 }

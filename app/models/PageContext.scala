@@ -33,6 +33,7 @@ case class PageEvaluationContext(page: Page,
                                  backLink: Option[String] = None,
                                  answer: Option[String] = None,
                                  betaPhaseBanner: Boolean = false,
+                                 ocelotBacklinkBehaviour: Boolean = false,
                                  debugInformation: Option[DebugInformation] = None
                                )
 
@@ -49,6 +50,7 @@ case class PageContext(page: ui.Page,
                        backLink: Option[String] = None,
                        answer: Option[String] = None,
                        betaPhaseBanner: Boolean = false,
+                       ocelotBacklinkBehaviour: Boolean = false,
                        debugInformation: Option[DebugInformation] = None)
 
 object PageContext {
@@ -67,6 +69,7 @@ object PageContext {
       pec.backLink,
       pec.answer,
       pec.betaPhaseBanner,
+      pec.ocelotBacklinkBehaviour,
       pec.debugInformation
     )
 }

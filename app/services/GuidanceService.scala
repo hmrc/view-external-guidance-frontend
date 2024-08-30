@@ -27,7 +27,7 @@ import core.models.RequestOutcome
 import play.api.i18n.{MessagesApi, Messages}
 import scala.concurrent.{ExecutionContext, Future}
 import repositories.SessionFSM
-import core.models.ocelot.{LabelCache, Labels, Process, Label, flowPath, Debugging, LabelOperation}
+import core.models.ocelot.{LabelCache, Labels, Process, Label, flowPath, Debugging, LabelOperation, Update, Delete}
 import core.models.ocelot.SecuredProcess
 import core.services.EncrypterService
 import models.admin.DebugInformation
@@ -108,36 +108,46 @@ class GuidanceService @Inject() (
     sessionService.get(key, processCode, hc.requestId.map(_.value)).flatMap{
       case Left(err) => Future.successful(Left((err, None)))
       case Right(sp) =>
-      pageUrl.fold[Future[DebuggableRequestOutcome[GuidanceSession]]](Future.successful(Right(sp))){url =>
-        sp.pageMap.get(url.drop(sp.process.meta.processCode.length)).fold[Future[DebuggableRequestOutcome[GuidanceSession]]]{
-          logger.warn(s"Attempt to move to unknown page $url in process ${sp.process.meta.id}, page count = ${sp.pageMap.size}")
-          Future.successful(Left((NotFoundError, None)))
-        }{pageNext =>
-          logger.debug(s"Incoming Page: ${pageNext.id}, $url, current legalPageIds: ${sp.legalPageIds}")
-          val requestId: Option[String] = hc.requestId.map(_.value)
-          if (sp.legalPageIds.isEmpty || sp.legalPageIds.contains(pageNext.id)){ // Wild card or fixed list of valid page ids
-            val firstPageUrl: String = s"${sp.process.meta.processCode}${sp.process.startUrl.getOrElse("")}"
-            val (backLink, updatedPageHistory, flowStackUpdate, labelUpdates) = transition(url, sp.pageHistory, sp.flowStack, previousPageByLink, firstPageUrl)
-            val labels: Map[String, Label] = sp.labels ++ labelUpdates.map(l => l.name -> l).toMap
-            val legalPageIds = (pageNext.id :: Process.StartStanzaId :: pageNext.linked ++
-                                backLink.fold(List.empty[String])(bl => List(sp.pageMap(bl.drop(sp.process.meta.processCode.length)).id))).distinct
+        // Test pageUrl, if None return with existing GuidanceSession (this is passphrase page)
+        pageUrl.fold[Future[DebuggableRequestOutcome[GuidanceSession]]](Future.successful(Right(sp))){url =>
+          sp.pageMap.get(url.drop(sp.process.meta.processCode.length)).fold[Future[DebuggableRequestOutcome[GuidanceSession]]]{
+            logger.warn(s"Attempt to move to unknown page $url in process ${sp.process.meta.id}, page count = ${sp.pageMap.size}")
+            Future.successful(Left((NotFoundError, None)))
+          }{pageNext =>
+            logger.debug(s"Incoming Page: ${pageNext.id}, $url, current legalPageIds: ${sp.legalPageIds}")
+            val requestId: Option[String] = hc.requestId.map(_.value)
+            if (sp.legalPageIds.isEmpty || sp.legalPageIds.contains(pageNext.id)){ // Wild card or fixed list of valid page ids
+              val firstPageUrl: String = s"${sp.process.meta.processCode}${sp.process.startUrl.getOrElse("")}"
+              val (backLink, updatedPageHistory, flowStackUpdate, flowLabelUpdates, revertOps) = transition(url, sp.pageHistory, sp.flowStack, previousPageByLink, firstPageUrl)
 
-            sessionService.updateForNewPage(key, processCode, sp.pageMap, updatedPageHistory, flowStackUpdate, labelUpdates, legalPageIds, requestId).map {
-              case Left(NotFoundError) =>
-                logger.warn(s"TRANSACTION FAULT(Recoverable): saveUpdates _id=$key, requestId: $requestId")
-                Left((TransactionFaultError, None))
-              case Left(err) =>
-                logger.error(s"Unable to update session data, error = $err")
-                Left((err, None))
-              case _ => Right(sp.copy(labels = labels, flowStack = flowStackUpdate.getOrElse(sp.flowStack), backLink = backLink))
+              // Labels from DB + flowstack related updates
+              val (updatedFlowAndRevertedLabels, labelDeletions) = mergeFlowLabelUpdatesAndRevertOperations(flowLabelUpdates, revertOps)
+
+              val labels: Map[String, Label] = sp.labels ++ updatedFlowAndRevertedLabels.map(l => l.name -> l).toMap
+              val labelsWithDeletions = labelDeletions.foldLeft(labels)((lbls, n) => lbls - n)
+              val legalPageIds = (pageNext.id :: Process.StartStanzaId :: pageNext.linked ++
+                                  backLink.fold(List.empty[String])(bl => List(sp.pageMap(bl.drop(sp.process.meta.processCode.length)).id))).distinct
+
+
+              sessionService.updateForNewPage(key, processCode, sp.pageMap, updatedPageHistory, flowStackUpdate, updatedFlowAndRevertedLabels, labelDeletions, legalPageIds, requestId).map {
+                case Left(NotFoundError) =>
+                  logger.warn(s"TRANSACTION FAULT(Recoverable): saveUpdates _id=$key, requestId: $requestId")
+                  Left((TransactionFaultError, None))
+                case Left(err) =>
+                  logger.error(s"Unable to update session data, error = $err")
+                  Left((err, None))
+                case _ => Right(sp.copy(labels = labelsWithDeletions, flowStack = flowStackUpdate.getOrElse(sp.flowStack), backLink = backLink))
+              }
+            } else {
+              logger.warn(s"Attempt to move to illegal page $url, LEGALPIDS ${sp.legalPageIds}")
+              Future.successful(Left((ForbiddenError, None)))
             }
-          } else {
-            logger.warn(s"Attempt to move to illegal page $url, LEGALPIDS ${sp.legalPageIds}")
-            Future.successful(Left((ForbiddenError, None)))
           }
         }
-      }
     }
+
+  private def mergeFlowLabelUpdatesAndRevertOperations(updates: List[Label], revertOps: List[LabelOperation]):(List[Label], List[String]) =
+    ((revertOps.collect{case u: Update => u.l} ++ updates).distinct, revertOps.collect{case d: Delete => d.name})
 
   def getSubmitEvaluationContext(processCode: String, url: String, sessionId: String)
                                 (implicit hc: HeaderCarrier, context: ExecutionContext, messages: Messages): 
@@ -154,7 +164,8 @@ class GuidanceService @Inject() (
                               (implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] =
     sessionService.get(key, processCode, hc.requestId.map(_.value)).map{
       case Left(err) => Left(err)
-      // If incoming url equals the most recent page history url proceed, otherwise, the POST is out of sequence (IllegalPageSubmissionError)
+      // If incoming url is None it is the passphrase page thereforew continue, otherwise if it equals the most recent
+      // page history url proceed, otherwise, the POST is out of sequence (IllegalPageSubmissionError)
       case Right(sp) if pageUrl.fold(true)(url => sp.pageHistory.reverse.headOption.fold(false)(ph => url.equals(ph.url))) =>
         val backlink = pageUrl.fold[Option[String]](None){_ =>
           sp.pageHistory.reverse match {
@@ -180,7 +191,7 @@ class GuidanceService @Inject() (
                                                    submittedAnswer, 
                                                    labels, 
                                                    List(next),
-                                                   optionalRevertOperations(url, false, labels),
+                                                   optionalRevertOperations(url, ctx.ocelotBacklinkBehaviour, labels),
                                                    requestId).map{
             case Left(NotFoundError) =>
               logger.warn(s"TRANSACTION FAULT(Recoverable): saveFormPageState _id=${ctx.sessionId}, url:$url, answer:$validatedAnswer, requestId:${requestId}")
@@ -198,7 +209,7 @@ class GuidanceService @Inject() (
       ctx.sessionId,
       ctx.processCode,
       ctx.labels,
-      optionalRevertOperations(ctx.page.urlPath, false, ctx.labels),
+      optionalRevertOperations(ctx.page.urlPath, ctx.ocelotBacklinkBehaviour, ctx.labels),
       hc.requestId.map(_.value)).map{
         case Left(NotFoundError) =>
           logger.warn(s"TRANSACTION FAULT(Recoverable): saveLabels _id=${ctx.sessionId}, requestId: ${hc.requestId.map(_.value)}")
@@ -237,6 +248,7 @@ class GuidanceService @Inject() (
                   processTitle, gs.process.meta.id, processCode, updatedLabels, 
                   gs.backLink.map(bl => s"${appConfig.baseUrl}/$bl"), gs.answers.get(answerStorageId(updatedLabels, url)),
                   gs.process.betaPhaseBanner,
+                  gs.process.ocelotBacklinkBehaviour,
                   Option.when(labels.runMode.equals(Debugging))
                              (DebugInformation(Some(debugService.mapPage(page, gs.pageMap)), Some(labels), Some(updatedLabels)))
                 )
@@ -246,7 +258,6 @@ class GuidanceService @Inject() (
     }
 
   private def answerStorageId(labels: Labels, url: String): String = flowPath(labels.flowStack).fold(url)(fp => s"${fp.replaceAll("[ .]", "_")}-$url")
-
   private def isAuthenticationUrl(url: String): Boolean = url.drop(1).equals(SecuredProcess.SecuredProcessStartUrl)
 
   // The revertOperations will be None if this the pasphrase page, otherwise it will be Some(Nil) or Some of the LabelCache revertOperations
