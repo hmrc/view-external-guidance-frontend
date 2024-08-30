@@ -195,7 +195,7 @@ class GuidanceService @Inject() (
 
   def savePageState(ctx: PageContext)(implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[Unit]] =
     sessionService.updateAfterStandardPage(
-      ctx.processId,
+      ctx.sessionId,
       ctx.processCode,
       ctx.labels,
       optionalRevertOperations(ctx.page.urlPath, false, ctx.labels),
