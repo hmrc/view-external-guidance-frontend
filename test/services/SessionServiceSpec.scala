@@ -212,11 +212,11 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
 
 
       MockSessionRepository
-        .updateAfterStandardPage(sessionRepoId, process.meta.processCode, labelCache, Nil, requestId)
+        .updateAfterStandardPage(sessionRepoId, process.meta.processCode, labelCache, None, requestId)
         .returns(Future.successful(Right(())))
 
       whenReady(
-        target.updateAfterStandardPage(sessionRepoId, process.meta.processCode, labelCache, ocelotBacklinkBehaviour = false, requestId)) {
+        target.updateAfterStandardPage(sessionRepoId, process.meta.processCode, labelCache, None, requestId)) {
         case Right(session) =>
           succeed
         case Left(err) => Future.successful(Left(err))
@@ -243,11 +243,11 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
 
 
       MockSessionRepository
-        .updateAfterFormSubmission(docId, processCode, firstPageUrl, answer, labelCache, Nil, Nil, requestId)
+        .updateAfterFormSubmission(docId, processCode, firstPageUrl, answer, labelCache, None, Nil, requestId)
         .returns(Future.successful(Right(())))
 
       whenReady(
-        target.updateAfterFormSubmission(docId, processCode, firstPageUrl, answer, labelCache, Nil,  false, requestId)) {
+        target.updateAfterFormSubmission(docId, processCode, firstPageUrl, answer, labelCache, Nil,  None, requestId)) {
         case Right(session) =>
           succeed
         case Left(err) => Future.successful(Left(err))

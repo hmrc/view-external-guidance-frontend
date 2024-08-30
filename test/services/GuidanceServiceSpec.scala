@@ -127,7 +127,7 @@ class GuidanceServiceSpec extends BaseSpec {
       val pageContext: PageContext = PageContext(uiPage, Seq.empty, None, sessionRepoId, None, Text(), processId, processCode, changedLabels, Some("/previousPage"))
 
       MockSessionService
-        .updateAfterStandardPage(processId, processCode, changedLabels, ocelotBacklinkBehaviour = false, requestId)
+        .updateAfterStandardPage(processId, processCode, changedLabels, None, requestId)
         .returns(Future.successful(Right(())))
 
       private val result = target.savePageState(pageContext)
@@ -168,7 +168,7 @@ class GuidanceServiceSpec extends BaseSpec {
         .returns(Right((page.stanzas.toList.collect{case s: VisualStanza => s}, labels, None)))
 
       MockSessionService
-        .updateAfterStandardPage(sessionRepoId, processCode, labels, ocelotBacklinkBehaviour = false, requestId)
+        .updateAfterStandardPage(sessionRepoId, processCode, labels, None, requestId)
         .returns(Future.successful(Right({})))
 
       MockUIBuilder
@@ -247,7 +247,7 @@ class GuidanceServiceSpec extends BaseSpec {
         .returns(Right((lastPage.stanzas.toList.collect{case s: VisualStanza => s}, labels, None)))
 
       MockSessionService
-        .updateAfterStandardPage(sessionRepoId, processCode, labels, ocelotBacklinkBehaviour = false, requestId)
+        .updateAfterStandardPage(sessionRepoId, processCode, labels, None, requestId)
         .returns(Future.successful(Right({})))
 
       MockUIBuilder
@@ -349,7 +349,7 @@ class GuidanceServiceSpec extends BaseSpec {
         .returns(Right((lastPage.stanzas.toList.collect{case s: VisualStanza => s}, labels, None)))
 
       MockSessionService
-        .updateAfterStandardPage(sessionRepoId, processCode, labels, ocelotBacklinkBehaviour = false, requestId)
+        .updateAfterStandardPage(sessionRepoId, processCode, labels, None, requestId)
         .returns(Future.successful(Right({})))
 
       MockUIBuilder
@@ -486,7 +486,7 @@ class GuidanceServiceSpec extends BaseSpec {
         .returns(Right((None, LabelCache())))
 
       MockSessionService
-        .updateAfterFormSubmission(processId, processCode, "/test-page", "yes", LabelCache(), List("2"), false, requestId)
+        .updateAfterFormSubmission(processId, processCode, "/test-page", "yes", LabelCache(), List("2"), None, requestId)
         .returns(Future.successful(Right({})))
 
       target.submitPage(pec, "/test-page", "yes", "yes").map{
@@ -502,7 +502,7 @@ class GuidanceServiceSpec extends BaseSpec {
         .returns(Right((Some("2"), LabelCache())))
 
       MockSessionService
-        .updateAfterFormSubmission(processId, pec.processCode, "/last-page", "yes", labels, List("2"), false, requestId)
+        .updateAfterFormSubmission(processId, pec.processCode, "/last-page", "yes", labels, List("2"), None, requestId)
         .returns(Future.successful(Right({})))
 
       target.submitPage(pec, "/last-page", "yes", "yes").map{
@@ -519,7 +519,7 @@ class GuidanceServiceSpec extends BaseSpec {
         .returns(Left((nonTerminatingPageError, labels)))
 
       MockSessionService
-        .updateAfterFormSubmission(processId, processCode, "/test-page", "yes", labels, Nil, false, requestId)
+        .updateAfterFormSubmission(processId, processCode, "/test-page", "yes", labels, Nil, None, requestId)
         .returns(Future.successful(Right({})))
 
       target.submitPage(pec, "/test-page", "yes", "yes").map{
@@ -537,7 +537,7 @@ class GuidanceServiceSpec extends BaseSpec {
       val pageContext: PageContext = PageContext(uiPage, Seq.empty, None, sessionRepoId, None, Text(), processId, processCode, labels, Some("/previousPage"))
 
       MockSessionService
-        .updateAfterStandardPage(processId, processCode, labels, ocelotBacklinkBehaviour = false, requestId)
+        .updateAfterStandardPage(processId, processCode, labels, None, requestId)
         .returns(Future.successful(Right({})))
 
       target.savePageState(pageContext).map{
@@ -551,7 +551,7 @@ class GuidanceServiceSpec extends BaseSpec {
       val pageContext: PageContext = PageContext(uiPage, Seq.empty, None, sessionRepoId, None, Text(), processId, processCode, labels, Some("/previousPage"))
 
       MockSessionService
-        .updateAfterStandardPage(processId, processCode, labels, ocelotBacklinkBehaviour = false, requestId)
+        .updateAfterStandardPage(processId, processCode, labels, None, requestId)
         .returns(Future.successful(Left(DatabaseError)))
 
       target.savePageState(pageContext).map{

@@ -29,6 +29,7 @@ import models.PageNext
 import core.models.ocelot.{Process, RunMode, Label, Labels, FlowStage}
 import core.models.ocelot.Debugging
 import scala.annotation.tailrec
+import core.models.ocelot.LabelOperation
 
 @Singleton
 class SessionService @Inject() (appConfig: AppConfig, sessionRepository: SessionRepository, processCacheRepository: ProcessCacheRepository) extends Logging {
@@ -81,18 +82,18 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
   
 
   def updateAfterStandardPage(key: String, processCode: String, labels: Labels,
-                              ocelotBacklinkBehaviour: Boolean, requestId: Option[String]): Future[RequestOutcome[Unit]] =
-    sessionRepository.updateAfterStandardPage(key, processCode, labels, if (ocelotBacklinkBehaviour) labels.revertOperations() else Nil, requestId)
+                              revertOperations: Option[List[LabelOperation]], requestId: Option[String]): Future[RequestOutcome[Unit]] =
+    sessionRepository.updateAfterStandardPage(key, processCode, labels, revertOperations, requestId)
 
   def updateAfterFormSubmission(key: String, processCode: String, answerId: String, answer: String, labels: Labels, nextLegalPageIds: List[String],
-                                ocelotBacklinkBehaviour: Boolean, requestId: Option[String]): Future[RequestOutcome[Unit]] =
+                                revertOperations: Option[List[LabelOperation]], requestId: Option[String]): Future[RequestOutcome[Unit]] =
     sessionRepository.updateAfterFormSubmission(
       key,
       processCode,
       answerId,
       answer,
       labels,
-      if (ocelotBacklinkBehaviour) labels.revertOperations() else Nil,
+      revertOperations,
       nextLegalPageIds,
       requestId)
 

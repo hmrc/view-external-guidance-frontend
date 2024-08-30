@@ -59,8 +59,8 @@ trait SessionRepository extends SessionRepositoryConstants {
   def reset(key: String, processCode: String, requestId: Option[String]): Future[RequestOutcome[Session]]
   def updateForNewPage(key: String, processCode: String, rawpageHistory: Option[List[RawPageHistory]], flowStack: Option[List[FlowStage]],
                                labelUpdates: List[Label], deletions: List[String], legalPageIds: List[String], requestId: Option[String]): Future[RequestOutcome[Unit]]
-  def updateAfterStandardPage(key: String, processCode: String, labels: Labels, revertOps: List[LabelOperation], requestId: Option[String]): Future[RequestOutcome[Unit]]
-  def updateAfterFormSubmission(key: String, processCode: String, answerId: String, answer: String, labels: Labels, revertOps: List[LabelOperation], nextLegalPageIds: List[String],
+  def updateAfterStandardPage(key: String, processCode: String, labels: Labels, revertOps: Option[List[LabelOperation]], requestId: Option[String]): Future[RequestOutcome[Unit]]
+  def updateAfterFormSubmission(key: String, processCode: String, answerId: String, answer: String, labels: Labels, revertOps: Option[List[LabelOperation]], nextLegalPageIds: List[String],
                                 requestId: Option[String]): Future[RequestOutcome[Unit]]
 }
 
@@ -191,17 +191,19 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
                                  answerId: String,
                                  answer: String,
                                  labels: Labels,
-                                 revertOps: List[LabelOperation],
+                                 revertOps: Option[List[LabelOperation]],
                                  nextLegalPageIds: List[String],
                                  requestId: Option[String]): Future[RequestOutcome[Unit]] =
     collection.findOneAndUpdate(
       requestId.fold(equal("_id", SessionKey(key, processCode)))(rId => and(equal("_id", SessionKey(key, processCode)), equal(RequestId, rId))),
-      combine((List(
-        Updates.set(TtlExpiryFieldName, Instant.now()),
-        Updates.set(s"${RawPageHistoryKey}.0.revertOps", Codecs.toBson(revertOps)),
-        Updates.set(FlowStackKey, Codecs.toBson(labels.flowStack)),
-        Updates.set(s"${AnswersKey}.$answerId", Codecs.toBson(answer)),
-        Updates.set(LegalPageIdsKey, Codecs.toBson(nextLegalPageIds))) ++
+      combine((
+        revertOps.fold[List[Bson]](Nil)(ops => List(Updates.set(s"${RawPageHistoryKey}.0.revertOps", Codecs.toBson(ops)))) ++
+        List(
+          Updates.set(TtlExpiryFieldName, Instant.now()),
+          Updates.set(FlowStackKey, Codecs.toBson(labels.flowStack)),
+          Updates.set(s"${AnswersKey}.$answerId", Codecs.toBson(answer)),
+          Updates.set(LegalPageIdsKey, Codecs.toBson(nextLegalPageIds))
+        ) ++
         labels.poolUpdates.toList.map(l => Updates.set(s"${ContinuationPoolKey}.${l._1}", Codecs.toBson(l._2))) ++
         labels.updatedLabels.values.map(l => Updates.set(s"${LabelsKey}.${l.name}", Codecs.toBson(l)))).toIndexedSeq: _*
       )
@@ -216,13 +218,13 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
       Left(DatabaseError)
     }
 
-  def updateAfterStandardPage(key: String, processCode: String, labels: Labels, revertOps: List[LabelOperation], requestId: Option[String]): Future[RequestOutcome[Unit]] =
+  def updateAfterStandardPage(key: String, processCode: String, labels: Labels, revertOps: Option[List[LabelOperation]], requestId: Option[String]): Future[RequestOutcome[Unit]] =
     collection.findOneAndUpdate(
       requestId.fold(equal("_id", SessionKey(key, processCode)))(rId => and(equal("_id", SessionKey(key, processCode)), equal(RequestId, rId))),
       combine((
         (labels.poolUpdates.toList.map(l => Updates.set(s"${ContinuationPoolKey}.${l._1}", Codecs.toBson(l._2))) ++
          labels.updatedLabels.values.map(l => Updates.set(s"${LabelsKey}.${l.name}", Codecs.toBson(l)))).toIndexedSeq :+
-         Updates.set(s"${RawPageHistoryKey}.0.revertOps", Codecs.toBson(revertOps)) :+
+         Updates.set(s"${RawPageHistoryKey}.0.revertOps", Codecs.toBson(revertOps.getOrElse(Nil))) :+
          Updates.set(FlowStackKey, Codecs.toBson(labels.flowStack)): _*
       ))
     )
