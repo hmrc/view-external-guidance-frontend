@@ -27,7 +27,7 @@ import core.models.RequestOutcome
 import play.api.i18n.{MessagesApi, Messages}
 import scala.concurrent.{ExecutionContext, Future}
 import repositories.SessionFSM
-import core.models.ocelot.{LabelCache, Labels, Process, Label, flowPath, Debugging}
+import core.models.ocelot.{LabelCache, Labels, Process, Label, flowPath, Debugging, LabelOperation}
 import core.models.ocelot.SecuredProcess
 import core.services.EncrypterService
 import models.admin.DebugInformation
@@ -179,9 +179,9 @@ class GuidanceService @Inject() (
                                                    answerStorageId(ctx.labels, url), 
                                                    submittedAnswer, 
                                                    labels, 
-                                                   List(next), 
-                                                   requestId,
-                                                   labels.revertOperations()).map{
+                                                   List(next),
+                                                   optionalRevertOperations(url, false, labels),
+                                                   requestId).map{
             case Left(NotFoundError) =>
               logger.warn(s"TRANSACTION FAULT(Recoverable): saveFormPageState _id=${ctx.sessionId}, url:$url, answer:$validatedAnswer, requestId:${requestId}")
               Left((TransactionFaultError, ctx.debugInformation))
@@ -193,14 +193,18 @@ class GuidanceService @Inject() (
         }
     }
 
-  def savePageState(sessionId: String, processCode: String, labels: Labels)
-                   (implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[Unit]] =
-    sessionService.updateAfterStandardPage(sessionId, processCode, labels, hc.requestId.map(_.value), labels.revertOperations()).map{
-      case Left(NotFoundError) =>
-        logger.warn(s"TRANSACTION FAULT(Recoverable): saveLabels _id=$sessionId, requestId: ${hc.requestId.map(_.value)}")
-        Left(TransactionFaultError)
-      case result => result
-    }
+  def savePageState(ctx: PageContext)(implicit hc: HeaderCarrier, context: ExecutionContext): Future[RequestOutcome[Unit]] =
+    sessionService.updateAfterStandardPage(
+      ctx.processId,
+      ctx.processCode,
+      ctx.labels,
+      optionalRevertOperations(ctx.page.urlPath, false, ctx.labels),
+      hc.requestId.map(_.value)).map{
+        case Left(NotFoundError) =>
+          logger.warn(s"TRANSACTION FAULT(Recoverable): saveLabels _id=${ctx.sessionId}, requestId: ${hc.requestId.map(_.value)}")
+          Left(TransactionFaultError)
+        case result => result
+      }
 
   private def messagesFn(k: String, args: Seq[Any])(implicit messages: Messages): String = messages(k, args: _*)
 
@@ -244,5 +248,14 @@ class GuidanceService @Inject() (
   private def answerStorageId(labels: Labels, url: String): String = flowPath(labels.flowStack).fold(url)(fp => s"${fp.replaceAll("[ .]", "_")}-$url")
 
   private def isAuthenticationUrl(url: String): Boolean = url.drop(1).equals(SecuredProcess.SecuredProcessStartUrl)
+
+  // The revertOperations will be None if this the pasphrase page, otherwise it will be Some(Nil) or Some of the LabelCache revertOperations
+  // depending on how the value of the ctx
+  private def optionalRevertOperations(url: String, ocelotBacklinkBehaviour: Boolean, labels: Labels): Option[List[LabelOperation]] =
+    (isAuthenticationUrl(url), ocelotBacklinkBehaviour) match {
+      case (true, _) => None
+      case (_, true) => Some(labels.revertOperations())
+      case (_, false) => Some(Nil)
+    }
 
 }

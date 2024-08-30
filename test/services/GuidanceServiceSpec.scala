@@ -28,7 +28,7 @@ import play.api.i18n.{Lang, Messages, MessagesApi}
 import repositories.SessionFSM
 import models.{PageHistory, Session, SessionKey}
 import uk.gov.hmrc.http.{HeaderCarrier, RequestId}
-
+import models.ui.Text
 import java.time.Instant
 import scala.concurrent.Future
 import core.services.EncrypterService
@@ -118,16 +118,19 @@ class GuidanceServiceSpec extends BaseSpec {
     }
   }
 
-  "Calling saveLabels when there labels to save" should {
+  "Calling saveLabels when there are labels to save" should {
 
     "save updated labels" in new Test {
       val changedLabels = labels.update("LabelName", "New value")
 
-      MockSessionService
-        .updateAfterStandardPage(sessionRepoId, processCode, changedLabels, requestId, changedLabels.revertOperations())
-        .returns(Future.successful(Right({})))
+      val uiPage: models.ui.Page = models.ui.StandardPage("/url", Seq(models.ui.H1(Text())))
+      val pageContext: PageContext = PageContext(uiPage, Seq.empty, None, sessionRepoId, None, Text(), processId, processCode, changedLabels, Some("/previousPage"))
 
-      private val result = target.savePageState(sessionRepoId, processCode, changedLabels)
+      MockSessionService
+        .updateAfterStandardPage(processId, processCode, changedLabels, Some(Nil), requestId)
+        .returns(Future.successful(Right(())))
+
+      private val result = target.savePageState(pageContext)
 
       whenReady(result) {
         case Right(pc) => succeed
@@ -165,7 +168,7 @@ class GuidanceServiceSpec extends BaseSpec {
         .returns(Right((page.stanzas.toList.collect{case s: VisualStanza => s}, labels, None)))
 
       MockSessionService
-        .updateAfterStandardPage(sessionRepoId, processCode, labels, requestId, labels.revertOperations())
+        .updateAfterStandardPage(sessionRepoId, processCode, labels, None, requestId)
         .returns(Future.successful(Right({})))
 
       MockUIBuilder
@@ -244,7 +247,7 @@ class GuidanceServiceSpec extends BaseSpec {
         .returns(Right((lastPage.stanzas.toList.collect{case s: VisualStanza => s}, labels, None)))
 
       MockSessionService
-        .updateAfterStandardPage(sessionRepoId, processCode, labels, requestId, labels.revertOperations())
+        .updateAfterStandardPage(sessionRepoId, processCode, labels, None, requestId)
         .returns(Future.successful(Right({})))
 
       MockUIBuilder
@@ -346,7 +349,7 @@ class GuidanceServiceSpec extends BaseSpec {
         .returns(Right((lastPage.stanzas.toList.collect{case s: VisualStanza => s}, labels, None)))
 
       MockSessionService
-        .updateAfterStandardPage(sessionRepoId, processCode, labels, requestId, labels.revertOperations())
+        .updateAfterStandardPage(sessionRepoId, processCode, labels, None, requestId)
         .returns(Future.successful(Right({})))
 
       MockUIBuilder
@@ -483,7 +486,7 @@ class GuidanceServiceSpec extends BaseSpec {
         .returns(Right((None, LabelCache())))
 
       MockSessionService
-        .updateAfterFormSubmission(processId, processCode, "/test-page", "yes", LabelCache(), List("2"), requestId, labels.revertOperations())
+        .updateAfterFormSubmission(processId, processCode, "/test-page", "yes", LabelCache(), List("2"), None, requestId)
         .returns(Future.successful(Right({})))
 
       target.submitPage(pec, "/test-page", "yes", "yes").map{
@@ -494,12 +497,13 @@ class GuidanceServiceSpec extends BaseSpec {
     }
 
     "Return the id of the page to follow" in new Test {
+      val emptyLabels = LabelCache()
       MockPageRenderer
-        .renderPagePostSubmit(page, labels, "yes")
+        .renderPagePostSubmit(page, emptyLabels, "yes")
         .returns(Right((Some("2"), LabelCache())))
 
       MockSessionService
-        .updateAfterFormSubmission(processId, pec.processCode, "/last-page", "yes", labels, List("2"), requestId, labels.revertOperations())
+        .updateAfterFormSubmission(processId, pec.processCode, "/last-page", "yes", emptyLabels, List("2"), Some(Nil), requestId)
         .returns(Future.successful(Right({})))
 
       target.submitPage(pec, "/last-page", "yes", "yes").map{
@@ -516,7 +520,7 @@ class GuidanceServiceSpec extends BaseSpec {
         .returns(Left((nonTerminatingPageError, labels)))
 
       MockSessionService
-        .updateAfterFormSubmission(processId, processCode, "/test-page", "yes", labels, Nil, requestId, labels.revertOperations())
+        .updateAfterFormSubmission(processId, processCode, "/test-page", "yes", labels, Nil, None, requestId)
         .returns(Future.successful(Right({})))
 
       target.submitPage(pec, "/test-page", "yes", "yes").map{
@@ -529,22 +533,29 @@ class GuidanceServiceSpec extends BaseSpec {
 
   "Calling saveLabels" should {
     "Success when labels saved successfully" in new Test {
+
+      val uiPage: models.ui.Page = models.ui.StandardPage("/url", Seq(models.ui.H1(Text())))
+      val pageContext: PageContext = PageContext(uiPage, Seq.empty, None, sessionRepoId, None, Text(), processId, processCode, labels, Some("/previousPage"))
+
       MockSessionService
-        .updateAfterStandardPage(processId, processCode, labels, requestId, labels.revertOperations())
+        .updateAfterStandardPage(processId, processCode, labels, Some(Nil), requestId)
         .returns(Future.successful(Right({})))
 
-      target.savePageState(processId, processCode, LabelCache()).map{
+      target.savePageState(pageContext).map{
         case Right(())  => succeed
         case Left(_) => fail()
       }
     }
 
     "An error when labels not saved successfully" in new Test {
+      val uiPage: models.ui.Page = models.ui.StandardPage("/url", Seq(models.ui.H1(Text())))
+      val pageContext: PageContext = PageContext(uiPage, Seq.empty, None, sessionRepoId, None, Text(), processId, processCode, labels, Some("/previousPage"))
+
       MockSessionService
-        .updateAfterStandardPage(processId, processCode, labels, requestId, labels.revertOperations())
+        .updateAfterStandardPage(processId, processCode, labels, Some(Nil), requestId)
         .returns(Future.successful(Left(DatabaseError)))
 
-      target.savePageState(processId, processCode, LabelCache()).map{
+      target.savePageState(pageContext).map{
         case Left(err) if err == DatabaseError => succeed
         case _ => fail()
       }

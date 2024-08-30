@@ -65,15 +65,15 @@ trait MockSessionService extends TestSuite with MockFactory {
         .updateForNewPage(_: String, _: String, _: Map[String, PageNext], _: Option[List[PageHistory]], _: Option[List[FlowStage]], _: List[Label], _: List[String], _: Option[String]))
         .expects(key, processCode, pageMap, pageHistory, flowStack, labelUpdates, legalPageIds, requestId)
 
-    def updateAfterStandardPage(key: String, processCode: String, labels: Labels, requestId: Option[String], revertOperations: List[LabelOperation]): CallHandler[Future[RequestOutcome[Unit]]] =
+    def updateAfterStandardPage(key: String, processCode: String, labels: Labels, revertOperations: Option[List[LabelOperation]], requestId: Option[String]): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockSessionService
-        .updateAfterStandardPage(_: String, _: String, _: Labels, _: Option[String], _: List[LabelOperation]))
-        .expects(key, processCode, *, requestId, revertOperations)
+        .updateAfterStandardPage(_: String, _: String, _: Labels, _: Option[List[LabelOperation]], _: Option[String]))
+        .expects(key, processCode, *, revertOperations, requestId)
 
     def updateAfterFormSubmission(key: String, processCode: String, answerId: String, answer: String, labels: Labels, nextLegalPageIds: List[String],
-                                requestId: Option[String], revertOperations: List[LabelOperation]): CallHandler[Future[RequestOutcome[Unit]]] =
+                                  revertOperations: Option[List[LabelOperation]], requestId: Option[String]): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockSessionService
-        .updateAfterFormSubmission(_: String, _: String, _: String, _: String, _: Labels, _: List[String], _: Option[String], _: List[LabelOperation]))
-        .expects(key, processCode, answerId, answer, *, nextLegalPageIds, requestId, revertOperations)
+        .updateAfterFormSubmission(_: String, _: String, _: String, _: String, _: Labels, _: List[String], _: Option[List[LabelOperation]], _: Option[String]))
+        .expects(key, processCode, answerId, answer, *, nextLegalPageIds, revertOperations, requestId)
   }
 }

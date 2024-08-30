@@ -23,13 +23,13 @@ import javax.inject.{Inject, Singleton}
 import models._
 import core.models.RequestOutcome
 import core.models.errors.{PageHistoryError, RawPageHistoryError}
-
 import scala.concurrent.{ExecutionContext, Future}
-import repositories.{ProcessCacheRepository, SessionRepository}
+import repositories.{SessionRepository, ProcessCacheRepository}
 import models.PageNext
-import core.models.ocelot.{Debugging, FlowStage, Label, LabelOperation, Labels, Process, RunMode}
-
+import core.models.ocelot.{Process, RunMode, Label, Labels, FlowStage}
+import core.models.ocelot.Debugging
 import scala.annotation.tailrec
+import core.models.ocelot.LabelOperation
 
 @Singleton
 class SessionService @Inject() (appConfig: AppConfig, sessionRepository: SessionRepository, processCacheRepository: ProcessCacheRepository) extends Logging {
@@ -69,8 +69,9 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
     }
   }
 
-  def updateForNewPage(key: String, processCode: String, pageMap: Map[String, PageNext], pageHistory: Option[List[PageHistory]], flowStack: Option[List[FlowStage]],
-                       labelUpdates: List[Label], legalPageIds: List[String], requestId: Option[String]): Future[RequestOutcome[Unit]] =
+  def updateForNewPage(key: String, processCode: String, pageMap: Map[String, PageNext], pageHistory: Option[List[PageHistory]],
+                       flowStack: Option[List[FlowStage]], labelUpdates: List[Label], legalPageIds: List[String],
+                      requestId: Option[String]): Future[RequestOutcome[Unit]] =
     toRawPageHistory(pageHistory, pageMap, processCode) match {
       case None if pageHistory.isDefined =>
         logger.error(s"ERROR:Conversion of PageHistory to RawPageHistory failed (None return)")
@@ -79,12 +80,22 @@ class SessionService @Inject() (appConfig: AppConfig, sessionRepository: Session
         sessionRepository.updateForNewPage(key, processCode, rawPageHistoryOption, flowStack, labelUpdates, legalPageIds, requestId)
     }
 
-  def updateAfterStandardPage(key: String, processCode: String, labels: Labels, requestId: Option[String], revertOperations: List[LabelOperation]): Future[RequestOutcome[Unit]] =
+
+  def updateAfterStandardPage(key: String, processCode: String, labels: Labels,
+                              revertOperations: Option[List[LabelOperation]], requestId: Option[String]): Future[RequestOutcome[Unit]] =
     sessionRepository.updateAfterStandardPage(key, processCode, labels, revertOperations, requestId)
 
   def updateAfterFormSubmission(key: String, processCode: String, answerId: String, answer: String, labels: Labels, nextLegalPageIds: List[String],
-                                requestId: Option[String], revertOperations: List[LabelOperation]): Future[RequestOutcome[Unit]] =
-    sessionRepository.updateAfterFormSubmission(key, processCode, answerId, answer, labels, nextLegalPageIds, revertOperations, requestId)
+                                revertOperations: Option[List[LabelOperation]], requestId: Option[String]): Future[RequestOutcome[Unit]] =
+    sessionRepository.updateAfterFormSubmission(
+      key,
+      processCode,
+      answerId,
+      answer,
+      labels,
+      revertOperations,
+      nextLegalPageIds,
+      requestId)
 
   private[services] def guidanceSession(session: Session)(implicit context: ExecutionContext): Future[RequestOutcome[GuidanceSession]] = {
     val processId = if (session.runMode.equals(Some(Debugging))) s"${session.processId}${processCacheRepository.DebugIdSuffix}" else session.processId
