@@ -69,7 +69,30 @@ sealed trait Input extends DataInputStanza {
 
   override val labelRefs: List[String] = labelReferences(name.english) ++ help.fold[List[String]](Nil)(h => labelReferences(h.english))
   override val labels: List[String] = List(label)
-  def eval(value: String, page: Page, labels: Labels): (Option[String], Labels) = (next.headOption, labels.update(label, value))
+  def eval(value: String, page: Page, labels: Labels): (Option[String], Labels) = {
+    //Changes for DL-15209 start here
+    val taxCodePattern = "(?<!.)(([CS]|[CS][K]|[K])?([1-9][\\d]{3}|[0N][T]|[B][R]|[D][0-8])([LMNT])?\\s?([MW][1]|[X])?)(?!.)".r
+    var temporaryLabelsInstance: Labels = labels
+    if (label == "asset" && taxCodePattern.matches(value)) { //it can be the newTaxCodeLabel
+
+      def retrieveTaxCodeComponents(labels: Labels, fullTaxCode: String): Option[Labels] = {
+        val Prefix: Int = 2
+        val Main: Int = 3
+        val Suffix: Int = 4
+        val NonCumulative: Int = 5
+        (taxCodePattern findFirstMatchIn fullTaxCode).map { matcher =>
+          labels
+            .update("TaxCode_prefix", Option(matcher.group(Prefix)).getOrElse(""))
+            .update("TaxCode_numbers", Option(matcher.group(Main)).getOrElse(""))
+            .update("TaxCode_suffix", Option(matcher.group(Suffix)).getOrElse(""))
+            .update("TaxCode_cumulative", Option(matcher.group(NonCumulative)).getOrElse(""))
+        }
+      }
+      temporaryLabelsInstance = retrieveTaxCodeComponents(labels, value).get
+    }
+    //Changes for DL-15209 end here
+    (next.headOption, temporaryLabelsInstance.update(label, value))
+  }
 }
 
 case class NumberInput(
