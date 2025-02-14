@@ -71,9 +71,9 @@ sealed trait Input extends DataInputStanza {
   override val labels: List[String] = List(label)
   def eval(value: String, page: Page, labels: Labels): (Option[String], Labels) = {
     //Changes for DL-15209 start here
-    val taxCodePattern = "(?<!.)(([CS]|[CS][K]|[K])?([1-9][\\d]{3}|[0N][T]|[B][R]|[D][0-8])([LMNT])?\\s?([MW][1]|[X])?)(?!.)".r
+    val taxCodePattern = "(?<!.)(([CS]|[CS][K]|[K])?([1]|[1-9][\\d]{1,3}|[0N][T]|[B][R]|[D][0-8])([LMNT])?\\s?([MW][1]|[X])?)(?!.)".r
     var temporaryLabelsInstance: Labels = labels
-    if (label == "asset" && taxCodePattern.matches(value)) { //it can be the newTaxCodeLabel
+    if (label == "TaxCode" && taxCodePattern.matches(value)) { //it can be the newTaxCodeLabel
 
       def retrieveTaxCodeComponents(labels: Labels, fullTaxCode: String): Option[Labels] = {
         val Prefix: Int = 2

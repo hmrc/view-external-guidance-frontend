@@ -1,0 +1,253 @@
+{
+  "meta": {
+    "id": "ext99995",
+    "title": "Tax code input - test",
+    "processCode": "tax-code-input-test",
+    "ocelot": 5,
+    "titlePhrase": 0,
+    "lastAuthor": "7234754",
+    "lastUpdate": 1739440307144,
+    "version": 3,
+    "filename": "ext99995.js"
+  },
+  "flow": {
+    "1": {
+      "type": "CalloutStanza",
+      "text": 1,
+      "noteType": "Error",
+      "next": [
+        "2"
+      ],
+      "stack": false
+    },
+    "2": {
+      "type": "QuestionStanza",
+      "text": 2,
+      "answers": [
+        3,
+        4
+      ],
+      "next": [
+        "3",
+        "16"
+      ],
+      "stack": false
+    },
+    "3": {
+      "type": "PageStanza",
+      "url": "/input/tax-code",
+      "next": [
+        "4"
+      ],
+      "stack": false
+    },
+    "4": {
+      "type": "CalloutStanza",
+      "text": 6,
+      "noteType": "Error",
+      "next": [
+        "5"
+      ],
+      "stack": false
+    },
+    "5":
+    {
+      "type": "ValueStanza",
+      "values":
+      [
+        {
+          "type": "scalar",
+          "label": "TaxCode",
+          "value": ""
+        },
+        {
+          "type": "scalar",
+          "label": "TaxCode_numbers",
+          "value": ""
+        },
+        {
+          "type": "scalar",
+          "label": "TaxCode_prefix",
+          "value": ""
+        },
+        {
+          "type": "scalar",
+          "label": "TaxCode_suffix",
+          "value": ""
+        },
+        {
+          "type": "scalar",
+          "label": "TaxCode_cumulative",
+          "value": ""
+        }
+      ],
+      "next":
+      [
+        "6"
+      ],
+      "stack": false
+    },
+    "6":
+    {
+      "type": "InputStanza",
+      "ipt_type": "Text",
+      "name": 10,
+      "label": "TaxCode",
+      "next":
+      [
+        "7"
+      ],
+      "stack": false
+    },
+    "7": {
+      "type": "PageStanza",
+      "url": "/outcome/tax-code-breakdown",
+      "next": [
+        "8"
+      ],
+      "stack": false
+    },
+    "8": {
+      "type": "CalloutStanza",
+      "text": 9,
+      "noteType": "YourCall",
+      "next": [
+        "9"
+      ],
+      "stack": false
+    },
+    "9": {
+      "type": "InstructionStanza",
+      "text": 10,
+      "next": [
+        "10"
+      ],
+      "stack": true
+    },
+    "10": {
+      "type": "InstructionStanza",
+      "text": 11,
+      "next": [
+        "11"
+      ],
+      "stack": true
+    },
+    "11": {
+      "type": "InstructionStanza",
+      "text": 12,
+      "next": [
+        "12"
+      ],
+      "stack": true
+    },
+    "12": {
+      "type": "InstructionStanza",
+      "text": 13,
+      "next": [
+        "14"
+      ],
+      "stack": true
+    },
+    "14": {
+      "type": "InstructionStanza",
+      "text": 14,
+      "next": [
+        "end"
+      ],
+      "stack": true
+    },
+    "16": {
+      "type": "PageStanza",
+      "url": "/outcome/no-tax-code",
+      "next": [
+        "17"
+      ],
+      "stack": false
+    },
+    "17": {
+      "type": "CalloutStanza",
+      "text": 5,
+      "noteType": "YourCall",
+      "next": [
+        "end"
+      ],
+      "stack": false
+    },
+    "start": {
+      "type": "PageStanza",
+      "url": "/start/do-you-have-your-tax-code",
+      "next": [
+        "1"
+      ],
+      "stack": false
+    },
+    "end": {
+      "type": "EndStanza"
+    }
+  },
+  "phrases": [
+    [
+      "Tax code input - test",
+      "Tax code input - test"
+    ],
+    [
+      "Select yes or no",
+      "Select yes or no"
+    ],
+    [
+      "Do you have your tax code?",
+      "Do you have your tax code?"
+    ],
+    [
+      "Yes",
+      "Yes"
+    ],
+    [
+      "No",
+      "No"
+    ],
+    [
+      "You need your tax code to use this guidance",
+      "You need your tax code to use this guidance"
+    ],
+    [
+      "Enter your tax code",
+      "Enter your tax code"
+    ],
+    [
+      "Enter a valid tax code",
+      "Enter a valid tax code"
+    ],
+    [
+      "TaxCode",
+      "TaxCode"
+    ],
+    [
+      "Your results",
+      "Your results"
+    ],
+    [
+      "Enter your tax code.",
+      "Enter your tax code."
+    ],
+    [
+      "The prefix of your tax code is [label:TaxCode_prefix].",
+      "The prefix of your tax code is [label:TaxCode_prefix]."
+    ],
+    [
+      "The numbers in your tax code are [label:TaxCode_numbers].",
+      "The numbers in your tax code are [label:TaxCode_numbers]."
+    ],
+    [
+      "The suffix in your tax code is [label:TaxCode_suffix].",
+      "The suffix in your tax code is [label:TaxCode_suffix]."
+    ],
+    [
+      "Your basis of your tax code is [label:TaxCode_cumulative].",
+      "Your basis of your tax code is [label:TaxCode_cumulative]."
+    ]
+  ],
+  "contacts": [],
+  "howto": [],
+  "links": []
+}
