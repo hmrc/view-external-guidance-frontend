@@ -72,8 +72,10 @@ sealed trait Input extends DataInputStanza {
   def eval(value: String, page: Page, labels: Labels): (Option[String], Labels) = {
     //Changes for DL-15209 start here
     val taxCodePattern = "(?<!.)(([CS]|[CS][K]|[K])?([1]|[1-9][\\d]{1,3}|[0N][T]|[B][R]|[D][0-8])([LMNT])?\\s?([MW][1]|[X])?)(?!.)".r
+    val taxCodeLabelPattern = "^TaxCode[\\d]+".r
     var temporaryLabelsInstance: Labels = labels
-    if (label == "TaxCode" && taxCodePattern.matches(value)) { //it can be the newTaxCodeLabel
+    System.out.print("\n\n\n\n\nlll: " + label + " matches " + taxCodeLabelPattern.matches(label) + "\n\n\n\n")
+    if (taxCodeLabelPattern.matches(label) && taxCodePattern.matches(value)) { //it can be the newTaxCodeLabel
 
       def retrieveTaxCodeComponents(labels: Labels, fullTaxCode: String): Option[Labels] = {
         val Prefix: Int = 2
@@ -82,10 +84,10 @@ sealed trait Input extends DataInputStanza {
         val NonCumulative: Int = 5
         (taxCodePattern findFirstMatchIn fullTaxCode).map { matcher =>
           labels
-            .update("TaxCode_prefix", Option(matcher.group(Prefix)).getOrElse(""))
-            .update("TaxCode_numbers", Option(matcher.group(Main)).getOrElse(""))
-            .update("TaxCode_suffix", Option(matcher.group(Suffix)).getOrElse(""))
-            .update("TaxCode_cumulative", Option(matcher.group(NonCumulative)).getOrElse(""))
+            .update(s"${label}_prefix", Option(matcher.group(Prefix)).getOrElse(""))
+            .update(s"${label}_numbers", Option(matcher.group(Main)).getOrElse(""))
+            .update(s"${label}_suffix", Option(matcher.group(Suffix)).getOrElse(""))
+            .update(s"${label}_cumulative", Option(matcher.group(NonCumulative)).getOrElse(""))
         }
       }
       temporaryLabelsInstance = retrieveTaxCodeComponents(labels, value).get

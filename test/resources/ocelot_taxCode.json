@@ -1,8 +1,8 @@
 {
   "meta": {
-    "id": "ext99995",
+    "id": "ext99995-multi",
     "title": "Tax code input - test",
-    "processCode": "tax-code-input-test",
+    "processCode": "tax-code-input-test-multi",
     "ocelot": 5,
     "titlePhrase": 0,
     "lastAuthor": "7234754",
@@ -29,7 +29,7 @@
       ],
       "next": [
         "3",
-        "16"
+        "20"
       ],
       "stack": false
     },
@@ -57,27 +57,27 @@
       [
         {
           "type": "scalar",
-          "label": "TaxCode",
+          "label": "TaxCode1",
           "value": ""
         },
         {
           "type": "scalar",
-          "label": "TaxCode_numbers",
+          "label": "TaxCode1_numbers",
           "value": ""
         },
         {
           "type": "scalar",
-          "label": "TaxCode_prefix",
+          "label": "TaxCode1_prefix",
           "value": ""
         },
         {
           "type": "scalar",
-          "label": "TaxCode_suffix",
+          "label": "TaxCode1_suffix",
           "value": ""
         },
         {
           "type": "scalar",
-          "label": "TaxCode_cumulative",
+          "label": "TaxCode1_cumulative",
           "value": ""
         }
       ],
@@ -91,8 +91,8 @@
     {
       "type": "InputStanza",
       "ipt_type": "Text",
-      "name": 10,
-      "label": "TaxCode",
+      "name": 16,
+      "label": "TaxCode1",
       "next":
       [
         "7"
@@ -101,7 +101,7 @@
     },
     "7": {
       "type": "PageStanza",
-      "url": "/outcome/tax-code-breakdown",
+      "url": "/input/tax-code2",
       "next": [
         "8"
       ],
@@ -109,40 +109,82 @@
     },
     "8": {
       "type": "CalloutStanza",
-      "text": 9,
-      "noteType": "YourCall",
+      "text": 6,
+      "noteType": "Error",
       "next": [
         "9"
       ],
       "stack": false
     },
-    "9": {
-      "type": "InstructionStanza",
-      "text": 10,
-      "next": [
+    "9":
+    {
+      "type": "ValueStanza",
+      "values":
+      [
+        {
+          "type": "scalar",
+          "label": "TaxCode2",
+          "value": ""
+        },
+        {
+          "type": "scalar",
+          "label": "TaxCode2_numbers",
+          "value": ""
+        },
+        {
+          "type": "scalar",
+          "label": "TaxCode2_prefix",
+          "value": ""
+        },
+        {
+          "type": "scalar",
+          "label": "TaxCode2_suffix",
+          "value": ""
+        },
+        {
+          "type": "scalar",
+          "label": "TaxCode2_cumulative",
+          "value": ""
+        }
+      ],
+      "next":
+      [
         "10"
       ],
-      "stack": true
+      "stack": false
     },
-    "10": {
-      "type": "InstructionStanza",
-      "text": 11,
-      "next": [
+    "10":
+    {
+      "type": "InputStanza",
+      "ipt_type": "Text",
+      "name": 15,
+      "label": "TaxCode2",
+      "next":
+      [
         "11"
       ],
-      "stack": true
+      "stack": false
     },
     "11": {
-      "type": "InstructionStanza",
-      "text": 12,
+      "type": "PageStanza",
+      "url": "/outcome/tax-code-breakdown",
       "next": [
         "12"
       ],
-      "stack": true
+      "stack": false
     },
     "12": {
+      "type": "CalloutStanza",
+      "text": 9,
+      "noteType": "YourCall",
+      "next": [
+        "13"
+      ],
+      "stack": false
+    },
+    "13": {
       "type": "InstructionStanza",
-      "text": 13,
+      "text": 10,
       "next": [
         "14"
       ],
@@ -150,21 +192,45 @@
     },
     "14": {
       "type": "InstructionStanza",
+      "text": 11,
+      "next": [
+        "15"
+      ],
+      "stack": true
+    },
+    "15": {
+      "type": "InstructionStanza",
+      "text": 12,
+      "next": [
+        "16"
+      ],
+      "stack": true
+    },
+    "16": {
+      "type": "InstructionStanza",
+      "text": 13,
+      "next": [
+        "18"
+      ],
+      "stack": true
+    },
+    "18": {
+      "type": "InstructionStanza",
       "text": 14,
       "next": [
         "end"
       ],
       "stack": true
     },
-    "16": {
+    "20": {
       "type": "PageStanza",
       "url": "/outcome/no-tax-code",
       "next": [
-        "17"
+        "21"
       ],
       "stack": false
     },
-    "17": {
+    "21": {
       "type": "CalloutStanza",
       "text": 5,
       "noteType": "YourCall",
@@ -227,24 +293,32 @@
       "Your results"
     ],
     [
-      "Enter your tax code.",
-      "Enter your tax code."
+      "The 1st tax code you entered is [label:TaxCode1] - The 2nd tax code you entered is [label:TaxCode2].",
+      "The 1st tax code you entered is [label:TaxCode1] - The 2nd tax code you entered is [label:TaxCode2]."
     ],
     [
-      "The prefix of your tax code is [label:TaxCode_prefix].",
-      "The prefix of your tax code is [label:TaxCode_prefix]."
+      "The prefix of your 1st tax code is [label:TaxCode1_prefix]. - The prefix of your 2nd tax code is [label:TaxCode2_prefix].",
+      "The prefix of your 1st tax code is [label:TaxCode1_prefix]. - The prefix of your 2nd tax code is [label:TaxCode2_prefix]."
     ],
     [
-      "The numbers in your tax code are [label:TaxCode_numbers].",
-      "The numbers in your tax code are [label:TaxCode_numbers]."
+      "The numbers in your 1st tax code are [label:TaxCode1_numbers] - The numbers in your 2nd tax code are [label:TaxCode2_numbers].",
+      "The numbers in your 1st tax code are [label:TaxCode1_numbers] - The numbers in your 2nd tax code are [label:TaxCode2_numbers]."
     ],
     [
-      "The suffix in your tax code is [label:TaxCode_suffix].",
-      "The suffix in your tax code is [label:TaxCode_suffix]."
+      "The suffix in your 1st tax code is [label:TaxCode1_suffix] - The suffix in your 2nd tax code is [label:TaxCode2_suffix].",
+      "The suffix in your 1st tax code is [label:TaxCode1_suffix] - The suffix in your 2nd tax code is [label:TaxCode2_suffix]."
     ],
     [
-      "Your basis of your tax code is [label:TaxCode_cumulative].",
-      "Your basis of your tax code is [label:TaxCode_cumulative]."
+      "Your basis of your 1st tax code is [label:TaxCode1_cumulative] - Your basis of your 2nd tax code is [label:TaxCode2_cumulative].",
+      "Your basis of your 1st tax code is [label:TaxCode1_cumulative] - Your basis of your 2nd tax code is [label:TaxCode2_cumulative]."
+    ],
+    [
+      "Enter your 2nd tax code",
+      "Enter your 2nd tax code"
+    ],
+    [
+      "Enter your 1st tax code",
+      "Enter your 1st tax code"
     ]
   ],
   "contacts": [],
