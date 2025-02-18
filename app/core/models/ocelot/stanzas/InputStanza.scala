@@ -69,35 +69,42 @@ sealed trait Input extends DataInputStanza {
 
   override val labelRefs: List[String] = labelReferences(name.english) ++ help.fold[List[String]](Nil)(h => labelReferences(h.english))
   override val labels: List[String] = List(label)
+
   def eval(value: String, page: Page, labels: Labels): (Option[String], Labels) = {
     //Changes for DL-15209 start here
     val taxCodePattern = "(?<!.)(([CS]|[CS][K]|[K])?([1]|[1-9][\\d]{1,3}|[0N][T]|[B][R]|[D][0-8])([LMNT])?\\s?([MW][1]|[X])?)(?!.)".r
-    val taxCodeLabelPattern = "^TaxCode[\\d]+".r
     var temporaryLabelsInstance: Labels = labels
-    System.out.print("\n\n\n\n\nlll: " + label + " matches " + taxCodeLabelPattern.matches(label) + "\n\n\n\n")
-    if (label == "TaxCode") { //it can be the newTaxCodeLabel
+    if (label == "__TreatAsTaxCodes") { //it can be the newTaxCodeLabel
 
       def retrieveTaxCodeComponents(labels: Labels, fullTaxCode: String, index: Int): Option[Labels] = {
+        val taxCodeLabelPrefix = "TaxCode"
+        val FullTaxCode: Int = 1
         val Prefix: Int = 2
         val Main: Int = 3
         val Suffix: Int = 4
         val NonCumulative: Int = 5
         (taxCodePattern findFirstMatchIn fullTaxCode).map { matcher =>
           labels
-            .update(s"${label}_${index}_prefix", Option(matcher.group(Prefix)).getOrElse(""))
-            .update(s"${label}_${index}_numbers", Option(matcher.group(Main)).getOrElse(""))
-            .update(s"${label}_${index}_suffix", Option(matcher.group(Suffix)).getOrElse(""))
-            .update(s"${label}_${index}_noncumulative", Option(matcher.group(NonCumulative)).getOrElse(""))
+            .update(s"${taxCodeLabelPrefix}_${index}", Option(matcher.group(FullTaxCode)).getOrElse(""))
+            .update(s"${taxCodeLabelPrefix}_${index}_prefix", Option(matcher.group(Prefix)).getOrElse(""))
+            .update(s"${taxCodeLabelPrefix}_${index}_numbers", Option(matcher.group(Main)).getOrElse(""))
+            .update(s"${taxCodeLabelPrefix}_${index}_suffix", Option(matcher.group(Suffix)).getOrElse(""))
+            .update(s"${taxCodeLabelPrefix}_${index}_cumulative", Option(matcher.group(NonCumulative)).getOrElse(""))
         }
       }
 
-      val tokens: List[String] = value.split(",").map(y => y.replace(" ", "")).filter(x => taxCodePattern.matches(x)).map(_.trim).toList
-      tokens.zipWithIndex.foreach { case (token, index) =>
-        retrieveTaxCodeComponents(temporaryLabelsInstance, token, index + 1).foreach { updatedLabels =>
-          temporaryLabelsInstance = updatedLabels
+      value.split(",").map(_.replace(" ", ""))
+        .map(_.trim)
+        .toList
+        .zipWithIndex.foreach {
+          case (token, index) =>
+            retrieveTaxCodeComponents(temporaryLabelsInstance, token, index + 1).foreach {
+              updatedLabels =>
+              temporaryLabelsInstance = updatedLabels
+            }
         }
-      }
     }
+
     //Changes for DL-15209 end here
     (next.headOption, temporaryLabelsInstance.update(label, value))
   }
