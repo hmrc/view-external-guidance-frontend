@@ -75,22 +75,28 @@ sealed trait Input extends DataInputStanza {
     val taxCodeLabelPattern = "^TaxCode[\\d]+".r
     var temporaryLabelsInstance: Labels = labels
     System.out.print("\n\n\n\n\nlll: " + label + " matches " + taxCodeLabelPattern.matches(label) + "\n\n\n\n")
-    if (taxCodeLabelPattern.matches(label) && taxCodePattern.matches(value)) { //it can be the newTaxCodeLabel
+    if (label == "TaxCode") { //it can be the newTaxCodeLabel
 
-      def retrieveTaxCodeComponents(labels: Labels, fullTaxCode: String): Option[Labels] = {
+      def retrieveTaxCodeComponents(labels: Labels, fullTaxCode: String, index: Int): Option[Labels] = {
         val Prefix: Int = 2
         val Main: Int = 3
         val Suffix: Int = 4
         val NonCumulative: Int = 5
         (taxCodePattern findFirstMatchIn fullTaxCode).map { matcher =>
           labels
-            .update(s"${label}_prefix", Option(matcher.group(Prefix)).getOrElse(""))
-            .update(s"${label}_numbers", Option(matcher.group(Main)).getOrElse(""))
-            .update(s"${label}_suffix", Option(matcher.group(Suffix)).getOrElse(""))
-            .update(s"${label}_cumulative", Option(matcher.group(NonCumulative)).getOrElse(""))
+            .update(s"${label}_${index}_prefix", Option(matcher.group(Prefix)).getOrElse(""))
+            .update(s"${label}_${index}_numbers", Option(matcher.group(Main)).getOrElse(""))
+            .update(s"${label}_${index}_suffix", Option(matcher.group(Suffix)).getOrElse(""))
+            .update(s"${label}_${index}_noncumulative", Option(matcher.group(NonCumulative)).getOrElse(""))
         }
       }
-      temporaryLabelsInstance = retrieveTaxCodeComponents(labels, value).get
+
+      val tokens: List[String] = value.split(",").map(y => y.replace(" ", "")).filter(x => taxCodePattern.matches(x)).map(_.trim).toList
+      tokens.zipWithIndex.foreach { case (token, index) =>
+        retrieveTaxCodeComponents(temporaryLabelsInstance, token, index + 1).foreach { updatedLabels =>
+          temporaryLabelsInstance = updatedLabels
+        }
+      }
     }
     //Changes for DL-15209 end here
     (next.headOption, temporaryLabelsInstance.update(label, value))
