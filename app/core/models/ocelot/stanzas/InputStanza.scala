@@ -16,11 +16,14 @@
 
 package core.models.ocelot.stanzas
 
-import core.models.ocelot.{SecuredProcess, Validation, validDate, Page, Labels, Phrase, asAnyInt, asCurrency}
-import core.models.ocelot.{asCurrencyPounds, asTextString, labelReferences, stringFromDate, Ten}
+import core.models.ocelot.stanzas.TaxCodeUtilities._
+import core.models.ocelot.{Labels, Page, Phrase, SecuredProcess, Validation, asAnyInt, asCurrency, validDate}
+import core.models.ocelot.{Ten, asCurrencyPounds, asTextString, labelReferences, stringFromDate}
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
 import play.api.libs.json._
+
+import scala.util.matching.Regex
 
 case class InputStanza(
   ipt_type: InputType,
@@ -69,29 +72,16 @@ sealed trait Input extends DataInputStanza {
 
   override val labelRefs: List[String] = labelReferences(name.english) ++ help.fold[List[String]](Nil)(h => labelReferences(h.english))
   override val labels: List[String] = List(label)
+
   def eval(value: String, page: Page, labels: Labels): (Option[String], Labels) = {
     //Changes for DL-15209 start here
-    val taxCodePattern = "(?<!.)(([CS]|[CS][K]|[K])?([1]|[1-9][\\d]{1,3}|[0N][T]|[B][R]|[D][0-8])([LMNT])?\\s?([MW][1]|[X])?)(?!.)".r
-    var temporaryLabelsInstance: Labels = labels
-    if (label == "TaxCode" && taxCodePattern.matches(value)) { //it can be the newTaxCodeLabel
-
-      def retrieveTaxCodeComponents(labels: Labels, fullTaxCode: String): Option[Labels] = {
-        val Prefix: Int = 2
-        val Main: Int = 3
-        val Suffix: Int = 4
-        val NonCumulative: Int = 5
-        (taxCodePattern findFirstMatchIn fullTaxCode).map { matcher =>
-          labels
-            .update("TaxCode_prefix", Option(matcher.group(Prefix)).getOrElse(""))
-            .update("TaxCode_numbers", Option(matcher.group(Main)).getOrElse(""))
-            .update("TaxCode_suffix", Option(matcher.group(Suffix)).getOrElse(""))
-            .update("TaxCode_cumulative", Option(matcher.group(NonCumulative)).getOrElse(""))
-        }
-      }
-      temporaryLabelsInstance = retrieveTaxCodeComponents(labels, value).get
-    }
+    if (label == taxCodeLabelName && taxCodePattern.matches(value)) { //it can be the newTaxCodeLabel
+      val processedTaxCodeComponents = retrieveTaxCodeComponents(labels, value).get
+      (next.headOption, processedTaxCodeComponents.update(label, value))
     //Changes for DL-15209 end here
-    (next.headOption, temporaryLabelsInstance.update(label, value))
+    } else {
+      (next.headOption, labels.update(label, value))
+    }
   }
 }
 
@@ -194,4 +184,23 @@ object Input {
       case CurrencyPoundsOnly => CurrencyPoundsOnlyInput(stanza.next, name, help, stanza.label, placeholder, stanza.stack, dontRepeatName, width)
       case Date => DateInput(stanza.next, name, help, stanza.label, placeholder, stanza.stack, dontRepeatName, width)
     }
+}
+
+object TaxCodeUtilities {
+  val taxCodeLabelName = "TaxCode"
+  val taxCodePattern: Regex = "(?<!.)(([CS]|[CS][K]|[K])?([1]|[1-9][\\d]{1,3}|[0N][T]|[B][R]|[D][0-8])([LMNT])?\\s?([MW][1]|[X])?)(?!.)".r
+
+  def retrieveTaxCodeComponents(labels: Labels, fullTaxCode: String): Option[Labels] = {
+    val Prefix: Int = 2
+    val Main: Int = 3
+    val Suffix: Int = 4
+    val NonCumulative: Int = 5
+    (taxCodePattern findFirstMatchIn fullTaxCode).map { matcher =>
+      labels
+        .update("TaxCode_prefix", Option(matcher.group(Prefix)).getOrElse(""))
+        .update("TaxCode_numbers", Option(matcher.group(Main)).getOrElse(""))
+        .update("TaxCode_suffix", Option(matcher.group(Suffix)).getOrElse(""))
+        .update("TaxCode_cumulative", Option(matcher.group(NonCumulative)).getOrElse(""))
+    }
+  }
 }

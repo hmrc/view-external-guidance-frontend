@@ -37,7 +37,7 @@ class InputStanzaSpec extends BaseSpec {
   )
 
   def inputStanza(inputType: InputType): InputStanza =
-    InputStanza(inputType,  Seq("1"), 0, Some(1),"Price", Some(2), stack = false)
+    InputStanza(inputType, Seq("1"), 0, Some(1), "Price", Some(2), stack = false)
   val blankPage: Page = Page("any", "/url", Seq.empty, Nil)
   val expectedCurrencyStanza: InputStanza = inputStanza(Currency)
   val expectedCurrencyPoStanza: InputStanza = inputStanza(CurrencyPoundsOnly)
@@ -51,7 +51,7 @@ class InputStanzaSpec extends BaseSpec {
     getStanzaJson("CurrencyPoundsOnly") -> expectedCurrencyPoStanza,
     getStanzaJson("Date") -> expectedDateStanza,
     getStanzaJson("Number") -> expectedNumberStanza,
-    getStanzaJson("Text") -> expectedTextStanza,
+    getStanzaJson("Text") -> expectedTextStanza
   )
 
   jsonToStanzaMappings foreach { mapping =>
@@ -68,31 +68,31 @@ class InputStanzaSpec extends BaseSpec {
 
   "CurrencyInput " should {
     "update the input label" in {
-      val input = Input(expectedCurrencyStanza, Phrase("",""), None, None)
+      val input = Input(expectedCurrencyStanza, Phrase("", ""), None, None)
       val labels = LabelCache()
       val (_, updatedLabels) = input.eval("33", blankPage, labels)
       updatedLabels.updatedLabels(expectedCurrencyStanza.label).english shouldBe List("33")
     }
 
     "Determine invalid input to be incorrect" in {
-      val input = Input(expectedCurrencyStanza, Phrase("",""), None, None)
+      val input = Input(expectedCurrencyStanza, Phrase("", ""), None, None)
       input.validInput("a value") shouldBe Left(Nil)
       input.validInput("100.789") shouldBe Left(Nil)
       input.validInput("100.7a9") shouldBe Left(Nil)
     }
 
     "Allow for coma separated 1000s" in {
-      val input = Input(expectedCurrencyStanza, Phrase("",""), None, None)
+      val input = Input(expectedCurrencyStanza, Phrase("", ""), None, None)
       input.validInput("123,345,768") shouldBe Right("123345768")
     }
 
     "Allow -ve values" in {
-      val input = Input(expectedCurrencyStanza, Phrase("",""), None, None)
+      val input = Input(expectedCurrencyStanza, Phrase("", ""), None, None)
       input.validInput("-567,345") shouldBe Right("-567345")
     }
 
     "Determine valid input to be correct" in {
-      val input = Input(expectedCurrencyStanza, Phrase("",""), None, None)
+      val input = Input(expectedCurrencyStanza, Phrase("", ""), None, None)
       input.validInput("£33") shouldBe Right("33")
       input.validInput("-33") shouldBe Right("-33")
       input.validInput("£33.79") shouldBe Right("33.79")
@@ -111,31 +111,31 @@ class InputStanzaSpec extends BaseSpec {
 
   "CurrencyPoundsOnlyInput " should {
     "update the input label" in {
-      val input = Input(expectedCurrencyPoStanza, Phrase("",""), None, None)
+      val input = Input(expectedCurrencyPoStanza, Phrase("", ""), None, None)
       val labels = LabelCache()
       val (_, updatedLabels) = input.eval("33", blankPage, labels)
       updatedLabels.updatedLabels(expectedCurrencyPoStanza.label).english shouldBe List("33")
     }
 
     "Determine invalid input to be incorrect" in {
-      val input = Input(expectedCurrencyPoStanza, Phrase("",""), None, None)
+      val input = Input(expectedCurrencyPoStanza, Phrase("", ""), None, None)
       input.validInput("a value") shouldBe Left(Nil)
       input.validInput("100.789") shouldBe Left(Nil)
       input.validInput("100.7a9") shouldBe Left(Nil)
     }
 
     "Allow for coma separated 1000s" in {
-      val input = Input(expectedCurrencyPoStanza, Phrase("",""), None, None)
+      val input = Input(expectedCurrencyPoStanza, Phrase("", ""), None, None)
       input.validInput("123,345,768") shouldBe Right("123345768")
     }
 
     "Allow -ve values" in {
-      val input = Input(expectedCurrencyPoStanza, Phrase("",""), None, None)
+      val input = Input(expectedCurrencyPoStanza, Phrase("", ""), None, None)
       input.validInput("-567,345") shouldBe Right("-567345")
     }
 
     "Determine valid input to be correct" in {
-      val input = Input(expectedCurrencyPoStanza, Phrase("",""), None, None)
+      val input = Input(expectedCurrencyPoStanza, Phrase("", ""), None, None)
       input.validInput("£33") shouldBe Right("33")
       input.validInput("-33") shouldBe Right("-33")
       input.validInput("£33.79") shouldBe Left(Nil)
@@ -154,14 +154,14 @@ class InputStanzaSpec extends BaseSpec {
 
   "DateInput" should {
     "update the input label" in {
-      val input = Input(expectedDateStanza, Phrase("",""), None, None)
+      val input = Input(expectedDateStanza, Phrase("", ""), None, None)
       val labels = LabelCache()
       val (_, updatedLabels) = input.eval("33", blankPage, labels)
       updatedLabels.updatedLabels(expectedDateStanza.label).english shouldBe List("33")
     }
 
     "Determine invalid input to be incorrect" in {
-      val input = Input(expectedDateStanza, Phrase("",""), None, None)
+      val input = Input(expectedDateStanza, Phrase("", ""), None, None)
       input.validInput("a value") shouldBe Left(Nil)
       input.validInput("100.78") shouldBe Left(Nil)
       input.validInput("100.7a") shouldBe Left(Nil)
@@ -172,7 +172,7 @@ class InputStanzaSpec extends BaseSpec {
     }
 
     "Determine valid input to be correct" in {
-      val input = Input(expectedDateStanza, Phrase("",""), None, None)
+      val input = Input(expectedDateStanza, Phrase("", ""), None, None)
       input.validInput("5/6/1989") shouldBe Right("5/6/1989")
       input.validInput("28/2/1999") shouldBe Right("28/2/1999")
       input.validInput("28 /2/19 99") shouldBe Right("28/2/1999")
@@ -182,19 +182,19 @@ class InputStanzaSpec extends BaseSpec {
 
   "TextInput" should {
     "update the input label" in {
-      val input = Input(expectedTextStanza, Phrase("",""), None, None)
+      val input = Input(expectedTextStanza, Phrase("", ""), None, None)
       val labels = LabelCache()
       val (_, updatedLabels) = input.eval("hello", blankPage, labels)
       updatedLabels.updatedLabels(expectedTextStanza.label).english shouldBe List("hello")
     }
 
     "Determine invalid input to be incorrect" in {
-      val input = Input(expectedTextStanza, Phrase("Name","Name"), None, None)
+      val input = Input(expectedTextStanza, Phrase("Name", "Name"), None, None)
       input.validInput("") shouldBe Left(Nil)
     }
 
     "Determine valid input to be correct" in {
-      val input = Input(expectedTextStanza, Phrase("",""), None, None)
+      val input = Input(expectedTextStanza, Phrase("", ""), None, None)
       input.validInput("a value") shouldBe Right("a value")
       input.validInput("""any valid text!@£%^&*()":;'?><,./""") shouldBe Right("""any valid text!@£%^&*()":;'?><,./""")
     }
@@ -203,32 +203,25 @@ class InputStanzaSpec extends BaseSpec {
   "PassphraseInput" should {
 
     "update the passphrase response labels" in {
-      val encrypter = new Encrypter{ def encrypt(p: String): String = p.reverse }
-      val labels: Labels = LabelCache(
-        Map[String, Label](),
-        Map[String, Label](),
-        Nil,
-        Map[String, Stanza](),
-        Map[String, Int](),
-        message(Lang("en")) _,
-        Published,
-        encrypter)
+      val encrypter = new Encrypter { def encrypt(p: String): String = p.reverse }
+      val labels: Labels =
+        LabelCache(Map[String, Label](), Map[String, Label](), Nil, Map[String, Stanza](), Map[String, Int](), message(Lang("en")) _, Published, encrypter)
       //val labels = LabelCache()
       val inputText = "Hello"
       val encryptedInput = labels.encrypt(inputText)
-      val input = Input(expectedPassphraseStanza, Phrase("",""), None, None)
+      val input = Input(expectedPassphraseStanza, Phrase("", ""), None, None)
       val (_, updatedLabels) = input.eval(inputText, blankPage, labels)
       updatedLabels.updatedLabels(SecuredProcess.PassPhraseResponseLabelName).english shouldBe List(inputText)
       updatedLabels.updatedLabels(SecuredProcess.EncryptedPassphraseResponseLabelName).english shouldBe List(encryptedInput)
     }
 
     "Determine invalid input to be incorrect" in {
-      val input = Input(expectedPassphraseStanza, Phrase("Name","Name"), None, None)
+      val input = Input(expectedPassphraseStanza, Phrase("Name", "Name"), None, None)
       input.validInput("") shouldBe Left(Nil)
     }
 
     "Determine valid input to be correct" in {
-      val input = Input(expectedPassphraseStanza, Phrase("",""), None, None)
+      val input = Input(expectedPassphraseStanza, Phrase("", ""), None, None)
       input.validInput("a value") shouldBe Right("a value")
       input.validInput("""any valid text!@£%^&*()":;'?><,./""") shouldBe Right("""any valid text!@£%^&*()":;'?><,./""")
     }
@@ -236,14 +229,14 @@ class InputStanzaSpec extends BaseSpec {
 
   "NumberInput " should {
     "update the input label" in {
-      val input = Input(expectedNumberStanza, Phrase("",""), None, None)
+      val input = Input(expectedNumberStanza, Phrase("", ""), None, None)
       val labels = LabelCache()
       val (_, newLabels) = input.eval("33", blankPage, labels)
       newLabels.updatedLabels(expectedNumberStanza.label).english shouldBe List("33")
     }
 
     "Determine invalid input to be incorrect" in {
-      val input = Input(expectedNumberStanza, Phrase("",""), None, None)
+      val input = Input(expectedNumberStanza, Phrase("", ""), None, None)
       input.validInput("a value") shouldBe Left(Nil)
       input.validInput("100.78") shouldBe Left(Nil)
       input.validInput("100.7a") shouldBe Left(Nil)
@@ -253,12 +246,12 @@ class InputStanzaSpec extends BaseSpec {
     }
 
     "Allow -ve values" in {
-      val input = Input(expectedNumberStanza, Phrase("",""), None, None)
+      val input = Input(expectedNumberStanza, Phrase("", ""), None, None)
       input.validInput("-567345") shouldBe Right("-567345")
     }
 
     "Dont allow values outside range of Int.MinValue <= x <= Int.MaxValue" in {
-      val input = Input(expectedNumberStanza, Phrase("",""), None, None)
+      val input = Input(expectedNumberStanza, Phrase("", ""), None, None)
       val tooNegative: Long = -1L + Int.MinValue
       val tooPositive: Long = 1L + Int.MaxValue
 
@@ -269,13 +262,75 @@ class InputStanzaSpec extends BaseSpec {
       input.validInput(Int.MaxValue.toString) shouldBe Right(Int.MaxValue.toString)
     }
 
-
     "Determine valid input to be correct" in {
 
-      val input = Input(expectedNumberStanza, Phrase("",""), None, None)
+      val input = Input(expectedNumberStanza, Phrase("", ""), None, None)
       input.validInput("33") shouldBe Right("33")
       input.validInput("3 3 ") shouldBe Right("33")
     }
+  }
+
+  "TaxCode input" should {
+    "update the input label" in {
+      val stanza = expectedTextStanza.copy(label = "TaxCode")
+      val input = Input(expectedTextStanza.copy(label = "TaxCode"), Phrase("", ""), None, None)
+      val labels = LabelCache()
+
+      List(
+        assert(
+          input.eval("1275L", blankPage, labels)._2,
+          taxCodeNumbers = List("1275"),
+          taxCodePrefix = List(""),
+          taxCodeSuffix = List("L"),
+          taxCodeCumulative = List(""),
+          taxCode = List("1275L")
+        ),
+        assert(
+          input.eval("SK678X", blankPage, labels)._2,
+          taxCodeNumbers = List("678"),
+          taxCodePrefix = List("SK"),
+          taxCodeSuffix = List(""), //should the suffix be X
+          taxCodeCumulative = List("X"),
+          taxCode = List("SK678X")
+        ),
+        assert(
+          input.eval("119T", blankPage, labels)._2,
+          taxCodeNumbers = List("119"),
+          taxCodePrefix = List(""),
+          taxCodeSuffix = List("T"),
+          taxCodeCumulative = List(""),
+          taxCode = List("119T")
+        )
+      )
+
+      def assert(
+          updatedLabels: Labels,
+          taxCodeNumbers: List[String],
+          taxCodePrefix: List[String],
+          taxCodeSuffix: List[String],
+          taxCodeCumulative: List[String],
+          taxCode: List[String]
+      ): Unit = {
+        updatedLabels.updatedLabels("TaxCode_numbers").english shouldBe taxCodeNumbers
+        updatedLabels.updatedLabels("TaxCode_prefix").english shouldBe taxCodePrefix
+        updatedLabels.updatedLabels("TaxCode_suffix").english shouldBe taxCodeSuffix
+        updatedLabels.updatedLabels("TaxCode_cumulative").english shouldBe taxCodeCumulative
+        updatedLabels.updatedLabels("TaxCode").english shouldBe taxCode
+      }
+
+    }
+
+//    "Determine invalid input to be incorrect" in {
+//      val input = Input(expectedTextStanza, Phrase("Name","Name"), None, None)
+//      input.validInput("") shouldBe Left(Nil)
+//    }
+//
+//    "Determine valid input to be correct" in {
+//      val input = Input(expectedTextStanza, Phrase("",""), None, None)
+//      input.validInput("a value") shouldBe Right("a value")
+//      input.validInput("""any valid text!@£%^&*()":;'?><,./""") shouldBe Right("""any valid text!@£%^&*()":;'?><,./""")
+//    }
+
   }
 
   "Reading invalid JSON for a Input" should {
@@ -287,8 +342,10 @@ class InputStanzaSpec extends BaseSpec {
     }
   }
 
-  def inputStanzaJsonFormat(typeName: String): String = s"""{"ipt_type":"$typeName","next":["1"],"name":0,"help":1,"label":"Price","placeholder":2,"stack":false}"""
-  def stanzaJsonFormat(typeName: String): String = s"""{"type":"InputStanza","ipt_type":"$typeName","next":["1"],"name":0,"help":1,"label":"Price","placeholder":2,"stack":false}"""
+  def inputStanzaJsonFormat(typeName: String): String =
+    s"""{"ipt_type":"$typeName","next":["1"],"name":0,"help":1,"label":"Price","placeholder":2,"stack":false}"""
+  def stanzaJsonFormat(typeName: String): String =
+    s"""{"type":"InputStanza","ipt_type":"$typeName","next":["1"],"name":0,"help":1,"label":"Price","placeholder":2,"stack":false}"""
 
   "serialise to json with ipt_type Currency" in {
     Json.toJson(expectedCurrencyStanza).toString shouldBe inputStanzaJsonFormat("Currency")
@@ -316,7 +373,6 @@ class InputStanzaSpec extends BaseSpec {
     val stanza: Stanza = expectedDateStanza
     Json.toJson(stanza).toString shouldBe stanzaJsonFormat("Date")
   }
-
 
   "serialise to json with ipt_type Number" in {
     Json.toJson(expectedNumberStanza).toString shouldBe inputStanzaJsonFormat("Number")
