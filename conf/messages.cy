@@ -12,7 +12,7 @@ passphrase.prompt = Rhowch gyfrinair
 
 getpagehelp.linkText = A yw’r dudalen hon yn gweithio’n iawn? (yn agor ffenestr newydd)
 
-site.continue = Yn eich blaen
+site.continue = Parhau
 
 label.day=Diwrnod
 label.month=Mis
