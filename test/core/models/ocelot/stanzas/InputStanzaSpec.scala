@@ -27,11 +27,11 @@ class InputStanzaSpec extends BaseSpec {
   val validTaxCodes: List[String] = List(
     "0T", "BR", "SBR", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8",
     "NT", "45L", "145L", "K585", "K630", "K45", "285", "K401", "K27", "K159", "K306",
-    "999L", "1000L", "1001L", "SK678X", "CBRW1"
+    "999L", "1000L", "1001L", "SK678X", "CBRW1", "9L", "C5L", "S5L", "5L", "CK9", "SK9", "K9"
   )
 
   // Invalid tax codes
-  val invalidTaxCodes: List[String] = List("D9", "D15", "X100", "12345", "9L", "KT999", "A1", "ZZZ")
+  val invalidTaxCodes: List[String] = List("D9", "D15", "X100", "12345", "KT999", "A1", "ZZZ")
 
   def getStanzaJson(inputType: String): JsValue = Json.parse(
     s"""|{
@@ -408,7 +408,7 @@ class InputStanzaSpec extends BaseSpec {
 
       updatedLabels.updatedLabels("__TaxCode_primary_prefix").english shouldBe List("K")
       updatedLabels.updatedLabels("__TaxCode_primary_main").english shouldBe List("1250")
-      updatedLabels.updatedLabels("__TaxCode_primary_suffix").english shouldBe List("L")
+      updatedLabels.updatedLabels("__TaxCode_primary_suffix").english shouldBe List("")
       updatedLabels.updatedLabels("__TaxCode_primary_cumulative").english shouldBe List("")
     }
   }

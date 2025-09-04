@@ -219,10 +219,16 @@ private object TaxCodeUtilities {
                            main: String,
                            suffix: String,
                            cumulative: String): Labels = {
+
+    val finalPrefix: String = Option(prefix).getOrElse("")
+    val finalMain: String = Option(main).getOrElse(DefaultValue)
+    val finalSuffix: String = if (finalPrefix.endsWith("K")) "" else Option(suffix).getOrElse("")
+    val finalCumulative: String = Option(cumulative).getOrElse("")
+
     labels
-      .update(s"${label}_prefix", Option(prefix).getOrElse(""))
-      .update(s"${label}_main", Option(main).getOrElse(DefaultValue))
-      .update(s"${label}_suffix", Option(suffix).getOrElse(""))
-      .update(s"${label}_cumulative", Option(cumulative).getOrElse(""))
+      .update(s"${label}_prefix", finalPrefix)
+      .update(s"${label}_main", finalMain)
+      .update(s"${label}_suffix", finalSuffix)
+      .update(s"${label}_cumulative", finalCumulative)
   }
 }
