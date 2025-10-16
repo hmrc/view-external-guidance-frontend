@@ -12,6 +12,7 @@ passphrase.prompt = Enter passphrase
 getpagehelp.linkText = Is this page not working properly? (opens new window)
 
 site.continue = Continue
+site.warning = Warning
 
 label.day=Day
 label.month=Month
