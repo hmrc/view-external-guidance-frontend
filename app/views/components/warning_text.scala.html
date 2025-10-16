@@ -17,11 +17,11 @@
 @import models.ui.WarningText
 @import views.html.components.render_text
 
-@(lst: WarningText)(implicit ctx: PageContext)
+@(lst: WarningText)(implicit ctx: PageContext, messages: Messages)
 <div class="govuk-warning-text">
  <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
  <strong class="govuk-warning-text__text">
-  <span class="govuk-visually-hidden">Warning</span>
+  <span class="govuk-visually-hidden">@messages("site.warning")</span>
  @for(item <- lst.items){@render_text(item)}
  </strong>
 </div>
