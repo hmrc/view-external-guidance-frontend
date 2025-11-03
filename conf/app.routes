@@ -12,7 +12,7 @@ GET   /:processCode/session-timeout      controllers.SessionTimeoutPageControlle
 GET   /:processCode/end-session          controllers.SessionTimeoutPageController.endSession(processCode: String)
 GET   /:processCode/session-blocked      controllers.SessionBlockedController.sessionBlocked(processCode: String, lang: Option[String] ?= None)
 
-GET   /:processCode                      controllers.entry.StartGuidanceController.published(processCode: String, c: Option[String] ?= None, lang: Option[String] ?= None)
+GET   /:processCode                      controllers.GuidanceController.published(processCode: String, c: Option[String] ?= None, lang: Option[String] ?= None)
 
 GET   /:processCode/session-restart      controllers.GuidanceController.sessionRestart(processCode: String)
 GET   /:processCode/*path                controllers.GuidanceController.getPage(processCode: String, path: String, p: Option[String] ?= None, c: Option[String] ?= None, lang: Option[String] ?= None)

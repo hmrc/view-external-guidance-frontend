@@ -29,28 +29,31 @@ import models.ui.{FormPage, StandardPage, SubmittedAnswer}
 import models.{GuidanceSession, PageContext, PageEvaluationContext}
 import play.api.Logger
 import play.api.data.Form
-import play.api.i18n.Messages
 import play.api.mvc._
 import play.twirl.api.Html
-import services.{ErrorStrategy, GuidanceService, ValueTypeError, ValueTypeGroupError}
+import services.{ErrorStrategy, GuidanceService, RetrieveAndCacheService, ValueTypeError, ValueTypeGroupError}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 import views.html.{form_page, standard_page}
 import models.admin.DebugInformation
+import uk.gov.hmrc.play.language.LanguageUtils
+
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class GuidanceController @Inject() (
-    appConfig: AppConfig,
-    sessionIdAction: SessionIdAction,
-    errorHandler: ErrorHandler,
+    val appConfig: AppConfig,
+    val sessionIdAction: SessionIdAction,
+    val errorHandler: ErrorHandler,
     standardView: standard_page,
     formView: form_page,
     service: GuidanceService,
-    mcc: MessagesControllerComponents,
-    formProvider: FormProviderFactory
-)(implicit ec: ExecutionContext) extends FrontendController(mcc)
-  with SessionFrontendController {
+    retrieveAndCacheService: RetrieveAndCacheService,
+    val mcc: MessagesControllerComponents,
+    formProvider: FormProviderFactory,
+    val languageUtils: LanguageUtils
+)(implicit val ec: ExecutionContext) extends FrontendController(mcc)
+  with SessionFrontendController with CacheAndRedirectToView {
 
   val logger: Logger = Logger(getClass)
 
@@ -80,7 +83,7 @@ class GuidanceController @Inject() (
               c: Option[String] = None,
               lang: Option[String] = None): Action[AnyContent] = sessionIdAction.async { implicit request =>
 
-    implicit val messages: Messages = mcc.messagesApi.preferred(request)
+    //implicit val messages: Messages = messagesApi.preferred(request)
     val sId: Option[String] = hc.sessionId.map(_.value)
     val rId: Option[String] = hc.requestId.map(_.value)
     val uri: String = request.target.uriString
@@ -115,6 +118,10 @@ class GuidanceController @Inject() (
     }
   }
 
+  def published(processCode: String, c: Option[String] = None, lang: Option[String] = None): Action[AnyContent] = Action.async { implicit request =>
+    logger.warn(s"ST: Starting publish journey for $processCode, lang = $lang")
+    retrieveCacheAndRedirectToView(processCode, retrieveAndCacheService.retrieveAndCachePublished, publishedErrorHandler, c, lang)
+  }
   private def translateGetPageError(err: Error,
                                     processCode: String,
                                     path: String,
@@ -152,11 +159,10 @@ class GuidanceController @Inject() (
   }
 
   def submitPage(processCode: String, path: String): Action[AnyContent] = Action.async { implicit request =>
-    implicit val messages: Messages = mcc.messagesApi.preferred(request)
     val sId: Option[String] = hc.sessionId.map(_.value)
     val rId: Option[String] = hc.requestId.map(_.value)
     val uri: String = request.target.uriString
-
+    val messages = mcc.messagesApi.preferred(request)
     logger.warn(s"SP: sessionId: ${sId}, requestId: ${rId}, URI: ${uri}")
     withExistingSession[PageEvaluationContext](service.getSubmitEvaluationContext(processCode, s"/$path", _)).flatMap {
       case Left((err, debugInformation)) => translateSubmitError(err, processCode, path, sId, debugInformation)
@@ -235,7 +241,6 @@ class GuidanceController @Inject() (
                                       sessionId: Option[String],
                                       debugInformation: Option[DebugInformation])
                                            (implicit request: Request[_]): Future[Result] = {
-    implicit val messages: Messages = mcc.messagesApi.preferred(request)
     val errorMsgs = errors.map(err => fromRuntimeError(err, stanzaId.getOrElse("UNKNOWN")))
     runMode match {
       case Published =>
@@ -272,13 +277,13 @@ class GuidanceController @Inject() (
     Redirect(s"${appConfig.baseUrl}/$processCode?$RedirectWhenNoSessionUrlParam${lang.fold("")(l => s"&lang=$l")}")
 
   private def createErrorView(ctxOutcome: DebuggableRequestOutcome[PageContext], inputName: String, form: Form[_])
-                                  (implicit request: Request[_], messages: Messages): Future[Html] =
+                                  (implicit request: Request[_]): Future[Html] =
     ctxOutcome match {
       case Left(err) => errorHandler.internalServerErrorTemplateWithProcessCode(None)
       case Right(ctx) =>
         ctx.page match {
           case page: FormPage => Future.successful(formView(page, ctx, inputName, form))
-          case page => 
+          case page =>
             logger.error(s"ERROR: Expected a form page, but standard page created $page")
             errorHandler.badRequestTemplateWithProcessCode(Some(ctx.processCode))
         }
