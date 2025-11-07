@@ -42,3 +42,8 @@ TwirlKeys.templateImports ++= Seq(
   "uk.gov.hmrc.hmrcfrontend.views.html.components._",
   "uk.gov.hmrc.govukfrontend.views.html.components._",
 )
+
+addCommandAlias("runAllChecks", ";clean;compile;coverage;test;coverageReport")
+
+
+
