@@ -32,19 +32,19 @@ class InputStanzaSpec extends BaseSpec {
     "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8",
 
     // Numeric with suffix
-    "5L", "9L", "45L", "145L", "999L", "1000L", "1001L",
+    "5L", "9L", "45L", "145L", "999L", "1000L", "1001L", "1092059L",
 
     // Prefix K with numeric only
-    "K9", "K27", "K45", "K159", "K306", "K401", "K585", "K630", "K1257W1",
+    "K9", "K27", "K45", "K159", "K306", "K401", "K585", "K630", "K1257989898", "K1257989898W1",
 
     // Prefix C
-    "C5L", "CK9", "CK1257W1", "CBRW1",
+    "C5L", "CK9", "CK1257W1", "CBRW1", "CK878787", "CK878787W1",
 
     // Prefix S
-    "S5L", "SK9", "SK678X",
+    "S5L", "SK9", "SK678X", "SK678987X", "SK678987",
 
     // Numeric with cumulative
-    "1257W1", "285", "BRLW1"
+    "1257W1", "285", "BRLW1", "1234567", "1234567W1"
   )
 
   // Invalid tax codes
@@ -54,9 +54,6 @@ class InputStanzaSpec extends BaseSpec {
 
     // Invalid prefixes
     "A1", "KT999", "ZZZ",
-
-    // Invalid numeric / length
-    "12345",
 
     // Invalid unknown codes
     "X100"
