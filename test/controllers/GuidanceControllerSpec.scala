@@ -16,12 +16,10 @@
 
 package controllers
 
-import org.apache.pekko.stream.Materializer
 import base.{BaseSpec, ViewFns}
 import config.ErrorHandler
 import controllers.actions.SessionIdAction
-import controllers.entry.StartGuidanceController
-import core.models.errors._
+import core.models.errors.{Error, _}
 import core.models.ocelot.errors._
 import core.models.ocelot.stanzas.{CurrencyInput, DateInput, Question, Sequence, _}
 import core.models.ocelot.{KeyedStanza, LabelCache, Labels, Meta, Page, Phrase, Process, ProcessJson, Published, Scratch}
@@ -29,9 +27,9 @@ import core.services._
 import forms.FormProviderFactory
 import forms.providers._
 import mocks._
-import core.models.errors.Error
 import models.ui._
-import models._
+import models.{Session, _}
+import org.apache.pekko.stream.Materializer
 import play.api.data.FormError
 import play.api.http.Status
 import play.api.i18n.{Messages, MessagesApi}
@@ -39,7 +37,6 @@ import play.api.mvc._
 import play.api.test.CSRFTokenHelper._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import models.{PageHistory, Session, SessionKey}
 import repositories.SessionFSM
 import services._
 import uk.gov.hmrc.http.{HeaderCarrier, HeaderNames, RequestId, SessionKeys}

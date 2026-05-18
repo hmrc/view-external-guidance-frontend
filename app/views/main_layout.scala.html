@@ -18,6 +18,7 @@
 @import models.admin.DebugInformation
 @import uk.gov.hmrc.hmrcfrontend.views.viewmodels.language.{En, Cy}
 @import uk.gov.hmrc.hmrcfrontend.views.html.components._
+@import uk.gov.hmrc.hmrcfrontend.views.html.helpers._
 @import uk.gov.hmrc.hmrcfrontend.views.viewmodels.hmrcstandardpage.HmrcStandardPageParams
 @import uk.gov.hmrc.hmrcfrontend.views.viewmodels.hmrcstandardpage.ServiceURLs
 @import uk.gov.hmrc.hmrcfrontend.views.viewmodels.hmrcstandardpage.TemplateOverrides
@@ -27,9 +28,9 @@
   hmrcExtendedPage: hmrc_extended_page,
   phaseBanner : GovukPhaseBanner,
   debug_footer: views.html.admin.debug_footer_tabs,
-  hmrcLanguageSelect: HmrcLanguageSelect,
+  hmrcServiceNavigationLanguageSelectHelper: HmrcServiceNavigationLanguageSelectHelper,
   appConfig: AppConfig,
-  timeoutDialog: HmrcTimeoutDialog,
+  hmrcTimeoutDialogHelper: HmrcTimeoutDialogHelper,
   govukBackLink : GovukBackLink,
   defaultLayout: TwoThirdsMainContent)
 
@@ -58,20 +59,17 @@
   <script @CSPNonce.attr type='module' src='@controllers.routes.Assets.versioned("javascripts/initSequenceAndPrintEventHandlers.js")'></script>
 
   @if(enableTimeout) {
-      @timeoutDialog(
-          TimeoutDialog(
-              language = Some(messages.lang.language),
-              timeout = Some(appConfig.timeoutInSeconds),
-              countdown = Some(appConfig.timeoutWarningInSeconds),
-              keepAliveUrl = Some("#"),
-              keepAliveButtonText = Some(messages("timeout.dialog.keep_alive_button.text")),
-              signOutUrl = processCodeUrl(processCode, appConfig.signOutUrl),
-              signOutButtonText = Some(messages("timeout.dialog.sign_out_button.text")),
-              timeoutUrl = processCodeUrl(processCode, appConfig.timeOutUrl),
-              title = Some(messages("timeout.dialog.title.text")),
-              synchroniseTabs = Some(true),
-              message = Some(messages("timeout.dialog.message.text"))
-          )
+      @hmrcTimeoutDialogHelper(
+          timeout = Some(appConfig.timeoutInSeconds),
+          countdown = Some(appConfig.timeoutWarningInSeconds),
+          keepAliveUrl = Some("#"),
+          keepAliveButtonText = Some(messages("timeout.dialog.keep_alive_button.text")),
+          signOutUrl = processCodeUrl(processCode, appConfig.signOutUrl).getOrElse(appConfig.signOutUrl),
+          signOutButtonText = Some(messages("timeout.dialog.sign_out_button.text")),
+          timeoutUrl = processCodeUrl(processCode, appConfig.timeOutUrl),
+          title = Some(messages("timeout.dialog.title.text")),
+          synchroniseTabs = Some(true),
+          message = Some(messages("timeout.dialog.message.text"))
       )
   }
 }
@@ -79,13 +77,7 @@
 @beforeContentBlock = {
   @urlLangSwitch.fold{
     @if(enableLanguageSelect) {
-      @hmrcLanguageSelect(
-        LanguageSelect(
-          if (messages.lang.language == "en") En else Cy,
-          En -> s"${appConfig.baseUrl}/language/en",
-          Cy -> s"${appConfig.baseUrl}/language/cy"
-        )
-      )
+      @hmrcServiceNavigationLanguageSelectHelper()
     }
   }{block => @block}
 
