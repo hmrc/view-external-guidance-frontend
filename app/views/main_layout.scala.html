@@ -79,7 +79,7 @@
   @backUrl.map(url =>
     govukBackLink(BackLink(href = url,
                            content = Text(messages("backlink.label")),
-                           classes = "govuk-!-margin-top-0",
+                           classes = "govuk-back-link",
                            attributes = Map( "id" -> "back-link" ))))
 }
 
