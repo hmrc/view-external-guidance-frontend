@@ -31,7 +31,6 @@
   hmrcStandardHeader: HmrcStandardHeader,
   hmrcStandardFooter: HmrcStandardFooter,
   hmrcHead: HmrcHead,
-  hmrcServiceNavigationLanguageSelectHelper: HmrcServiceNavigationLanguageSelectHelper,
   hmrcScripts: HmrcScripts,
   govukBackLink: GovukBackLink,
   govukExitThisPage: GovukExitThisPage,
@@ -57,7 +56,6 @@
 }
 
 @beforeContent = {
-    @hmrcServiceNavigationLanguageSelectHelper()
 
     @backLink.map { link =>
       @govukBackLink(link)

@@ -75,11 +75,6 @@
 }
 
 @beforeContentBlock = {
-  @urlLangSwitch.fold{
-    @if(enableLanguageSelect) {
-      @hmrcServiceNavigationLanguageSelectHelper()
-    }
-  }{block => @block}
 
   @backUrl.map(url =>
     govukBackLink(BackLink(href = url,
@@ -110,6 +105,7 @@
         ))
       } else None
     ),
+    isWelshTranslationAvailable = true,
     templateOverrides = TemplateOverrides(
       additionalHeadBlock = Some(head),
       additionalScriptsBlock = None,
