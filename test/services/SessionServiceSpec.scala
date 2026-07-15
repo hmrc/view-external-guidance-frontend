@@ -18,11 +18,12 @@ package services
 
 import base.BaseSpec
 import core.models.errors.DatabaseError
-import core.models.ocelot.{Published, LabelCache, Label, ScalarLabel, Process, ProcessJson}
-import mocks._
+import core.models.ocelot.{Label, LabelCache, Labels, Process, ProcessJson, Published, ScalarLabel}
+import mocks.*
 import repositories.CachedProcess
-import models.{SessionKey, GuidanceSession, Session, RawPageHistory, PageNext, PageHistory}
-import uk.gov.hmrc.http.{RequestId, HeaderCarrier}
+import models.{GuidanceSession, PageHistory, PageNext, RawPageHistory, Session, SessionKey}
+import uk.gov.hmrc.http.{HeaderCarrier, RequestId}
+
 import scala.concurrent.Future
 import java.time.Instant
 import core.models.RequestOutcome
@@ -66,7 +67,6 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
     )
 
     lazy val target = new SessionService(
-      MockAppConfig,
       mockSessionRepository,
       mockProcessCacheRepository)
 
@@ -87,8 +87,8 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
       val result: Future[RequestOutcome[Unit]] = target.create(sessionRepoId, Published, process, Map(), List())
 
       whenReady(result) {
-        case Right(pc) => succeed
-        case Left(err) => fail()
+        case Right(_) => succeed
+        case Left(_) => fail()
       }
     }
 
@@ -99,8 +99,8 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
         .returns(Future.successful(Left(DatabaseError)))
 
       whenReady(target.create(sessionRepoId, Published, process, Map(), List())) {
-        case Right(pc) => fail()
-        case Left(err) => succeed
+        case Right(_) => fail()
+        case Left(_) => succeed
       }
     }
 
@@ -115,8 +115,8 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
         .returns(Future.successful(Left(DatabaseError)))
 
       whenReady(target.create(sessionRepoId, Published, process, Map(), List())) {
-        case Right(pc) => fail()
-        case Left(err) => succeed
+        case Right(_) => fail()
+        case Left(_) => succeed
       }
 
     }
@@ -135,7 +135,7 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
         .returns(Future.successful(Right(cachedProcess)))
 
        whenReady(target.getNoUpdate(sessionId, processCode)) {
-        case Right(session) => succeed
+        case Right(_) => succeed
         case Left(err) => Future.successful(Left(err))
       }
     }
@@ -153,7 +153,7 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
         .returns(Future.successful(Right(cachedProcess)))
 
       whenReady(target.get(sessionId, processCode, requestId)) {
-        case Right(session) => succeed
+        case Right(_) => succeed
         case Left(err) => Future.successful(Left(err))
       }
     }
@@ -171,7 +171,7 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
         .returns(Future.successful(Right(cachedProcess)))
 
       whenReady(target.reset(sessionId, processCode, requestId)) {
-        case Right(session) => succeed
+        case Right(_) => succeed
         case Left(err) => Future.successful(Left(err))
       }
     }
@@ -186,7 +186,7 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
 
       whenReady(
         target.updateForNewPage(sessionRepoId, process.meta.processCode, Map(), None, None, Nil, Nil, Nil, requestId)) {
-        case Right(session) =>
+        case Right(_) =>
           succeed
         case Left(err) => Future.successful(Left(err))
       }
@@ -208,7 +208,7 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
         input4.name -> input4
       )
 
-      val labelCache = LabelCache(labelMap)
+      val labelCache: Labels = LabelCache(labelMap)
 
 
       MockSessionRepository
@@ -217,7 +217,7 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
 
       whenReady(
         target.updateAfterStandardPage(sessionRepoId, process.meta.processCode, labelCache, None, requestId)) {
-        case Right(session) =>
+        case Right(_) =>
           succeed
         case Left(err) => Future.successful(Left(err))
       }
@@ -239,7 +239,7 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
         input4.name -> input4
       )
 
-      val labelCache = LabelCache(labelMap)
+      val labelCache: Labels = LabelCache(labelMap)
 
 
       MockSessionRepository
@@ -248,7 +248,7 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
 
       whenReady(
         target.updateAfterFormSubmission(docId, processCode, firstPageUrl, answer, labelCache, Nil,  None, requestId)) {
-        case Right(session) =>
+        case Right(_) =>
           succeed
         case Left(err) => Future.successful(Left(err))
       }
@@ -312,7 +312,7 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
 
       result match {
         case None => succeed
-        case Some(rph) => fail()
+        case Some(_) => fail()
       }
     }
 
@@ -363,7 +363,7 @@ class SessionServiceSpec extends BaseSpec with MockProcessCacheRepository with M
 
       result match {
         case None => succeed
-        case Some(rph) => fail()
+        case Some(_) => fail()
       }
     }
 

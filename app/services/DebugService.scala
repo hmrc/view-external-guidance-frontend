@@ -17,7 +17,6 @@
 package services
 
 import play.api.Logging
-import config.AppConfig
 import javax.inject.{Inject, Singleton}
 import models.admin._
 import models.PageNext
@@ -25,10 +24,10 @@ import core.models.ocelot.stanzas._
 import core.models.ocelot.{Page, SecuredProcess}
 
 @Singleton
-class DebugService @Inject() (appConfig: AppConfig) extends Logging {
+class DebugService @Inject() extends Logging {
 
   def mapPage(page: Page, pageMap: Map[String, PageNext]): ProcessPageStructure = {
-    val pageNextById: Map[String, PageNext] = pageMap.map{case (url, pn) => (pn.id, pn)}
+    val pageNextById: Map[String, PageNext] = pageMap.map{case (_, pn) => (pn.id, pn)}
     val nexts = page.next.distinct.map(n => LinkedPage(n, pageNextById(n).url.getOrElse(""), pageNextById(n).title))
     val linked = page.linked.distinct.map(l => LinkedPage(l, pageNextById(l).url.getOrElse(""), pageNextById(l).title))
     val linkedFrom = pageMap.values

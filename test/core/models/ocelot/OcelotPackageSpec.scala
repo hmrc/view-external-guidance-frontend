@@ -17,7 +17,7 @@
 package core.models.ocelot
 
 import base.{EnglishLanguage, WelshLanguage, BaseSpec}
-import core.models._
+import core.models.*
 import org.scalatest.Inspectors.forAll
 import play.api.i18n.Lang
 import java.time.LocalDate

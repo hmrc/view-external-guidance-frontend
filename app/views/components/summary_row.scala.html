@@ -21,7 +21,7 @@
 <div class=@if(row.length > 2){"govuk-summary-list__row"} else {"govuk-summary-list__row govuk-summary-list__row--no-actions"}>
   <dt class=@if(numericColumns(1)){"govuk-summary-list__key govuk-!-width-three-quarters"} else {"govuk-summary-list__key"}>@render_text(row(0))</dt>
   <dd class=@if(numericColumns(1)){"govuk-summary-list__value govuk-!-width-one-quarter numeric"} else {"govuk-summary-list__value"}>@render_text(row(1))</dd>
-  @{if(row.length > 2) summary_actioncell(row(2)) }
+  @{if(row.length > 2) summary_actioncell(row(2)) else {} }
 </div>
 @{
      //$COVERAGE-OFF$

@@ -29,6 +29,8 @@ import org.scalatest.TestSuite
 import scala.concurrent.{ExecutionContext, Future}
 import core.models.ocelot.LabelOperation
 
+import scala.annotation.unused
+
 trait MockSessionService extends TestSuite with MockFactory {
 
   val mockSessionService: SessionService = mock[SessionService]
@@ -66,12 +68,12 @@ trait MockSessionService extends TestSuite with MockFactory {
         .updateForNewPage(_: String, _: String, _: Map[String, PageNext], _: Option[List[PageHistory]], _: Option[List[FlowStage]], _: List[Label], _: List[String], _: List[String], _: Option[String]))
         .expects(key, processCode, pageMap, pageHistory, flowStack, labelUpdates, labelDeletions, legalPageIds, requestId)
 
-    def updateAfterStandardPage(key: String, processCode: String, labels: Labels, revertOperations: Option[List[LabelOperation]], requestId: Option[String]): CallHandler[Future[RequestOutcome[Unit]]] =
+    def updateAfterStandardPage(key: String, processCode: String, @unused labels: Labels, revertOperations: Option[List[LabelOperation]], requestId: Option[String]): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockSessionService
         .updateAfterStandardPage(_: String, _: String, _: Labels, _: Option[List[LabelOperation]], _: Option[String]))
         .expects(key, processCode, *, revertOperations, requestId)
 
-    def updateAfterFormSubmission(key: String, processCode: String, answerId: String, answer: String, labels: Labels, nextLegalPageIds: List[String],
+    def updateAfterFormSubmission(key: String, processCode: String, answerId: String, answer: String, @unused labels: Labels, nextLegalPageIds: List[String],
                                   revertOperations: Option[List[LabelOperation]], requestId: Option[String]): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockSessionService
         .updateAfterFormSubmission(_: String, _: String, _: String, _: String, _: Labels, _: List[String], _: Option[List[LabelOperation]], _: Option[String]))

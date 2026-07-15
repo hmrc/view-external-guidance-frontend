@@ -171,15 +171,15 @@ class QuestionSpec extends AnyWordSpec with Matchers with ViewFns with GuiceOneA
       }
     }
 
-   "question with hint should include hint id in aria-desribedby on fieldset" in new Test {
+    "question with hint should include hint id in aria-desribedby on fieldset" in new Test {
       val doc: Document = asDocument(components.question(questionWithHint, "test", formProvider("test"))(fakeRequest, messages, ctx))
       val fieldset = doc.getElementsByTag("fieldset").first
       Option(fieldset).fold(fail("Missing fieldset")){ fset =>
         elementAttrs(fset)("aria-describedby") shouldBe "question-hint"
       }
-   }
+    }
 
-   "question with hint in error should include hint id and error id in aria-desribedby on fieldset" in new Test {
+    "question with hint in error should include hint id and error id in aria-desribedby on fieldset" in new Test {
       val doc: Document = asDocument(components.question(questionWithHintAndErrors, "test", formProvider("test"))(fakeRequest, messages, ctx))
       val fieldset = doc.getElementsByTag("fieldset").first
       Option(fieldset).fold(fail("Missing fieldset")){ fset =>
@@ -188,18 +188,18 @@ class QuestionSpec extends AnyWordSpec with Matchers with ViewFns with GuiceOneA
           aria should include("required-error")
         }
       }
-   }
+    }
 
-   "answer with hint should include hint id in aria-desribedby on input" in new Test {
+    "answer with hint should include hint id in aria-desribedby on input" in new Test {
       val doc: Document = asDocument(components.question(questionWithHint, "test", formProvider("test"))(fakeRequest, messages, ctx))
       for{
         (inp, index) <- doc.getElementsByTag("input").asScala.toList.zipWithIndex
       } yield {
         elementAttrs(inp)("aria-describedby") shouldBe s"test-item-$index-hint"
       }
-   }
+    }
 
-   "answer with hint in error should include hint id and error id in aria-desribedby on input" in new Test {
+    "answer with hint in error should include hint id and error id in aria-desribedby on input" in new Test {
       val doc: Document = asDocument(components.question(questionWithHintAndErrors, "test", formProvider("test"))(fakeRequest, messages, ctx))
       for{
         (inp, index) <- doc.getElementsByTag("input").asScala.toList.zipWithIndex

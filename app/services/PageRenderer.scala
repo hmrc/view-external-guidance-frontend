@@ -64,7 +64,7 @@ class PageRenderer @Inject() (appConfig: AppConfig) {
             }
           case _ => Left((executionError(ProgrammingError("Visual stanzas found after input"), next, labels.runMode), labels))
         }
-        case Some(s) => Left((executionError(NonTerminatingPageError, next, labels.runMode), labels))
+        case Some(_) => Left((executionError(NonTerminatingPageError, next, labels.runMode), labels))
       }}
 
     implicit val stanzaMap: Map[String, Stanza] = page.keyedStanzas.map(ks => (ks.key, ks.stanza)).toMap ++ labels.continuationPool
@@ -90,7 +90,7 @@ class PageRenderer @Inject() (appConfig: AppConfig) {
   private def evalStanza(s: Evaluate, labels: Labels):(String, Labels, Option[RuntimeError]) =
     (s.eval(labels), labels.runMode) match {
       // Ignore evaluation error when running in PageReview run mode
-      case ((nxt, updatedLabels, err), PageReview) => (nxt, updatedLabels, None)
+      case ((nxt, updatedLabels, _), PageReview) => (nxt, updatedLabels, None)
       case ((nxt, updatedLabels, err), _) => (nxt, updatedLabels, err)
     }
 
@@ -119,7 +119,7 @@ class PageRenderer @Inject() (appConfig: AppConfig) {
                                                 stanzaCount + 1)
         case _ => Left((executionError(ProgrammingError("Unknown stanza without Evaluate"), stanzaId, labels.runMode), labels))
       }
-      case Some(s) => Left((executionError(NonTerminatingPageError, stanzaId, labels.runMode), labels))
+      case Some(_) => Left((executionError(NonTerminatingPageError, stanzaId, labels.runMode), labels))
     }
 
   private def executionError(err: RuntimeError, stanzId: String, runMode: RunMode): Error =

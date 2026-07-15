@@ -65,8 +65,8 @@ class AdminApiControllerSpec extends BaseSpec with SequenceJson with GuiceOneApp
       val result = target.listActiveProcessSummaries()(fakeRequest)
       status(result) shouldBe Status.OK
       contentAsJson(result).as[List[CachedProcessSummary]] match {
-        case x :: y :: xs if x == summaries(0) && y == summaries(1) => succeed
-        case x => fail()
+        case x :: y :: _ if x == summaries(0) && y == summaries(1) => succeed
+        case _ => fail()
       }
     }
   }

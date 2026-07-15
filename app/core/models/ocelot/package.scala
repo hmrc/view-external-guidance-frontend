@@ -165,8 +165,8 @@ package object ocelot {
       val capture = matchGroup(m) _
       capture(TextGroup).fold[(String, Boolean, Option[String])]((s, false, None)){field =>
         (capture(NoRepeatGroup1), capture(NoRepeatGroup2)) match {
-          case (Some(nr1), _) => (field, true, capture(WidthGroup1))
-          case (_, Some(nr2)) => (field, true, capture(WidthGroup2))
+          case (Some(_), _) => (field, true, capture(WidthGroup1))
+          case (_, Some(_)) => (field, true, capture(WidthGroup2))
           case (_, _) => (field, false, capture(WidthGroup2))
         }
       }

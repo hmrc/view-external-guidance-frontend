@@ -45,7 +45,7 @@ object QuestionStanza {
         (JsPath \ "next").write[Seq[String]] and
         (JsPath \ "label").writeNullable[String] and
         (JsPath \ "stack").write[Boolean]
-    )(unlift(QuestionStanza.unapply))
+    )(Tuple.fromProductTyped(_))
 
 }
 

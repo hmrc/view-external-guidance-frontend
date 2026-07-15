@@ -18,7 +18,7 @@ package views.components
 
 import base.{ViewFns, ViewSpec}
 import core.models.ocelot.{LabelCache, Labels}
-import models.ui._
+import models.ui.*
 import models.PageContext
 import org.jsoup.nodes.Element
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -26,8 +26,8 @@ import play.api.i18n.{Messages, MessagesApi}
 import play.api.inject.Injector
 import play.api.test.FakeRequest
 import play.twirl.api.Html
-import views.html._
-import scala.jdk.CollectionConverters._
+import views.html.*
+import scala.jdk.CollectionConverters.*
 
 class TableSpec extends ViewSpec with ViewFns with GuiceOneAppPerSuite {
 
@@ -89,7 +89,7 @@ class TableSpec extends ViewSpec with ViewFns with GuiceOneAppPerSuite {
             case (c, td) if td.isNumeric =>
               c.hasClass("govuk-table__cell--numeric") shouldBe true
 
-            case (c, tc) =>
+            case (c, _) =>
               c.hasClass("govuk-table__cell--numeric") shouldBe false
           }
       }
@@ -108,7 +108,7 @@ class TableSpec extends ViewSpec with ViewFns with GuiceOneAppPerSuite {
         case (rowElem, tableRow) =>
           val cells = rowElem.children.asScala.toList
           (cells zip tableRow).foreach{
-            case (c, td) if td.isNumeric => fail()
+            case (_, td) if td.isNumeric => fail()
             case (c, _) =>
               c.hasClass("govuk-table__cell--numeric") shouldBe false
           }

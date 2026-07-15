@@ -32,10 +32,10 @@ case class DebugInformation(processPageStructure: Option[ProcessPageStructure], 
 
     val all: List[DebugLabelRow] = names.map{n =>
       allLabels(n) match {
-        case s: ScalarLabel => 
+        case _: ScalarLabel => 
           DebugLabelRow(n, "Scalar", preRenderLabels.fold[Option[String]](None)(_.flush().value(n)),
                                     postRenderLabels.fold[Option[String]](None)(_.flush().value(n)))
-        case l: ListLabel => 
+        case _: ListLabel => 
           DebugLabelRow(n, "List", preRenderLabels.fold[Option[String]](None)(_.flush().valueAsList(n).map(_.mkString(","))), 
                                    postRenderLabels.fold[Option[String]](None)(_.flush().valueAsList(n).map(_.mkString(","))))
       }

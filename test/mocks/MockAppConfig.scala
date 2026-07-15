@@ -31,27 +31,27 @@ object MockAppConfig extends AppConfig {
   val analyticsHost: String = "host"
   val reportAProblemPartialUrl: String = "someUrl"
   val reportAProblemNonJSUrl: String = "someJsUrl"
-  val externalGuidanceBaseUrl: String = "http://external-guidance-base-url"
+  lazy val externalGuidanceBaseUrl: String = "http://external-guidance-base-url"
   val cookies: String = "someUrl"
   val privacy: String = "someUrl"
   val termsConditions: String = "someUrl"
   val govukHelp: String = "someUrl"
-  val accessibilityStatement: String = "/accessibility-statement/interactive-guidance"
-  val timeOutUrl: String = "/guidance/endSession"
-  val signOutUrl: String = "/guidance/sessionTimeout"
+  lazy val accessibilityStatement: String = "/accessibility-statement/interactive-guidance"
+  lazy val timeOutUrl: String = "/guidance/endSession"
+  lazy val signOutUrl: String = "/guidance/sessionTimeout"
   val defaultSignOutUrl: String = "https://www.gov.uk"
-  val timeoutInSeconds: Int = 1200
-  val timeoutWarningInSeconds: Int = 300
-  val expiryErrorMarginInMilliSeconds: Int = 100
+  lazy val timeoutInSeconds: Int = 1200
+  lazy val timeoutWarningInSeconds: Int = 300
+  lazy val expiryErrorMarginInMilliSeconds: Int = 100
   def feedbackUrl(implicit request: RequestHeader): String = "somefeedbackUrl"
-  val baseUrl: String = "/guidance"
-  val host: String = "http://localhost:9741"
-  val adminHost: String = "http://adminhost"
-  val hostBaseUrl: String = s"${host}${baseUrl}"
-  val adminHostBaseUrl: String = s"${adminHost}${baseUrl}"
-  val pageStanzaLimit: Int = 1000
-  val optimizelyProjectId: Option[String] = None
-  val processCacheTimeoutHours: Int = 120
-  val processCacheScratchTimeoutHours: Int = 12
-  val passphraseHashKey: String = "gvBoGdgzqG1AarzF1LY0zQ=="
+  lazy val baseUrl: String = "/guidance"
+  lazy val host: String = "http://localhost:9741"
+  lazy val adminHost: String = "http://adminhost"
+  lazy val hostBaseUrl: String = s"${host}${baseUrl}"
+  lazy val adminHostBaseUrl: String = s"${adminHost}${baseUrl}"
+  lazy val pageStanzaLimit: Int = 1000
+  lazy val optimizelyProjectId: Option[String] = None
+  lazy val processCacheTimeoutHours: Int = 120
+  lazy val processCacheScratchTimeoutHours: Int = 12
+  lazy val passphraseHashKey: String = "gvBoGdgzqG1AarzF1LY0zQ=="
 }

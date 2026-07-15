@@ -37,7 +37,7 @@ object InstructionStanza {
         (JsPath \ "next").write[Seq[String]] and
         (JsPath \ "link").writeNullable[Int] and
         (JsPath \ "stack").write[Boolean]
-    )(unlift(InstructionStanza.unapply))
+    )(Tuple.fromProductTyped(_))
 
 }
 

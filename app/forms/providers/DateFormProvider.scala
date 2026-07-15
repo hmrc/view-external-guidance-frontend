@@ -47,6 +47,6 @@ class DateFormProvider extends FormProvider[DateAnswer] {
     Form(mapping("day" -> nonEmptyText,
                  "month" -> nonEmptyText,
                  "year" -> nonEmptyText)
-        (DateAnswer.apply)(DateAnswer.unapply)
+        (DateAnswer.apply)(da => Some(Tuple.fromProductTyped(da)))
     )
 }

@@ -36,6 +36,6 @@ object RawPageHistory {
     (__ \ "stanzId").write[String] and
       (__ \ "revertOps").write[List[LabelOperation]] and
       (__ \ "flowStack").write[List[FlowStage]]
-    )(unlift(RawPageHistory.unapply))
+    )(Tuple.fromProductTyped(_))
 
 }

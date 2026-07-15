@@ -20,14 +20,14 @@ import config.ErrorHandler
 import core.models.RequestOutcome
 import core.models.errors.NotFoundError
 import core.models.ocelot.{Page, Process}
-import models.admin._
+import models.admin.*
 import models.PageNext
 import play.api.Logger
 import play.api.i18n.I18nSupport
-import play.api.mvc._
+import play.api.mvc.*
 import services.{DebugService, RetrieveAndCacheService}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
-import views.html._
+import views.html.*
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -60,7 +60,7 @@ class StartAdminController @Inject() (
         val processPageMaps: List[ProcessPageStructure] = pages.map(debugService.mapPage(_, pageMap)).toList
         Future.successful(Ok(view(process.title.english, processPageMaps)))
       case Left(NotFoundError) => errorHandler.notFoundTemplate.map(NotFound(_))
-      case Left(err) => errorHandler.internalServerErrorTemplate.map(InternalServerError(_))
+      case Left(_) => errorHandler.internalServerErrorTemplate.map(InternalServerError(_))
     }
 
 }

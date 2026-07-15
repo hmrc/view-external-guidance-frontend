@@ -20,21 +20,23 @@ import java.math.RoundingMode
 import java.text.NumberFormat
 import java.util.Locale.UK
 import play.api.i18n.Messages
-import core.models.ocelot.{asNumeric, asDate}
+import core.models.ocelot.{asDate, asNumeric}
+
+import scala.annotation.unused
 
 trait Name {
   val name: String
 }
 
 sealed trait OutputFormat {
-  def asString(value: Option[String], messages: Messages): String = value.getOrElse("")
+  def asString(value: Option[String], @unused messages: Messages): String = value.getOrElse("")
   def isNumeric: Boolean = false
 }
 
 case object Currency extends OutputFormat with Name {
   val name: String = "currency"
   override def isNumeric: Boolean = true
-  override def asString(optValue: Option[String], messages: Messages): String =
+  override def asString(optValue: Option[String], @unused messages: Messages): String =
     optValue.fold("")(value =>
       asNumeric(value) match {
         case Some(x) => NumberFormat.getCurrencyInstance(UK).format(x)
@@ -46,7 +48,7 @@ case object Currency extends OutputFormat with Name {
 case object CurrencyPoundsOnly extends OutputFormat with Name {
   val name: String = "currencyPoundsOnly"
   override def isNumeric: Boolean = true
-  override def asString(optValue: Option[String], messages: Messages): String =
+  override def asString(optValue: Option[String], @unused messages: Messages): String =
     optValue.fold("")(value =>
       // Extract as simple number, then format as pounds only
       asNumeric(value) match {

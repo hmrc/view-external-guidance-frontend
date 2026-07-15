@@ -18,7 +18,7 @@ package views.admin
 
 import base.BaseSpec
 import core.models.ocelot.Phrase
-import core.models.ocelot.stanzas._
+import core.models.ocelot.stanzas.*
 
 class AdminPackageSpec extends BaseSpec {
 

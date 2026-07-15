@@ -18,7 +18,7 @@ package views
 
 import base.{ViewFns, ViewSpec}
 import core.models.ocelot.{LabelCache, Labels}
-import models.ui._
+import models.ui.*
 import models.PageContext
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.i18n.{Messages, MessagesApi}

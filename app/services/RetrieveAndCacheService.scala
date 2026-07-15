@@ -16,11 +16,11 @@
 
 package services
 
-import core.services._
+import core.services.*
 import connectors.GuidanceConnector
 import javax.inject.{Inject, Singleton}
 import play.api.Logger
-import core.models.errors._
+import core.models.errors.*
 import core.models.RequestOutcome
 import uk.gov.hmrc.http.HeaderCarrier
 import scala.concurrent.{ExecutionContext, Future}

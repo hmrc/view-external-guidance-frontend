@@ -16,7 +16,7 @@
 
 package forms
 
-import play.api.mvc._
+import play.api.mvc.*
 import play.api.data.Form
 import play.api.i18n.{Lang, Messages, MessagesApi}
 import core.models.ocelot.{Labels, Phrase, Page, Validation}
@@ -26,7 +26,7 @@ import services.{ErrorStrategy, ValueMissingError, ValueMissingGroupError}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.test.FakeRequest
 import base.BaseSpec
-import forms.providers._
+import forms.providers.*
 import core.models.ocelot.SecuredProcess
 
 class FormProvidersSpec extends BaseSpec with GuiceOneAppPerSuite {
@@ -359,7 +359,7 @@ class FormProvidersSpec extends BaseSpec with GuiceOneAppPerSuite {
       val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = formProvider(dateInput).bind(relativePath)
 
       result match {
-        case Left((formWithErrors: Form[_], errorStrategy: ErrorStrategy)) =>
+        case Left((_, errorStrategy: ErrorStrategy)) =>
           errorStrategy shouldBe ValueMissingGroupError(List(day))
         case _  => fail("Binding should fail for incorrect request data")
       }
@@ -391,7 +391,7 @@ class FormProvidersSpec extends BaseSpec with GuiceOneAppPerSuite {
       val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = formProvider(dateInput).bind(relativePath)
 
       result match {
-        case Left((formWithErrors: Form[_], errorStrategy: ErrorStrategy)) =>
+        case Left((_, errorStrategy: ErrorStrategy)) =>
           errorStrategy shouldBe ValueMissingGroupError(List(month))
         case _  => fail("Binding should fail for incorrect request data")
       }
@@ -423,7 +423,7 @@ class FormProvidersSpec extends BaseSpec with GuiceOneAppPerSuite {
       val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = formProvider(dateInput).bind(relativePath)
 
       result match {
-        case Left((formWithErrors: Form[_], errorStrategy: ErrorStrategy)) =>
+        case Left((_, errorStrategy: ErrorStrategy)) =>
           errorStrategy shouldBe ValueMissingGroupError(List(year))
         case _  => fail("Binding should fail for incorrect request data")
       }
@@ -457,7 +457,7 @@ class FormProvidersSpec extends BaseSpec with GuiceOneAppPerSuite {
       val result: Either[(Form[_], ErrorStrategy), (Form[_], SubmittedAnswer)] = formProvider(dateInput).bind(relativePath)
 
       result match {
-        case Left((formWithErrors: Form[_], errorStrategy: ErrorStrategy)) =>
+        case Left((_, errorStrategy: ErrorStrategy)) =>
           errorStrategy shouldBe ValueMissingGroupError(List(day, year))
         case _  => fail("Binding should fail for incorrect request data")
       }

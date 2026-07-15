@@ -56,7 +56,7 @@ object InputStanza {
         (JsPath \ "label").write[String] and
         (JsPath \ "placeholder").writeNullable[Int] and
         (JsPath \ "stack").write[Boolean]
-    )(unlift(InputStanza.unapply))
+    )(Tuple.fromProductTyped(_))
 
 }
 

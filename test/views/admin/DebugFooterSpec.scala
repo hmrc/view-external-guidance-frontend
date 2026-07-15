@@ -17,11 +17,11 @@
 package views.html.admin
 
 import base.{BaseSpec, ViewFns, ViewSpec}
-import core.models.ocelot._
-import core.models.ocelot.stanzas._
+import core.models.ocelot.*
+import core.models.ocelot.stanzas.*
 import play.api.i18n.{Messages, MessagesApi}
 import play.api.test.FakeRequest
-import models.admin._
+import models.admin.*
 import views.html.admin.debug_footer_tabs
 
 class DebugFooterSpec extends BaseSpec with ViewSpec with ViewFns {

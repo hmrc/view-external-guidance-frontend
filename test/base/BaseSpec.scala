@@ -21,11 +21,12 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
-import play.api.libs.json._
+import play.api.libs.json.*
 import play.api.i18n.Lang
 import play.api.inject.Injector
 import play.api.inject.guice.GuiceApplicationBuilder
 
+import scala.annotation.unused
 import scala.concurrent.ExecutionContext
 
 trait EnglishLanguage {
@@ -101,7 +102,7 @@ trait TestConstants {
         "day.display.value.7" -> "Dydd Sul"
       )
 
-  def message(lang: Lang)(id: String, param: Any*): String =
+  def message(lang: Lang)(id: String, @unused param: Any*): String =
     lang.code match {
       case "en" => enmessages(id)
       case "cy" => cymessages(id)

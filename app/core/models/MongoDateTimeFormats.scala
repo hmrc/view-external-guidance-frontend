@@ -36,11 +36,11 @@ trait MongoDateTimeFormats {
 
   final val tolerantLocalDateReads: Reads[LocalDate] = (js: JsValue) =>
     (js \ "$date" \ "$numberLong").validate[String] match {
-      case err @ JsError(_) =>
+      case _ @ JsError(_) =>
         // Fall back to try and read date as string
         (js).validate[String] match {
           case err2 @ JsError(_) => err2
-          case res2 @ JsSuccess(dt, pth) => JsSuccess(LocalDate.parse(dt), pth)
+          case _ @ JsSuccess(dt, pth) => JsSuccess(LocalDate.parse(dt), pth)
         }
       case JsSuccess(dt, pth) => JsSuccess(Instant.ofEpochMilli(dt.toLong).atZone(ZoneOffset.UTC).toLocalDate, pth)
       }

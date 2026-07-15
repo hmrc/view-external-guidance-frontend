@@ -38,7 +38,7 @@ object LabelValue {
   implicit val writes: Writes[LabelValue] = (
     (__ \ "name").write[String] and
       (__ \ "value").write[Phrase]
-  )(unlift(LabelValue.unapply))
+  )(Tuple.fromProductTyped(_))
 }
 
 object Flow {
@@ -50,7 +50,7 @@ object Flow {
   implicit val writes: OWrites[Flow] = (
     (__ \ "next").write[String] and
       (__ \ "labelValue").writeNullable[LabelValue]
-  )(unlift(Flow.unapply))
+  )(Tuple.fromProductTyped(_))
 }
 
 object Continuation {

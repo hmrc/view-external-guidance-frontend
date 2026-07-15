@@ -36,6 +36,6 @@ object PageStanza {
       (__ \ "url").write[String] and
         (__ \ "next").write[Seq[String]] and
         (__ \ "stack").write[Boolean]
-    )(unlift(PageStanza.unapply))
+    )(Tuple.fromProductTyped(_))
 
 }

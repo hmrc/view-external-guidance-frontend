@@ -17,7 +17,7 @@
 import java.time.Instant
 import config.AppConfig
 import play.api.i18n.Messages
-import core.models.ocelot.errors._
+import core.models.ocelot.errors.*
 import core.models.ocelot.UrlPathPattern
 import uk.gov.hmrc.http.SessionKeys
 import play.api.mvc.Request
@@ -45,7 +45,7 @@ package object controllers {
 
   def errorSolutions(errors: List[RuntimeError], stanzaId: String)(implicit messages: Messages): List[List[String]] =
     List(errors.collectFirst{
-      case e: UnsupportedOperationError => List(messages("guidance.error.unsupported_operation.soln"))
+      case _: UnsupportedOperationError => List(messages("guidance.error.unsupported_operation.soln"))
     }, errors.collectFirst{
       case NonTerminatingPageError => List(messages("guidance.error.nonterminating_loop.soln"))
     }, errors.collectFirst{
@@ -56,7 +56,7 @@ package object controllers {
              messages("guidance.error.unsupported_ui_pattern.soln3"),
              messages("guidance.error.unsupported_ui_pattern.soln4"))
     }, errors.collectFirst{
-      case e: DivideByZeroError => List(messages("guidance.error.divide_by_zero.soln"))
+      case _: DivideByZeroError => List(messages("guidance.error.divide_by_zero.soln"))
     }, errors.collectFirst{
       case e: ProgrammingError => List(messages("guidance.error.programming_error", e.msg, stanzaId))
     }

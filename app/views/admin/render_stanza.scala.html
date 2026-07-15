@@ -20,7 +20,7 @@
 
 @(s: PopulatedStanza, pageIds: Seq[String], externalLinks: Boolean)
 
- @implicitExternalLinks = @{externalLinks}
+ @implicitExternalLinks: Boolean = @{externalLinks}
 
   @{s match {
     case p: PageStanza => Html(

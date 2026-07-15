@@ -19,7 +19,7 @@ package controllers
 import config.{AppConfig, ErrorHandler}
 import controllers.actions.SessionIdAction
 import models.DebuggableRequestOutcome
-import core.models.errors._
+import core.models.errors.*
 import core.models.errors.Error
 import core.models.ocelot.errors.RuntimeError
 import core.models.ocelot.stanzas.DateInput
@@ -150,7 +150,7 @@ class GuidanceController @Inject() (
     case ExpectationFailedError =>
       logger.warn(s"ExpectationFailed error on getPage. Redirecting to ${appConfig.baseUrl}/$processCode")
       Future.successful(redirectToGuidanceStartWhenNoSession(processCode, lang))
-    case Error(Error.ExecutionError, errs, Some(errorRunMode), stanzaId) =>
+    case Error(Error.ExecutionError, _, Some(errorRunMode), stanzaId) =>
       translateExecutionError(err.errors.collect{case e: RuntimeError => e},
                                                 processCode, path, errorRunMode, stanzaId, sessionId, debugInformation)
     case err =>
@@ -181,7 +181,7 @@ class GuidanceController @Inject() (
                   val pageCtx = service.getSubmitPageContext(ctx, ValueTypeGroupError(missingFieldNames, fieldErrors.map(dateInput.FieldNames)))
                   // Answer didn't pass DateInput stanza validation
                   createErrorView(pageCtx, inputName, form).map(BadRequest(_))
-                case (Left(fieldErrors), _) =>
+                case (Left(_), _) =>
                   // Answer didn't pass other DataInput stanza validation
                   createErrorView(service.getSubmitPageContext(ctx, ValueTypeError), inputName, form).map(BadRequest(_))
                 case (Right(answer), _) =>
@@ -225,7 +225,7 @@ class GuidanceController @Inject() (
     case SessionNotFoundError =>
       logger.warn(s"Request for page at /$path returned SessionNotFound. Redirect to ${appConfig.baseUrl}/$processCode")
       Future.successful(redirectToGuidanceStart(processCode))
-    case Error(Error.ExecutionError, errs, Some(errorRunMode), stanzaId) =>
+    case Error(Error.ExecutionError, _, Some(errorRunMode), stanzaId) =>
       translateExecutionError(err.errors.collect{case e: RuntimeError => e},
                                                 processCode, path, errorRunMode, stanzaId, sessionId, debugInformation)
     case err =>
@@ -249,11 +249,11 @@ class GuidanceController @Inject() (
       case Debugging =>
         errorHandler
           .runtimeErrorHandler(processCode, errorMsgs,
-                               errorSolutions(errors, stanzaId.getOrElse("UNKNOWN")), stanzaId, debugInformation)
+                               errorSolutions(errors, stanzaId.getOrElse("UNKNOWN")), debugInformation)
           .map(InternalServerError(_))
       case _ =>
         errorMsgs.foreach{err => logger.warn(s"RuntimeError: $err within page /$path of processCode ${processCode}, sessionId=$sessionId")}
-        errorHandler.runtimeErrorHandler(processCode, errorMsgs, errorSolutions(errors, stanzaId.getOrElse("UNKNOWN")), stanzaId, None).map(InternalServerError(_))
+        errorHandler.runtimeErrorHandler(processCode, errorMsgs, errorSolutions(errors, stanzaId.getOrElse("UNKNOWN")), None).map(InternalServerError(_))
     }
   }
 
@@ -279,7 +279,7 @@ class GuidanceController @Inject() (
   private def createErrorView(ctxOutcome: DebuggableRequestOutcome[PageContext], inputName: String, form: Form[_])
                                   (implicit request: Request[_]): Future[Html] =
     ctxOutcome match {
-      case Left(err) => errorHandler.internalServerErrorTemplateWithProcessCode(None)
+      case Left(_) => errorHandler.internalServerErrorTemplateWithProcessCode(None)
       case Right(ctx) =>
         ctx.page match {
           case page: FormPage => Future.successful(formView(page, ctx, inputName, form))

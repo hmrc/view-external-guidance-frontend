@@ -29,24 +29,24 @@ trait AppConfig {
   val reportAProblemPartialUrl: String
   val reportAProblemNonJSUrl: String
   val languageMap: Map[String, Lang]
-  val externalGuidanceBaseUrl: String
+  lazy val externalGuidanceBaseUrl: String
   val config: Configuration
-  val accessibilityStatement: String
-  val signOutUrl: String
-  val timeOutUrl: String
-  val timeoutInSeconds: Int
-  val timeoutWarningInSeconds: Int
-  val expiryErrorMarginInMilliSeconds: Int
+  lazy val accessibilityStatement: String
+  lazy val signOutUrl: String
+  lazy val timeOutUrl: String
+  lazy val timeoutInSeconds: Int
+  lazy val timeoutWarningInSeconds: Int
+  lazy val expiryErrorMarginInMilliSeconds: Int
   def feedbackUrl(implicit request: RequestHeader): String
-  val host: String
-  val adminHost: String
-  val baseUrl: String
-  val hostBaseUrl: String
-  val adminHostBaseUrl: String
-  val pageStanzaLimit: Int
-  val processCacheTimeoutHours: Int
-  val processCacheScratchTimeoutHours: Int
-  val passphraseHashKey: String
+  lazy val host: String
+  lazy val adminHost: String
+  lazy val baseUrl: String
+  lazy val hostBaseUrl: String
+  lazy val adminHostBaseUrl: String
+  lazy val pageStanzaLimit: Int
+  lazy val processCacheTimeoutHours: Int
+  lazy val processCacheScratchTimeoutHours: Int
+  lazy val passphraseHashKey: String
 }
 
 @Singleton

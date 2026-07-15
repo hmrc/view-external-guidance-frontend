@@ -94,5 +94,5 @@ object Meta {
       (__ \ "processCode").write[String] and
       (__ \ "timescalesVersion").writeNullable[Long] and
       (__ \ "ratesVersion").writeNullable[Long]
-  )(unlift(Meta.unapply))
+  )(Tuple.fromProductTyped(_))
 }

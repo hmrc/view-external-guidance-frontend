@@ -43,5 +43,5 @@ class StringListFormProvider extends FormProvider[ListAnswer] {
     Form(mapping(
       name -> list(text).verifying(Constraint[List[String]]("constraint.required")(l => if(l.nonEmpty) Valid else Invalid(ValidationError("error.required"))))
     )
-    (ListAnswer.apply)(ListAnswer.unapply))
+    (ListAnswer.apply)(la => Some(la.items)))
 }

@@ -65,15 +65,14 @@ object TextBuilder {
     def placeholdersToItems(matches: List[Match])(implicit ctx: UIContext): List[TextItem] =
       matches.map { m =>
         val capture: Int => Option[String] = matchGroup(m)
-        capture(BoldTextIdx).fold[TextItem]({
+        capture(BoldTextIdx).fold{
             val linkDestination = m.group(LinkDestIdx)
             val window: Boolean = capture(LinkTypeIdx).fold(false)(modifier => modifier == "-tab")
             val dest: String = if (Link.isLinkableStanzaId(linkDestination)) ctx.pageMapById(linkDestination).url else linkDestination
             val asButton: Boolean = capture(ButtonOrLinkIdx).fold(false)(_ == "button")
             val (lnkText, lnkHint) = stringWithOptionalHint(m.group(LinkTextIdx))
             ui.Link(dest, lnkText, window, asButton, lnkHint)
-          })
-        {txt => Words(txt, true)}
+        }(txt => Words(txt, true))
       }
   }
 
@@ -142,7 +141,7 @@ object TextBuilder {
 
   def fragment(text: String): List[Fragment] = {
     val (txts, matches) = fromPattern(plregex, text)
-    merge[Fragment, Fragment](txts.map(PartialMatch), matches.map(m => TotalMatch(m.group(0), placeholderText(m))), Nil, _ => false)
+    merge[Fragment, Fragment](txts.map(PartialMatch(_)), matches.map(m => TotalMatch(m.group(0), placeholderText(m))), Nil, _ => false)
   }
 
   def flattenFragments(f: List[Fragment]): List[String] = f.flatMap(_.tokens).mkString.split("\\s+").toList

@@ -173,40 +173,40 @@ object AddOperation {
   implicit val reads: Reads[AddOperation] =
     ((JsPath \ "left").read[String] and (JsPath \ "right").read[String] and (JsPath \ "label").read[String]) (AddOperation.apply _)
   implicit val writes: OWrites[AddOperation] =
-    ((JsPath \ "left").write[String] and (JsPath \ "right").write[String] and (JsPath \ "label").write[String]) (unlift(AddOperation.unapply))
+    ((JsPath \ "left").write[String] and (JsPath \ "right").write[String] and (JsPath \ "label").write[String]) (Tuple.fromProductTyped(_))
 }
 
 object SubtractOperation {
   implicit val reads: Reads[SubtractOperation] =
     ((JsPath \ "left").read[String] and (JsPath \ "right").read[String] and (JsPath \ "label").read[String]) (SubtractOperation.apply _)
   implicit val writes: OWrites[SubtractOperation] =
-    ((JsPath \ "left").write[String] and (JsPath \ "right").write[String] and (JsPath \ "label").write[String]) (unlift(SubtractOperation.unapply))
+    ((JsPath \ "left").write[String] and (JsPath \ "right").write[String] and (JsPath \ "label").write[String]) (Tuple.fromProductTyped(_))
 }
 
 object MultiplyOperation {
   implicit val reads: Reads[MultiplyOperation] =
     ((JsPath \ "left").read[String] and (JsPath \ "right").read[String] and (JsPath \ "label").read[String]) (MultiplyOperation.apply _)
   implicit val writes: OWrites[MultiplyOperation] =
-    ((JsPath \ "left").write[String] and (JsPath \ "right").write[String] and (JsPath \ "label").write[String]) (unlift(MultiplyOperation.unapply))
+    ((JsPath \ "left").write[String] and (JsPath \ "right").write[String] and (JsPath \ "label").write[String]) (Tuple.fromProductTyped(_))
 }
 
 object DivideOperation {
   implicit val reads: Reads[DivideOperation] =
     ((JsPath \ "left").read[String] and (JsPath \ "right").read[String] and (JsPath \ "label").read[String]) (DivideOperation.apply _)
   implicit val writes: OWrites[DivideOperation] =
-    ((JsPath \ "left").write[String] and (JsPath \ "right").write[String] and (JsPath \ "label").write[String]) (unlift(DivideOperation.unapply))
+    ((JsPath \ "left").write[String] and (JsPath \ "right").write[String] and (JsPath \ "label").write[String]) (Tuple.fromProductTyped(_))
 }
 
 object CeilingOperation {
   implicit val reads: Reads[CeilingOperation] =
     ((JsPath \ "left").read[String] and (JsPath \ "right").read[String] and (JsPath \ "label").read[String]) (CeilingOperation.apply _)
   implicit val writes: OWrites[CeilingOperation] =
-    ((JsPath \ "left").write[String] and (JsPath \ "right").write[String] and (JsPath \ "label").write[String]) (unlift(CeilingOperation.unapply))
+    ((JsPath \ "left").write[String] and (JsPath \ "right").write[String] and (JsPath \ "label").write[String]) (Tuple.fromProductTyped(_))
 }
 
 object FloorOperation {
   implicit val reads: Reads[FloorOperation] =
     ((JsPath \ "left").read[String] and (JsPath \ "right").read[String] and (JsPath \ "label").read[String]) (FloorOperation.apply _)
   implicit val writes: OWrites[FloorOperation] =
-    ((JsPath \ "left").write[String] and (JsPath \ "right").write[String] and (JsPath \ "label").write[String]) (unlift(FloorOperation.unapply))
+    ((JsPath \ "left").write[String] and (JsPath \ "right").write[String] and (JsPath \ "label").write[String]) (Tuple.fromProductTyped(_))
 }

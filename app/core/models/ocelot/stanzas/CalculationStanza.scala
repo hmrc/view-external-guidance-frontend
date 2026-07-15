@@ -46,7 +46,7 @@ object CalcOperation {
         (JsPath \ "op").write[CalcOperationType] and
         (JsPath \ "right").write[String] and
         (JsPath \ "label").write[String]
-    )(unlift(CalcOperation.unapply))
+    )(Tuple.fromProductTyped(_))
 }
 
 case class CalculationStanza(calcs: Seq[CalcOperation], override val next: Seq[String], stack: Boolean) extends Stanza {
@@ -68,7 +68,7 @@ object CalculationStanza {
       (JsPath \ "calcs").write[Seq[CalcOperation]] and
         (JsPath \ "next").write[Seq[String]] and
         (JsPath \ "stack").write[Boolean]
-    )(unlift(CalculationStanza.unapply))
+    )(Tuple.fromProductTyped(_))
 }
 
 case class Calculation(override val next: Seq[String], calcs: Seq[Operation]) extends PopulatedStanza with Evaluate {
@@ -97,7 +97,7 @@ object Calculation {
     ((JsPath \ "next").read[Seq[String]](minLength[Seq[String]](1)) and (JsPath \ "calcs").read[Seq[Operation]])(buildCalculation _)
 
   implicit val writes: OWrites[Calculation] =
-    ((JsPath \ "next").write[Seq[String]] and (JsPath \ "calcs").write[Seq[Operation]])(unlift(Calculation.unapply))
+    ((JsPath \ "next").write[Seq[String]] and (JsPath \ "calcs").write[Seq[Operation]])(Tuple.fromProductTyped(_))
 
 
   def apply(stanza: CalculationStanza): Calculation =

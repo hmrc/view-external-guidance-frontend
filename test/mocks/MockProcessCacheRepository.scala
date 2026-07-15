@@ -19,7 +19,7 @@ package mocks
 import repositories.{CachedProcess, ProcessCacheRepository}
 import models.admin.CachedProcessSummary
 import models.PageNext
-import core.models.ocelot._
+import core.models.ocelot.*
 import core.models.RequestOutcome
 import org.scalamock.handlers.CallHandler
 import org.scalamock.scalatest.MockFactory

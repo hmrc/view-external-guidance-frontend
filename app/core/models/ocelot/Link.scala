@@ -37,6 +37,6 @@ object Link {
       (__ \ "dest").write[String] and
       (__ \ "title").write[String] and
       (__ \ "window").write[Boolean]
-  )(unlift(Link.unapply))
+  )(Tuple.fromProductTyped(_))
 
 }

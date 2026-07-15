@@ -20,28 +20,28 @@ import base.{BaseSpec, ViewFns}
 import config.ErrorHandler
 import controllers.actions.SessionIdAction
 import core.models.errors.{Error, _}
-import core.models.ocelot.errors._
+import core.models.ocelot.errors.*
 import core.models.ocelot.stanzas.{CurrencyInput, DateInput, Question, Sequence, _}
 import core.models.ocelot.{KeyedStanza, LabelCache, Labels, Meta, Page, Phrase, Process, ProcessJson, Published, Scratch}
-import core.services._
+import core.services.*
 import forms.FormProviderFactory
-import forms.providers._
-import mocks._
-import models.ui._
+import forms.providers.*
+import mocks.*
+import models.ui.*
 import models.{Session, _}
 import org.apache.pekko.stream.Materializer
 import play.api.data.FormError
 import play.api.http.Status
 import play.api.i18n.{Messages, MessagesApi}
-import play.api.mvc._
-import play.api.test.CSRFTokenHelper._
+import play.api.mvc.*
+import play.api.test.CSRFTokenHelper.*
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import repositories.SessionFSM
-import services._
+import services.*
 import uk.gov.hmrc.http.{HeaderCarrier, HeaderNames, RequestId, SessionKeys}
 import uk.gov.hmrc.play.language.LanguageUtils
-import views.html._
+import views.html.*
 
 import java.time.Instant
 import scala.concurrent.{ExecutionContext, Future}
@@ -218,10 +218,8 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
       mockDebugService,
       new PageBuilder(new LabelledData(new Timescales(new DefaultTodayProvider), new Rates())),
       new PageRenderer(MockAppConfig),
-      new SecuredProcessBuilder(messagesApi),
       new UIBuilder(),
       new SessionFSM,
-      messagesApi,
       new EncrypterService(MockAppConfig)
     )
 
@@ -399,10 +397,8 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
       mockDebugService,
       new PageBuilder(new LabelledData(new Timescales(new DefaultTodayProvider), new Rates())),
       new PageRenderer(MockAppConfig),
-      new SecuredProcessBuilder(messagesApi),
       new UIBuilder(),
       new SessionFSM,
-      messagesApi,
       new EncrypterService(MockAppConfig))
 
     val target = new GuidanceController(
@@ -538,7 +534,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
         .withCSRFToken
       val result = target.submitPage("blah", relativePath)(fakeRequest)
       status(result) shouldBe Status.SEE_OTHER
-      redirectLocation(result) shouldBe guidanceSession.currentPageUrl.map(url => s"/guidance/blah")
+      redirectLocation(result) shouldBe guidanceSession.currentPageUrl.map(_ => s"/guidance/blah")
     }
 
     "Return Internal server error when a Database error occurs" in new QuestionSubmissionTest with MockGuidanceService {
@@ -882,7 +878,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
   "Submitting an Input page with an invalid value" should {
 
     "return a BadRequest to the current page" in new InputTest {
-      override val (vStanzas: Seq[VisualStanza], labels: Labels, di: Option[DataInput]) = renderPage(inputPage, initialLabels)
+      override val (vStanzas: Seq[VisualStanza], _, di: Option[DataInput]) = renderPage(inputPage, initialLabels)
       override val pec = PageEvaluationContext(
         inputPage,
         vStanzas,
@@ -924,7 +920,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
   "Submitting an Input page with a guidance detected invalid value" should {
 
     "return a BadRequest to the current page and retain input data" in new InputTest {
-      override val (vStanzas: Seq[VisualStanza], labels: Labels, di: Option[DataInput]) = renderPage(inputPage, initialLabels)
+      override val (vStanzas: Seq[VisualStanza], _, di: Option[DataInput]) = renderPage(inputPage, initialLabels)
       override val pec = PageEvaluationContext(
         inputPage,
         vStanzas,
@@ -992,7 +988,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
     }
 
     "redirect to new page with out query string after valid submission" in new InputTest {
-      override val (vStanzas: Seq[VisualStanza], labels: Labels, di: Option[DataInput]) = renderPage(inputPage, initialLabels)
+      override val (vStanzas: Seq[VisualStanza], _, di: Option[DataInput]) = renderPage(inputPage, initialLabels)
       override val pec = PageEvaluationContext(
         inputPage,
         vStanzas,
@@ -1031,7 +1027,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
     }
 
     "redirect to previously visited page with query string after valid submission" in new InputTest {
-      override val (vStanzas: Seq[VisualStanza], labels: Labels, di: Option[DataInput]) = renderPage(inputPage, initialLabels)
+      override val (vStanzas: Seq[VisualStanza], _, di: Option[DataInput]) = renderPage(inputPage, initialLabels)
       override val pec = PageEvaluationContext(
         inputPage,
         vStanzas,
@@ -1740,7 +1736,7 @@ class GuidanceControllerSpec extends BaseSpec with ViewFns {
       )
 
       val initialLabels = LabelCache()
-      val (vStanzas: Seq[VisualStanza], labels: Labels, di: Option[DataInput]) = renderPage(dateInputPage, initialLabels)
+      val (vStanzas: Seq[VisualStanza], _, di: Option[DataInput]) = renderPage(dateInputPage, initialLabels)
       val pec = PageEvaluationContext(
         dateInputPage,
         vStanzas,

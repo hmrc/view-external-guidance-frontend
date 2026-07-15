@@ -24,7 +24,7 @@ import play.api.test.FakeRequest
 import play.twirl.api.Html
 import views.html.runtime_error_template
 
-import scala.jdk.CollectionConverters._
+import scala.jdk.CollectionConverters.*
 
 class GuidanceErrorSpec extends ViewSpec with ViewFns with GuiceOneAppPerSuite {
 

@@ -38,5 +38,5 @@ class PassphraseFormProvider extends FormProvider[PassphraseAnswer] {
   def apply(name: String): Form[PassphraseAnswer] =
     Form(mapping(
       name -> nonEmptyText
-    )(PassphraseAnswer.apply)(PassphraseAnswer.unapply))
+    )(PassphraseAnswer.apply)(pa => Some(pa.text)))
 }

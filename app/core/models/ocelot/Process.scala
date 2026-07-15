@@ -85,5 +85,5 @@ object Process {
       (__ \ "links").write[Vector[Link]] and
       (__ \ "timescales").write[Map[String, Int]] and
       (__ \ "rates").write[Map[String, BigDecimal]]
-  )(unlift(Process.unapply))
+  )(Tuple.fromProductTyped(_))
 }

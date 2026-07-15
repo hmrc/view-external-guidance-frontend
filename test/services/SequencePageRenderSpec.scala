@@ -97,7 +97,7 @@ class SequencePageRenderSpec extends BaseSpec with ProcessJson {
               next shouldBe Some("2")
               labels.value("FlowInput") shouldBe Some("hello")
 
-              followNext(next, labels, process, (p, l) => {p.next shouldBe Nil})
+              followNext(next, labels, process, (p, _) => {p.next shouldBe Nil})
             })
           })
         }

@@ -247,7 +247,7 @@ class RetrieveAndCacheServiceSpec extends BaseSpec {
         .returns(Future.successful(Left(NotFoundError)))
 
       target.retrieveOnlyPublished(processId).map{
-        case Right((process, pges)) => fail()
+        case Right((_, _)) => fail()
         case Left(err) => err shouldBe NotFoundError
       }
 
@@ -283,7 +283,7 @@ class RetrieveAndCacheServiceSpec extends BaseSpec {
         .returns(Future.successful(Left(NotFoundError)))
 
       target.retrieveOnlyApproval(processId).map{
-        case Right((process, pges)) => fail()
+        case Right((_, _)) => fail()
         case Left(err) => err shouldBe NotFoundError
       }
 

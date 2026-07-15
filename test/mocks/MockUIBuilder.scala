@@ -23,13 +23,15 @@ import services.{ErrorStrategy, UIBuilder, UIContext}
 import core.models.RequestOutcome
 import org.scalatest.TestSuite
 
+import scala.annotation.unused
+
 trait MockUIBuilder extends TestSuite with MockFactory {
 
   val mockUIBuilder: UIBuilder = mock[UIBuilder]
 
   object MockUIBuilder {
 
-    def buildPage(url: String, stanzas: List[VisualStanza], errStrategy: ErrorStrategy): CallHandler[RequestOutcome[models.ui.Page]] = {
+    def buildPage(url: String, stanzas: List[VisualStanza], @unused errStrategy: ErrorStrategy): CallHandler[RequestOutcome[models.ui.Page]] = {
 
       (mockUIBuilder
         .buildPage(_: String, _: List[VisualStanza], _: ErrorStrategy)(_: UIContext))

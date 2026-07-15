@@ -38,7 +38,7 @@ object RowStanza {
         (JsPath \ "next").write[Seq[String]] and
         (JsPath \ "stack").write[Boolean]
 
-    )(unlift(RowStanza.unapply))
+    )(Tuple.fromProductTyped(_))
 }
 
 case class Row( cells: Seq[Phrase],

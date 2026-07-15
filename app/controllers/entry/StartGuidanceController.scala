@@ -20,7 +20,7 @@ import config.{AppConfig, ErrorHandler}
 import controllers.actions.SessionIdAction
 import controllers.CacheAndRedirectToView
 import play.api.Logger
-import play.api.mvc._
+import play.api.mvc.*
 import services.RetrieveAndCacheService
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 import uk.gov.hmrc.play.language.LanguageUtils

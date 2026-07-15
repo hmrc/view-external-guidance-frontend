@@ -16,7 +16,7 @@
 
 package test.support
 
-import org.scalatest._
+import org.scalatest.*
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite

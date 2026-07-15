@@ -196,7 +196,7 @@ class InputSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite {
       }
     }
 
-   "input with hint in error should include hint id and error id in aria-describedby on input" in new Test {
+    "input with hint in error should include hint id and error id in aria-describedby on input" in new Test {
       private val doc = asDocument(components.input(inputWithHintAndErrors, "test", textFormProvider("test"))(fakeRequest, messages, ctx))
 
       doc.getElementsByTag("input").asScala.toList.foreach { inp =>
@@ -205,7 +205,7 @@ class InputSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite {
           aria should include("required-error")
         }
       }
-   }
+    }
 
     "input with errors should have error class assigned" in new Test {
 
@@ -311,7 +311,7 @@ class InputSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite {
       }
     }
 
-   "input with hint in error should include hint id and error id in aria-describedby on input" in new TextTest {
+    "input with hint in error should include hint id and error id in aria-describedby on input" in new TextTest {
       private val doc = asDocument(components.input(inputWithHintAndErrors, "test", textFormProvider("test"))(fakeRequest, messages, ctx))
 
       doc.getElementsByTag("input").asScala.toList.foreach { inp =>

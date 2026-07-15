@@ -17,8 +17,8 @@
 package core.models.ocelot.stanzas
 
 import base.BaseSpec
-import CalloutStanza._
-import play.api.libs.json._
+import CalloutStanza.*
+import play.api.libs.json.*
 
 class CalloutStanzaSpec extends BaseSpec {
 

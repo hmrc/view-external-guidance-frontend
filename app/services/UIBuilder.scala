@@ -196,7 +196,7 @@ class UIBuilder {
 
   private def fromRequiredErrorGroup(eg: RequiredErrorGroup, errStrategy: ErrorStrategy)(implicit ctx: UIContext): Seq[UIComponent] =
     errStrategy match {
-      case _: ValueMissingGroupError => errorGroupMsg(eg.group, errStrategy).map(RequiredErrorMsg)
+      case _: ValueMissingGroupError => errorGroupMsg(eg.group, errStrategy).map(RequiredErrorMsg(_))
       case _ => Seq()
     }
 
@@ -243,8 +243,8 @@ class UIBuilder {
     Details(caption, Seq(Paragraph(TextBuilder.fromPhrase(nc.text))))
 
   private def fromSequence(s: Sequence, body: Seq[UIComponent])(implicit ctx: UIContext): UIComponent = {
-    val exclusiveAnswer = s.exclusive.map(p => SequenceAnswer.tupled(TextBuilder.fromPhraseWithOptionalHint(p)))
-    val standardAnswers = s.options.map(p=> SequenceAnswer.tupled(TextBuilder.fromPhraseWithOptionalHint(p)))
+    val exclusiveAnswer = s.exclusive.map(p => (SequenceAnswer.apply _).tupled(TextBuilder.fromPhraseWithOptionalHint(p)))
+    val standardAnswers = s.options.map(p=> (SequenceAnswer.apply _).tupled(TextBuilder.fromPhraseWithOptionalHint(p)))
 
     // Split out an Error callouts from body
     val (errorMsgs, uiElements) = partitionComponents(body.toList, List.empty, List.empty)

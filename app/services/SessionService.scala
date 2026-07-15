@@ -17,7 +17,6 @@
 package services
 
 import play.api.Logging
-import config.AppConfig
 
 import javax.inject.{Inject, Singleton}
 import models._
@@ -32,7 +31,7 @@ import scala.annotation.tailrec
 import core.models.ocelot.LabelOperation
 
 @Singleton
-class SessionService @Inject() (appConfig: AppConfig, sessionRepository: SessionRepository, processCacheRepository: ProcessCacheRepository) extends Logging {
+class SessionService @Inject() (sessionRepository: SessionRepository, processCacheRepository: ProcessCacheRepository) extends Logging {
 
   def create(id: String, runMode: RunMode, process: Process, pageMap: Map[String, PageNext], legalPageIds: List[String])
             (implicit ec: ExecutionContext): Future[RequestOutcome[Unit]] = {

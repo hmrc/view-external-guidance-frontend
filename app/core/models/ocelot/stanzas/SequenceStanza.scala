@@ -50,7 +50,7 @@ object SequenceStanza {
         (JsPath \ "options").write[Seq[Int]] and
         (JsPath \ "label").writeNullable[String] and
         (JsPath \ "stack").write[Boolean]
-    )(unlift(SequenceStanza.unapply))
+    )(Tuple.fromProductTyped(_))
 }
 
 object Sequence {

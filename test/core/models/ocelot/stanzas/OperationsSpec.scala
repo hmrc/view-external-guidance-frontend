@@ -17,7 +17,7 @@
 package core.models.ocelot.stanzas
 
 import base.BaseSpec
-import core.models.ocelot._
+import core.models.ocelot.*
 
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit

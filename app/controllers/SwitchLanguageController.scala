@@ -17,7 +17,7 @@
 package controllers
 
 import com.google.inject.{Inject, Singleton}
-import play.api.mvc._
+import play.api.mvc.*
 import play.api.i18n.Lang
 import config.AppConfig
 import play.api.Logger

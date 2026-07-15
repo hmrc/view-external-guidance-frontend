@@ -17,4 +17,4 @@
 @import models.ui.Input
 
 @(input: Input)
-@{if(input.errorMsgs.nonEmpty) " govuk-input--error"}
+@{if(input.errorMsgs.nonEmpty) " govuk-input--error" else ""}

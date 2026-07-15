@@ -76,7 +76,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
                              IndexOptions()
                               .name(DefaultSessionRepository.LastAccessedIndexName)
                               .unique(false)
-                              .expireAfter(config.timeoutInSeconds, TimeUnit.SECONDS))),
+                              .expireAfter(config.timeoutInSeconds.toLong, TimeUnit.SECONDS))),
     extraCodecs = Seq(Codecs.playFormatCodec(SessionKey.format)),
     replaceIndexes = true // Ensure an updated timeout from config is used
   ) with SessionRepository {
@@ -115,7 +115,7 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
       .toFutureOption()
       .map {
         case Some(result: DeleteResult) if result.getDeletedCount > 0 => Right(())
-        case Some(result: DeleteResult) =>
+        case Some(_: DeleteResult) =>
           logger.warn(s"Attempt to delete session for $key and $processCode failed as no such session exists")
           Left(NotFoundError)
         case None =>
@@ -221,12 +221,12 @@ class DefaultSessionRepository @Inject() (config: AppConfig, component: MongoCom
   def updateAfterStandardPage(key: String, processCode: String, labels: Labels, revertOps: Option[List[LabelOperation]], requestId: Option[String]): Future[RequestOutcome[Unit]] =
     collection.findOneAndUpdate(
       requestId.fold(equal("_id", SessionKey(key, processCode)))(rId => and(equal("_id", SessionKey(key, processCode)), equal(RequestId, rId))),
-      combine((
+      combine(
         (labels.poolUpdates.toList.map(l => Updates.set(s"${ContinuationPoolKey}.${l._1}", Codecs.toBson(l._2))) ++
          labels.updatedLabels.values.map(l => Updates.set(s"${LabelsKey}.${l.name}", Codecs.toBson(l)))).toIndexedSeq :+
          Updates.set(s"${RawPageHistoryKey}.0.revertOps", Codecs.toBson(revertOps.getOrElse(Nil))) :+
          Updates.set(FlowStackKey, Codecs.toBson(labels.flowStack)): _*
-      ))
+      )
     )
     .toFutureOption()
     .map{

@@ -39,5 +39,5 @@ class StringFormProvider extends FormProvider[StringAnswer] {
   def apply(name: String): Form[StringAnswer] =
     Form(mapping(
       name -> nonEmptyText
-    )(StringAnswer.apply)(StringAnswer.unapply))
+    )(StringAnswer.apply)(sa => Some(sa.text)))
 }

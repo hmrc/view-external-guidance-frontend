@@ -20,7 +20,7 @@ import config.{AppConfig, ErrorHandler}
 import core.models.errors.SessionNotFoundError
 import play.api.Logger
 import play.api.i18n.{I18nSupport, Messages}
-import play.api.mvc._
+import play.api.mvc.*
 import play.twirl.api.Html
 import services.GuidanceService
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController

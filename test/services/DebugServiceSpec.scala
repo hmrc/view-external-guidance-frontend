@@ -19,12 +19,11 @@ package services
 import base.BaseSpec
 import core.models.ocelot._
 import core.models.ocelot.stanzas._
-import mocks.MockAppConfig
 import play.api.i18n.{Messages, MessagesApi}
 import play.api.libs.json._
 
 class DebugServiceSpec extends BaseSpec with ProcessJson {
-  val debugService: DebugService = new DebugService(MockAppConfig)
+  val debugService: DebugService = new DebugService()
   val messagesApi: MessagesApi = injector.instanceOf[MessagesApi]
   implicit val messages: Messages = messagesApi.preferred(Seq())
   val meta: Meta = Json.parse(prototypeMetaSection).as[Meta]

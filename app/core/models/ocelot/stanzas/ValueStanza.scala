@@ -39,7 +39,7 @@ object Value {
       (__ \ "type").write[ValueType] and
         (__ \ "label").write[String] and
         (__ \ "value").write[String]
-    )(unlift(Value.unapply))
+    )(Tuple.fromProductTyped(_))
 }
 
 case class ValueStanza(values: List[Value], override val next: Seq[String], stack: Boolean) extends PopulatedStanza with Evaluate {
@@ -78,6 +78,6 @@ object ValueStanza {
       (__ \ "values").write[List[Value]] and
         (__ \ "next").write[Seq[String]] and
         (__ \ "stack").write[Boolean]
-    )(unlift(ValueStanza.unapply))
+    )(Tuple.fromProductTyped(_))
 
 }

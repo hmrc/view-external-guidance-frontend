@@ -20,13 +20,13 @@ import base.BaseSpec
 import mocks.{MockAppConfig, MockRetrieveAndCacheService}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.Status
-import play.api.mvc._
+import play.api.mvc.*
 import play.api.mvc.{AnyContentAsEmpty, BodyParsers}
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import play.api.test.Helpers.stubMessagesControllerComponents
-import models.ui._
-import core.models.errors._
+import models.ui.*
+import core.models.errors.*
 
 import scala.concurrent.{ExecutionContext, Future}
 import controllers.actions.SessionIdAction

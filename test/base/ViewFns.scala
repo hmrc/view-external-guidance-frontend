@@ -17,9 +17,9 @@
 package base
 
 import org.jsoup.Jsoup
-import org.jsoup.nodes._
+import org.jsoup.nodes.*
 import play.twirl.api.Html
-import scala.jdk.CollectionConverters._
+import scala.jdk.CollectionConverters.*
 
 trait ViewFns {
   def asDocument(html: Html): Document = Jsoup.parse(html.toString)

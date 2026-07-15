@@ -24,7 +24,7 @@ import play.api.Logger
 import uk.gov.hmrc.http.HeaderCarrier
 import core.models.errors._
 import core.models.RequestOutcome
-import play.api.i18n.{MessagesApi, Messages}
+import play.api.i18n.Messages
 import scala.concurrent.{ExecutionContext, Future}
 import repositories.SessionFSM
 import core.models.ocelot.{LabelCache, Labels, Process, Label, flowPath, Debugging, LabelOperation, Update, Delete}
@@ -39,10 +39,8 @@ class GuidanceService @Inject() (
     debugService: DebugService,
     pageBuilder: PageBuilder,
     pageRenderer: PageRenderer,
-    spb: SecuredProcessBuilder,
     uiBuilder: UIBuilder,
     transition: SessionFSM,
-    messagesApi: MessagesApi,
     encrypter: EncrypterService
 ) {
   val logger: Logger = Logger(getClass)
@@ -174,7 +172,7 @@ class GuidanceService @Inject() (
           }
         }
         Right(sp.copy(backLink = backlink))
-      case Right(sp) => Left(IllegalPageSubmissionError)
+      case Right(_) => Left(IllegalPageSubmissionError)
     }
 
   def submitPage(ctx: PageEvaluationContext, url: String, validatedAnswer: String, submittedAnswer: String)

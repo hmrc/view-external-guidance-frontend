@@ -24,17 +24,19 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.TestSuite
 import play.api.i18n.Messages
 
+import scala.annotation.unused
+
 trait MockPageRenderer extends TestSuite with MockFactory {
   val mockPageRenderer: PageRenderer = mock[PageRenderer]
 
   object MockPageRenderer {
 
-    def renderPage(page: Page, labels: Labels): CallHandler[RenderOutcome[(List[VisualStanza], Labels, Option[DataInput])]] =
+    def renderPage(page: Page, @unused labels: Labels): CallHandler[RenderOutcome[(List[VisualStanza], Labels, Option[DataInput])]] =
       (mockPageRenderer
         .renderPage(_: Page, _: Labels)(_: Messages))
         .expects(page, *, *)
 
-    def renderPagePostSubmit(page: Page, labels: Labels, answer: String): CallHandler[RenderOutcome[(Option[String], Labels)]] =
+    def renderPagePostSubmit(page: Page, @unused labels: Labels, answer: String): CallHandler[RenderOutcome[(Option[String], Labels)]] =
       (mockPageRenderer
         .renderPagePostSubmit(_: Page, _: Labels, _: String)(_: Messages))
         .expects(page, *, answer, *)

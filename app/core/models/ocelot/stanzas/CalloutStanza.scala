@@ -44,7 +44,7 @@ object CalloutStanza {
         (JsPath \ "text").write[Int] and
         (JsPath \ "next").write[Seq[String]] and
         (JsPath \ "stack").write[Boolean]
-    )(unlift(CalloutStanza.unapply))
+    )(Tuple.fromProductTyped(_))
 }
 
 object Callout {

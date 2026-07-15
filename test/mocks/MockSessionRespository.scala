@@ -18,13 +18,14 @@ package mocks
 
 import models.{RawPageHistory, Session}
 import repositories.SessionRepository
-import core.models.ocelot._
+import core.models.ocelot.*
 import core.models.RequestOutcome
 import core.models.ocelot.RunMode
 import org.scalamock.handlers.CallHandler
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.TestSuite
 
+import scala.annotation.unused
 import scala.concurrent.Future
 
 trait MockSessionRepository extends TestSuite with MockFactory {
@@ -43,7 +44,7 @@ trait MockSessionRepository extends TestSuite with MockFactory {
         .delete(_: String, _: String))
         .expects(key, processCode)
 
-    def updateAfterFormSubmission(docId: String, processCode: String, url: String, answer: String, labels: Labels, revertOps: Option[List[LabelOperation]], nextLegalPageIds: List[String], requestId: Option[String]): CallHandler[Future[RequestOutcome[Unit]]] =
+    def updateAfterFormSubmission(docId: String, processCode: String, url: String, answer: String, @unused labels: Labels, revertOps: Option[List[LabelOperation]], nextLegalPageIds: List[String], requestId: Option[String]): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockSessionRepository
         .updateAfterFormSubmission(_: String, _: String, _: String, _: String, _: Labels, _: Option[List[LabelOperation]], _: List[String], _: Option[String]))
         .expects(docId, processCode, url, answer, *, revertOps, nextLegalPageIds, requestId)
@@ -63,7 +64,7 @@ trait MockSessionRepository extends TestSuite with MockFactory {
         .reset(_: String, _: String, _: Option[String]))
         .expects(key, processCode, requestId)
 
-    def updateAfterStandardPage(key: String, processCode: String, labels: Labels, revertOps: Option[List[LabelOperation]], requestId: Option[String]): CallHandler[Future[RequestOutcome[Unit]]] =
+    def updateAfterStandardPage(key: String, processCode: String, @unused labels: Labels, revertOps: Option[List[LabelOperation]], requestId: Option[String]): CallHandler[Future[RequestOutcome[Unit]]] =
       (mockSessionRepository
         .updateAfterStandardPage(_: String, _: String, _: Labels, _: Option[List[LabelOperation]], _: Option[String]))
         .expects(key, processCode, *, revertOps, requestId)

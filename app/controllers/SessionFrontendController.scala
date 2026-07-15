@@ -16,9 +16,9 @@
 
 package controllers
 
-import play.api.mvc._
+import play.api.mvc.*
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
-import core.models.errors._
+import core.models.errors.*
 import models.DebuggableRequestOutcome
 import play.api.Logger
 import scala.concurrent.Future
@@ -32,5 +32,5 @@ trait SessionFrontendController {
     hc.sessionId.fold[Future[DebuggableRequestOutcome[T]]] {
       logger.warn(s"Session Id missing from request when required, requestId: ${hc.requestId.map(_.value).getOrElse("")}, URI: ${request.target.uriString}")
       Future.successful(Left((ExpectationFailedError, None)))
-    }(sessionId => block(sessionId.value))
+    }{sessionId => block(sessionId.value)}
 }

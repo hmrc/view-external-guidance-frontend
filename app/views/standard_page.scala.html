@@ -21,7 +21,7 @@
 
 @(page: StandardPage, ctx: PageContext)(implicit request: Request[_], messages: Messages)
 
-@implicitCtx = @{ctx}
+@implicitCtx: PageContext = @{ctx}
 
 @layout(page.heading.asString, ctx.processTitle.asString, Some(ctx.processCode), ctx.processStartUrl, ctx.backLink, ctx.betaPhaseBanner, debugInformation = ctx.debugInformation) {
 

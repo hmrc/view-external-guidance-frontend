@@ -43,7 +43,7 @@ object Label {
   implicit val writes: Writes[Label] = {
     case s: ScalarLabel => Json.obj("type" -> "scalar") ++ Json.toJsObject[ScalarLabel](s)
     case l: ListLabel => Json.obj("type" -> "list") ++ Json.toJsObject[ListLabel](l)
-    case _ => Json.toJson("")
+    case null => Json.toJson("")
   }
 }
 
@@ -59,7 +59,7 @@ object ScalarLabel {
     (__ \ "name").write[String] and
       (__ \ "english").write[List[String]] and
       (__ \ "welsh").write[List[String]]
-  )(unlift(ScalarLabel.unapply))
+  )(Tuple.fromProductTyped(_))
 }
 
 object ListLabel {
@@ -74,6 +74,6 @@ object ListLabel {
     (__ \ "name").write[String] and
       (__ \ "english").write[List[String]] and
       (__ \ "welsh").write[List[String]]
-  )(unlift(ListLabel.unapply))
+  )(Tuple.fromProductTyped(_))
 
 }

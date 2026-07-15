@@ -40,7 +40,6 @@ class ErrorHandler @Inject()(val messagesApi: MessagesApi,
   def runtimeErrorHandler(processCode: String,
                           errors: List[String],
                           solns: List[List[String]],
-                          stanzaId: Option[String],
                           debugInformation: Option[DebugInformation])(implicit request: RequestHeader): Future[Html] =
     Future.successful(runtimeErrorView(
       Messages("guidance.error.title", processCode),

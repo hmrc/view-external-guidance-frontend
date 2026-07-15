@@ -107,10 +107,8 @@ class GuidanceServiceSpec extends BaseSpec {
       mockDebugService,
       mockPageBuilder,
       mockPageRenderer,
-      new SecuredProcessBuilder(messagesApi),
       mockUIBuilder,
       new SessionFSM,
-      messagesApi,
       encrypter)
 
     def renderPage(p: Page, labels: Labels)(implicit messages: Messages): (Seq[VisualStanza], Labels, Option[DataInput]) = {
@@ -133,7 +131,7 @@ class GuidanceServiceSpec extends BaseSpec {
       private val result = target.savePageState(pageContext)
 
       whenReady(result) {
-        case Right(pc) => succeed
+        case Right(_) => succeed
         case Left(err) => fail(s"sabveLabels returned error $err")
       }
     }
@@ -360,7 +358,7 @@ class GuidanceServiceSpec extends BaseSpec {
 
       whenReady(result) { pageCtx =>
         pageCtx match {
-          case Right(PageContext(_, _, _, _, _, _, _, _, _, _, Some(answer), _, _, _)) => succeed
+          case Right(PageContext(_, _, _, _, _, _, _, _, _, _, Some(_), _, _, _)) => succeed
           case Right(wrongContext) => fail(s"Previous answer missing from PageContext, $wrongContext")
           case Left(err) => fail(s"Previous answer missing from PageContext, $err")
         }
@@ -490,8 +488,8 @@ class GuidanceServiceSpec extends BaseSpec {
         .returns(Future.successful(Right({})))
 
       target.submitPage(pec, "/test-page", "yes", "yes").map{
-        case Left(err) => fail()
-        case Right((nxt, lbls)) if nxt.isEmpty => succeed
+        case Left(_) => fail()
+        case Right((nxt, _)) if nxt.isEmpty => succeed
         case Right(_) => fail()
       }
     }
@@ -507,7 +505,7 @@ class GuidanceServiceSpec extends BaseSpec {
         .returns(Future.successful(Right({})))
 
       target.submitPage(pec, "/last-page", "yes", "yes").map{
-        case Left(err) => fail()
+        case Left(_) => fail()
         case Right((Some("4"), _)) => succeed
         case Right(_) => fail()
       }

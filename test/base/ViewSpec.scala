@@ -23,7 +23,7 @@ import org.jsoup.select.Elements
 
 import play.twirl.api.Html
 
-import scala.jdk.CollectionConverters._
+import scala.jdk.CollectionConverters.*
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.matchers.should.Matchers
 

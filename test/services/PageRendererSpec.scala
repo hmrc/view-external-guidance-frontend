@@ -153,7 +153,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson {
 
       renderer.renderPage(page, LabelCache()) match {
         case Left((err, _)) if err == unsupportedOpError => succeed
-        case res => fail()
+        case _ => fail()
       }
     }
 
@@ -175,7 +175,7 @@ class PageRendererSpec extends BaseSpec with ProcessJson {
 
       renderer.renderPagePostSubmit(page, LabelCache(), "0") match {
         case Left((err, _)) if err == unsupportedOpError => succeed
-        case res => fail()
+        case _ => fail()
       }
     }
 

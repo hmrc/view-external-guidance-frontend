@@ -76,7 +76,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
     "Ignore Error Callouts when there are no errors" in new QuestionTest {
       uiBuilder.buildPage(page.url, page.stanzas.toList.collect{case s: VisualStanza => s}, NoError) match {
         case Right(s: FormPage) if s.formComponent.errorMsgs.isEmpty => succeed
-        case Right(s: FormPage) => fail("No error messages should be included on page")
+        case Right(_: FormPage) => fail("No error messages should be included on page")
         case _ => fail("Should return FormPage")
       }
     }
@@ -85,7 +85,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
 
       uiBuilder.buildPage(page.url, page.stanzas.toList.collect{case s: VisualStanza => s}, ValueMissingError) match {
         case Right(s: FormPage) if s.formComponent.errorMsgs.isEmpty => fail("No error messages found on page")
-        case Right(s: FormPage) => succeed
+        case Right(_: FormPage) => succeed
         case _ => fail("Should return FormPage")
       }
     }
@@ -94,15 +94,15 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
       uiBuilder.buildPage(page.url, page.stanzas.toList.collect{case s: VisualStanza => s}, NoError) match {
         case Right(q: FormPage) =>
           q.formComponent.body(0) match {
-            case h: H3 => succeed
+            case _: H3 => succeed
             case _ => fail("Ordering of question body components not maintained")
           }
           q.formComponent.body(1) match {
-            case h: H4 => succeed
+            case _: H4 => succeed
             case _ => fail("Ordering of question body components not maintained")
           }
           q.formComponent.body(2) match {
-            case h: Paragraph => succeed
+            case _: Paragraph => succeed
             case _ => fail("Ordering of question body components not maintained")
           }
 
@@ -113,7 +113,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
     "Include a question hint appended to the question text" in new QuestionTest {
       uiBuilder.buildPage(pageWithQuestionHint.url, pageWithQuestionHint.stanzas.toList.collect{case s: VisualStanza => s}) match {
         case Right(s: FormPage) if s.formComponent.hint == Some(Text(questionHintString)) => succeed
-        case Right(s: FormPage) => fail("No hint found within Question")
+        case Right(_: FormPage) => fail("No hint found within Question")
         case _ => fail("Should return FormPage")
       }
     }
@@ -486,7 +486,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
       val p = uiBuilder.buildPage("/start", List(SubSectionCallout(headingPhrase, Seq.empty, false),
                                                 tableRowGroup))
       p.fold(_ => fail(), p => p).components match {
-        case Seq(Table(Text(h), th, _)) if h.headOption == Some(Words(headingPhrase.value(lang))) => succeed
+        case Seq(Table(Text(h), _, _)) if h.headOption == Some(Words(headingPhrase.value(lang))) => succeed
         case x =>
           fail(s"Found $x")
       }
@@ -1631,7 +1631,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
     "Include correct Error messages when all fields missing" in new DateInputTest {
       uiBuilder.buildPage(datePage.url, datePage.stanzas.toList.collect{case s: VisualStanza => s}, ValueMissingGroupError(Nil)) match {
         case Right(s: FormPage) if s.formComponent.errorMsgs.isEmpty => fail("No error messages found on page")
-        case Right(s: FormPage) => succeed
+        case Right(_: FormPage) => succeed
         case x => fail(s"Should return FormPage: found $x")
       }
     }
@@ -1710,7 +1710,7 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
 
     "Create a Form page" in new DateInputTest {
       uiBuilder.buildPage(datePage.url, datePage.stanzas.toList.collect{case s: VisualStanza => s}, ValueMissingGroupError(Nil)) match {
-        case Right(i: FormPage) => succeed
+        case Right(_: FormPage) => succeed
         case x => fail(s"Should return FormPage: found $x")
       }
     }
@@ -1973,11 +1973,11 @@ class EnglishUIBuilderSpec extends BaseSpec with ProcessJson with EnglishLanguag
           details.disclosure.size shouldBe 5
 
           details.disclosure.zipWithIndex.map {
-            case (p: Paragraph, 0) =>
+            case (_: Paragraph, 0) =>
             case (bp: BulletPointList, 1) => bp.listItems.size shouldBe 3
-            case (p: Paragraph, 2) =>
+            case (_: Paragraph, 2) =>
             case (bp: BulletPointList, 3) => bp.listItems.size shouldBe 2
-            case (p: Paragraph, 4) =>
+            case (_: Paragraph, 4) =>
             case _ => fail()
           }
 

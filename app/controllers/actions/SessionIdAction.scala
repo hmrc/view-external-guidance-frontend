@@ -19,7 +19,7 @@ package controllers.actions
 import javax.inject.Inject
 import play.api.mvc.request.Cell
 import play.api.mvc.request.RequestAttrKey
-import play.api.mvc._
+import play.api.mvc.*
 import uk.gov.hmrc.http.SessionKeys
 import play.api.Logger
 import scala.concurrent.{ExecutionContext, Future}
