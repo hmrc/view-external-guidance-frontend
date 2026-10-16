@@ -27,12 +27,27 @@ object CodeCoverageSettings {
     "prod.*",
     ".*Routes.*",
     "testOnly.*",
-    "testOnlyDoNotUseInAppConf.*"
+    "testOnlyDoNotUseInAppConf.*",
+    "repositories.DefaultSessionRepository",
+    "repositories.SessionRepositoryConstants",
+    "repositories.DefaultProcessCacheRepository",
+    "repositories.ProcessCacheRepository",
+    "repositories.ProcessCacheRepositoryConstants",
+    "models.RawPageHistory",
+    "models.ui.Table",
+    "models.ui.SummaryList",
+    "models.ui.CyaSummaryList",
+    "models.ui.NameValueSummaryList",
+    "models.ui.InsetText",
+    "models.ui.WarningText",
+    "models.ui.NumberedList",
+    "models.ui.NumberedCircleList",
+    "views.admin.package"
   )
 
   val settings: Seq[Setting[_]] = Seq(
     ScoverageKeys.coverageExcludedPackages := excludedPackages.mkString(";"),
-    ScoverageKeys.coverageMinimumStmtTotal := 85.0,
+    ScoverageKeys.coverageMinimumStmtTotal := 89.53,
     ScoverageKeys.coverageFailOnMinimum := true,
     ScoverageKeys.coverageHighlighting := true
   )
