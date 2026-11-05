@@ -16,12 +16,13 @@
 
 package core.services
 
-import core.models.ocelot.{Process, TestTimescaleDefnsDB, ProcessJson}
+import core.models.ocelot.{Process, ProcessJson, TestTimescaleDefnsDB}
 import base.BaseSpec
-import java.time.LocalDate
+
+import java.time.{LocalDate, LocalDateTime}
 
 class TimescalesSpec extends BaseSpec with ProcessJson with TestTimescaleDefnsDB {
-  val today: LocalDate = LocalDate.of(2020, 6, 24)
+  val today: LocalDateTime = LocalDateTime.of(2020, 6, 24, 16, 13, 0)
   val earlyYearToday: LocalDate = LocalDate.of(2018, 2, 12)
   val taxStartForNow = LocalDate.of(2020, 4, 6)
   val taxYearForNow = taxStartForNow.getYear
@@ -30,7 +31,7 @@ class TimescalesSpec extends BaseSpec with ProcessJson with TestTimescaleDefnsDB
                         def year: String = now.getYear().toString
                       }
   val taxStartProvider = new TodayProvider{
-                        def now = taxStartForNow
+                        def now = taxStartForNow.atStartOfDay()
                         def year: String = now.getYear().toString
                       }
   val pls: Timescales = new Timescales(todayProvider)
@@ -104,11 +105,14 @@ class TimescalesSpec extends BaseSpec with ProcessJson with TestTimescaleDefnsDB
       pls.expand("Timescale in days: [timescale:UNKNOWN:days]", process) shouldBe s"Timescale in days: [timescale:UNKNOWN:days]"
     }
 
+    "expand currenttime" in {
+      pls.expand("Current time is [timescale:currenttime]", process) shouldBe s"Current time is 16:13:00"
+    }
   }
 
   "Timescales with overridden TodayProvider" must {
     val pls: Timescales = new Timescales(new TodayProvider{
-                                            def now = earlyYearToday
+                                            def now = earlyYearToday.atStartOfDay()
                                             def year: String = now.getYear().toString
                                           })
 

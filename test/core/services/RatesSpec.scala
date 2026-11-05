@@ -19,7 +19,8 @@ package core.services
 import base.BaseSpec
 import core.models.ocelot.ProcessJson
 import core.models.ocelot.Process
-import java.time.LocalDate
+
+import java.time.{LocalDate, LocalDateTime}
 
 class RatesSpec extends BaseSpec with ProcessJson {
   val rates: Rates = new Rates()
@@ -46,7 +47,7 @@ class RatesSpec extends BaseSpec with ProcessJson {
     )
   )
   val today: LocalDate = LocalDate.of(2020, 6, 24)
-  val earlyYearToday: LocalDate = LocalDate.of(2018, 2, 12)
+  val earlyYearToday: LocalDateTime = LocalDateTime.of(2018, 2, 12, 16, 13, 0)
   val taxStartForNow = LocalDate.of(2020, 4, 6)
   val taxYearForNow = taxStartForNow.getYear
   val todayProvider: TodayProvider = new TodayProvider{

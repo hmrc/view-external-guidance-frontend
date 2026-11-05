@@ -16,7 +16,7 @@
 
 package core.models
 
-import java.time.{YearMonth, LocalDate}
+import java.time.{LocalDate, LocalDateTime, YearMonth}
 import java.time.format.{DateTimeFormatter, ResolverStyle}
 import scala.util.Try
 import scala.util.matching.Regex
@@ -151,8 +151,9 @@ package object ocelot {
       }
     }
   def stringFromDate(when: LocalDate): String = when.format(dateFormatter)
+  def stringFromDateTime(when: LocalDateTime): String = when.format(dateFormatter)
   def stripHintPlaceholder(p: Phrase): Phrase = Phrase(hintRegex.replaceAllIn(p.english, ""), hintRegex.replaceAllIn(p.welsh, ""))
-  def trimTrailing(s: String): String = s.reverse.dropWhile(_.equals(' ')).reverse
+  private def trimTrailing(s: String): String = s.reverse.dropWhile(_.equals(' ')).reverse
 
   private val TextGroup = 1
   private val WidthGroup1 = 2
